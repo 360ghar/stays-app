@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../../controllers/auth/auth_controller.dart';
-import '../../../controllers/auth/otp_controller.dart';
 import '../../../routes/app_routes.dart';
 
-class ForgotPasswordView extends GetView<AuthController> {
-  const ForgotPasswordView({super.key});
+class PhoneLoginView extends GetView<AuthController> {
+  const PhoneLoginView({super.key});
 
   static final _phoneController = TextEditingController();
+  static final _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -30,49 +30,25 @@ class ForgotPasswordView extends GetView<AuthController> {
             children: [
               const SizedBox(height: 20),
               
-              // Icon
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.lock_reset_outlined,
-                    size: 40,
-                    color: Colors.orange.shade600,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Title
+              // Welcome Section
               const Text(
-                'Forgot Password?',
+                'Welcome Back',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
-              const SizedBox(height: 12),
-              
-              // Subtitle
+              const SizedBox(height: 8),
               Text(
-                'No worries! Enter your phone number and we\'ll send you a code to reset your password.',
+                'Sign in to continue',
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey.shade600,
-                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
               const SizedBox(height: 48),
               
               // Phone Number Field
@@ -88,15 +64,10 @@ class ForgotPasswordView extends GetView<AuthController> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Obx(() => Container(
+                  Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: controller.phoneError.value.isEmpty 
-                            ? Colors.grey.shade300 
-                            : Colors.red,
-                        width: controller.phoneError.value.isEmpty ? 1 : 2,
-                      ),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Row(
                       children: [
@@ -138,7 +109,6 @@ class ForgotPasswordView extends GetView<AuthController> {
                               FilteringTextInputFormatter.digitsOnly,
                               LengthLimitingTextInputFormatter(10),
                             ],
-                            onChanged: (_) => controller.phoneError.value = '',
                             decoration: const InputDecoration(
                               hintText: '9876543210',
                               border: InputBorder.none,
@@ -153,7 +123,7 @@ class ForgotPasswordView extends GetView<AuthController> {
                         ),
                       ],
                     ),
-                  )),
+                  ),
                   Obx(() => controller.phoneError.value.isEmpty
                     ? const SizedBox(height: 4)
                     : Padding(
@@ -169,22 +139,98 @@ class ForgotPasswordView extends GetView<AuthController> {
                   ),
                 ],
               ),
+              const SizedBox(height: 24),
               
-              const SizedBox(height: 48),
+              // Password Field
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Password',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() => Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: !controller.isPasswordVisible.value,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your password',
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            controller.isPasswordVisible.value 
+                              ? Icons.visibility_off_outlined 
+                              : Icons.visibility_outlined,
+                            color: Colors.grey,
+                          ),
+                          onPressed: controller.togglePasswordVisibility,
+                        ),
+                        hintStyle: const TextStyle(color: Colors.grey),
+                      ),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  )),
+                  Obx(() => controller.passwordError.value.isEmpty
+                    ? const SizedBox(height: 4)
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          controller.passwordError.value,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                  ),
+                ],
+              ),
               
-              // Send OTP Button
+              // Forgot Password
+              const SizedBox(height: 16),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Get.toNamed(Routes.forgotPassword),
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(
+                      color: Color(0xFF2196F3),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Login Button
               Obx(() => AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 height: 56,
                 child: ElevatedButton(
                   onPressed: controller.isLoading.value 
                     ? null 
-                    : _handleSendOTP,
+                    : _handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF9800),
+                    backgroundColor: const Color(0xFF2196F3),
                     foregroundColor: Colors.white,
                     elevation: 2,
-                    shadowColor: const Color(0xFFFF9800).withOpacity(0.3),
+                    shadowColor: const Color(0xFF2196F3).withOpacity(0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -199,7 +245,7 @@ class ForgotPasswordView extends GetView<AuthController> {
                         ),
                       )
                     : const Text(
-                        'Send Code',
+                        'Sign In',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -208,23 +254,40 @@ class ForgotPasswordView extends GetView<AuthController> {
                 ),
               )),
               
-              const SizedBox(height: 60),
+              const SizedBox(height: 24),
               
-              // Back to Login
+              // Divider
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'or',
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Sign Up Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Remember your password? ",
+                    "Don't have an account? ",
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 16,
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => Get.back(),
+                    onTap: () => Get.toNamed(Routes.register),
                     child: const Text(
-                      'Sign In',
+                      'Sign Up',
                       style: TextStyle(
                         color: Color(0xFF2196F3),
                         fontSize: 16,
@@ -236,9 +299,6 @@ class ForgotPasswordView extends GetView<AuthController> {
               ),
               
               const SizedBox(height: 32),
-              
-              // Extra spacing for keyboard
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],
           ),
         ),
@@ -246,28 +306,10 @@ class ForgotPasswordView extends GetView<AuthController> {
     );
   }
 
-  void _handleSendOTP() async {
-    final phone = _phoneController.text.trim();
-    
-    // Validate locally first
-    if (phone.isEmpty) {
-      controller.phoneError.value = 'Phone number is required';
-      return;
-    } else if (phone.length != 10) {
-      controller.phoneError.value = 'Please enter a valid 10-digit phone number';
-      return;
-    }
-    
-    final success = await controller.sendForgotPasswordOTP(phone);
-    
-    if (success) {
-      // Initialize OTP controller and navigate to verification
-      final otpController = Get.find<OTPController>();
-      otpController.initializeOTP(
-        type: OTPType.forgotPassword,
-        phone: phone,
-      );
-      Get.toNamed(Routes.verification);
-    }
+  void _handleLogin() {
+    controller.loginWithPhone(
+      phone: _phoneController.text.trim(),
+      password: _passwordController.text,
+    );
   }
 }

@@ -12,10 +12,11 @@ import '../bindings/profile_binding.dart';
 import '../middlewares/auth_middleware.dart';
 import '../middlewares/initial_middleware.dart';
 
-import '../ui/views/auth/login_view.dart';
-import '../ui/views/auth/register_view.dart';
+import '../ui/views/auth/phone_login_view.dart';
+import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/forgot_password_view.dart';
 import '../ui/views/auth/verification_view.dart';
+import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/home/explore_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
@@ -41,13 +42,13 @@ class AppPages {
     ),
     GetPage(
       name: Routes.login,
-      page: () => const LoginView(),
+      page: () => const PhoneLoginView(),
       binding: AuthBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage(
       name: Routes.register,
-      page: () => const RegisterView(),
+      page: () => const SignupView(),
       binding: AuthBinding(),
       transition: Transition.rightToLeft,
     ),
@@ -62,6 +63,12 @@ class AppPages {
       page: () => const VerificationView(),
       binding: AuthBinding(),
       transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: Routes.resetPassword,
+      page: () => const ResetPasswordView(),
+      binding: AuthBinding(),
+      transition: Transition.rightToLeft,
     ),
     GetPage(
       name: Routes.home,
