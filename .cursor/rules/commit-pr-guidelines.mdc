@@ -1,0 +1,126 @@
+---
+alwaysApply: false
+description: Git commit conventions and pull request guidelines for Flutter app
+---
+
+# Git Commit & Pull Request Guidelines
+
+## Commit Message Format
+Use Conventional Commits format for all commit messages:
+
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
+```
+
+### Commit Types
+- **`feat`**: New feature or functionality
+- **`fix`**: Bug fix
+- **`docs`**: Documentation changes
+- **`style`**: Code style changes (formatting, etc.)
+- **`refactor`**: Code refactoring without changing functionality
+- **`test`**: Adding or updating tests
+- **`chore`**: Maintenance tasks, dependency updates, etc.
+
+### Commit Examples
+```bash
+# Feature commits
+feat(auth): add social login with Google and Apple
+feat(booking): implement calendar availability picker
+feat(payment): add Stripe payment integration
+
+# Fix commits
+fix(auth): resolve token refresh issue on app launch
+fix(booking): fix date selection validation bug
+fix(ui): correct responsive layout on mobile devices
+
+# Refactor commits
+refactor(listing): extract listing card widget for reusability
+refactor(api): standardize error handling across all providers
+
+# Test commits
+test(auth): add unit tests for login validation
+test(booking): add integration test for complete booking flow
+
+# Chore commits
+chore(deps): update Flutter to version 3.19.0
+chore(ci): configure automated testing pipeline
+```
+
+## Pull Request Guidelines
+
+### PR Title Format
+Follow the same Conventional Commits format for PR titles:
+```
+feat: add user profile management
+fix: resolve booking confirmation email issue
+```
+
+### PR Description Requirements
+Every PR must include:
+
+1. **Clear Description**: What changes were made and why
+2. **Linked Issues**: Reference related issues (e.g., "Fixes #123")
+3. **Testing Instructions**: How to test the changes
+4. **Screenshots**: UI changes must include before/after screenshots
+5. **Breaking Changes**: If any, clearly document them
+
+### PR Template Example
+```markdown
+## Description
+Brief description of the changes made in this PR.
+
+## Type of Change
+- [ ] Bug fix (non-breaking change)
+- [ ] New feature (non-breaking change)
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Unit tests pass
+- [ ] Widget tests pass
+- [ ] Integration tests pass
+- [ ] Manual testing completed
+
+## Screenshots (if applicable)
+Add screenshots of UI changes
+
+## Checklist
+- [ ] Code follows project conventions
+- [ ] Tests have been added/updated
+- [ ] Documentation has been updated
+- [ ] PR has been reviewed by at least one team member
+```
+
+### Branch Naming Convention
+- **`feature/`**: New features (`feature/user-authentication`)
+- **`fix/`**: Bug fixes (`fix/payment-validation`)
+- **`hotfix/`**: Critical fixes (`hotfix/crash-on-launch`)
+- **`refactor/`**: Code refactoring (`refactor/api-layer`)
+- **`docs/`**: Documentation updates (`docs/api-endpoints`)
+
+### Code Review Requirements
+Before merging, ensure:
+- ✅ `flutter analyze` passes with no errors
+- ✅ `dart format .` has been run
+- ✅ `flutter test` passes (including new tests)
+- ✅ At least one approval from team member
+- ✅ No merge conflicts
+- ✅ Related issues are properly linked
+
+### CI/CD Pipeline Checks
+All PRs must pass:
+- Code analysis (flutter analyze)
+- Code formatting (dart format)
+- Unit tests (flutter test)
+- Integration tests (if applicable)
+- Build verification (flutter build)
+
+## Release Process
+- Use semantic versioning (MAJOR.MINOR.PATCH)
+- Create release branches from main
+- Tag releases with version numbers
+- Generate release notes from merged PRs

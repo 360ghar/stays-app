@@ -1,0 +1,178 @@
+---
+alwaysApply: false
+description: Security best practices and configuration management for Flutter app
+---
+
+# Security & Configuration Guidelines
+
+## Environment Variables
+Environment files must be properly configured and never committed:
+
+### Required Environment Files
+- **`.env.dev`**: Development environment
+- **`.env.staging`**: Staging environment  
+- **`.env.prod`**: Production environment
+
+### Key Environment Variables
+```bash
+# API Configuration
+API_BASE_URL=https://api.stays-app.com
+API_TIMEOUT=30000
+
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+
+# Payment Configuration
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
+
+# Analytics & Monitoring
+ANALYTICS_KEY=your-analytics-key
+SENTRY_DSN=your-sentry-dsn
+
+# Feature Flags
+ENABLE_ANALYTICS=true
+ENABLE_PUSH_NOTIFICATIONS=true
+```
+
+## Security Best Practices
+
+### Data Handling
+- **Never log sensitive data**: Remove API keys, tokens, passwords from logs
+- **Encrypt sensitive data**: Use proper encryption for stored data
+- **Validate input**: Always validate and sanitize user inputs
+- **Use HTTPS**: All API calls must use HTTPS in production
+
+### Authentication & Authorization
+- **Token Management**: Implement secure token refresh mechanisms
+- **Session Handling**: Properly handle session expiration and logout
+- **Route Guards**: Protect routes that require authentication
+- **Password Policies**: Enforce strong password requirements
+
+### API Security
+- **Request Signing**: Sign API requests when possible
+- **Rate Limiting**: Implement rate limiting for API calls
+- **Error Handling**: Don't expose sensitive error details to users
+- **CORS**: Properly configure CORS policies
+
+## Configuration Management
+
+### AppConfig Class
+Use the `AppConfig` class for environment-specific configuration:
+
+```dart
+class AppConfig {
+  static late String apiBaseUrl;
+  static late String supabaseUrl;
+  static late String supabaseAnonKey;
+  static late bool enableAnalytics;
+
+  static void initialize(String env) {
+    // Load environment variables based on env
+    // Initialize configuration values
+  }
+}
+```
+
+### Environment-Specific Configuration
+Each environment should have its own configuration file:
+
+```dart
+// lib/config/environments/dev_config.dart
+class DevConfig {
+  static const String apiBaseUrl = 'https://dev-api.stays-app.com';
+  static const String supabaseUrl = 'https://dev-project.supabase.co';
+  // ... other dev-specific config
+}
+```
+
+### Feature Flags
+Implement feature flags for controlled rollouts:
+
+```dart
+class FeatureFlags {
+  static const bool enableNewBookingFlow = true;
+  static const bool enablePushNotifications = false;
+  // Environment-specific feature flags
+}
+```
+
+## Secret Management
+
+### .gitignore Configuration
+Ensure sensitive files are properly ignored:
+
+```gitignore
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+build/
+android/app/build/
+ios/Pods/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+```
+
+### Example .env.example File
+Provide a template for environment variables:
+
+```bash
+# .env.example
+API_BASE_URL=your-api-url-here
+SUPABASE_URL=your-supabase-url-here
+SUPABASE_ANON_KEY=your-anon-key-here
+STRIPE_PUBLISHABLE_KEY=your-stripe-key-here
+ANALYTICS_KEY=your-analytics-key-here
+```
+
+## Code Security
+
+### Dependency Security
+- **Regular Updates**: Keep dependencies updated to latest secure versions
+- **Vulnerability Scanning**: Use tools like `flutter pub outdated` and `flutter pub upgrade`
+- **License Compliance**: Ensure all dependencies have compatible licenses
+
+### Code Review Security Checklist
+- [ ] No hardcoded secrets or API keys
+- [ ] Proper input validation and sanitization
+- [ ] Secure authentication flow implementation
+- [ ] No sensitive data in logs or error messages
+- [ ] Proper error handling without information leakage
+- [ ] HTTPS usage for all external communications
+- [ ] Secure storage of sensitive data
+
+## Build Security
+
+### Release Build Configuration
+- **Obfuscation**: Enable code obfuscation for production builds
+- **Signing**: Properly sign Android and iOS builds
+- **ProGuard/R8**: Configure for Android release builds
+
+### CI/CD Security
+- **Secret Management**: Use secure secret storage in CI/CD pipelines
+- **Build Verification**: Verify builds are from trusted sources
+- **Automated Security Scanning**: Integrate security scanning tools
+
+## Monitoring & Alerting
+
+### Error Tracking
+- **Sentry Integration**: Configure Sentry for error tracking
+- **Custom Logging**: Implement structured logging for security events
+- **Alert Configuration**: Set up alerts for security-related events
+
+### Performance Monitoring
+- **API Monitoring**: Monitor API response times and error rates
+- **User Analytics**: Track user behavior for security insights
+- **Performance Metrics**: Monitor app performance and resource usage

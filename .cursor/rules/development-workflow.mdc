@@ -1,0 +1,114 @@
+---
+alwaysApply: false
+description: Development commands, build scripts, and workflow guidelines
+---
+
+# Development Workflow & Commands
+
+## Dependency Management
+```bash
+# Install dependencies
+flutter pub get
+
+# Update dependencies
+flutter pub upgrade
+```
+
+## Code Quality & Analysis
+```bash
+# Static analysis
+flutter analyze
+
+# Format code
+dart format .
+
+# Combined quality check
+flutter analyze && dart format . --set-exit-if-changed
+```
+
+## Code Generation
+```bash
+# Generate code (models, routes, etc.)
+dart run build_runner build --delete-conflicting-outputs
+
+# Watch mode for continuous generation
+dart run build_runner watch --delete-conflicting-outputs
+```
+
+## Development Environment
+```bash
+# Run in development mode
+flutter run -t lib/main_dev.dart
+
+# Or with flavor
+flutter run --flavor dev -t lib/main_dev.dart
+
+# Run with specific device
+flutter run -d <device_id> -t lib/main_dev.dart
+```
+
+## Staging Environment
+```bash
+# Run in staging mode
+flutter run -t lib/main_staging.dart
+
+# Or with flavor
+flutter run --flavor staging -t lib/main_staging.dart
+```
+
+## Testing
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+
+# Run specific test file
+flutter test test/unit/controllers/auth_controller_test.dart
+
+# Run widget tests
+flutter test test/widget/
+
+# Run integration tests
+flutter test integration_test/
+```
+
+## Build Commands
+```bash
+# Development build
+flutter build apk --flavor dev -t lib/main_dev.dart
+flutter build ios --flavor dev -t lib/main_dev.dart
+
+# Staging build
+flutter build apk --flavor staging -t lib/main_staging.dart
+flutter build ios --flavor staging -t lib/main_staging.dart
+
+# Production build
+flutter build apk --flavor prod -t lib/main_prod.dart
+flutter build ios --flavor prod -t lib/main_prod.dart
+
+# App Bundle for Play Store
+flutter build appbundle --flavor prod -t lib/main_prod.dart
+```
+
+## Debug Commands
+```bash
+# Clean build
+flutter clean && flutter pub get
+
+# Clear app data and reinstall
+flutter clean && flutter pub get && flutter run
+
+# Check connected devices
+flutter devices
+
+# Doctor check
+flutter doctor
+```
+
+## Environment Setup
+- Use `.env.dev`, `.env.staging`, `.env.prod` for environment variables
+- Never commit `.env.*` files to version control
+- Use `flutter_dotenv` package for loading environment variables
+- Environment selection is handled by entry point files and `--flavor` flags
