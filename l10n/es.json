@@ -1,0 +1,11 @@
+{
+  "app_name": "360ghar stays",
+  "tagline": "Registrate antes de reservar.",
+  "auth": {
+    "login": "Iniciar sesión",
+    "signup": "Regístrate"
+  },
+  "home": {
+    "explore_nearby": "Explora Cerca"
+  }
+}

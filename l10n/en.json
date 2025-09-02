@@ -1,0 +1,21 @@
+{
+  "app_name": "360ghar stays",
+  "tagline": "Check in before you book in.",
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot Password?",
+    "logout": "Log Out"
+  },
+  "home": {
+    "explore_nearby": "Explore Nearby"
+  },
+  "listing": {
+    "per_night": "per night"
+  },
+  "booking": {
+    "confirm_booking": "Confirm Booking"
+  }
+}
