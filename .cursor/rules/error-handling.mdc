@@ -1,0 +1,387 @@
+---
+globs: *.dart
+description: Error handling patterns and exception management for Flutter app
+---
+
+# Error Handling & Exception Management
+
+## Custom Exception Hierarchy
+Create a structured exception hierarchy for consistent error handling:
+
+```dart
+// lib/app/utils/exceptions/app_exception.dart
+abstract class AppException implements Exception {
+  final String message;
+  final String? code;
+  final dynamic data;
+
+  const AppException(this.message, {this.code, this.data});
+
+  @override
+  String toString() => 'AppException: $message${code != null ? ' (Code: $code)' : ''}';
+}
+
+// lib/app/utils/exceptions/api_exception.dart
+class ApiException extends AppException {
+  final int? statusCode;
+
+  const ApiException(
+    super.message, {
+    super.code,
+    this.statusCode,
+    super.data,
+  });
+
+  factory ApiException.fromResponse(dynamic response) {
+    if (response is Map<String, dynamic>) {
+      return ApiException(
+        response['message'] ?? 'Unknown API error',
+        code: response['code']?.toString(),
+        data: response,
+      );
+    }
+    return const ApiException('Unknown API error');
+  }
+}
+
+// lib/app/utils/exceptions/auth_exception.dart
+class AuthException extends AppException {
+  const AuthException(super.message, {super.code, super.data});
+
+  factory AuthException.invalidCredentials() =>
+    const AuthException('Invalid email or password', code: 'INVALID_CREDENTIALS');
+
+  factory AuthException.tokenExpired() =>
+    const AuthException('Session expired. Please login again.', code: 'TOKEN_EXPIRED');
+
+  factory AuthException.accountDisabled() =>
+    const AuthException('Account has been disabled', code: 'ACCOUNT_DISABLED');
+}
+
+// lib/app/utils/exceptions/validation_exception.dart
+class ValidationException extends AppException {
+  final Map<String, String> fieldErrors;
+
+  const ValidationException(
+    super.message, {
+    required this.fieldErrors,
+    super.code,
+    super.data,
+  });
+
+  bool hasFieldError(String field) => fieldErrors.containsKey(field);
+  String? getFieldError(String field) => fieldErrors[field];
+}
+```
+
+## Error Handling in Controllers
+Implement consistent error handling patterns in controllers:
+
+```dart
+class AuthController extends GetxController {
+  final AuthRepository _authRepository;
+  final Logger _logger;
+
+  AuthController(this._authRepository, this._logger);
+
+  final RxBool isLoading = false.obs;
+  final Rx<String?> errorMessage = Rx<String?>(null);
+
+  Future<void> login(String email, String password) async {
+    try {
+      isLoading.value = true;
+      errorMessage.value = null;
+
+      final user = await _authRepository.login(email, password);
+
+      // Navigate to home on success
+      Get.offAllNamed(Routes.HOME);
+
+    } on AuthException catch (e) {
+      _handleAuthError(e);
+    } on ApiException catch (e) {
+      _handleApiError(e);
+    } catch (e) {
+      _handleUnexpectedError(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _handleAuthError(AuthException e) {
+    errorMessage.value = e.message;
+    _logger.warning('Authentication error: ${e.code}', e);
+
+    if (e.code == 'TOKEN_EXPIRED') {
+      // Handle token expiration
+      logout();
+    }
+  }
+
+  void _handleApiError(ApiException e) {
+    errorMessage.value = 'Connection error. Please try again.';
+    _logger.error('API error: ${e.statusCode}', e);
+
+    if (e.statusCode == 500) {
+      // Handle server errors
+      Get.snackbar(
+        'Server Error',
+        'Our servers are experiencing issues. Please try again later.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  void _handleUnexpectedError(dynamic e) {
+    errorMessage.value = 'An unexpected error occurred.';
+    _logger.error('Unexpected error in login', e);
+  }
+
+  void clearError() {
+    errorMessage.value = null;
+  }
+}
+```
+
+## Error Handling in Providers
+Handle API errors consistently in providers:
+
+```dart
+class AuthProvider extends GetConnect {
+  final Logger _logger;
+
+  AuthProvider(this._logger) {
+    httpClient.baseUrl = AppConfig.apiBaseUrl;
+    httpClient.timeout = const Duration(seconds: 30);
+
+    // Add request/response interceptors
+    httpClient.addRequestModifier<dynamic>((request) {
+      _logger.info('API Request: ${request.method} ${request.url}');
+      return request;
+    });
+
+    httpClient.addResponseModifier((request, response) {
+      _logger.info('API Response: ${response.statusCode} ${request.url}');
+      return response;
+    });
+  }
+
+  Future<Response<User>> login(String email, String password) async {
+    try {
+      final response = await post(
+        '/auth/login',
+        {'email': email, 'password': password},
+      );
+
+      if (response.hasError) {
+        throw ApiException.fromResponse(response.body);
+      }
+
+      return response;
+    } on TimeoutException {
+      throw const ApiException('Request timeout. Please check your connection.');
+    } on SocketException {
+      throw const ApiException('No internet connection. Please check your network.');
+    } catch (e) {
+      _logger.error('Login API error', e);
+      throw const ApiException('Login failed. Please try again.');
+    }
+  }
+}
+```
+
+## Error Handling in UI
+Display errors consistently in the UI:
+
+```dart
+class LoginView extends GetView<AuthController> {
+  const LoginView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Login')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Error message display
+            Obx(() {
+              if (controller.errorMessage.value != null) {
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: Colors.red.shade400),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          controller.errorMessage.value!,
+                          style: TextStyle(color: Colors.red.shade700),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: controller.clearError,
+                        icon: Icon(Icons.close, color: Colors.red.shade400),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            }),
+
+            // Loading indicator
+            Obx(() {
+              if (controller.isLoading.value) {
+                return const CircularProgressIndicator();
+              }
+              return const SizedBox.shrink();
+            }),
+
+            // Login form...
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+## Global Error Handling
+Set up global error handling for uncaught errors:
+
+```dart
+// lib/main.dart or main_*.dart
+void main() {
+  // Set up global error handling
+  FlutterError.onError = (FlutterErrorDetails details) {
+    // Log Flutter framework errors
+    Logger().error('Flutter Error', details.exception, details.stack);
+  };
+
+  // Handle platform errors
+  PlatformDispatcher.instance.onError = (error, stack) {
+    Logger().error('Platform Error', error, stack);
+    return true; // Prevent the app from crashing
+  };
+
+  runApp(const MyApp());
+}
+```
+
+## Validation Error Handling
+Handle form validation errors:
+
+```dart
+class ValidationHelper {
+  static ValidationException validateLogin(String email, String password) {
+    final errors = <String, String>{};
+
+    if (email.isEmpty) {
+      errors['email'] = 'Email is required';
+    } else if (!GetUtils.isEmail(email)) {
+      errors['email'] = 'Please enter a valid email address';
+    }
+
+    if (password.isEmpty) {
+      errors['password'] = 'Password is required';
+    } else if (password.length < 6) {
+      errors['password'] = 'Password must be at least 6 characters';
+    }
+
+    if (errors.isNotEmpty) {
+      throw ValidationException('Please correct the errors below', fieldErrors: errors);
+    }
+
+    return ValidationException('', fieldErrors: {});
+  }
+}
+```
+
+## Error Recovery Strategies
+Implement different recovery strategies based on error type:
+
+```dart
+class ErrorRecoveryService {
+  static Future<bool> attemptRecovery(AppException exception) async {
+    switch (exception.runtimeType) {
+      case AuthException:
+        return await _handleAuthRecovery(exception as AuthException);
+      case ApiException:
+        return await _handleApiRecovery(exception as ApiException);
+      default:
+        return false;
+    }
+  }
+
+  static Future<bool> _handleAuthRecovery(AuthException exception) async {
+    if (exception.code == 'TOKEN_EXPIRED') {
+      // Try to refresh token
+      try {
+        await Get.find<AuthController>().refreshToken();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  static Future<bool> _handleApiRecovery(ApiException exception) async {
+    if (exception.statusCode == 429) {
+      // Rate limited - wait and retry
+      await Future.delayed(const Duration(seconds: 5));
+      return true; // Indicate that retry should be attempted
+    }
+    return false;
+  }
+}
+```
+
+## Logging Strategy
+Implement structured logging for better error tracking:
+
+```dart
+// lib/app/utils/logger/logger.dart
+class Logger {
+  static final Logger _instance = Logger._internal();
+  factory Logger() => _instance;
+  Logger._internal();
+
+  void info(String message, [dynamic data]) {
+    _log('INFO', message, data);
+  }
+
+  void warning(String message, [dynamic error, StackTrace? stackTrace]) {
+    _log('WARNING', message, error, stackTrace);
+  }
+
+  void error(String message, [dynamic error, StackTrace? stackTrace]) {
+    _log('ERROR', message, error, stackTrace);
+  }
+
+  void _log(String level, String message, [dynamic data, StackTrace? stackTrace]) {
+    final timestamp = DateTime.now().toIso8601String();
+    final logMessage = '[$timestamp] $level: $message';
+
+    // In development, print to console
+    if (AppConfig.isDevelopment) {
+      print(logMessage);
+      if (data != null) print('Data: $data');
+      if (stackTrace != null) print('StackTrace: $stackTrace');
+    }
+
+    // Send to external logging service in production
+    if (AppConfig.enableAnalytics) {
+      // Send to Sentry, Firebase Crashlytics, etc.
+    }
+  }
+}
+```

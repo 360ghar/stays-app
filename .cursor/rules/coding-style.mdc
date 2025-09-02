@@ -1,0 +1,73 @@
+---
+globs: *.dart
+description: Dart/Flutter coding style, naming conventions, and best practices
+---
+
+# Dart/Flutter Coding Style & Conventions
+
+## Code Style Guidelines
+- **Lints**: Use `flutter_lints` (configured in `analysis_options.yaml`)
+- **Indentation**: 2 spaces (not tabs)
+- **Logging**: Avoid `print()` statements; use the `logger` utility instead
+- **Code Generation**: Run `dart run build_runner build --delete-conflicting-outputs` after modifying annotated classes
+
+## Naming Conventions
+- **Files**: `lower_snake_case.dart`
+- **Classes/Types**: `PascalCase`
+- **Variables/Methods**: `camelCase`
+- **Constants**: `SCREAMING_SNAKE_CASE`
+- **Private Members**: Prefix with underscore `_privateMember`
+
+## Code Organization
+- **Business Logic**: Keep in `controllers/` and `repositories/`
+- **UI Logic**: Keep in `views/` and `widgets/`
+- **Data Models**: Simple POJOs in `models/` with JSON serialization
+- **API Calls**: Use GetConnect in `providers/`
+- **External Services**: Abstract in `services/` layer
+
+## Best Practices
+- Use dependency injection through GetX bindings
+- Follow single responsibility principle for controllers
+- Keep widgets stateless when possible, use GetX for state management
+- Use repositories to abstract data sources
+- Implement proper error handling with custom exceptions
+- Use extension methods for common utility functions
+
+## Common Patterns
+```dart
+// Controller pattern
+class AuthController extends GetxController {
+  final AuthRepository _authRepository;
+
+  AuthController(this._authRepository);
+
+  // State variables
+  final RxBool isLoading = false.obs;
+  final Rx<User?> currentUser = Rx<User?>(null);
+
+  // Business logic methods
+  Future<void> login(String email, String password) async {
+    try {
+      isLoading.value = true;
+      final user = await _authRepository.login(email, password);
+      currentUser.value = user;
+    } catch (e) {
+      // Handle error appropriately
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}
+
+// Repository pattern
+class AuthRepository {
+  final AuthProvider _authProvider;
+
+  AuthRepository(this._authProvider);
+
+  Future<User> login(String email, String password) async {
+    final response = await _authProvider.login(email, password);
+    return User.fromJson(response.body);
+  }
+}
+```

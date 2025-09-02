@@ -1,0 +1,177 @@
+---
+globs: *_test.dart
+description: Testing frameworks, structure, and best practices for Flutter app
+---
+
+# Testing Guidelines & Structure
+
+## Testing Frameworks
+- **Unit Tests**: `flutter_test` framework
+- **Mocking**: `mockito` for mocking dependencies
+- **Integration Tests**: `integration_test` package
+- **Widget Tests**: `flutter_test` with widget testing utilities
+
+## Test File Organization
+```
+test/
+├── unit/                    # Unit tests
+│   ├── controllers/         # Controller tests
+│   ├── repositories/        # Repository tests
+│   ├── services/            # Service tests
+│   └── utils/              # Utility tests
+├── widget/                  # Widget tests
+│   ├── views/              # View component tests
+│   └── widgets/            # Widget tests
+└── integration/            # Integration tests
+    ├── auth_flow_test.dart
+    ├── booking_flow_test.dart
+    └── payment_flow_test.dart
+```
+
+## Test File Naming
+- All test files must end with `_test.dart`
+- Mirror the source file structure and naming
+- Example: `auth_controller.dart` → `auth_controller_test.dart`
+
+## Testing Scope & Coverage
+- **Controllers**: Test business logic, state management, error handling
+- **Providers**: Test API calls, response handling, error scenarios
+- **Middleware/Route Guards**: Test authentication, authorization logic
+- **Critical Navigation**: Test navigation flows and guards
+- **Integration**: Test complete user flows (login → booking → payment)
+
+## Unit Testing Patterns
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:mockito/annotations.dart';
+
+// Generate mocks
+@GenerateMocks([AuthRepository])
+import 'auth_controller_test.mocks.dart';
+
+void main() {
+  late AuthController authController;
+  late MockAuthRepository mockAuthRepository;
+
+  setUp(() {
+    mockAuthRepository = MockAuthRepository();
+    authController = AuthController(mockAuthRepository);
+  });
+
+  group('AuthController', () {
+    test('should login successfully', () async {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'password123';
+      final user = User(id: '1', email: email);
+
+      when(mockAuthRepository.login(email, password))
+          .thenAnswer((_) async => user);
+
+      // Act
+      await authController.login(email, password);
+
+      // Assert
+      expect(authController.currentUser.value, user);
+      verify(mockAuthRepository.login(email, password)).called(1);
+    });
+
+    test('should handle login error', () async {
+      // Arrange
+      when(mockAuthRepository.login(any, any))
+          .thenThrow(Exception('Login failed'));
+
+      // Act & Assert
+      expect(
+        () => authController.login('test@example.com', 'wrong'),
+        throwsA(isA<Exception>()),
+      );
+    });
+  });
+}
+```
+
+## Widget Testing Patterns
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+void main() {
+  setUp(() {
+    Get.testMode = true;
+  });
+
+  testWidgets('LoginForm displays validation errors', (tester) async {
+    // Build the widget
+    await tester.pumpWidget(
+      GetMaterialApp(
+        home: LoginForm(),
+      ),
+    );
+
+    // Find form fields
+    final emailField = find.byKey(const Key('email_field'));
+    final passwordField = find.byKey(const Key('password_field'));
+    final loginButton = find.byKey(const Key('login_button'));
+
+    // Test empty form submission
+    await tester.tap(loginButton);
+    await tester.pump();
+
+    // Verify validation errors are shown
+    expect(find.text('Email is required'), findsOneWidget);
+    expect(find.text('Password is required'), findsOneWidget);
+  });
+}
+```
+
+## Integration Testing Patterns
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:stays_app/main_dev.dart' as app;
+
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('end-to-end test', () {
+    testWidgets('complete booking flow', (tester) async {
+      // Launch the app
+      app.main();
+      await tester.pumpAndSettle();
+
+      // Navigate to login
+      await tester.tap(find.byKey(const Key('login_button')));
+      await tester.pumpAndSettle();
+
+      // Fill login form
+      await tester.enterText(
+        find.byKey(const Key('email_field')),
+        'test@example.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('password_field')),
+        'password123',
+      );
+
+      // Submit login
+      await tester.tap(find.byKey(const Key('submit_login')));
+      await tester.pumpAndSettle();
+
+      // Verify successful login and navigation
+      expect(find.text('Welcome'), findsOneWidget);
+
+      // Continue with booking flow...
+    });
+  });
+}
+```
+
+## Test Coverage Requirements
+- Aim for >80% code coverage
+- Cover happy path and error scenarios
+- Test edge cases and boundary conditions
+- Mock external dependencies (API calls, database, etc.)
+- Use descriptive test names that explain the scenario
