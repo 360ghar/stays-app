@@ -1,0 +1,279 @@
+---
+globs: *.dart
+description: File organization patterns and structure guidelines for Flutter app
+---
+
+# File Organization & Structure Patterns
+
+## Controller Organization
+Controllers should be organized by domain/feature in separate directories:
+
+```
+lib/app/controllers/
+├── auth/
+│   ├── auth_controller.dart
+│   ├── login_controller.dart
+│   └── register_controller.dart
+├── listing/
+│   ├── listing_controller.dart
+│   ├── listing_details_controller.dart
+│   └── create_listing_controller.dart
+├── booking/
+│   ├── booking_controller.dart
+│   ├── booking_details_controller.dart
+│   └── booking_history_controller.dart
+├── payment/
+│   ├── payment_controller.dart
+│   └── payment_method_controller.dart
+├── messaging/
+│   ├── messaging_controller.dart
+│   └── chat_controller.dart
+├── review/
+│   ├── review_controller.dart
+│   └── review_list_controller.dart
+└── notification/
+    ├── notification_controller.dart
+    └── push_notification_controller.dart
+```
+
+## Model Organization
+Data models should follow a clear structure:
+
+```
+lib/app/data/models/
+├── auth/
+│   ├── user.dart
+│   ├── login_request.dart
+│   └── login_response.dart
+├── listing/
+│   ├── listing.dart
+│   ├── listing_category.dart
+│   └── listing_image.dart
+├── booking/
+│   ├── booking.dart
+│   ├── booking_status.dart
+│   └── booking_request.dart
+├── payment/
+│   ├── payment.dart
+│   ├── payment_method.dart
+│   └── transaction.dart
+├── messaging/
+│   ├── message.dart
+│   ├── conversation.dart
+│   └── message_type.dart
+├── review/
+│   ├── review.dart
+│   └── rating.dart
+└── notification/
+    ├── notification.dart
+    └── notification_type.dart
+```
+
+## Provider Organization
+API providers should mirror the model structure:
+
+```
+lib/app/data/providers/
+├── auth_provider.dart
+├── listing_provider.dart
+├── booking_provider.dart
+├── payment_provider.dart
+├── messaging_provider.dart
+├── review_provider.dart
+└── notification_provider.dart
+```
+
+## Repository Organization
+Repositories provide a clean abstraction layer:
+
+```
+lib/app/data/repositories/
+├── auth_repository.dart
+├── listing_repository.dart
+├── booking_repository.dart
+├── payment_repository.dart
+├── messaging_repository.dart
+├── review_repository.dart
+└── notification_repository.dart
+```
+
+## Service Organization
+External services and integrations:
+
+```
+lib/app/data/services/
+├── supabase_service.dart
+├── storage_service.dart
+├── location_service.dart
+├── push_notification_service.dart
+├── analytics_service.dart
+└── payment_service.dart
+```
+
+## View Organization
+UI views organized by feature:
+
+```
+lib/app/ui/views/
+├── auth/
+│   ├── login_view.dart
+│   ├── register_view.dart
+│   ├── forgot_password_view.dart
+│   └── profile_view.dart
+├── home/
+│   ├── home_view.dart
+│   └── search_view.dart
+├── listing/
+│   ├── listing_list_view.dart
+│   ├── listing_details_view.dart
+│   ├── create_listing_view.dart
+│   └── edit_listing_view.dart
+├── booking/
+│   ├── booking_list_view.dart
+│   ├── booking_details_view.dart
+│   └── create_booking_view.dart
+├── payment/
+│   ├── payment_view.dart
+│   ├── payment_method_view.dart
+│   └── payment_history_view.dart
+├── messaging/
+│   ├── chat_list_view.dart
+│   └── chat_view.dart
+├── review/
+│   ├── review_list_view.dart
+│   └── create_review_view.dart
+└── settings/
+    ├── settings_view.dart
+    └── notification_settings_view.dart
+```
+
+## Widget Organization
+Reusable UI components:
+
+```
+lib/app/ui/widgets/
+├── common/
+│   ├── app_bar.dart
+│   ├── bottom_nav_bar.dart
+│   ├── drawer.dart
+│   └── loading_indicator.dart
+├── cards/
+│   ├── listing_card.dart
+│   ├── booking_card.dart
+│   ├── review_card.dart
+│   └── notification_card.dart
+├── forms/
+│   ├── login_form.dart
+│   ├── register_form.dart
+│   ├── booking_form.dart
+│   ├── payment_form.dart
+│   └── review_form.dart
+├── dialogs/
+│   ├── confirm_dialog.dart
+│   ├── error_dialog.dart
+│   ├── success_dialog.dart
+│   └── loading_dialog.dart
+└── inputs/
+    ├── text_field.dart
+    ├── dropdown_field.dart
+    ├── date_picker_field.dart
+    └── image_picker_field.dart
+```
+
+## Utility Organization
+Helper classes and utilities:
+
+```
+lib/app/utils/
+├── constants/
+│   ├── app_constants.dart
+│   ├── api_constants.dart
+│   ├── ui_constants.dart
+│   └── color_constants.dart
+├── helpers/
+│   ├── date_helper.dart
+│   ├── validation_helper.dart
+│   ├── formatting_helper.dart
+│   └── image_helper.dart
+├── extensions/
+│   ├── string_extensions.dart
+│   ├── date_extensions.dart
+│   ├── context_extensions.dart
+│   └── widget_extensions.dart
+├── exceptions/
+│   ├── app_exception.dart
+│   ├── api_exception.dart
+│   ├── auth_exception.dart
+│   └── validation_exception.dart
+└── logger/
+    ├── logger.dart
+    └── log_levels.dart
+```
+
+## Binding Organization
+Dependency injection bindings:
+
+```
+lib/app/bindings/
+├── initial_binding.dart
+├── auth_binding.dart
+├── listing_binding.dart
+├── booking_binding.dart
+├── payment_binding.dart
+├── messaging_binding.dart
+├── review_binding.dart
+└── notification_binding.dart
+```
+
+## Route Organization
+Route definitions:
+
+```
+lib/app/routes/
+├── app_pages.dart
+├── app_routes.dart
+└── auth_routes.dart
+```
+
+## Theme Organization
+App theming and styling:
+
+```
+lib/app/ui/theme/
+├── app_theme.dart
+├── colors.dart
+├── text_styles.dart
+├── app_bar_theme.dart
+├── button_themes.dart
+└── input_decoration_themes.dart
+```
+
+## File Naming Conventions
+- **Controllers**: `{feature}_controller.dart`
+- **Models**: `{entity}.dart`
+- **Views**: `{feature}_{action}_view.dart`
+- **Widgets**: `{component}_{type}.dart`
+- **Services**: `{service}_service.dart`
+- **Providers**: `{feature}_provider.dart`
+- **Repositories**: `{feature}_repository.dart`
+- **Bindings**: `{feature}_binding.dart`
+
+## Import Organization
+Organize imports in this order:
+1. Dart SDK imports
+2. Third-party packages
+3. Project imports (relative)
+4. Export statements
+
+```dart
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../data/models/user.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../theme/app_theme.dart';
+```

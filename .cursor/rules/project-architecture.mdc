@@ -1,0 +1,53 @@
+---
+alwaysApply: true
+description: Flutter app architecture, structure, and organization guidelines
+---
+
+# Flutter Stays App Architecture & Structure
+
+## Core Application Structure
+The app follows a clean architecture pattern with GetX for state management:
+
+- **`lib/app/`**: Core application layers
+  - **`bindings/`**: Dependency injection bindings (e.g., `initial_binding.dart`, `auth_binding.dart`, `listing_binding.dart`)
+  - **`controllers/`**: Business logic controllers organized by domain:
+    - `auth/`, `listing/`, `booking/`, `payment/`, `messaging/`, `review/`, `notification/`
+  - **`data/`**: Data layer components:
+    - `models/`: Plain Old Dart Objects (POJOs)
+    - `providers/`: GetConnect-based API clients
+    - `repositories/`: Abstraction layer for data access
+    - `services/`: External SDK integrations (Supabase, storage, location, push notifications, analytics)
+  - **`routes/`**: Route definitions (`app_pages.dart`, `app_routes.dart`)
+  - **`ui/`**: User interface components:
+    - `views/`: Page-level screens (auth, home, listing, booking, payment, messaging, profile, settings)
+    - `widgets/`: Reusable UI components (common, cards, forms, dialogs)
+    - `theme/`: App theming and styling
+  - **`utils/`**: Utility classes and helpers:
+    - `constants/`, `helpers/`, `extensions/`, `exceptions/`, `logger/`
+
+- **`lib/config/`**: Configuration management
+  - `app_config.dart`: Environment selection and configuration
+  - `environments/`: Environment-specific configs (`dev_config.dart`, `staging_config.dart`, `prod_config.dart`)
+
+- **`l10n/`**: Localization files
+  - `en.json`, `es.json`, `fr.json`: Translation files
+  - `localization_service.dart`: Localization service
+
+## Entry Points
+- `lib/main.dart`: Base entry point
+- `lib/main_dev.dart`: Development environment entry point (loads `.env.dev`)
+- `lib/main_staging.dart`: Staging environment entry point (loads `.env.staging`)
+- `lib/main_prod.dart`: Production environment entry point (loads `.env.prod`)
+
+## File Responsibilities
+- **`main*.dart`**: Initialize environment, dependency injection, routes, theme; run the app
+- **`app/bindings/initial_binding.dart`**: Register core services and controllers
+- **`config/app_config.dart`**: Environment selection and configuration values
+- **Controllers**: Manage feature flows and state for each domain
+- **Data Layer**: `models` (JSON serialization), `providers` (API calls), `repositories` (domain access), `services` (external integrations)
+
+## Environment Configuration
+- `.env.dev`, `.env.staging`, `.env.prod`: Environment variables
+- Key variables: `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Use `flutter_dotenv` and `AppConfig` for environment loading
+- Select entrypoint with `--flavor` flag: `flutter run --flavor dev -t lib/main_dev.dart`

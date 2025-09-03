@@ -1,0 +1,148 @@
+---
+alwaysApply: true
+description: Overview and guide for using Cursor Rules in the Flutter Stays app
+---
+
+# Cursor Rules for Flutter Stays App
+
+This directory contains comprehensive Cursor Rules that guide development practices for the Flutter Stays app. These rules are automatically applied based on their metadata configuration and help maintain consistency across the codebase.
+
+## Available Rules
+
+### 🏗️ **Project Architecture** (`project-architecture.mdc`)
+**Always Applied** - Core structural guidelines
+- Flutter app architecture with GetX state management
+- Directory structure and organization patterns
+- Entry points and configuration management
+- File responsibilities and separation of concerns
+
+### 💻 **Coding Style** (`coding-style.mdc`)
+**Applied to Dart files** - Code quality and conventions
+- Dart/Flutter coding standards and linting rules
+- Naming conventions (PascalCase, camelCase, SCREAMING_SNAKE_CASE)
+- Code organization principles
+- Best practices for controllers, repositories, and services
+
+### 🔧 **Development Workflow** (`development-workflow.mdc`)
+**Manual Application** - Build, test, and development commands
+- Flutter development commands and workflows
+- Code generation with build_runner
+- Environment-specific build configurations
+- Debug and maintenance commands
+
+### 🧪 **Testing Guidelines** (`testing-guidelines.mdc`)
+**Applied to test files** - Comprehensive testing framework
+- Unit, widget, and integration testing patterns
+- Test file organization and naming conventions
+- Mocking strategies with Mockito
+- Coverage requirements and testing best practices
+
+### 📝 **Commit & PR Guidelines** (`commit-pr-guidelines.mdc`)
+**Manual Application** - Version control and collaboration
+- Conventional Commits format and examples
+- Pull request templates and requirements
+- Code review checklists
+- Branch naming conventions
+
+### 🔒 **Security & Configuration** (`security-config.mdc`)
+**Manual Application** - Security best practices and config management
+- Environment variable handling
+- Secret management and API key security
+- Authentication and authorization patterns
+- Build security and CI/CD considerations
+
+### 📁 **File Organization** (`file-organization.mdc`)
+**Applied to Dart files** - File structure and naming patterns
+- Feature-based directory organization
+- Model, provider, repository, and service patterns
+- View and widget organization
+- Import organization and file naming conventions
+
+### 🚨 **Error Handling** (`error-handling.mdc`)
+**Applied to Dart files** - Exception management and error recovery
+- Custom exception hierarchy and patterns
+- Error handling in controllers, providers, and UI
+- Global error handling and logging strategies
+- Validation error management
+
+### 🎯 **GetX Patterns** (`getx-patterns.mdc`)
+**Applied to Dart files** - State management and reactive patterns
+- Base controller patterns and lifecycle management
+- Reactive state management with Rx types
+- Dependency injection with bindings
+- Route management and middleware patterns
+
+## How to Use These Rules
+
+### Automatic Application
+Rules with `alwaysApply: true` are automatically applied to all requests:
+- **Project Architecture** - Always provides structural context
+- **README** - Always provides this overview
+
+### File-Specific Application
+Rules with `globs` patterns are applied based on file types:
+- **Coding Style** - Applied to all `.dart` files
+- **Testing Guidelines** - Applied to `*_test.dart` files
+- **File Organization** - Applied to all `.dart` files
+- **Error Handling** - Applied to all `.dart` files
+- **GetX Patterns** - Applied to all `.dart` files
+
+### Manual Application
+Rules with `alwaysApply: false` can be manually invoked by mentioning their description:
+- **Development Workflow** - Mention "build commands" or "development workflow"
+- **Commit & PR Guidelines** - Mention "commit conventions" or "pull request guidelines"
+- **Security & Configuration** - Mention "security practices" or "environment configuration"
+
+## Rule Priority and Conflicts
+
+1. **Specific file patterns** take precedence over general rules
+2. **Always applied rules** provide baseline context
+3. **Newer rules** may override older ones with similar scope
+4. **Manual rules** are applied when explicitly requested
+
+## Contributing to Rules
+
+To modify or add new rules:
+
+1. **Create/Edit** `.mdc` files in this directory
+2. **Follow metadata format** with proper YAML frontmatter
+3. **Use descriptive descriptions** for manual rule activation
+4. **Test rule application** to ensure proper triggering
+
+## Key Principles
+
+### 🧹 **Clean Architecture**
+- Clear separation between UI, business logic, and data layers
+- Dependency injection for testability and maintainability
+- Repository pattern for data abstraction
+
+### ⚡ **Reactive Programming**
+- GetX for state management and reactive UI updates
+- Rx types for observable data structures
+- Debounced inputs for performance optimization
+
+### 🛡️ **Security First**
+- Never commit secrets or environment files
+- Proper error handling without information leakage
+- Secure authentication and authorization flows
+
+### 🧪 **Test-Driven Development**
+- Comprehensive test coverage across all layers
+- Mock external dependencies for reliable testing
+- Integration tests for critical user flows
+
+### 📋 **Consistent Standards**
+- Follow established naming and file organization patterns
+- Use conventional commits for version control
+- Maintain code quality with automated analysis
+
+## Getting Started
+
+New developers should:
+1. Read the **Project Architecture** rule for overall structure
+2. Review **Coding Style** for code conventions
+3. Follow **Development Workflow** for setup and commands
+4. Study **GetX Patterns** for state management
+5. Refer to **File Organization** for proper file placement
+
+These rules work together to ensure consistent, maintainable, and scalable Flutter development practices across the entire Stays app codebase.

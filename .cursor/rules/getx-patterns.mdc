@@ -1,0 +1,532 @@
+---
+globs: *.dart
+description: GetX state management patterns and best practices for Flutter app
+---
+
+# GetX Patterns & State Management
+
+## Controller Patterns
+
+### Base Controller
+Create a base controller for common functionality:
+
+```dart
+// lib/app/controllers/base_controller.dart
+abstract class BaseController extends GetxController {
+  final Logger _logger = Logger();
+
+  final RxBool isLoading = false.obs;
+  final Rx<String?> errorMessage = Rx<String?>(null);
+  final RxBool isInitialized = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _logger.info('${runtimeType.toString()} initialized');
+    isInitialized.value = true;
+  }
+
+  @override
+  void onClose() {
+    _logger.info('${runtimeType.toString()} disposed');
+    super.onClose();
+  }
+
+  void setLoading(bool loading) {
+    isLoading.value = loading;
+  }
+
+  void setError(String? message) {
+    errorMessage.value = message;
+  }
+
+  void clearError() {
+    errorMessage.value = null;
+  }
+
+  Future<T> executeWithLoading<T>(Future<T> Function() operation) async {
+    try {
+      setLoading(true);
+      clearError();
+      return await operation();
+    } catch (e) {
+      setError(e.toString());
+      rethrow;
+    } finally {
+      setLoading(false);
+    }
+  }
+}
+```
+
+### Feature Controller Pattern
+Implement feature-specific controllers extending the base:
+
+```dart
+class AuthController extends BaseController {
+  final AuthRepository _authRepository;
+
+  AuthController(this._authRepository);
+
+  final Rx<User?> currentUser = Rx<User?>(null);
+  final RxBool isAuthenticated = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _checkAuthStatus();
+    _listenToAuthChanges();
+  }
+
+  void _checkAuthStatus() {
+    // Check if user is already logged in
+    final savedUser = _authRepository.getSavedUser();
+    if (savedUser != null) {
+      currentUser.value = savedUser;
+      isAuthenticated.value = true;
+    }
+  }
+
+  void _listenToAuthChanges() {
+    ever(currentUser, (User? user) {
+      isAuthenticated.value = user != null;
+      if (user == null) {
+        Get.offAllNamed(Routes.LOGIN);
+      } else {
+        Get.offAllNamed(Routes.HOME);
+      }
+    });
+  }
+
+  Future<void> login(String email, String password) async {
+    await executeWithLoading(() async {
+      final user = await _authRepository.login(email, password);
+      currentUser.value = user;
+    });
+  }
+
+  Future<void> logout() async {
+    await executeWithLoading(() async {
+      await _authRepository.logout();
+      currentUser.value = null;
+    });
+  }
+
+  Future<void> refreshToken() async {
+    try {
+      final user = await _authRepository.refreshToken();
+      currentUser.value = user;
+    } catch (e) {
+      logout(); // Force logout on token refresh failure
+    }
+  }
+}
+```
+
+## Reactive State Management
+
+### Observable Patterns
+Use appropriate Rx types for different data structures:
+
+```dart
+class ListingController extends BaseController {
+  final ListingRepository _listingRepository;
+
+  ListingController(this._listingRepository);
+
+  // Simple reactive values
+  final RxString searchQuery = ''.obs;
+  final RxBool showFilters = false.obs;
+
+  // Reactive lists
+  final RxList<Listing> listings = <Listing>[].obs;
+  final RxList<String> selectedAmenities = <String>[].obs;
+
+  // Reactive maps
+  final RxMap<String, dynamic> filters = <String, dynamic>{}.obs;
+
+  // Computed observables
+  RxBool get hasActiveFilters => filters.isNotEmpty.obs;
+  RxInt get totalListings => listings.length.obs;
+  RxList<Listing> get filteredListings => listings
+      .where((listing) => _matchesFilters(listing))
+      .toList()
+      .obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _loadListings();
+    _setupSearchDebounce();
+    _setupFilterListeners();
+  }
+
+  void _setupSearchDebounce() {
+    // Debounce search to avoid excessive API calls
+    debounce(searchQuery, (String query) {
+      if (query.isNotEmpty) {
+        searchListings(query);
+      }
+    }, time: const Duration(milliseconds: 500));
+  }
+
+  void _setupFilterListeners() {
+    // React to filter changes
+    ever(filters, (_) => _applyFilters());
+    ever(selectedAmenities, (_) => _updateAmenityFilters());
+  }
+
+  Future<void> _loadListings() async {
+    await executeWithLoading(() async {
+      final result = await _listingRepository.getListings();
+      listings.assignAll(result);
+    });
+  }
+
+  Future<void> searchListings(String query) async {
+    await executeWithLoading(() async {
+      final result = await _listingRepository.searchListings(query);
+      listings.assignAll(result);
+    });
+  }
+
+  void toggleFilters() {
+    showFilters.toggle();
+  }
+
+  void addAmenity(String amenity) {
+    if (!selectedAmenities.contains(amenity)) {
+      selectedAmenities.add(amenity);
+    }
+  }
+
+  void removeAmenity(String amenity) {
+    selectedAmenities.remove(amenity);
+  }
+
+  void _applyFilters() {
+    // Apply filters to listings
+    // Implementation depends on filter logic
+  }
+
+  void _updateAmenityFilters() {
+    filters['amenities'] = selectedAmenities.toList();
+  }
+
+  bool _matchesFilters(Listing listing) {
+    // Implement filter matching logic
+    return true; // Placeholder
+  }
+}
+```
+
+## Dependency Injection with Bindings
+
+### Feature Binding Pattern
+Create feature-specific bindings:
+
+```dart
+// lib/app/bindings/auth_binding.dart
+class AuthBinding extends Bindings {
+  @override
+  void dependencies() {
+    // Repositories
+    Get.lazyPut<AuthRepository>(() => AuthRepository(
+      Get.find<AuthProvider>(),
+    ));
+
+    // Providers
+    Get.lazyPut<AuthProvider>(() => AuthProvider(
+      Get.find<Logger>(),
+    ));
+
+    // Controllers
+    Get.lazyPut<AuthController>(() => AuthController(
+      Get.find<AuthRepository>(),
+    ));
+
+    // Services
+    Get.lazyPut<TokenService>(() => TokenService());
+  }
+}
+
+// lib/app/bindings/initial_binding.dart
+class InitialBinding extends Bindings {
+  @override
+  void dependencies() {
+    // Core services - singleton
+    Get.put<Logger>(Logger(), permanent: true);
+    Get.put<AppConfig>(AppConfig(), permanent: true);
+
+    // HTTP client
+    Get.put<GetConnect>(GetConnect(), permanent: true);
+
+    // External services
+    Get.put<SupabaseService>(SupabaseService(), permanent: true);
+    Get.put<StorageService>(StorageService(), permanent: true);
+    Get.put<AnalyticsService>(AnalyticsService(), permanent: true);
+  }
+}
+```
+
+## Route Management
+
+### Route Guards
+Implement authentication guards:
+
+```dart
+// lib/app/middlewares/auth_middleware.dart
+class AuthMiddleware extends GetMiddleware {
+  @override
+  int? get priority => 1;
+
+  @override
+  RouteSettings? redirect(String? route) {
+    final authController = Get.find<AuthController>();
+    final isAuthenticated = authController.isAuthenticated.value;
+
+    // If not authenticated and trying to access protected route
+    if (!isAuthenticated && _isProtectedRoute(route)) {
+      return const RouteSettings(name: Routes.LOGIN);
+    }
+
+    // If authenticated and trying to access auth routes
+    if (isAuthenticated && _isAuthRoute(route)) {
+      return const RouteSettings(name: Routes.HOME);
+    }
+
+    return null;
+  }
+
+  bool _isProtectedRoute(String? route) {
+    const protectedRoutes = [
+      Routes.HOME,
+      Routes.PROFILE,
+      Routes.BOOKING,
+      Routes.MESSAGING,
+    ];
+    return route != null && protectedRoutes.contains(route);
+  }
+
+  bool _isAuthRoute(String? route) {
+    const authRoutes = [
+      Routes.LOGIN,
+      Routes.REGISTER,
+      Routes.FORGOT_PASSWORD,
+    ];
+    return route != null && authRoutes.contains(route);
+  }
+}
+```
+
+### Route Definitions
+Organize routes with middleware:
+
+```dart
+// lib/app/routes/app_pages.dart
+part of 'app_routes.dart';
+
+abstract class AppPages {
+  static final pages = [
+    // Auth routes
+    GetPage(
+      name: Routes.LOGIN,
+      page: () => const LoginView(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: Routes.REGISTER,
+      page: () => const RegisterView(),
+      binding: AuthBinding(),
+    ),
+
+    // Protected routes
+    GetPage(
+      name: Routes.HOME,
+      page: () => const HomeView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<HomeController>(() => HomeController(
+          Get.find<ListingRepository>(),
+        ));
+      }),
+      middlewares: [AuthMiddleware()],
+    ),
+
+    // Other protected routes...
+  ];
+}
+```
+
+## Service Layer Integration
+
+### Service Integration Pattern
+Integrate external services with GetX:
+
+```dart
+class PushNotificationService extends GetxService {
+  final Logger _logger;
+  final RxList<Notification> notifications = <Notification>[].obs;
+
+  PushNotificationService(this._logger);
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initializeNotifications();
+  }
+
+  void _initializeNotifications() {
+    // Initialize Firebase Messaging or similar
+    // Listen to notification streams
+    // Update notifications list reactively
+  }
+
+  Future<void> requestPermission() async {
+    // Request notification permissions
+  }
+
+  void showNotification(Notification notification) {
+    notifications.add(notification);
+
+    // Show local notification
+    Get.snackbar(
+      notification.title,
+      notification.body,
+      onTap: (snack) => _handleNotificationTap(notification),
+    );
+  }
+
+  void _handleNotificationTap(Notification notification) {
+    // Navigate based on notification type
+    switch (notification.type) {
+      case NotificationType.BOOKING_CONFIRMED:
+        Get.toNamed(Routes.BOOKING_DETAILS, arguments: notification.data);
+        break;
+      case NotificationType.NEW_MESSAGE:
+        Get.toNamed(Routes.CHAT, arguments: notification.data);
+        break;
+      default:
+        break;
+    }
+  }
+
+  void markAsRead(String notificationId) {
+    final index = notifications.indexWhere((n) => n.id == notificationId);
+    if (index != -1) {
+      notifications[index] = notifications[index].copyWith(isRead: true);
+    }
+  }
+
+  void clearAll() {
+    notifications.clear();
+  }
+}
+```
+
+## Reactive Form Management
+
+### Form Controller Pattern
+Handle forms reactively:
+
+```dart
+class LoginFormController extends BaseController {
+  final AuthController _authController;
+
+  LoginFormController(this._authController);
+
+  final RxString email = ''.obs;
+  final RxString password = ''.obs;
+  final RxBool rememberMe = false.obs;
+
+  // Form validation
+  RxBool get isEmailValid => GetUtils.isEmail(email.value).obs;
+  RxBool get isPasswordValid => password.value.length >= 6.obs;
+  RxBool get isFormValid => (isEmailValid.value && isPasswordValid.value).obs;
+
+  // Form errors
+  final Rx<String?> emailError = Rx<String?>(null);
+  final Rx<String?> passwordError = Rx<String?>(null);
+
+  void updateEmail(String value) {
+    email.value = value;
+    _validateEmail();
+  }
+
+  void updatePassword(String value) {
+    password.value = value;
+    _validatePassword();
+  }
+
+  void _validateEmail() {
+    if (email.value.isEmpty) {
+      emailError.value = 'Email is required';
+    } else if (!GetUtils.isEmail(email.value)) {
+      emailError.value = 'Please enter a valid email';
+    } else {
+      emailError.value = null;
+    }
+  }
+
+  void _validatePassword() {
+    if (password.value.isEmpty) {
+      passwordError.value = 'Password is required';
+    } else if (password.value.length < 6) {
+      passwordError.value = 'Password must be at least 6 characters';
+    } else {
+      passwordError.value = null;
+    }
+  }
+
+  Future<void> submitForm() async {
+    if (!isFormValid.value) {
+      _validateAll();
+      return;
+    }
+
+    await executeWithLoading(() async {
+      await _authController.login(email.value, password.value);
+
+      if (rememberMe.value) {
+        // Save credentials securely
+      }
+    });
+  }
+
+  void _validateAll() {
+    _validateEmail();
+    _validatePassword();
+  }
+
+  void clearForm() {
+    email.value = '';
+    password.value = '';
+    rememberMe.value = false;
+    clearError();
+    emailError.value = null;
+    passwordError.value = null;
+  }
+}
+```
+
+## Best Practices Summary
+
+### Controller Guidelines
+- Extend `BaseController` for common functionality
+- Use appropriate Rx types for different data structures
+- Implement proper lifecycle management (`onInit`, `onClose`)
+- Use `debounce` for search inputs to avoid excessive API calls
+- Use `ever` for reactive side effects
+
+### State Management Principles
+- Keep business logic in controllers, not in views
+- Use reactive programming for UI updates
+- Separate concerns: controllers for logic, views for UI
+- Use dependency injection for testability
+- Implement proper error handling and loading states
+
+### Performance Considerations
+- Use `lazyPut` for controllers that aren't always needed
+- Dispose of subscriptions in `onClose`
+- Use `debounce` for user input to reduce API calls
+- Implement pagination for large lists
+- Use `GetBuilder` for simple rebuilds, `Obx` for complex reactive UI
