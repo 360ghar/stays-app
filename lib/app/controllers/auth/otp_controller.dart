@@ -126,6 +126,9 @@ class OTPController extends GetxController {
   }
   
   Future<void> verifyOTP() async {
+    // Add guard clause to prevent double-submits
+    if (isLoading.value) return;
+    
     try {
       isLoading.value = true;
       otpError.value = '';

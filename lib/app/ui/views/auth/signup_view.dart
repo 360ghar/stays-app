@@ -5,11 +5,30 @@ import '../../../controllers/auth/auth_controller.dart';
 import '../../../controllers/auth/otp_controller.dart';
 import '../../../routes/app_routes.dart';
 
-class SignupView extends GetView<AuthController> {
+class SignupView extends StatefulWidget {
   const SignupView({super.key});
 
-  static final _phoneController = TextEditingController();
-  static final _passwordController = TextEditingController();
+  @override
+  State<SignupView> createState() => _SignupViewState();
+}
+
+class _SignupViewState extends State<SignupView> {
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  late final AuthController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<AuthController>();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

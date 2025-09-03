@@ -27,20 +27,20 @@ class RegisterView extends GetView<AuthController> {
                 decoration: const InputDecoration(labelText: 'First name'),
                 controller: firstNameCtrl,
                 validator: ValidatorHelper.requiredField,
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Last name'),
                 controller: lastNameCtrl,
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Email'),
                 controller: emailCtrl,
                 validator: ValidatorHelper.email,
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -48,7 +48,7 @@ class RegisterView extends GetView<AuthController> {
                 controller: passwordCtrl,
                 obscureText: true,
                 validator: ValidatorHelper.requiredField,
-                style: const TextStyle(color: Colors.black),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
               const SizedBox(height: 20),
               Obx(() => ElevatedButton(

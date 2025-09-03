@@ -409,13 +409,13 @@ class SimpleHomeView extends StatelessWidget {
             
             const SizedBox(height: 4),
             
-            Text(
-              '+91 9876543210',
+            Obx(() => Text(
+              authController.currentUser.value?.email ?? 'No email',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey.shade600,
               ),
-            ),
+            )),
             
             const SizedBox(height: 32),
             

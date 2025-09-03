@@ -41,9 +41,17 @@ class HomeView extends StatelessWidget {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Get.back();
-                        authController.logout();
+                        try {
+                          await authController.logout();
+                        } catch (e) {
+                          Get.snackbar(
+                            'Logout Failed', 
+                            'An error occurred. Please try again.',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red[600],

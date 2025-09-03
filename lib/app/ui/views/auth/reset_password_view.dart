@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/auth/auth_controller.dart';
 
-class ResetPasswordView extends GetView<AuthController> {
+class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({super.key});
 
-  static final _passwordController = TextEditingController();
-  static final _confirmPasswordController = TextEditingController();
+  @override
+  State<ResetPasswordView> createState() => _ResetPasswordViewState();
+}
+
+class _ResetPasswordViewState extends State<ResetPasswordView> {
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  late final AuthController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<AuthController>();
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -45,6 +45,9 @@ app.*.map.json
 /android/app/release
 
 # Env files
+.env
+.env.*
+!.env.example
 .env.dev
 .env.staging
 .env.prod

@@ -4,11 +4,30 @@ import 'package:get/get.dart';
 import '../../../controllers/auth/auth_controller.dart';
 import '../../../routes/app_routes.dart';
 
-class PhoneLoginView extends GetView<AuthController> {
+class PhoneLoginView extends StatefulWidget {
   const PhoneLoginView({super.key});
 
-  static final _phoneController = TextEditingController();
-  static final _passwordController = TextEditingController();
+  @override
+  State<PhoneLoginView> createState() => _PhoneLoginViewState();
+}
+
+class _PhoneLoginViewState extends State<PhoneLoginView> {
+  final _phoneController = TextEditingController();
+  final _passwordController = TextEditingController();
+  late final AuthController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<AuthController>();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

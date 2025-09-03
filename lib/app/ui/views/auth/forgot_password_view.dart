@@ -5,10 +5,28 @@ import '../../../controllers/auth/auth_controller.dart';
 import '../../../controllers/auth/otp_controller.dart';
 import '../../../routes/app_routes.dart';
 
-class ForgotPasswordView extends GetView<AuthController> {
+class ForgotPasswordView extends StatefulWidget {
   const ForgotPasswordView({super.key});
 
-  static final _phoneController = TextEditingController();
+  @override
+  State<ForgotPasswordView> createState() => _ForgotPasswordViewState();
+}
+
+class _ForgotPasswordViewState extends State<ForgotPasswordView> {
+  final _phoneController = TextEditingController();
+  late final AuthController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<AuthController>();
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +265,7 @@ class ForgotPasswordView extends GetView<AuthController> {
     );
   }
 
-  void _handleSendOTP() async {
+  Future<void> _handleSendOTP() async {
     final phone = _phoneController.text.trim();
     
     // Validate locally first

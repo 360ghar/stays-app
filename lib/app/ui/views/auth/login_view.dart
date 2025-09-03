@@ -2,19 +2,37 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/auth/auth_controller.dart';
 
-class LoginView extends StatelessWidget {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
 
-  static final TextEditingController _emailController = TextEditingController();
-  static final TextEditingController _passwordController = TextEditingController();
-  static final RxBool _isPasswordVisible = false.obs;
-  static final RxBool _isLoginMode = true.obs;
-  static final RxString _emailError = ''.obs;
-  static final RxString _passwordError = ''.obs;
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final RxBool _isPasswordVisible = false.obs;
+  final RxBool _isLoginMode = true.obs;
+  final RxString _emailError = ''.obs;
+  final RxString _passwordError = ''.obs;
+  late final AuthController authController;
+
+  @override
+  void initState() {
+    super.initState();
+    authController = Get.find<AuthController>();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final AuthController authController = Get.find<AuthController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -122,7 +140,7 @@ class LoginView extends StatelessWidget {
                       Obx(() => _buildPrimaryButton(
                         text: _isLoginMode.value ? 'Sign in' : 'Create account',
                         isLoading: authController.isLoading.value,
-                        onPressed: () => _handleSubmit(authController),
+                        onPressed: _handleSubmit,
                       )),
                       
                       const SizedBox(height: 24),
@@ -224,7 +242,7 @@ class LoginView extends StatelessWidget {
     );
   }
 
-  static void _handleSubmit(AuthController authController) {
+  void _handleSubmit() {
     // Clear previous errors
     _emailError.value = '';
     _passwordError.value = '';
