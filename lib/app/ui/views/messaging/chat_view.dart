@@ -43,6 +43,7 @@ class ChatView extends GetView<ChatController> {
                   Expanded(
                     child: TextField(
                       controller: input,
+                      style: const TextStyle(color: Colors.black),
                       decoration: const InputDecoration(hintText: 'Type a message'),
                     ),
                   ),

@@ -27,7 +27,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: '360ghar stays (Staging)',
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.lightTheme.copyWith(
+        primaryTextTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.black),
+          bodyMedium: TextStyle(color: Colors.black),
+        ),
+      ),
       darkTheme: AppTheme.darkTheme,
       translations: LocalizationService(),
       locale: LocalizationService.locale,

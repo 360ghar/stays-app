@@ -299,7 +299,7 @@ class LoginView extends StatelessWidget {
           child: TextField(
             controller: controller,
             keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.black),
             onChanged: (_) => error.value = '',
             decoration: InputDecoration(
               hintText: hint,
@@ -362,7 +362,7 @@ class LoginView extends StatelessWidget {
           child: TextField(
             controller: controller,
             obscureText: !isVisible,
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.black),
             onChanged: (_) => error.value = '',
             decoration: InputDecoration(
               hintText: hint,

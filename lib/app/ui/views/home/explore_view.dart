@@ -17,6 +17,7 @@ class ExploreView extends StatelessWidget {
             TextField(
               key: const Key('search_field'),
               controller: controller,
+              style: const TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 hintText: 'Where are you going?',
                 prefixIcon: const Icon(Icons.search),

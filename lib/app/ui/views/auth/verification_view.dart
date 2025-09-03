@@ -60,7 +60,7 @@ class VerificationView extends GetView<OTPController> {
               const SizedBox(height: 12),
               
               // Subtitle
-              Obx(() => RichText(
+              RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
                   style: TextStyle(
@@ -79,7 +79,7 @@ class VerificationView extends GetView<OTPController> {
                     ),
                   ],
                 ),
-              )),
+              ),
               
               const SizedBox(height: 48),
               
@@ -91,40 +91,42 @@ class VerificationView extends GetView<OTPController> {
               
               // Error Message
               const SizedBox(height: 16),
-              Obx(() => controller.otpError.value.isEmpty
-                ? const SizedBox(height: 20)
-                : Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.red.shade600, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            controller.otpError.value,
-                            style: TextStyle(
-                              color: Colors.red.shade600,
-                              fontSize: 12,
-                            ),
+              Obx(() {
+                if (controller.otpError.value.isEmpty) {
+                  return const SizedBox(height: 20);
+                }
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red.shade600, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          controller.otpError.value,
+                          style: TextStyle(
+                            color: Colors.red.shade600,
+                            fontSize: 12,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-              ),
+                );
+              }),
               
               const SizedBox(height: 32),
               
               // Verify Button
-              Obx(() => AnimatedContainer(
+              AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 height: 56,
-                child: ElevatedButton(
+                child: Obx(() => ElevatedButton(
                   onPressed: controller.isLoading.value 
                     ? null 
                     : controller.verifyOTP,
@@ -153,60 +155,50 @@ class VerificationView extends GetView<OTPController> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                ),
-              )),
+                )),
+              ),
               
               const SizedBox(height: 32),
               
               // Resend Section
-              Obx(() => Column(
+              Column(
                 children: [
-                  if (!controller.canResend.value) ...[
-                    Text(
-                      'Didn\'t receive the code?',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
+                  Text(
+                    'Didn\'t receive the code?',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Resend in ${controller.countdown.value}s',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ] else ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Didn't receive the code? ",
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    if (!controller.canResend.value) {
+                      return Text(
+                        'Resend in ${controller.countdown.value}s',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    } else {
+                      return GestureDetector(
+                        onTap: controller.resendOTP,
+                        child: const Text(
+                          'Resend',
                           style: TextStyle(
-                            color: Colors.grey.shade600,
+                            color: Color(0xFF2196F3),
                             fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        GestureDetector(
-                          onTap: controller.resendOTP,
-                          child: const Text(
-                            'Resend',
-                            style: TextStyle(
-                              color: Color(0xFF2196F3),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      );
+                    }
+                  }),
                 ],
-              )),
+              ),
               
               const SizedBox(height: 60),
               
