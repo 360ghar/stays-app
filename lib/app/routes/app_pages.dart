@@ -26,7 +26,7 @@ import '../ui/views/payment/payment_view.dart';
 import '../ui/views/payment/payment_methods_view.dart';
 import '../ui/views/messaging/inbox_view.dart';
 import '../ui/views/messaging/chat_view.dart';
-import '../ui/views/profile/profile_view.dart';
+import '../ui/views/home/profile_view.dart';
 import '../ui/views/splash/splash_view.dart';
 import 'app_routes.dart';
 

@@ -21,6 +21,11 @@ class StorageService {
 
   Future<String?> getAccessToken() async => _box.read<String>(_accessTokenKey);
   Future<String?> getRefreshToken() async => _box.read<String>(_refreshTokenKey);
+  
+  // Synchronous versions for middleware
+  String? getAccessTokenSync() => _box.read<String>(_accessTokenKey);
+  String? getRefreshTokenSync() => _box.read<String>(_refreshTokenKey);
+  bool hasAccessToken() => _box.read<String>(_accessTokenKey) != null;
 
   Future<void> clearTokens() async {
     await _box.remove(_accessTokenKey);

@@ -2,7 +2,19 @@
   "permissions": {
     "allow": [
       "Bash(flutter analyze:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter packages pub run build_runner build:*)",
+      "Bash(flutter run:*)",
+      "Bash(flutter build:*)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\widgets\\cards/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\controllers/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\bindings/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\android\\app\\src\\main/**)"
     ],
     "deny": [],
     "ask": []

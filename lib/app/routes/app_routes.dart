@@ -15,4 +15,12 @@ abstract class Routes {
   static const profile = '/profile';
   static const inbox = '/inbox';
   static const chat = '/chat/:conversationId';
+  
+  // Profile related routes
+  static const trips = '/trips';
+  static const accountSettings = '/account-settings';
+  static const help = '/help';
+  static const profileView = '/profile-view';
+  static const privacy = '/privacy';
+  static const legal = '/legal';
 }

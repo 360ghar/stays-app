@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../controllers/auth/auth_controller.dart';
 import '../controllers/auth/otp_controller.dart';
+import '../controllers/auth/phone_auth_controller.dart';
 import '../data/providers/auth_provider.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/services/storage_service.dart';
@@ -16,5 +17,8 @@ class AuthBinding extends Bindings {
           storageService: Get.find<StorageService>(),
         ));
     Get.lazyPut<OTPController>(() => OTPController());
+    Get.lazyPut<PhoneAuthController>(() => PhoneAuthController(
+          storageService: Get.find<StorageService>(),
+        ));
   }
 }

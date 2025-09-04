@@ -1,257 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/explore_controller.dart';
+import 'package:stays_app/app/ui/widgets/cards/hotel_card.dart';
+import 'package:stays_app/app/ui/widgets/common/section_header.dart';
+import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 import '../../../controllers/auth/phone_auth_controller.dart';
 
-class SimpleHomeView extends StatelessWidget {
+class SimpleHomeView extends GetView<ExploreController> {
   const SimpleHomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final PhoneAuthController authController = Get.find<PhoneAuthController>();
-
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: const Text(
-          'Home',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: controller.refreshLocation,
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            slivers: [
+              _buildSliverAppBar(context),
+              _buildPopularHomes(),
+              _buildNearbyHotels(),
+              _buildRecommendedSection(),
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
+            ],
           ),
-        ),
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: IconButton(
-              onPressed: () => _showProfileSheet(context, authController),
-              icon: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person_outline,
-                  color: Colors.grey.shade700,
-                  size: 20,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Welcome section
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              color: Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Obx(() => Text(
-                    'Welcome back, ${authController.currentUser.value?.firstName ?? 'User'}!',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  )),
-                  const SizedBox(height: 8),
-                  Text(
-                    'What would you like to explore today?',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Quick actions
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Quick Actions',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildActionCard(
-                      icon: Icons.search,
-                      label: 'Search',
-                      color: Colors.blue,
-                      onTap: () => _showComingSoon('Search'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionCard(
-                      icon: Icons.bookmark_outline,
-                      label: 'Saved',
-                      color: Colors.orange,
-                      onTap: () => _showComingSoon('Saved'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildActionCard(
-                      icon: Icons.history,
-                      label: 'History',
-                      color: Colors.green,
-                      onTap: () => _showComingSoon('History'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildActionCard(
-                      icon: Icons.settings_outlined,
-                      label: 'Settings',
-                      color: Colors.purple,
-                      onTap: () => _showComingSoon('Settings'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Info section
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.blue.shade100,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: Colors.blue.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Demo Mode',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue.shade800,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'This is a demo version. Features will be added soon.',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.blue.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Recent activity placeholder
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                'Recent Activity',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade800,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: Colors.grey.shade200,
-                  width: 1,
-                ),
-              ),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.inbox_outlined,
-                      size: 48,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No activity yet',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Your recent activities will appear here',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-          ],
         ),
       ),
       
@@ -261,7 +39,7 @@ class SimpleHomeView extends StatelessWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -274,10 +52,10 @@ class SimpleHomeView extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildNavItem(Icons.home, 'Home', true),
-                _buildNavItem(Icons.explore_outlined, 'Explore', false),
-                _buildNavItem(Icons.favorite_outline, 'Saved', false),
-                _buildNavItem(Icons.person_outline, 'Profile', false),
+                _buildNavItem(Icons.explore, 'Explore', true),
+                _buildNavItem(Icons.card_travel_outlined, 'Trips', false),
+                _buildNavItem(Icons.inbox_outlined, 'Inbox', false),
+                _buildNavItem(Icons.person_outline, 'Profile', false, () => Get.toNamed('/profile')),
               ],
             ),
           ),
@@ -286,58 +64,180 @@ class SimpleHomeView extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: Colors.grey.shade200,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF1A1A1A),
-              ),
-            ),
-          ],
+  Widget _buildSliverAppBar(BuildContext context) {
+    return SliverAppBar(
+      floating: true,
+      snap: true,
+      backgroundColor: const Color(0xFFF8F9FA),
+      elevation: 0,
+      toolbarHeight: 70,
+      flexibleSpace: FlexibleSpaceBar(
+        background: SearchBarWidget(
+          placeholder: 'Start your search',
+          onTap: controller.navigateToSearch,
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
+  Widget _buildPopularHomes() {
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        final city = controller.currentCity;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          child: Column(
+            key: ValueKey('popular-$city'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 24),
+              SectionHeader(
+                title: 'Popular homes in $city',
+                onViewAll: () => controller.navigateToAllHotels(city),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(controller.popularHomes, 'popular'),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildNearbyHotels() {
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        final nearbyCity = controller.nearbyCity;
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          child: Column(
+            key: ValueKey('nearby-$nearbyCity'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 32),
+              SectionHeader(
+                title: 'Popular hotels near $nearbyCity',
+                onViewAll: () => controller.navigateToAllHotels(nearbyCity),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(controller.nearbyHotels, 'nearby'),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildRecommendedSection() {
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        if (controller.recommendedHotels.isEmpty) return const SizedBox();
+        
+        return AnimatedSwitcher(
+          duration: const Duration(milliseconds: 500),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 32),
+              const SectionHeader(
+                title: 'Recommended for you',
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 200,
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(controller.recommendedHotels, 'recommended'),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  Widget _buildHotelsList(List hotels, String heroPrefix) {
+    if (hotels.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.hotel_outlined,
+                size: 48,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No hotels available',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      itemCount: hotels.length,
+      itemBuilder: (context, index) {
+        final hotel = hotels[index];
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: Duration(milliseconds: 300 + (index * 100)),
+          curve: Curves.easeOutCubic,
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Opacity(
+                opacity: value,
+                child: HotelCard(
+                  hotel: hotel,
+                  heroPrefix: heroPrefix,
+                  onTap: () => controller.navigateToHotelDetail(hotel),
+                  onFavoriteToggle: () => controller.toggleFavorite(hotel),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildShimmerList() {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 3,
+      itemBuilder: (context, index) {
+        return const HotelCardShimmer();
+      },
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, bool isActive, [VoidCallback? onTap]) {
     return InkWell(
-      onTap: isActive ? null : () => _showComingSoon(label),
+      onTap: isActive ? null : (onTap ?? () => _showComingSoon(label)),
       borderRadius: BorderRadius.circular(8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
