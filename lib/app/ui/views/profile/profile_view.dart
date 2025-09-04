@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/auth/auth_controller.dart';
+import '../../../controllers/auth/phone_auth_controller.dart';
 import '../../../routes/app_routes.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
   @override
   Widget build(BuildContext context) {
-    final auth = Get.find<AuthController>();
+    final auth = Get.find<PhoneAuthController>();
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: ListView(

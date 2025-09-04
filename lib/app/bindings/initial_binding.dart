@@ -1,10 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../config/app_config.dart';
-import '../controllers/auth/auth_controller.dart';
 import '../controllers/notification/notification_controller.dart';
-import '../data/providers/auth_provider.dart';
-import '../data/repositories/auth_repository.dart';
 import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
 import '../data/services/push_notification_service.dart';
@@ -35,6 +32,9 @@ class InitialBinding extends Bindings {
       await s.initialize();
       return s;
     }, permanent: true);
+
+    // Don't initialize PhoneAuthController here - let specific bindings handle it
+    // This prevents issues with async dependencies not being ready
 
     // Don't initialize AuthController here - let AuthBinding handle it
     // This prevents timing issues with async services

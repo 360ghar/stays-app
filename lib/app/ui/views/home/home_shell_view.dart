@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-// ignore: unused_import
 import 'package:get/get.dart';
 
 import '../../../bindings/home_binding.dart';
 import '../../../bindings/message_binding.dart';
 import '../../../bindings/profile_binding.dart';
+import '../../../controllers/auth/phone_auth_controller.dart';
 import '../../views/home/simple_home_view.dart';
 import '../../views/booking/trips_view.dart';
 import '../../views/messaging/inbox_view.dart';
@@ -27,6 +27,15 @@ class _HomeShellViewState extends State<HomeShellView> {
     HomeBinding().dependencies();
     MessageBinding().dependencies();
     ProfileBinding().dependencies();
+    
+    // Ensure PhoneAuthController is initialized and check auth status
+    if (Get.isRegistered<PhoneAuthController>()) {
+      final authController = Get.find<PhoneAuthController>();
+      // Trigger auth check if not already authenticated
+      if (!authController.isAuthenticated.value) {
+        authController.onInit();
+      }
+    }
   }
 
   @override

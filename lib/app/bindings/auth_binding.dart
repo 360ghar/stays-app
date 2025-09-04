@@ -17,8 +17,14 @@ class AuthBinding extends Bindings {
           storageService: Get.find<StorageService>(),
         ));
     Get.lazyPut<OTPController>(() => OTPController());
-    Get.lazyPut<PhoneAuthController>(() => PhoneAuthController(
+    // Ensure PhoneAuthController is immediately available and permanent
+    if (!Get.isRegistered<PhoneAuthController>()) {
+      Get.put<PhoneAuthController>(
+        PhoneAuthController(
           storageService: Get.find<StorageService>(),
-        ));
+        ),
+        permanent: true,
+      );
+    }
   }
 }

@@ -128,7 +128,6 @@ class AppPages {
       name: Routes.profile,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
-      middlewares: [AuthMiddleware()],
     ),
   ];
 }

@@ -13,10 +13,11 @@ class HomeBinding extends Bindings {
   void dependencies() {
     // Ensure PhoneAuthController is available
     if (!Get.isRegistered<PhoneAuthController>()) {
-      Get.lazyPut<PhoneAuthController>(
-        () => PhoneAuthController(
+      Get.put<PhoneAuthController>(
+        PhoneAuthController(
           storageService: Get.find<StorageService>(),
         ),
+        permanent: true,
       );
     }
 

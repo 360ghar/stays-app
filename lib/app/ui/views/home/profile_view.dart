@@ -211,15 +211,15 @@ class ProfileView extends GetView<ProfileController> {
             
             const SizedBox(height: 24),
             
-            // Past Trips Section
+            // Past Bookings Section
             _buildAnimatedSection(
               delay: 100,
               child: _buildGlassTile(
                 icon: Icons.flight_takeoff_rounded,
-                title: 'Past Trips',
+                title: 'Past Bookings',
                 subtitle: controller.pastTrips.isNotEmpty
-                    ? '${controller.pastTrips.length} trips completed'
-                    : 'No trips yet',
+                    ? '${controller.pastTrips.length} bookings completed'
+                    : 'No bookings yet',
                 onTap: controller.navigateToPastTrips,
                 gradient: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
               ),

@@ -55,7 +55,7 @@ class SimpleHomeView extends GetView<ExploreController> {
                 _buildNavItem(Icons.explore, 'Explore', true),
                 _buildNavItem(Icons.card_travel_outlined, 'Trips', false),
                 _buildNavItem(Icons.inbox_outlined, 'Inbox', false),
-                _buildNavItem(Icons.person_outline, 'Profile', false, () => Get.toNamed('/profile')),
+                _buildNavItem(Icons.person_outline, 'Profile', false, () => _navigateToProfile()),
               ],
             ),
           ),
@@ -415,6 +415,15 @@ class SimpleHomeView extends GetView<ExploreController> {
         ],
       ),
     );
+  }
+
+  void _navigateToProfile() {
+    final authController = Get.find<PhoneAuthController>();
+    if (authController.isAuthenticated.value) {
+      Get.toNamed('/profile');
+    } else {
+      _showProfileSheet(Get.context!, authController);
+    }
   }
 
   void _showComingSoon(String feature) {

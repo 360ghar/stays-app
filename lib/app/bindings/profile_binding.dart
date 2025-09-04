@@ -9,10 +9,11 @@ class ProfileBinding extends Bindings {
   void dependencies() {
     // Ensure the PhoneAuthController dependency is available before ProfileController.
     if (!Get.isRegistered<PhoneAuthController>()) {
-      Get.lazyPut<PhoneAuthController>(
-        () => PhoneAuthController(
+      Get.put<PhoneAuthController>(
+        PhoneAuthController(
           storageService: Get.find<StorageService>(),
         ),
+        permanent: true,
       );
     }
     Get.lazyPut<ProfileController>(() => ProfileController());

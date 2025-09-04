@@ -70,6 +70,9 @@ class PhoneAuthController extends GetxController {
 
         currentUser.value = mockUser;
         isAuthenticated.value = true;
+        
+        // Ensure the state is updated before navigation
+        update();
 
         // Success snackbar
         Get.snackbar(
@@ -90,8 +93,8 @@ class PhoneAuthController extends GetxController {
           ),
         );
 
-        // Navigate to home
-        await Future.delayed(const Duration(milliseconds: 500));
+        // Navigate to home with a small delay to ensure state is propagated
+        await Future.delayed(const Duration(milliseconds: 800));
         Get.offAllNamed(Routes.home);
       } else {
         // Error snackbar for wrong credentials
