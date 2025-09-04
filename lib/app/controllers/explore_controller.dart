@@ -86,9 +86,10 @@ class ExploreController extends GetxController with GetTickerProviderStateMixin 
   }
 
   void navigateToAllHotels(String city) {
+    final hotelList = city == currentCity ? popularHomes : nearbyHotels;
     Get.toNamed('/search-results', arguments: {
       'city': city,
-      'hotels': city == currentCity ? popularHomes : nearbyHotels,
+      'hotels': hotelList.toList(),
     });
   }
 

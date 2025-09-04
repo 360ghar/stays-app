@@ -14,7 +14,9 @@
       "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
       "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
       "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\bindings/**)",
-      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\android\\app\\src\\main/**)"
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\android\\app\\src\\main/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\bindings/**)",
+      "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\controllers/**)"
     ],
     "deny": [],
     "ask": []
