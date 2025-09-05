@@ -24,7 +24,7 @@ import '../ui/views/listing/search_results_view.dart';
 import '../ui/views/booking/booking_view.dart';
 import '../ui/views/payment/payment_view.dart';
 import '../ui/views/payment/payment_methods_view.dart';
-import '../ui/views/messaging/inbox_view.dart';
+import '../ui/views/messaging/locate_view.dart';
 import '../ui/views/messaging/chat_view.dart';
 import '../ui/views/home/profile_view.dart';
 import '../ui/views/splash/splash_view.dart';
@@ -114,7 +114,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.inbox,
-      page: () => const InboxView(),
+      page: () => const LocateView(),
       binding: MessageBinding(),
       middlewares: [AuthMiddleware()],
     ),

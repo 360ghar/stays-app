@@ -15,6 +15,7 @@ abstract class Routes {
   static const profile = '/profile';
   static const inbox = '/inbox';
   static const chat = '/chat/:conversationId';
+  static const wishlist = '/wishlist';
   
   // Profile related routes
   static const trips = '/trips';

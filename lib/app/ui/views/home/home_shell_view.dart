@@ -7,7 +7,7 @@ import '../../../bindings/profile_binding.dart';
 import '../../../controllers/auth/phone_auth_controller.dart';
 import '../../views/home/simple_home_view.dart';
 import '../../views/booking/trips_view.dart';
-import '../../views/messaging/inbox_view.dart';
+import '../../views/messaging/locate_view.dart';
 import '../../views/profile/profile_view.dart';
 
 class HomeShellView extends StatefulWidget {
