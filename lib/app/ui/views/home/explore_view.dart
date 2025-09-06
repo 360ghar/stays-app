@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/explore_controller.dart';
-import 'package:stays_app/app/ui/widgets/cards/hotel_card.dart';
+import 'package:stays_app/app/ui/widgets/cards/property_card.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 
@@ -63,7 +63,7 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 24),
               SectionHeader(
                 title: 'Popular homes in $city',
-                onViewAll: () => controller.navigateToAllHotels(city),
+                onViewAll: () => controller.navigateToAllProperties(city),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -92,7 +92,7 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 32),
               SectionHeader(
                 title: 'Popular hotels near $nearbyCity',
-                onViewAll: () => controller.navigateToAllHotels(nearbyCity),
+                onViewAll: () => controller.navigateToAllProperties(nearbyCity),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -179,10 +179,11 @@ class ExploreView extends GetView<ExploreController> {
               scale: value,
               child: Opacity(
                 opacity: value,
-                child: HotelCard(
-                  hotel: hotel,
-                  heroPrefix: heroPrefix,
-                  onTap: () => controller.navigateToHotelDetail(hotel),
+                child: PropertyCard(
+                  property: hotel,
+                  heroPrefix: '${heroPrefix}_$index',
+                  isFavorite: controller.isPropertyFavorite(hotel.id),
+                  onTap: () => controller.navigateToPropertyDetail(hotel),
                   onFavoriteToggle: () => controller.toggleFavorite(hotel),
                 ),
               ),
@@ -200,7 +201,7 @@ class ExploreView extends GetView<ExploreController> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: 3,
       itemBuilder: (context, index) {
-        return const HotelCardShimmer();
+        return const PropertyCardShimmer();
       },
     );
   }

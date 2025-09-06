@@ -3,10 +3,13 @@ import 'package:get/get.dart';
 import '../../config/app_config.dart';
 import '../controllers/notification/notification_controller.dart';
 import '../data/services/analytics_service.dart';
+import '../data/services/api_service.dart';
 import '../data/services/location_service.dart';
+import '../data/services/properties_service.dart';
 import '../data/services/push_notification_service.dart';
 import '../data/services/storage_service.dart';
 import '../data/services/supabase_service.dart';
+import '../data/services/wishlist_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -16,6 +19,33 @@ class InitialBinding extends Bindings {
     Get.put<AnalyticsService>(AnalyticsService(enabled: AppConfig.I.enableAnalytics), permanent: true);
     Get.put<PushNotificationService>(PushNotificationService(), permanent: true);
     Get.put<NotificationController>(NotificationController(), permanent: true);
+    
+    // Initialize API services
+    Get.putAsync<AuthService>(() async {
+      final service = AuthService();
+      await service.init();
+      return service;
+    }, permanent: true);
+    
+    Get.putAsync<ApiService>(() async {
+      final service = ApiService();
+      await service.init();
+      return service;
+    }, permanent: true);
+    
+    Get.putAsync<PropertiesService>(() async {
+      Get.find<ApiService>(); // Ensure ApiService is initialized first
+      final service = PropertiesService();
+      await service.init();
+      return service;
+    }, permanent: true);
+    
+    Get.putAsync<WishlistService>(() async {
+      Get.find<ApiService>(); // Ensure ApiService is initialized first
+      final service = WishlistService();
+      await service.init();
+      return service;
+    }, permanent: true);
     
     // Initialize async services
     Get.putAsync<StorageService>(() async {

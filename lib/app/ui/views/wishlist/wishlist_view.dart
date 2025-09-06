@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../controllers/wishlist_controller.dart';
+import '../../../data/models/property_model.dart';
 
 class WishlistView extends GetView<WishlistController> {
   const WishlistView({super.key});
@@ -44,7 +46,7 @@ class WishlistView extends GetView<WishlistController> {
         }
 
         return RefreshIndicator(
-          onRefresh: () async => controller.loadWishlist(),
+          onRefresh: () async => await controller.loadWishlist(),
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: controller.wishlistItems.length,
@@ -116,7 +118,7 @@ class WishlistView extends GetView<WishlistController> {
     );
   }
 
-  Widget _buildWishlistCard(Map<String, dynamic> item) {
+  Widget _buildWishlistCard(Property item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -150,14 +152,24 @@ class WishlistView extends GetView<WishlistController> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: Container(
+                  child: CachedNetworkImage(
+                    imageUrl: item.displayImage,
                     height: 200,
                     width: double.infinity,
-                    color: Colors.grey[300],
-                    child: Icon(
-                      Icons.image,
-                      size: 50,
-                      color: Colors.grey[400],
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[300],
+                      child: Icon(
+                        Icons.image,
+                        size: 50,
+                        color: Colors.grey[400],
+                      ),
                     ),
                   ),
                 ),
@@ -176,7 +188,7 @@ class WishlistView extends GetView<WishlistController> {
                       ],
                     ),
                     child: IconButton(
-                      onPressed: () => controller.removeFromWishlist(item['id']),
+                      onPressed: () => controller.removeFromWishlist(item.id),
                       icon: const Icon(
                         Icons.favorite,
                         color: Colors.red,
@@ -203,11 +215,15 @@ class WishlistView extends GetView<WishlistController> {
                         color: Colors.grey[600],
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        item['location'] ?? '',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
+                      Expanded(
+                        child: Text(
+                          '${item.city}, ${item.country}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -216,7 +232,7 @@ class WishlistView extends GetView<WishlistController> {
                   
                   // Name
                   Text(
-                    item['name'] ?? '',
+                    item.name,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -240,22 +256,31 @@ class WishlistView extends GetView<WishlistController> {
                             color: Colors.amber,
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            '${item['rating']}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1A1A1A),
+                          if (item.rating != null) ...[  
+                            Text(
+                              item.ratingText,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1A1A1A),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '(${item['reviews']} reviews)',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+                            const SizedBox(width: 4),
+                            Text(
+                              '(${item.reviewsText})',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          ),
+                          ] else
+                            Text(
+                              'No rating',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                         ],
                       ),
                       
@@ -263,7 +288,7 @@ class WishlistView extends GetView<WishlistController> {
                       Row(
                         children: [
                           Text(
-                            '\$${item['price']}',
+                            item.displayPrice,
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,

@@ -15,6 +15,8 @@ class LocationService extends GetxService {
   String get nearbyCity => _nearbyCity.value;
   bool get isLocationEnabled => _isLocationEnabled.value;
   bool get isLoadingLocation => _isLoadingLocation.value;
+  double? get latitude => _currentPosition.value?.latitude;
+  double? get longitude => _currentPosition.value?.longitude;
 
   @override
   void onInit() {
