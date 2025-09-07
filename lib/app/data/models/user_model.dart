@@ -21,7 +21,23 @@ class UserModel {
         isSuperHost: map['isSuperHost'] as bool? ?? false,
       );
 
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+        id: json['id']?.toString() ?? '',
+        email: json['email'] as String? ?? '',
+        firstName: json['firstName'] as String?,
+        lastName: json['lastName'] as String?,
+        isSuperHost: json['isSuperHost'] as bool? ?? false,
+      );
+
   Map<String, dynamic> toMap() => {
+        'id': id,
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'isSuperHost': isSuperHost,
+      };
+
+  Map<String, dynamic> toJson() => {
         'id': id,
         'email': email,
         'firstName': firstName,

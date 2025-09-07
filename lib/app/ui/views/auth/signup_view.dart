@@ -267,7 +267,7 @@ class _SignupViewState extends State<SignupView> {
                     backgroundColor: const Color(0xFF4CAF50),
                     foregroundColor: Colors.white,
                     elevation: 2,
-                    shadowColor: const Color(0xFF4CAF50).withOpacity(0.3),
+                    shadowColor: const Color(0xFF4CAF50).withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

@@ -115,7 +115,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           // Glassmorphism overlay
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
           
@@ -145,7 +145,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
@@ -191,7 +191,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                             : 'Join us and explore amazing stays',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w400,
                         ),
                       )),
@@ -206,10 +206,10 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           child: Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 width: 1.5,
                               ),
                             ),
@@ -285,7 +285,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    Colors.white.withOpacity(0.5),
+                                    Colors.white.withValues(alpha: 0.5),
                                   ],
                                 ),
                               ),
@@ -296,7 +296,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                             child: Text(
                               'or continue with',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
+                                color: Colors.white.withValues(alpha: 0.8),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -308,7 +308,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Colors.white.withOpacity(0.5),
+                                    Colors.white.withValues(alpha: 0.5),
                                     Colors.transparent,
                                   ],
                                 ),
@@ -352,7 +352,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 ? "Don't have an account? "
                                 : "Already have an account? ",
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: Colors.white.withValues(alpha: 0.8),
                               fontSize: 15,
                             ),
                           )),
@@ -408,10 +408,10 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.2),
+          color: Colors.white.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -427,7 +427,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 16,
           ),
           prefixIcon: Icon(
@@ -472,7 +472,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF6B6B).withOpacity(0.4),
+                color: const Color(0xFFFF6B6B).withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -522,10 +522,10 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -566,7 +566,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
             fontSize: 14,
           ),
         ),
-        backgroundColor: Colors.red.withOpacity(0.8),
+        backgroundColor: Colors.red.withValues(alpha: 0.8),
         borderRadius: 16,
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 3),
@@ -605,7 +605,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           fontSize: 14,
         ),
       ),
-      backgroundColor: const Color(0xFF667eea).withOpacity(0.9),
+      backgroundColor: const Color(0xFF667eea).withValues(alpha: 0.9),
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 2),

@@ -7,9 +7,7 @@ import '../controllers/navigation_controller.dart';
 import '../data/providers/listing_provider.dart';
 import '../data/repositories/listing_repository.dart';
 import '../data/services/location_service.dart';
-import '../data/services/properties_service.dart';
 import '../data/services/storage_service.dart';
-import '../data/services/wishlist_service.dart';
 
 class HomeBinding extends Bindings {
   @override
@@ -35,22 +33,9 @@ class HomeBinding extends Bindings {
       () => NavigationController(),
     );
 
-    // Ensure async services are available (fallback registration with proper initialization)
-    if (!Get.isRegistered<PropertiesService>()) {
-      Get.lazyPut<PropertiesService>(() {
-        final service = PropertiesService();
-        service.init();
-        return service;
-      }, fenix: true);
-    }
-    
-    if (!Get.isRegistered<WishlistService>()) {
-      Get.lazyPut<WishlistService>(() {
-        final service = WishlistService();
-        service.init();
-        return service;
-      }, fenix: true);
-    }
+    // REMOVE THE OLD SERVICE REGISTRATIONS. They are now permanent
+    // and initialized at startup in SplashController.
+    // The services are already registered as permanent with proper initialization
 
     // Explore controller
     Get.lazyPut<ExploreController>(

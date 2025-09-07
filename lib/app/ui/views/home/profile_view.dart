@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/auth/profile_controller.dart';
-import '../../widgets/profile/profile_header.dart';
-import '../../widgets/profile/profile_tile.dart';
-import '../../widgets/profile/section_card.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});

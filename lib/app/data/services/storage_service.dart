@@ -1,17 +1,19 @@
 import 'dart:convert';
 
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
-class StorageService {
+class StorageService extends GetxService {
   static const _boxName = 'app_storage';
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
 
   late final GetStorage _box;
 
-  Future<void> initialize() async {
+  Future<StorageService> initialize() async {
     await GetStorage.init(_boxName);
     _box = GetStorage(_boxName);
+    return this;
   }
 
   Future<void> saveTokens({required String accessToken, required String refreshToken}) async {

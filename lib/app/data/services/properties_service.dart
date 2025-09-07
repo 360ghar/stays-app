@@ -1,16 +1,57 @@
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/services/api_service.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class PropertiesService extends GetxService {
-  late final ApiService _apiService;
+  // No longer 'late'! It's provided in the constructor.
+  final ApiService _apiService;
+  
+  // Constructor to accept the dependency
+  PropertiesService(this._apiService);
 
+  // The init method is now simpler
   Future<PropertiesService> init() async {
-    _apiService = Get.find<ApiService>();
+    // Nothing to do here anymore, but we keep it for consistency with Get.putAsync
     return this;
   }
 
-  // Fetch properties with optional filters
+  // CORRESPONDS TO: GET /properties
+  Future<List<Property>> getListings({
+    String? location,
+    String? propertyType,
+    int? page,
+    int? limit,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'purpose': 'short_stay' // Hardcoded as per app requirement
+      };
+      
+      if (location != null) queryParams['location'] = location;
+      if (propertyType != null) queryParams['propertyType'] = propertyType;
+      if (page != null) queryParams['page'] = page;
+      if (limit != null) queryParams['limit'] = limit;
+
+      final response = await _apiService.get(
+        '/properties',
+        query: queryParams,
+      );
+      
+      if (response.body == null) {
+        return [];
+      }
+      
+      final List<dynamic> data = response.body['data']?['properties'] ?? [];
+      return data.map((json) => Property.fromJson(json)).toList();
+
+    } catch (e) {
+      AppLogger.error('Error fetching listings', e);
+      rethrow;
+    }
+  }
+
+  // Generic method to get properties with filters
   Future<List<Property>> getProperties({
     String? propertyType,
     String? city,
@@ -19,13 +60,10 @@ class PropertiesService extends GetxService {
     double? maxPrice,
     int? page,
     int? limit,
-    String? sortBy,
-    String? searchQuery,
   }) async {
     try {
       final queryParams = <String, dynamic>{};
       
-      // Add filters
       if (propertyType != null) queryParams['propertyType'] = propertyType;
       if (city != null) queryParams['city'] = city;
       if (country != null) queryParams['country'] = country;
@@ -33,26 +71,21 @@ class PropertiesService extends GetxService {
       if (maxPrice != null) queryParams['maxPrice'] = maxPrice;
       if (page != null) queryParams['page'] = page;
       if (limit != null) queryParams['limit'] = limit;
-      if (sortBy != null) queryParams['sortBy'] = sortBy;
-      if (searchQuery != null) queryParams['search'] = searchQuery;
 
       final response = await _apiService.get(
-        '/listings',
-        queryParameters: queryParams,
+        '/properties',
+        query: queryParams,
       );
-
-      if (response.statusCode == 200) {
-        final responseData = response.data;
-        final List<dynamic> data = responseData is Map<String, dynamic> 
-            ? responseData['properties'] ?? []
-            : responseData is List ? responseData : [];
-        
-        return data.map((json) => Property.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load properties');
+      
+      if (response.body == null) {
+        return [];
       }
+      
+      final List<dynamic> data = response.body['data']?['properties'] ?? [];
+      return data.map((json) => Property.fromJson(json)).toList();
+
     } catch (e) {
-      print('Error fetching properties: $e');
+      AppLogger.error('Error fetching properties', e);
       rethrow;
     }
   }
@@ -77,18 +110,16 @@ class PropertiesService extends GetxService {
     );
   }
 
-  // Get property by ID
+  // CORRESPONDS TO: GET /properties/:id
   Future<Property> getPropertyById(String id) async {
     try {
-      final response = await _apiService.get('/listings/$id');
-      
-      if (response.statusCode == 200) {
-        return Property.fromJson(response.data);
-      } else {
-        throw Exception('Failed to load property details');
+      final response = await _apiService.get('/properties/$id');
+      if (response.body == null) {
+        throw Exception('Property not found');
       }
+      return Property.fromJson(response.body['data']['property']);
     } catch (e) {
-      print('Error fetching property by ID: $e');
+      AppLogger.error('Error fetching property by ID', e);
       rethrow;
     }
   }
@@ -117,11 +148,11 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/search',
-        queryParameters: queryParams,
+        query: queryParams,
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.data;
+        final responseData = response.body;
         final List<dynamic> data = responseData is Map<String, dynamic> 
             ? responseData['properties'] ?? []
             : responseData is List ? responseData : [];
@@ -131,7 +162,7 @@ class PropertiesService extends GetxService {
         throw Exception('Search failed');
       }
     } catch (e) {
-      print('Error searching properties: $e');
+      AppLogger.error('Error searching properties', e);
       rethrow;
     }
   }
@@ -156,11 +187,11 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/nearby',
-        queryParameters: queryParams,
+        query: queryParams,
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.data;
+        final responseData = response.body;
         final List<dynamic> data = responseData is Map<String, dynamic> 
             ? responseData['properties'] ?? []
             : responseData is List ? responseData : [];
@@ -170,7 +201,7 @@ class PropertiesService extends GetxService {
         throw Exception('Failed to load nearby properties');
       }
     } catch (e) {
-      print('Error fetching nearby properties: $e');
+      AppLogger.error('Error fetching nearby properties', e);
       rethrow;
     }
   }
@@ -188,11 +219,11 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/recommended',
-        queryParameters: queryParams,
+        query: queryParams,
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.data;
+        final responseData = response.body;
         final List<dynamic> data = responseData is Map<String, dynamic> 
             ? responseData['properties'] ?? []
             : responseData is List ? responseData : [];
@@ -202,7 +233,7 @@ class PropertiesService extends GetxService {
         throw Exception('Failed to load recommendations');
       }
     } catch (e) {
-      print('Error fetching recommended properties: $e');
+      AppLogger.error('Error fetching recommended properties', e);
       rethrow;
     }
   }

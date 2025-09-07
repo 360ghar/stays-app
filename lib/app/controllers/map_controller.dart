@@ -5,6 +5,7 @@ import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/property_image_model.dart';
 import 'package:stays_app/app/data/services/properties_service.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class MapController extends GetxController {
   PropertiesService? _propertiesService;
@@ -38,7 +39,7 @@ class MapController extends GetxController {
     try {
       _propertiesService = Get.find<PropertiesService>();
     } catch (e) {
-      print('PropertiesService not found');
+      AppLogger.warning('PropertiesService not found');
     }
     
     try {
@@ -50,7 +51,7 @@ class MapController extends GetxController {
         );
       }
     } catch (e) {
-      print('LocationService not found');
+      AppLogger.warning('LocationService not found');
     }
   }
   
@@ -98,7 +99,7 @@ class MapController extends GetxController {
         
       } catch (e2) {
         errorMessage.value = 'Failed to load properties for map';
-        print('Error loading map properties: $e2');
+        AppLogger.error('Error loading map properties', e2);
         _loadMockMapData();
       }
     } finally {

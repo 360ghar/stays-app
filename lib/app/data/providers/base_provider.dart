@@ -25,9 +25,14 @@ abstract class BaseProvider extends GetConnect {
 
     httpClient.addResponseModifier<Object?>((request, response) async {
       AppLogger.logResponse({'status': response.statusCode, 'url': request.url.toString()});
-      if (response.statusCode == 401) {
-        // TODO: refresh token
+      
+      // Handle 401 unauthorized - redirect to login
+      if (response.statusCode == 401 && !_isAuthEndpoint(request.url)) {
+        AppLogger.warning('Token expired, redirecting to login');
+        await _storage.clearTokens();
+        Get.offAllNamed('/login');
       }
+      
       return response;
     });
     super.onInit();
@@ -43,6 +48,13 @@ abstract class BaseProvider extends GetConnect {
       );
     }
     return parser(response.body);
+  }
+
+  /// Check if the current request is for auth endpoints
+  bool _isAuthEndpoint(Uri url) {
+    return url.path.contains('/auth/') ||
+           url.path.contains('/login') ||
+           url.path.contains('/register');
   }
 }
 

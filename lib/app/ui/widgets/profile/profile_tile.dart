@@ -41,7 +41,7 @@ class ProfileTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: (iconColor ?? theme.colorScheme.primary).withOpacity(0.1),
+                  color: (iconColor ?? theme.colorScheme.primary).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -70,7 +70,7 @@ class ProfileTile extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -83,7 +83,7 @@ class ProfileTile extends StatelessWidget {
                 Icon(
                   Icons.chevron_right,
                   size: 20,
-                  color: theme.colorScheme.onSurface.withOpacity(0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
             ],
           ),

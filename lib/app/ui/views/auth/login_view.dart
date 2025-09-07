@@ -432,7 +432,7 @@ class _LoginViewState extends State<LoginView> {
           backgroundColor: Colors.blue[600],
           foregroundColor: Colors.white,
           elevation: 2,
-          shadowColor: Colors.blue[600]!.withOpacity(0.3),
+          shadowColor: Colors.blue[600]!.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -474,7 +474,7 @@ class _LoginViewState extends State<LoginView> {
           backgroundColor: backgroundColor,
           foregroundColor: textColor,
           elevation: borderColor != null ? 0 : 1,
-          shadowColor: Colors.black.withOpacity(0.1),
+          shadowColor: Colors.black.withValues(alpha: 0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: borderColor != null

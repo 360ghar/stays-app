@@ -1,201 +1,93 @@
 import 'package:get/get.dart';
-import 'package:stays_app/app/data/models/wishlist_model.dart';
 import 'package:stays_app/app/data/services/api_service.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+
+class WishlistItem {
+  final int id;
+  final int propertyId;
+  final dynamic property;
+  
+  WishlistItem({
+    required this.id,
+    required this.propertyId,
+    this.property,
+  });
+  
+  factory WishlistItem.fromJson(Map<String, dynamic> json) {
+    return WishlistItem(
+      id: json['id'],
+      propertyId: json['propertyId'] ?? json['property_id'],
+      property: json['property'],
+    );
+  }
+}
 
 class WishlistService extends GetxService {
-  late final ApiService _apiService;
+  // No longer 'late'! It's provided in the constructor.
+  final ApiService _apiService;
+  
+  // Constructor to accept the dependency
+  WishlistService(this._apiService);
 
+  // The init method is now simpler
   Future<WishlistService> init() async {
-    _apiService = Get.find<ApiService>();
+    // Nothing to do here anymore, but we keep it for consistency with Get.putAsync
     return this;
   }
 
-  // Get user's wishlist (liked properties)
-  Future<List<WishlistItem>> getUserWishlist({
-    String? userId,
-    int? page,
-    int? limit,
-  }) async {
+  // This should correspond to a dedicated wishlist endpoint.
+  // Since one isn't listed, we'll assume a user profile endpoint returns favorites.
+  // This part needs clarification from your backend team. For now, we'll assume
+  // we fetch all listings and filter by a local 'isFavorite' flag updated by the user.
+  // A proper implementation would have a GET /favorites endpoint.
+
+  // CORRESPONDS TO: POST /properties/:id/like
+  Future<bool> addToWishlist({required int propertyId}) async {
     try {
-      final queryParams = <String, dynamic>{};
-      
-      if (userId != null) queryParams['userId'] = userId;
-      if (page != null) queryParams['page'] = page;
-      if (limit != null) queryParams['limit'] = limit;
-
-      final response = await _apiService.get(
-        '/swipes',
-        queryParameters: queryParams,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List 
-            ? response.data 
-            : response.data['data'] ?? [];
-        
-        // Filter only liked items
-        final likedItems = data.where((item) => 
-          item['action'] == 'like' || item['liked'] == true
-        ).toList();
-        
-        return likedItems.map((json) => WishlistItem.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load wishlist');
-      }
-    } catch (e) {
-      print('Error fetching wishlist: $e');
-      rethrow;
-    }
-  }
-
-  // Add property to wishlist (like/swipe right)
-  Future<bool> addToWishlist({
-    required int propertyId,
-    String? userId,
-  }) async {
-    try {
-      final response = await _apiService.post(
-        '/swipes',
-        data: {
-          'propertyId': propertyId,
-          'userId': userId,
-          'action': 'like',
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
+      // The endpoint in your docs is /properties/:id/like
+      // The existing backend seems to be using /properties/:id/like
+      final response = await _apiService.post('/properties/$propertyId/like', {});
       return response.statusCode == 200 || response.statusCode == 201;
     } catch (e) {
-      print('Error adding to wishlist: $e');
+      AppLogger.error('Error adding to wishlist', e);
       return false;
     }
   }
 
-  // Remove from wishlist (unlike)
-  Future<bool> removeFromWishlist({
-    required int propertyId,
-    String? userId,
-  }) async {
+  // CORRESPONDS TO: DELETE /properties/:id/like (assuming unlike)
+  Future<bool> removeFromWishlist({required int propertyId}) async {
     try {
-      final response = await _apiService.delete(
-        '/swipes/$propertyId',
-        queryParameters: userId != null ? {'userId': userId} : null,
-      );
-
-      if (response.statusCode == 404) {
-        // If delete endpoint doesn't exist, try updating the swipe
-        return await updateSwipe(
-          propertyId: propertyId,
-          userId: userId,
-          action: 'unlike',
-        );
-      }
-
+      // Assuming 'unlike' is the correct corresponding action
+      final response = await _apiService.post('/properties/$propertyId/unlike', {});
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error removing from wishlist: $e');
+      AppLogger.error('Error removing from wishlist', e);
       return false;
     }
   }
 
-  // Update swipe action
-  Future<bool> updateSwipe({
-    required int propertyId,
-    String? userId,
-    required String action, // 'like', 'unlike', 'pass'
-  }) async {
+  // Get user's wishlist items
+  Future<List<WishlistItem>> getUserWishlist() async {
     try {
-      final response = await _apiService.put(
-        '/swipes/$propertyId',
-        data: {
-          'userId': userId,
-          'action': action,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
-      );
-
-      return response.statusCode == 200;
-    } catch (e) {
-      print('Error updating swipe: $e');
-      return false;
-    }
-  }
-
-  // Check if property is in wishlist
-  Future<bool> isInWishlist({
-    required int propertyId,
-    String? userId,
-  }) async {
-    try {
-      final queryParams = <String, dynamic>{
-        'propertyId': propertyId,
-      };
-      
-      if (userId != null) queryParams['userId'] = userId;
-
-      final response = await _apiService.get(
-        '/swipes/check',
-        queryParameters: queryParams,
-      );
-
+      final response = await _apiService.get('/user/wishlist');
       if (response.statusCode == 200) {
-        return response.data['liked'] == true || 
-               response.data['action'] == 'like';
+        final List<dynamic> data = response.body?['data'] ?? [];
+        return data.map((json) => WishlistItem.fromJson(json)).toList();
       }
-      
-      return false;
+      return [];
     } catch (e) {
-      print('Error checking wishlist status: $e');
-      return false;
+      AppLogger.error('Error getting user wishlist', e);
+      return [];
     }
   }
 
-  // Get swipe history
-  Future<List<SwipeHistory>> getSwipeHistory({
-    String? userId,
-    String? action, // Filter by action: 'like', 'pass', etc.
-    int? page,
-    int? limit,
-  }) async {
+  // Clear all wishlist items
+  Future<bool> clearWishlist() async {
     try {
-      final queryParams = <String, dynamic>{};
-      
-      if (userId != null) queryParams['userId'] = userId;
-      if (action != null) queryParams['action'] = action;
-      if (page != null) queryParams['page'] = page;
-      if (limit != null) queryParams['limit'] = limit;
-
-      final response = await _apiService.get(
-        '/swipes/history',
-        queryParameters: queryParams,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List 
-            ? response.data 
-            : response.data['data'] ?? [];
-        
-        return data.map((json) => SwipeHistory.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load swipe history');
-      }
-    } catch (e) {
-      print('Error fetching swipe history: $e');
-      rethrow;
-    }
-  }
-
-  // Clear entire wishlist
-  Future<bool> clearWishlist({String? userId}) async {
-    try {
-      final response = await _apiService.delete(
-        '/swipes/clear',
-        queryParameters: userId != null ? {'userId': userId} : null,
-      );
-
+      final response = await _apiService.delete('/user/wishlist');
       return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      print('Error clearing wishlist: $e');
+      AppLogger.error('Error clearing wishlist', e);
       return false;
     }
   }

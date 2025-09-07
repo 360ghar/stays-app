@@ -134,7 +134,7 @@ class VerificationView extends GetView<OTPController> {
                     backgroundColor: const Color(0xFF2196F3),
                     foregroundColor: Colors.white,
                     elevation: 2,
-                    shadowColor: const Color(0xFF2196F3).withOpacity(0.3),
+                    shadowColor: const Color(0xFF2196F3).withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

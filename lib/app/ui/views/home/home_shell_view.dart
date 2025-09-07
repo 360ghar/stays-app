@@ -6,9 +6,6 @@ import '../../../bindings/message_binding.dart';
 import '../../../bindings/profile_binding.dart';
 import '../../../controllers/auth/phone_auth_controller.dart';
 import '../../views/home/simple_home_view.dart';
-import '../../views/booking/trips_view.dart';
-import '../../views/messaging/locate_view.dart';
-import '../../views/profile/profile_view.dart';
 
 class HomeShellView extends StatefulWidget {
   const HomeShellView({super.key});
@@ -18,7 +15,6 @@ class HomeShellView extends StatefulWidget {
 }
 
 class _HomeShellViewState extends State<HomeShellView> {
-  int _index = 0;
 
   @override
   void initState() {

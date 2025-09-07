@@ -6,11 +6,11 @@ class SectionHeader extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   const SectionHeader({
-    Key? key,
+    super.key,
     required this.title,
     this.onViewAll,
     this.padding = const EdgeInsets.symmetric(horizontal: 20),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

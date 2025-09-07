@@ -14,7 +14,7 @@ class HotelCard extends StatelessWidget {
   final String? heroPrefix;
 
   const HotelCard({
-    Key? key,
+    super.key,
     required this.hotel,
     required this.onTap,
     this.onFavoriteToggle,
@@ -23,7 +23,7 @@ class HotelCard extends StatelessWidget {
     this.showPrice = true,
     this.showRating = true,
     this.heroPrefix,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +88,7 @@ class HotelCard extends StatelessWidget {
             end: Alignment.bottomCenter,
             colors: [
               Colors.transparent,
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
             ],
           ),
         ),
@@ -137,7 +137,7 @@ class HotelCard extends StatelessWidget {
                 Text(
                   '(${hotel.reviews})',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
                   ),
                 ),
@@ -155,7 +155,7 @@ class HotelCard extends StatelessWidget {
                 Text(
                   '/night',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 12,
                   ),
                 ),
@@ -176,7 +176,7 @@ class HotelCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Icon(
@@ -195,10 +195,10 @@ class HotelCardShimmer extends StatelessWidget {
   final double height;
 
   const HotelCardShimmer({
-    Key? key,
+    super.key,
     this.width = 280,
     this.height = 200,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

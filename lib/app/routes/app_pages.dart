@@ -4,7 +4,7 @@ import '../bindings/auth_binding.dart';
 import '../bindings/home_binding.dart';
 import '../bindings/listing_binding.dart';
 import '../bindings/booking_binding.dart';
-import '../bindings/initial_binding.dart';
+import '../bindings/splash_binding.dart';
 import '../bindings/message_binding.dart';
 import '../bindings/payment_binding.dart';
 import '../bindings/profile_binding.dart';
@@ -37,7 +37,7 @@ class AppPages {
     GetPage(
       name: Routes.initial,
       page: () => const SplashView(),
-      binding: InitialBinding(),
+      binding: SplashBinding(),
       middlewares: [InitialMiddleware()],
     ),
     GetPage(

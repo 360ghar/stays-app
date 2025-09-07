@@ -115,7 +115,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
           // Glass overlay
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
             ),
           ),
           
@@ -148,7 +148,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.black.withOpacity(0.3),
+                              Colors.black.withValues(alpha: 0.3),
                               Colors.transparent,
                             ],
                           ),
@@ -161,10 +161,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                         icon: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withValues(alpha: 0.3),
                               width: 1,
                             ),
                           ),
@@ -244,13 +244,13 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.2),
-                Colors.white.withOpacity(0.1),
+                Colors.white.withValues(alpha: 0.2),
+                Colors.white.withValues(alpha: 0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -262,7 +262,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(
@@ -374,10 +374,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -396,7 +396,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 12,
                 ),
               ),
@@ -446,13 +446,13 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.15),
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha: 0.15),
+                Colors.white.withValues(alpha: 0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -494,10 +494,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -506,7 +506,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: Colors.orange.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
@@ -553,10 +553,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
         child: Container(
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             border: Border(
               top: BorderSide(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -613,7 +613,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Column(
@@ -683,7 +683,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
       BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
         child: AlertDialog(
-          backgroundColor: Colors.white.withOpacity(0.9),
+          backgroundColor: Colors.white.withValues(alpha: 0.9),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -735,7 +735,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
           fontSize: 14,
         ),
       ),
-      backgroundColor: const Color(0xFF667eea).withOpacity(0.9),
+      backgroundColor: const Color(0xFF667eea).withValues(alpha: 0.9),
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 2),

@@ -203,7 +203,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     backgroundColor: const Color(0xFFFF9800),
                     foregroundColor: Colors.white,
                     elevation: 2,
-                    shadowColor: const Color(0xFFFF9800).withOpacity(0.3),
+                    shadowColor: const Color(0xFFFF9800).withValues(alpha: 0.3),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

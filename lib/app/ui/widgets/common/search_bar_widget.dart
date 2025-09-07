@@ -13,7 +13,7 @@ class SearchBarWidget extends StatelessWidget {
   final double elevation;
 
   const SearchBarWidget({
-    Key? key,
+    super.key,
     this.placeholder = 'Start your search',
     required this.onTap,
     this.enabled = false,
@@ -24,7 +24,7 @@ class SearchBarWidget extends StatelessWidget {
     this.trailing,
     this.backgroundColor,
     this.elevation = 2,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,14 +37,14 @@ class SearchBarWidget extends StatelessWidget {
         child: Material(
           elevation: elevation,
           borderRadius: BorderRadius.circular(30),
-          shadowColor: Colors.black.withOpacity(0.1),
+          shadowColor: Colors.black.withValues(alpha: 0.1),
           child: Container(
             height: 50,
             decoration: BoxDecoration(
               color: backgroundColor ?? Colors.white,
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.grey.withValues(alpha: 0.2),
                 width: 0.5,
               ),
             ),

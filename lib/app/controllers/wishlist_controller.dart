@@ -4,6 +4,7 @@ import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/property_image_model.dart';
 import 'package:stays_app/app/data/services/wishlist_service.dart';
 import 'package:stays_app/app/data/services/properties_service.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class WishlistController extends GetxController {
   WishlistService? _wishlistService;
@@ -24,13 +25,13 @@ class WishlistController extends GetxController {
     try {
       _wishlistService = Get.find<WishlistService>();
     } catch (e) {
-      print('WishlistService not found');
+      AppLogger.warning('WishlistService not found');
     }
     
     try {
       _propertiesService = Get.find<PropertiesService>();
     } catch (e) {
-      print('PropertiesService not found');
+      AppLogger.warning('PropertiesService not found');
     }
   }
 
@@ -51,9 +52,16 @@ class WishlistController extends GetxController {
       final propertyIds = wishlistData.map((item) => item.propertyId).toList();
       
       // Check if wishlist items include property details
-      final propertiesWithDetails = wishlistData
+      final List<Property> propertiesWithDetails = wishlistData
           .where((item) => item.property != null)
-          .map((item) => item.property!)
+          .map((item) {
+            final propertyData = item.property;
+            if (propertyData is Map<String, dynamic>) {
+              return Property.fromJson(propertyData);
+            }
+            return null;
+          })
+          .whereType<Property>()
           .toList();
       
       if (propertiesWithDetails.isNotEmpty) {
@@ -66,14 +74,14 @@ class WishlistController extends GetxController {
             final property = await _propertiesService!.getPropertyById(id.toString());
             properties.add(property);
           } catch (e) {
-            print('Error fetching property $id: $e');
+            AppLogger.error('Error fetching property $id', e);
           }
         }
         wishlistItems.value = properties;
       }
     } catch (e) {
       errorMessage.value = 'Failed to load wishlist';
-      print('Error loading wishlist: $e');
+      AppLogger.error('Error loading wishlist', e);
       _loadMockWishlist();
     } finally {
       isLoading.value = false;
@@ -178,7 +186,7 @@ class WishlistController extends GetxController {
         );
       }
     } catch (e) {
-      print('Error adding to wishlist: $e');
+      AppLogger.error('Error adding to wishlist', e);
       Get.snackbar(
         'Error',
         'Failed to add to wishlist. Please try again.',
@@ -220,7 +228,7 @@ class WishlistController extends GetxController {
         );
       }
     } catch (e) {
-      print('Error removing from wishlist: $e');
+      AppLogger.error('Error removing from wishlist', e);
       Get.snackbar(
         'Error',
         'Failed to remove from wishlist. Please try again.',
@@ -269,7 +277,7 @@ class WishlistController extends GetxController {
                     );
                   }
                 } catch (e) {
-                  print('Error clearing wishlist: $e');
+                  AppLogger.error('Error clearing wishlist', e);
                   Get.snackbar(
                     'Error',
                     'Failed to clear wishlist. Please try again.',

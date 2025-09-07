@@ -25,10 +25,10 @@ class ProfileHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outline.withOpacity(0.2),
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: Row(
@@ -42,7 +42,7 @@ class ProfileHeader extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -72,7 +72,7 @@ class ProfileHeader extends StatelessWidget {
                     width: 140,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -81,7 +81,7 @@ class ProfileHeader extends StatelessWidget {
                     width: 80,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
+                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -124,7 +124,7 @@ class ProfileHeader extends StatelessWidget {
                     Text(
                       userEmail,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/navigation_controller.dart';
-import '../../../controllers/explore_controller.dart';
-import '../../../controllers/auth/phone_auth_controller.dart';
 import '../../../bindings/wishlist_binding.dart';
 import '../../../bindings/trips_binding.dart';
 import '../../../bindings/message_binding.dart';

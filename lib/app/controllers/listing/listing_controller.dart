@@ -38,7 +38,7 @@ class ListingController extends GetxController {
   }
 
   List<ListingModel> _mapHotelsToListings(List<Hotel> hotels) {
-    PropertyType _mapPropertyType(String value) {
+    PropertyType mapPropertyType(String value) {
       switch (value.toLowerCase()) {
         case 'house':
           return PropertyType.house;
@@ -60,7 +60,7 @@ class ListingController extends GetxController {
         id: h.id,
         title: h.name,
         description: h.description ?? '${h.propertyType} in ${h.city}',
-        propertyType: _mapPropertyType(h.propertyType),
+        propertyType: mapPropertyType(h.propertyType),
         location: LocationModel(
           city: h.city,
           country: h.country,

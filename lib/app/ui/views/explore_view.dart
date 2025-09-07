@@ -6,7 +6,7 @@ import 'package:stays_app/app/ui/widgets/common/section_header.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 
 class ExploreView extends GetView<ExploreController> {
-  const ExploreView({Key? key}) : super(key: key);
+  const ExploreView({super.key});
 
   @override
   Widget build(BuildContext context) {

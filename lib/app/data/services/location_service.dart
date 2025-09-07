@@ -2,6 +2,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LocationService extends GetxService {
   final _currentPosition = Rxn<Position>();
@@ -52,7 +53,7 @@ class LocationService extends GetxService {
       _isLocationEnabled.value = false;
       return false;
     } catch (e) {
-      print('Error checking location permission: $e');
+      AppLogger.error('Error checking location permission', e);
       _isLocationEnabled.value = false;
       return false;
     } finally {
@@ -102,7 +103,7 @@ class LocationService extends GetxService {
       
       return position;
     } catch (e) {
-      print('Error getting current location: $e');
+      AppLogger.error('Error getting current location', e);
       _setDefaultCities();
       return null;
     } finally {
@@ -127,7 +128,7 @@ class LocationService extends GetxService {
         _setDefaultCities();
       }
     } catch (e) {
-      print('Error getting city from position: $e');
+      AppLogger.error('Error getting city from position', e);
       _setDefaultCities();
     }
   }

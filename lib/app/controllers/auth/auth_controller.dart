@@ -5,7 +5,6 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../routes/app_routes.dart';
-import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/logger/app_logger.dart';
 
 class AuthController extends GetxController {
@@ -276,7 +275,7 @@ class AuthController extends GetxController {
           fontSize: 14,
         ),
       ),
-      backgroundColor: const Color(0xFF4CAF50).withOpacity(0.9),
+      backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.9),
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 3),
@@ -316,7 +315,7 @@ class AuthController extends GetxController {
           fontSize: 14,
         ),
       ),
-      backgroundColor: const Color(0xFFE91E63).withOpacity(0.9),
+      backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.9),
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 3),

@@ -51,7 +51,9 @@
       "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
       "Read(/C:\\Users\\ravi7\\OneDrive\\Documents\\GitHub\\stays-app\\lib\\app\\ui\\views\\home/**)",
       "Bash(flutter clean:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(printf \"R\")",
+      "Bash(flutter test:*)"
     ],
     "deny": [],
     "ask": []
