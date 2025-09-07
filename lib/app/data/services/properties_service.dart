@@ -16,6 +16,73 @@ class PropertiesService extends GetxService {
     return this;
   }
 
+  /// Robust helper to safely parse properties list from any response format
+  List<Property> _parsePropertiesList(dynamic responseBody, String context) {
+    if (responseBody == null) {
+      AppLogger.warning('Null response body for $context');
+      return [];
+    }
+
+    try {
+      List<dynamic> items = [];
+      
+      if (responseBody is Map<String, dynamic>) {
+        // Try nested data.properties first
+        final data = responseBody['data'];
+        if (data is Map<String, dynamic>) {
+          final props = data['properties'];
+          if (props is List) {
+            items = props;
+          } else if (props != null) {
+            AppLogger.warning('Expected List for data.properties in $context, got ${props.runtimeType}: $props');
+            return [];
+          }
+        }
+        
+        // Try direct properties if no nested data
+        if (items.isEmpty) {
+          final props = responseBody['properties'];
+          if (props is List) {
+            items = props;
+          } else if (props != null) {
+            AppLogger.warning('Expected List for properties in $context, got ${props.runtimeType}: $props');
+            return [];
+          }
+        }
+      } else if (responseBody is List) {
+        items = responseBody;
+      } else {
+        AppLogger.warning('Unexpected response type for $context: ${responseBody.runtimeType}. Value: $responseBody');
+        return [];
+      }
+
+      if (items.isEmpty) {
+        AppLogger.info('Empty properties list for $context');
+        return [];
+      }
+
+      return items
+          .map((json) {
+            try {
+              if (json is Map<String, dynamic>) {
+                return Property.fromJson(json);
+              } else {
+                AppLogger.warning('Invalid property format in $context: ${json.runtimeType}');
+                return null;
+              }
+            } catch (e) {
+              AppLogger.error('Failed to parse property in $context', e);
+              return null;
+            }
+          })
+          .whereType<Property>()
+          .toList();
+    } catch (e) {
+      AppLogger.error('Error parsing properties list for $context', e);
+      return [];
+    }
+  }
+
   // CORRESPONDS TO: GET /properties
   Future<List<Property>> getListings({
     String? location,
@@ -38,15 +105,10 @@ class PropertiesService extends GetxService {
         query: queryParams,
       );
       
-      if (response.body == null) {
-        return [];
-      }
-      
-      final List<dynamic> data = response.body['data']?['properties'] ?? [];
-      return data.map((json) => Property.fromJson(json)).toList();
+      return _parsePropertiesList(response.body, 'getListings');
 
-    } catch (e) {
-      AppLogger.error('Error fetching listings', e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Error fetching listings', e, stackTrace);
       rethrow;
     }
   }
@@ -77,15 +139,10 @@ class PropertiesService extends GetxService {
         query: queryParams,
       );
       
-      if (response.body == null) {
-        return [];
-      }
-      
-      final List<dynamic> data = response.body['data']?['properties'] ?? [];
-      return data.map((json) => Property.fromJson(json)).toList();
+      return _parsePropertiesList(response.body, 'getProperties');
 
-    } catch (e) {
-      AppLogger.error('Error fetching properties', e);
+    } catch (e, stackTrace) {
+      AppLogger.error('Error fetching properties', e, stackTrace);
       rethrow;
     }
   }
@@ -152,12 +209,7 @@ class PropertiesService extends GetxService {
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.body;
-        final List<dynamic> data = responseData is Map<String, dynamic> 
-            ? responseData['properties'] ?? []
-            : responseData is List ? responseData : [];
-        
-        return data.map((json) => Property.fromJson(json)).toList();
+        return _parsePropertiesList(response.body, 'searchProperties');
       } else {
         throw Exception('Search failed');
       }
@@ -191,12 +243,7 @@ class PropertiesService extends GetxService {
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.body;
-        final List<dynamic> data = responseData is Map<String, dynamic> 
-            ? responseData['properties'] ?? []
-            : responseData is List ? responseData : [];
-        
-        return data.map((json) => Property.fromJson(json)).toList();
+        return _parsePropertiesList(response.body, 'getNearbyProperties');
       } else {
         throw Exception('Failed to load nearby properties');
       }
@@ -223,12 +270,7 @@ class PropertiesService extends GetxService {
       );
 
       if (response.statusCode == 200) {
-        final responseData = response.body;
-        final List<dynamic> data = responseData is Map<String, dynamic> 
-            ? responseData['properties'] ?? []
-            : responseData is List ? responseData : [];
-        
-        return data.map((json) => Property.fromJson(json)).toList();
+        return _parsePropertiesList(response.body, 'getRecommendedProperties');
       } else {
         throw Exception('Failed to load recommendations');
       }

@@ -34,16 +34,12 @@ class SplashController extends GetxController {
           .timeout(const Duration(seconds: 5));
       AppLogger.info('StorageService initialized.');
 
-      // 2) ApiService (critical) with timeout guard
-      final apiService = await Get
-          .putAsync(() => ApiService().init(), permanent: true)
-          .timeout(const Duration(seconds: 12), onTimeout: () {
-        AppLogger.warning('ApiService initialization timed out. Continuing in limited mode.');
-        if (!Get.isRegistered<ApiService>()) {
-          return Get.put(ApiService(), permanent: true);
-        }
-        return Get.find<ApiService>();
-      });
+      // 2) ApiService (critical) — register eagerly; let onInit run once
+      // Avoid calling a custom init that re-calls onInit (which caused LateInitializationError)
+      Get.put<ApiService>(ApiService(), permanent: true);
+      // Allow a brief tick for onInit to schedule
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final apiService = ApiService.instance;
       AppLogger.info('ApiService initialized.');
 
       // 3) Non-critical services: kick off in parallel, do not await

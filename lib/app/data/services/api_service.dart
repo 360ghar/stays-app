@@ -156,6 +156,7 @@ class SearchCenter {
 class ApiService extends getx.GetConnect {
   static ApiService get instance => getx.Get.find<ApiService>();
   
+  bool _isInitialized = false;
   late final String _baseUrl;
   SupabaseClient? _supabase;
 
@@ -211,6 +212,10 @@ class ApiService extends getx.GetConnect {
   }
 
   Future<void> _initializeService() async {
+    if (_isInitialized) {
+      DebugLogger.startup('API Service already initialized.');
+      return;
+    }
     try {
       // Initialize environment variables - use root URL for GetConnect
       final fullApiUrl = dotenv.env['API_BASE_URL'] ?? 'https://360ghar.up.railway.app';
@@ -251,6 +256,7 @@ class ApiService extends getx.GetConnect {
       DebugLogger.warning('API service will work in limited mode without Supabase');
       return; // Exit early if Supabase failed to initialize
     }
+    _isInitialized = true;
     
     // Listen to auth state changes with proper cleanup
     try {
@@ -1352,7 +1358,7 @@ class ApiService extends getx.GetConnect {
 
   /// Initialize the ApiService - required for dependency injection
   Future<ApiService> init() async {
-    await onInit();
+    // Avoid calling onInit() directly; GetX lifecycle will handle it.
     return this;
   }
 

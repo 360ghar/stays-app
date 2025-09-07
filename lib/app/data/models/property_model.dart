@@ -83,6 +83,7 @@ class Property {
   final String? builderName;
   
   // Images and media
+  @JsonKey(fromJson: _imagesFromJson)
   final List<PropertyImage>? images;
   @JsonKey(name: 'main_image_url')
   final String? coverImage;
@@ -91,8 +92,11 @@ class Property {
   final bool? has360View;
   
   // Features and amenities
+  @JsonKey(fromJson: _stringListFromJson)
   final List<String>? features;
+  @JsonKey(fromJson: _stringListFromJson)
   final List<String>? amenities;
+  @JsonKey(fromJson: _stringListFromJson)
   final List<String>? tags;
   
   // Availability
@@ -183,6 +187,31 @@ class Property {
 
   factory Property.fromJson(Map<String, dynamic> json) => _$PropertyFromJson(json);
   Map<String, dynamic> toJson() => _$PropertyToJson(this);
+
+  // Safe converters to handle non-list values gracefully
+  static List<PropertyImage>? _imagesFromJson(dynamic value) {
+    try {
+      if (value is List) {
+        return value
+            .whereType<Map>()
+            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  static List<String>? _stringListFromJson(dynamic value) {
+    try {
+      if (value is List) {
+        return value.map((e) => e?.toString()).whereType<String>().toList();
+      }
+      if (value is String && value.isNotEmpty) {
+        return [value];
+      }
+    } catch (_) {}
+    return null;
+  }
 
   // Helper methods
   String get displayImage {

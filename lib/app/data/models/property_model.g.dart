@@ -48,19 +48,13 @@ Property _$PropertyFromJson(Map<String, dynamic> json) => Property(
   ownerName: json['owner_name'] as String?,
   ownerContact: json['owner_contact'] as String?,
   builderName: json['builder_name'] as String?,
-  images: (json['images'] as List<dynamic>?)
-      ?.map((e) => PropertyImage.fromJson(e as Map<String, dynamic>))
-      .toList(),
+  images: Property._imagesFromJson(json['images']),
   coverImage: json['main_image_url'] as String?,
   virtualTourUrl: json['virtual_tour_url'] as String?,
   has360View: json['has360View'] as bool?,
-  features: (json['features'] as List<dynamic>?)
-      ?.map((e) => e as String)
-      .toList(),
-  amenities: (json['amenities'] as List<dynamic>?)
-      ?.map((e) => e as String)
-      .toList(),
-  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  features: Property._stringListFromJson(json['features']),
+  amenities: Property._stringListFromJson(json['amenities']),
+  tags: Property._stringListFromJson(json['tags']),
   available: json['is_available'] as bool?,
   availableFrom: json['available_from'] == null
       ? null
