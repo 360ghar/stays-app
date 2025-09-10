@@ -14,28 +14,16 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
-  
-  bool _isPasswordVisible = false;
-  bool _isLoginMode = true;
-  String _emailError = '';
-  String _passwordError = '';
-  bool _isLoading = false;
-  
+  final RxBool _isPasswordVisible = false.obs;
+  final RxBool _isLoginMode = true.obs;
+  final RxString _emailError = ''.obs;
+  final RxString _passwordError = ''.obs;
   late final AuthController authController;
 
   @override
   void initState() {
     super.initState();
     authController = Get.find<AuthController>();
-    
-    // Listen to auth controller loading state
-    ever(authController.isLoading, (loading) {
-      if (mounted) {
-        setState(() {
-          _isLoading = loading;
-        });
-      }
-    });
   }
 
   @override
@@ -49,19 +37,20 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
-          _isLoginMode ? 'Log in or Sign up' : 'Create Account',
+        title: Obx(() => Text(
+          _isLoginMode.value ? 'Log in or Sign up' : 'Create Account',
           style: const TextStyle(
             color: Colors.black87,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
-        ),
+        )),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
@@ -78,24 +67,24 @@ class _LoginViewState extends State<LoginView> {
                       const SizedBox(height: 32),
                       
                       // Welcome Text
-                      Text(
-                        _isLoginMode ? 'Welcome back' : 'Create your account',
+                      Obx(() => Text(
+                        _isLoginMode.value ? 'Welcome back' : 'Create your account',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
-                      ),
+                      )),
                       const SizedBox(height: 8),
-                      Text(
-                        _isLoginMode 
+                      Obx(() => Text(
+                        _isLoginMode.value 
                           ? 'Sign in to your account to continue'
                           : 'Join us and start your journey',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
                         ),
-                      ),
+                      )),
                       
                       const SizedBox(height: 40),
                       
@@ -103,78 +92,62 @@ class _LoginViewState extends State<LoginView> {
                       _buildInputField(
                         controller: _emailController,
                         focusNode: _emailFocusNode,
+                        error: _emailError,
                         label: 'Email',
                         hint: 'Enter your email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        error: _emailError,
-                        onChanged: (value) {
-                          if (_emailError.isNotEmpty) {
-                            setState(() {
-                              _emailError = '';
-                            });
-                          }
-                        },
                       ),
                       
                       const SizedBox(height: 20),
                       
                       // Password Input
-                      _buildPasswordField(
+                      Obx(() => _buildPasswordField(
                         controller: _passwordController,
                         focusNode: _passwordFocusNode,
                         label: 'Password',
                         hint: 'Enter your password',
-                        isVisible: _isPasswordVisible,
-                        onToggleVisibility: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
-                        },
+                        isVisible: _isPasswordVisible.value,
+                        onToggleVisibility: () => _isPasswordVisible.toggle(),
                         error: _passwordError,
-                        onChanged: (value) {
-                          if (_passwordError.isNotEmpty) {
-                            setState(() {
-                              _passwordError = '';
-                            });
-                          }
-                        },
-                      ),
+                      )),
                       
                       const SizedBox(height: 12),
                       
                       // Forgot Password
-                      if (_isLoginMode)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Get.snackbar(
-                                'Feature Coming Soon',
-                                'Password reset feature will be available soon.',
-                                backgroundColor: Colors.blue[50],
-                                colorText: Colors.blue[800],
-                                snackPosition: SnackPosition.TOP,
-                              );
-                            },
-                            child: Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                color: Colors.blue[700],
-                                fontWeight: FontWeight.w500,
+                      Obx(() => _isLoginMode.value
+                        ? Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                Get.snackbar(
+                                  'Feature Coming Soon',
+                                  'Password reset feature will be available soon.',
+                                  backgroundColor: Colors.blue[50],
+                                  colorText: Colors.blue[800],
+                                  snackPosition: SnackPosition.TOP,
+                                );
+                              },
+                              child: Text(
+                                'Forgot password?',
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                        ),
+                          )
+                        : const SizedBox.shrink(),
+                      ),
                       
                       const SizedBox(height: 24),
                       
                       // Login/Signup Button
-                      _buildPrimaryButton(
-                        text: _isLoginMode ? 'Sign in' : 'Create account',
-                        isLoading: _isLoading,
+                      Obx(() => _buildPrimaryButton(
+                        text: _isLoginMode.value ? 'Sign in' : 'Create account',
+                        isLoading: authController.isLoading.value,
                         onPressed: _handleSubmit,
-                      ),
+                      )),
                       
                       const SizedBox(height: 24),
                       
@@ -240,37 +213,30 @@ class _LoginViewState extends State<LoginView> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      _isLoginMode
+                    Obx(() => Text(
+                      _isLoginMode.value
                         ? "Don't have an account? "
                         : "Already have an account? ",
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 16,
                       ),
-                    ),
+                    )),
                     TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _isLoginMode = !_isLoginMode;
-                          // Clear errors when switching modes
-                          _emailError = '';
-                          _passwordError = '';
-                        });
-                      },
+                      onPressed: () => _isLoginMode.toggle(),
                       style: TextButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      child: Text(
-                        _isLoginMode ? 'Sign up' : 'Sign in',
+                      child: Obx(() => Text(
+                        _isLoginMode.value ? 'Sign up' : 'Sign in',
                         style: TextStyle(
                           color: Colors.blue[700],
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
-                      ),
+                      )),
                     ),
                   ],
                 ),
@@ -287,10 +253,8 @@ class _LoginViewState extends State<LoginView> {
     FocusScope.of(context).unfocus();
     
     // Clear previous errors
-    setState(() {
-      _emailError = '';
-      _passwordError = '';
-    });
+    _emailError.value = '';
+    _passwordError.value = '';
     
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -299,33 +263,25 @@ class _LoginViewState extends State<LoginView> {
     
     // Validate email
     if (email.isEmpty) {
-      setState(() {
-        _emailError = 'Email is required';
-      });
+      _emailError.value = 'Email is required';
       hasError = true;
     } else if (!GetUtils.isEmail(email)) {
-      setState(() {
-        _emailError = 'Please enter a valid email';
-      });
+      _emailError.value = 'Please enter a valid email';
       hasError = true;
     }
     
     // Validate password
     if (password.isEmpty) {
-      setState(() {
-        _passwordError = 'Password is required';
-      });
+      _passwordError.value = 'Password is required';
       hasError = true;
     } else if (password.length < 6) {
-      setState(() {
-        _passwordError = 'Password must be at least 6 characters';
-      });
+      _passwordError.value = 'Password must be at least 6 characters';
       hasError = true;
     }
     
     if (hasError) return;
     
-    if (_isLoginMode) {
+    if (_isLoginMode.value) {
       authController.login(email: email, password: password);
     } else {
       Get.snackbar(
@@ -344,8 +300,7 @@ class _LoginViewState extends State<LoginView> {
     required String label,
     required String hint,
     required IconData icon,
-    required String error,
-    required Function(String) onChanged,
+    required RxString error,
     TextInputType? keyboardType,
   }) {
     return Column(
@@ -365,8 +320,8 @@ class _LoginViewState extends State<LoginView> {
             color: Colors.grey[50],
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: error.isEmpty ? Colors.grey[200]! : Colors.red,
-              width: error.isEmpty ? 1 : 2,
+              color: Colors.grey[200]!,
+              width: 1,
             ),
           ),
           child: TextField(
@@ -374,7 +329,11 @@ class _LoginViewState extends State<LoginView> {
             focusNode: focusNode,
             keyboardType: keyboardType,
             style: const TextStyle(fontSize: 16, color: Colors.black),
-            onChanged: onChanged,
+            onChanged: (_) {
+              if (error.value.isNotEmpty) {
+                error.value = '';
+              }
+            },
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(color: Colors.grey[500]),
@@ -387,17 +346,19 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
         ),
-        if (error.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              error,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
-            ),
-          ),
+        Obx(() => error.value.isEmpty
+            ? const SizedBox(height: 4)
+            : Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  error.value,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+              )
+        ),
       ],
     );
   }
@@ -409,8 +370,7 @@ class _LoginViewState extends State<LoginView> {
     required String hint,
     required bool isVisible,
     required VoidCallback onToggleVisibility,
-    required String error,
-    required Function(String) onChanged,
+    required RxString error,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -429,8 +389,8 @@ class _LoginViewState extends State<LoginView> {
             color: Colors.grey[50],
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: error.isEmpty ? Colors.grey[200]! : Colors.red,
-              width: error.isEmpty ? 1 : 2,
+              color: Colors.grey[200]!,
+              width: 1,
             ),
           ),
           child: TextField(
@@ -438,7 +398,11 @@ class _LoginViewState extends State<LoginView> {
             focusNode: focusNode,
             obscureText: !isVisible,
             style: const TextStyle(fontSize: 16, color: Colors.black),
-            onChanged: onChanged,
+            onChanged: (_) {
+              if (error.value.isNotEmpty) {
+                error.value = '';
+              }
+            },
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(color: Colors.grey[500]),
@@ -458,17 +422,19 @@ class _LoginViewState extends State<LoginView> {
             ),
           ),
         ),
-        if (error.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              error,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
-            ),
-          ),
+        Obx(() => error.value.isEmpty
+            ? const SizedBox(height: 4)
+            : Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  error.value,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+              )
+        ),
       ],
     );
   }

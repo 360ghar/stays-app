@@ -6,6 +6,7 @@ import '../../data/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/logger/app_logger.dart';
+import '../../utils/exceptions/app_exceptions.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
@@ -19,36 +20,39 @@ class AuthController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxBool isAuthenticated = false.obs;
   final RxBool isPasswordVisible = false.obs;
-  
+
   // Form validation observables
-  final RxString phoneError = ''.obs;
+  final RxString emailOrPhoneError = ''.obs;
   final RxString passwordError = ''.obs;
   final RxString confirmPasswordError = ''.obs;
+
+  // Backwards-compat alias used by phone-based views
+  RxString get phoneError => emailOrPhoneError;
 
   @override
   void onInit() {
     super.onInit();
     _checkAuthStatus();
   }
+  
+  @override
+  void onReady() {
+    super.onReady();
+    _loadSavedUser();
+  }
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  String? validatePhone(String? phone) {
-    if (phone == null || phone.isEmpty) {
-      return 'Phone number is required';
-    }
-    if (phone.length != 10) {
-      return 'Please enter a valid 10-digit phone number';
-    }
-    if (!RegExp(r'^[0-9]+$').hasMatch(phone)) {
-      return 'Phone number should contain only digits';
+  String? _validateEmailOrPhone(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Email or phone is required';
     }
     return null;
   }
 
-  String? validatePassword(String? password) {
+  String? _validatePassword(String? password) {
     if (password == null || password.isEmpty) {
       return 'Password is required';
     }
@@ -58,7 +62,7 @@ class AuthController extends GetxController {
     return null;
   }
 
-  String? validateConfirmPassword(String? password, String? confirmPassword) {
+  String? _validateConfirmPassword(String? password, String? confirmPassword) {
     if (confirmPassword == null || confirmPassword.isEmpty) {
       return 'Please confirm your password';
     }
@@ -70,187 +74,263 @@ class AuthController extends GetxController {
 
   Future<void> _checkAuthStatus() async {
     try {
-      final token = await _storageService.getAccessToken();
-      if (token != null) {
-        // In a real app, fetch profile
-        isAuthenticated.value = true;
-      }
+      final isAuth = await _authRepository.isAuthenticated();
+      isAuthenticated.value = isAuth;
+      AppLogger.info(isAuth ? 'User is authenticated' : 'No token found. Navigating to login.');
     } catch (e) {
       AppLogger.error('Auth check failed', e);
+      isAuthenticated.value = false;
+    }
+  }
+  
+  Future<void> _loadSavedUser() async {
+    try {
+      final user = await _authRepository.getCurrentUser();
+      if (user != null) {
+        currentUser.value = user;
+        AppLogger.info('Loaded saved user: ${user.email ?? user.phone}');
+      }
+    } catch (e) {
+      AppLogger.error('Failed to load saved user', e);
     }
   }
 
-  Future<void> loginWithPhone({required String phone, required String password}) async {
+  // Login with email or phone
+  Future<void> login({required String email, required String password}) async {
     try {
       isLoading.value = true;
-      
-      // Clear previous errors
-      phoneError.value = '';
+
+      emailOrPhoneError.value = '';
       passwordError.value = '';
-      
-      // Validate inputs
-      final phoneValidation = validatePhone(phone);
-      final passwordValidation = validatePassword(password);
-      
-      if (phoneValidation != null) {
-        phoneError.value = phoneValidation;
+
+      final emailValidation = _validateEmailOrPhone(email);
+      final passwordValidation = _validatePassword(password);
+      if (emailValidation != null) {
+        emailOrPhoneError.value = emailValidation;
         return;
       }
-      
       if (passwordValidation != null) {
         passwordError.value = passwordValidation;
         return;
       }
-      
-      // Dummy authentication with phone
-      const String validPhone = '9876543210';
-      const String validPassword = 'ravi123';
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 1500));
-      
-      if (phone == validPhone && password == validPassword) {
-        // Mock user data
-        final mockUser = UserModel(
-          id: '1',
-          email: 'user@example.com',
-          firstName: 'Ravi',
-          lastName: 'Sahu',
-        );
-        
-        // Save mock tokens
-        await _storageService.saveTokens(
-          accessToken: 'mock_access_token_123',
-          refreshToken: 'mock_refresh_token_456',
-        );
-        
-        currentUser.value = mockUser;
-        isAuthenticated.value = true;
-        
-        _showSuccessSnackbar(
-          title: 'Welcome Back!',
-          message: 'Hello ${mockUser.firstName}, great to see you again!',
-        );
-        
-        Get.offAllNamed(Routes.home);
+
+      UserModel user;
+      // Check if input is email or phone
+      if (GetUtils.isEmail(email)) {
+        user = await _authRepository.loginWithEmail(email: email, password: password);
       } else {
-        _showErrorSnackbar(
-          title: 'Login Failed',
-          message: 'Invalid phone number or password. Please check and try again.',
-        );
+        user = await _authRepository.loginWithPhone(phone: email, password: password);
       }
-    } catch (e) {
-      _showErrorSnackbar(
-        title: 'Error',
-        message: 'An error occurred. Please try again.',
+      
+      currentUser.value = user;
+      isAuthenticated.value = true;
+
+      final displayName = user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
+      _showSuccessSnackbar(
+        title: 'Welcome Back!',
+        message: 'Hello $displayName',
       );
+      
+      // Navigate to home
+      await Get.offAllNamed(Routes.home);
+    } on ApiException catch (e) {
+      AppLogger.error('Login failed: ${e.message}', e);
+      _handleApiError('Login Failed', e);
+    } catch (e) {
+      AppLogger.error('Login error', e);
+      _showErrorSnackbar(title: 'Login Failed', message: 'An unexpected error occurred. Please try again.');
     } finally {
       isLoading.value = false;
     }
   }
 
+  // Phone-based login (if backend supports phone on same endpoint)
+  Future<void> loginWithPhone({required String phone, required String password}) async {
+    AppLogger.info('Attempting to log in with phone: $phone');
+    try {
+      isLoading.value = true;
+
+      // --- Validation logic ---
+      emailOrPhoneError.value = '';
+      passwordError.value = '';
+      final phoneValidation = _validateEmailOrPhone(phone);
+      final passwordValidation = _validatePassword(password);
+      if (phoneValidation != null) {
+        emailOrPhoneError.value = phoneValidation;
+        isLoading.value = false; // Stop loading on validation fail
+        return;
+      }
+      if (passwordValidation != null) {
+        passwordError.value = passwordValidation;
+        isLoading.value = false; // Stop loading on validation fail
+        return;
+      }
+      // --- End of validation ---
+
+      final user = await _authRepository.loginWithPhone(phone: phone, password: password);
+      currentUser.value = user;
+      isAuthenticated.value = true;
+      
+      AppLogger.info('✅ Login successful for user: ${user.name ?? user.firstName ?? user.phone}');
+
+      _showSuccessSnackbar(
+        title: 'Welcome Back!',
+        message: 'Hello ${user.name ?? user.firstName ?? user.phone}',
+      );
+      Get.offAllNamed(Routes.home);
+
+    } catch (e, stackTrace) {
+      // Corrected logging for AppLogger
+      AppLogger.error('LOGIN FAILED!', e, stackTrace);
+
+      // Show the actual error message from the server
+      String errorMessage = e.toString();
+      if (e is ApiException) {
+        errorMessage = e.message; // Use the specific message from your custom exception
+      }
+      
+      _showErrorSnackbar(title: 'Login Failed', message: errorMessage);
+
+    } finally {
+      AppLogger.info('Login process finished. Setting isLoading to false.');
+      isLoading.value = false;
+    }
+  }
+
+  // Backwards-compat: legacy phone signup path triggers OTP screen.
+  // If your backend supports phone-based signup, implement it in AuthProvider
+  // and call the repository here. For now, surface a clear message.
   Future<bool> registerWithPhone({required String phone, required String password}) async {
     try {
       isLoading.value = true;
-      
-      // Clear previous errors
-      phoneError.value = '';
-      passwordError.value = '';
-      
-      // Validate inputs
-      final phoneValidation = validatePhone(phone);
-      final passwordValidation = validatePassword(password);
-      
+      final phoneValidation = _validateEmailOrPhone(phone);
+      final passwordValidation = _validatePassword(password);
       if (phoneValidation != null) {
-        phoneError.value = phoneValidation;
+        emailOrPhoneError.value = phoneValidation;
         return false;
       }
-      
       if (passwordValidation != null) {
         passwordError.value = passwordValidation;
         return false;
       }
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      return true; // Success, will proceed to OTP
-    } catch (e) {
-      _showErrorSnackbar(
-        title: 'Error',
-        message: 'Registration failed. Please try again.',
-      );
+      // Optional: attempt direct login if account already exists
+      await loginWithPhone(phone: phone, password: password);
+      return true;
+    } on ApiException catch (e) {
+      _showErrorSnackbar(title: 'Signup Failed', message: e.message);
+      return false;
+    } catch (_) {
+      _showErrorSnackbar(title: 'Signup Failed', message: 'Phone-based signup not supported.');
       return false;
     } finally {
       isLoading.value = false;
     }
   }
 
+  // Backwards-compat: the current UI triggers an OTP flow for forgot password.
+  // Provide a graceful error until a backend endpoint is available.
   Future<bool> sendForgotPasswordOTP(String phone) async {
-    try {
-      isLoading.value = true;
-      
-      // Clear previous errors
-      phoneError.value = '';
-      
-      // Validate phone
-      final phoneValidation = validatePhone(phone);
-      if (phoneValidation != null) {
-        phoneError.value = phoneValidation;
-        return false;
-      }
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      return true; // Success, OTP sent
-    } catch (e) {
-      _showErrorSnackbar(
-        title: 'Error',
-        message: 'Failed to send OTP. Please try again.',
-      );
+    final validation = _validateEmailOrPhone(phone);
+    if (validation != null) {
+      emailOrPhoneError.value = validation;
       return false;
-    } finally {
-      isLoading.value = false;
     }
+    _showErrorSnackbar(title: 'Not Supported', message: 'Forgot password via phone OTP is not supported.');
+    return false;
   }
 
+  // Backwards-compat stub, replace with real backend call when available
   Future<void> resetPassword({required String newPassword, required String confirmPassword}) async {
+    final passwordValidation = _validatePassword(newPassword);
+    final confirmValidation = _validateConfirmPassword(newPassword, confirmPassword);
+    if (passwordValidation != null) {
+      passwordError.value = passwordValidation;
+      return;
+    }
+    if (confirmValidation != null) {
+      confirmPasswordError.value = confirmValidation;
+      return;
+    }
+    _showErrorSnackbar(title: 'Not Supported', message: 'Password reset via OTP is not supported.');
+  }
+
+  Future<void> logout() async {
     try {
       isLoading.value = true;
-      
-      // Clear previous errors
-      passwordError.value = '';
-      confirmPasswordError.value = '';
-      
-      // Validate passwords
-      final passwordValidation = validatePassword(newPassword);
-      final confirmPasswordValidation = validateConfirmPassword(newPassword, confirmPassword);
-      
-      if (passwordValidation != null) {
-        passwordError.value = passwordValidation;
-        return;
-      }
-      
-      if (confirmPasswordValidation != null) {
-        confirmPasswordError.value = confirmPasswordValidation;
-        return;
-      }
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 800));
+      await _authRepository.logout();
+      currentUser.value = null;
+      isAuthenticated.value = false;
       
       _showSuccessSnackbar(
-        title: 'Success',
-        message: 'Password reset successful!',
+        title: 'Logged Out',
+        message: 'You have been successfully logged out.',
       );
       
-      Get.offAllNamed(Routes.login);
+      await Get.offAllNamed(Routes.login);
     } catch (e) {
-      _showErrorSnackbar(
-        title: 'Error',
-        message: 'Failed to reset password. Please try again.',
+      AppLogger.error('Logout failed', e);
+      _showErrorSnackbar(title: 'Logout Failed', message: 'Failed to logout properly.');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> register({
+    String? name,
+    String? firstName,
+    String? lastName,
+    required String email,
+    required String password,
+    String? confirmPassword,
+  }) async {
+    try {
+      isLoading.value = true;
+
+      emailOrPhoneError.value = '';
+      passwordError.value = '';
+      confirmPasswordError.value = '';
+
+      final emailValidation = _validateEmailOrPhone(email);
+      final passwordValidation = _validatePassword(password);
+      final confirmValidation = _validateConfirmPassword(password, confirmPassword ?? password);
+      if (emailValidation != null) {
+        emailOrPhoneError.value = emailValidation;
+        return;
+      }
+      if (passwordValidation != null) {
+        passwordError.value = passwordValidation;
+        return;
+      }
+      if (confirmValidation != null) {
+        confirmPasswordError.value = confirmValidation;
+        return;
+      }
+
+      // Build a sensible full name for backend
+      final computedName = () {
+        if (name != null && name!.trim().isNotEmpty) return name!.trim();
+        final parts = <String>[];
+        if ((firstName ?? '').trim().isNotEmpty) parts.add(firstName!.trim());
+        if ((lastName ?? '').trim().isNotEmpty) parts.add(lastName!.trim());
+        if (parts.isNotEmpty) return parts.join(' ');
+        // Fallback: use email username
+        final at = email.indexOf('@');
+        return at > 0 ? email.substring(0, at) : email;
+      }();
+
+      final user = await _authRepository.register(name: computedName, email: email, password: password);
+      currentUser.value = user;
+      isAuthenticated.value = true;
+
+      _showSuccessSnackbar(
+        title: 'Welcome!',
+        message: 'Account created, logged in as ${user.firstName ?? user.email}',
       );
+      Get.offAllNamed(Routes.home);
+    } on ApiException catch (e) {
+      _showErrorSnackbar(title: 'Registration Failed', message: e.message);
+    } catch (e) {
+      _showErrorSnackbar(title: 'Error', message: 'An error occurred. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -296,6 +376,30 @@ class AuthController extends GetxController {
     );
   }
 
+  void _handleApiError(String title, ApiException e) {
+    String message;
+    switch (e.statusCode) {
+      case 401:
+        message = 'Invalid credentials. Please check your email/phone and password.';
+        break;
+      case 404:
+        message = 'Account not found. Please check your credentials or sign up.';
+        break;
+      case 422:
+        message = 'Invalid input. Please check your information and try again.';
+        break;
+      case 429:
+        message = 'Too many attempts. Please try again later.';
+        break;
+      case 500:
+        message = 'Server error. Please try again later.';
+        break;
+      default:
+        message = e.message.isNotEmpty ? e.message : 'An error occurred. Please try again.';
+    }
+    _showErrorSnackbar(title: title, message: message);
+  }
+  
   void _showErrorSnackbar({required String title, required String message}) {
     Get.snackbar(
       '',
@@ -318,7 +422,7 @@ class AuthController extends GetxController {
       backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.9),
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
       animationDuration: const Duration(milliseconds: 500),
       snackPosition: SnackPosition.TOP,
       icon: Container(
@@ -334,98 +438,5 @@ class AuthController extends GetxController {
         ),
       ),
     );
-  }
-
-  Future<void> login({required String email, required String password}) async {
-    try {
-      isLoading.value = true;
-      
-      // Dummy authentication
-      const String validEmail = 'ravisahu@gmail.com';
-      const String validPassword = 'ravi123';
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 1500));
-      
-      if (email.toLowerCase() == validEmail && password == validPassword) {
-        // Mock user data
-        final mockUser = UserModel(
-          id: '1',
-          email: email,
-          firstName: 'Ravi',
-          lastName: 'Sahu',
-        );
-        
-        // Save mock tokens
-        await _storageService.saveTokens(
-          accessToken: 'mock_access_token_123',
-          refreshToken: 'mock_refresh_token_456',
-        );
-        
-        currentUser.value = mockUser;
-        isAuthenticated.value = true;
-        
-        _showSuccessSnackbar(
-          title: 'Welcome Back!',
-          message: 'Hello ${mockUser.firstName}, great to see you again!',
-        );
-        
-        Get.offAllNamed(Routes.home);
-      } else {
-        _showErrorSnackbar(
-          title: 'Login Failed',
-          message: 'Invalid email or password. Please check and try again.',
-        );
-      }
-    } catch (e) {
-      _showErrorSnackbar(
-        title: 'Error',
-        message: 'An error occurred. Please try again.',
-      );
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> logout() async {
-    try {
-      await _authRepository.logout(_storageService);
-      await _storageService.clearTokens();
-      currentUser.value = null;
-      isAuthenticated.value = false;
-      Get.offAllNamed(Routes.login);
-    } catch (e) {
-      AppLogger.error('Logout failed', e);
-    }
-  }
-
-  Future<void> register({
-    required String firstName,
-    required String lastName,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      isLoading.value = true;
-      await Future.delayed(const Duration(milliseconds: 800));
-      Get.snackbar('Success', 'Account created. Please login.');
-      Get.offAllNamed(Routes.login);
-    } catch (e) {
-      Get.snackbar('Error', 'Registration failed');
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> forgotPassword(String email) async {
-    try {
-      isLoading.value = true;
-      await Future.delayed(const Duration(milliseconds: 800));
-      Get.snackbar('Email sent', 'Check your inbox for reset link');
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to send reset link');
-    } finally {
-      isLoading.value = false;
-    }
   }
 }

@@ -13,7 +13,7 @@ class ProfileController extends GetxController {
   final RxString userInitials = ''.obs;
   final RxString userName = 'Guest User'.obs;
   final RxString userType = 'Guest'.obs;
-  final RxString userEmail = ''.obs;
+  final RxString userPhone = ''.obs;
   
   late final PhoneAuthController _authController;
 
@@ -38,7 +38,7 @@ class ProfileController extends GetxController {
         userName.value = 'Guest User';
         userInitials.value = 'GU';
         userType.value = 'Guest';
-        userEmail.value = '';
+        userPhone.value = '';
       }
       
       // Load past trips
@@ -63,11 +63,11 @@ class ProfileController extends GetxController {
       userName.value = '$firstName $lastName'.trim();
       userInitials.value = _generateInitials(firstName, lastName);
     } else {
-      userName.value = user.email.split('@').first;
+      userName.value = user.phone ?? 'User';
       userInitials.value = userName.value.substring(0, 1).toUpperCase();
     }
     
-    userEmail.value = user.email;
+    userPhone.value = user.phone ?? '';
     userType.value = user.isSuperHost ? 'Superhost' : 'Guest';
   }
 
@@ -79,8 +79,8 @@ class ProfileController extends GetxController {
     if (lastName.isNotEmpty) {
       initials += lastName[0].toUpperCase();
     }
-    if (initials.isEmpty && userEmail.value.isNotEmpty) {
-      initials = userEmail.value[0].toUpperCase();
+    if (initials.isEmpty && userPhone.value.isNotEmpty) {
+      initials = userPhone.value[0].toUpperCase();
     }
     return initials;
   }
@@ -167,7 +167,7 @@ class ProfileController extends GetxController {
       userInitials.value = '';
       userName.value = 'Guest User';
       userType.value = 'Guest';
-      userEmail.value = '';
+      userPhone.value = '';
       
       // Call auth controller logout
       await _authController.logout();
