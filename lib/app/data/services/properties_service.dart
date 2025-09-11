@@ -27,19 +27,38 @@ class PropertiesService extends GetxService {
       List<dynamic> items = [];
       
       if (responseBody is Map<String, dynamic>) {
-        // Try nested data.properties first
-        final data = responseBody['data'];
-        if (data is Map<String, dynamic>) {
-          final props = data['properties'];
-          if (props is List) {
-            items = props;
-          } else if (props != null) {
-            AppLogger.warning('Expected List for data.properties in $context, got ${props.runtimeType}: $props');
-            return [];
+        // 1) Common paginated shape: { count, next, previous, results: [...] }
+        final results = responseBody['results'];
+        if (results is List) {
+          items = results;
+        }
+
+        // 2) Nested data.results
+        if (items.isEmpty) {
+          final data = responseBody['data'];
+          if (data is Map<String, dynamic>) {
+            final dataResults = data['results'];
+            if (dataResults is List) {
+              items = dataResults;
+            }
+
+            // 3) Nested data.properties
+            if (items.isEmpty) {
+              final props = data['properties'];
+              if (props is List) {
+                items = props;
+              } else if (props != null) {
+                AppLogger.warning('Expected List for data.properties in $context, got ${props.runtimeType}: $props');
+                return [];
+              }
+            }
+          } else if (data is List) {
+            // 2b) data is directly a list
+            items = data;
           }
         }
-        
-        // Try direct properties if no nested data
+
+        // 4) Direct properties at root
         if (items.isEmpty) {
           final props = responseBody['properties'];
           if (props is List) {
@@ -91,14 +110,17 @@ class PropertiesService extends GetxService {
     int? limit,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'purpose': 'short_stay' // Hardcoded as per app requirement
+      final queryParams = <String, String>{
+        'purpose': 'short_stay', // Hardcoded as per app requirement
       };
-      
-      if (location != null) queryParams['location'] = location;
-      if (propertyType != null) queryParams['propertyType'] = propertyType;
-      if (page != null) queryParams['page'] = page;
-      if (limit != null) queryParams['limit'] = limit;
+      if (location != null && location.trim().isNotEmpty) {
+        queryParams['location'] = location;
+      }
+      if (propertyType != null && propertyType.trim().isNotEmpty) {
+        queryParams['propertyType'] = propertyType;
+      }
+      if (page != null) queryParams['page'] = page.toString();
+      if (limit != null) queryParams['limit'] = limit.toString();
 
       final response = await _apiService.get(
         '/properties',
@@ -124,15 +146,20 @@ class PropertiesService extends GetxService {
     int? limit,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-      
-      if (propertyType != null) queryParams['propertyType'] = propertyType;
-      if (city != null) queryParams['city'] = city;
-      if (country != null) queryParams['country'] = country;
-      if (minPrice != null) queryParams['minPrice'] = minPrice;
-      if (maxPrice != null) queryParams['maxPrice'] = maxPrice;
-      if (page != null) queryParams['page'] = page;
-      if (limit != null) queryParams['limit'] = limit;
+      final queryParams = <String, String>{};
+      if (propertyType != null && propertyType.trim().isNotEmpty) {
+        queryParams['propertyType'] = propertyType;
+      }
+      if (city != null && city.trim().isNotEmpty) {
+        queryParams['city'] = city;
+      }
+      if (country != null && country.trim().isNotEmpty) {
+        queryParams['country'] = country;
+      }
+      if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
+      if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
+      if (page != null) queryParams['page'] = page.toString();
+      if (limit != null) queryParams['limit'] = limit.toString();
 
       final response = await _apiService.get(
         '/properties',
@@ -191,17 +218,18 @@ class PropertiesService extends GetxService {
     double? minRating,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
+      final queryParams = <String, String>{
         'search': query,
       };
-      
-      if (propertyType != null) queryParams['propertyType'] = propertyType;
-      if (minPrice != null) queryParams['minPrice'] = minPrice;
-      if (maxPrice != null) queryParams['maxPrice'] = maxPrice;
+      if (propertyType != null && propertyType.trim().isNotEmpty) {
+        queryParams['propertyType'] = propertyType;
+      }
+      if (minPrice != null) queryParams['minPrice'] = minPrice.toString();
+      if (maxPrice != null) queryParams['maxPrice'] = maxPrice.toString();
       if (amenities != null && amenities.isNotEmpty) {
         queryParams['amenities'] = amenities.join(',');
       }
-      if (minRating != null) queryParams['minRating'] = minRating;
+      if (minRating != null) queryParams['minRating'] = minRating.toString();
 
       final response = await _apiService.get(
         '/listings/search',
@@ -228,14 +256,15 @@ class PropertiesService extends GetxService {
     int? limit,
   }) async {
     try {
-      final queryParams = <String, dynamic>{
-        'lat': latitude,
-        'lng': longitude,
-        'radius': radiusKm,
+      final queryParams = <String, String>{
+        'lat': latitude.toString(),
+        'lng': longitude.toString(),
+        'radius': radiusKm.toString(),
       };
-      
-      if (propertyType != null) queryParams['propertyType'] = propertyType;
-      if (limit != null) queryParams['limit'] = limit;
+      if (propertyType != null && propertyType.trim().isNotEmpty) {
+        queryParams['propertyType'] = propertyType;
+      }
+      if (limit != null) queryParams['limit'] = limit.toString();
 
       final response = await _apiService.get(
         '/listings/nearby',
@@ -259,10 +288,11 @@ class PropertiesService extends GetxService {
     int? limit,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-      
-      if (userId != null) queryParams['userId'] = userId;
-      if (limit != null) queryParams['limit'] = limit;
+      final queryParams = <String, String>{};
+      if (userId != null && userId.trim().isNotEmpty) {
+        queryParams['userId'] = userId;
+      }
+      if (limit != null) queryParams['limit'] = limit.toString();
 
       final response = await _apiService.get(
         '/listings/recommended',

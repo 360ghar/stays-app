@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/repositories/auth_repository.dart';
-import '../../data/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../data/services/api_service.dart' as api_service show ApiService;
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
-  final StorageService _storageService;
 
-  AuthController({required AuthRepository authRepository, required StorageService storageService})
-      : _authRepository = authRepository,
-        _storageService = storageService;
+  AuthController({required AuthRepository authRepository})
+      : _authRepository = authRepository;
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
@@ -74,9 +72,17 @@ class AuthController extends GetxController {
 
   Future<void> _checkAuthStatus() async {
     try {
-      final isAuth = await _authRepository.isAuthenticated();
-      isAuthenticated.value = isAuth;
-      AppLogger.info(isAuth ? 'User is authenticated' : 'No token found. Navigating to login.');
+      // Use Supabase session as single source of truth
+      final api = Get.find<api_service.ApiService>();
+      final hasSession = api.currentSupabaseSession != null;
+      isAuthenticated.value = hasSession;
+      AppLogger.info(hasSession
+          ? 'User is authenticated via Supabase session'
+          : 'No active Supabase session.');
+
+      if (hasSession) {
+        await _loadSavedUser();
+      }
     } catch (e) {
       AppLogger.error('Auth check failed', e);
       isAuthenticated.value = false;
@@ -308,7 +314,7 @@ class AuthController extends GetxController {
 
       // Build a sensible full name for backend
       final computedName = () {
-        if (name != null && name!.trim().isNotEmpty) return name!.trim();
+        if (name != null && name.trim().isNotEmpty) return name.trim();
         final parts = <String>[];
         if ((firstName ?? '').trim().isNotEmpty) parts.add(firstName!.trim());
         if ((lastName ?? '').trim().isNotEmpty) parts.add(lastName!.trim());

@@ -18,8 +18,9 @@ class ExploreController extends GetxController {
   final RxBool isLoading = true.obs; // Start with loading true
   final RxString errorMessage = ''.obs;
   
-  String get currentCity => _locationService.currentCity.isEmpty ? 'New York' : _locationService.currentCity;
-  String get nearbyCity => currentCity;
+  // Make currentCity reactive
+  final RxString currentCity = 'Jhansi'.obs;
+  String get nearbyCity => currentCity.value;
   List<Property> get recommendedHotels => nearbyHotels.toList();
   
   Future<void> Function() get refreshLocation => () async => await _locationService.getCurrentLocation();
@@ -28,7 +29,15 @@ class ExploreController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _fetchInitialData();
+    _initializeAndFetchData();
+  }
+
+  Future<void> _initializeAndFetchData() async {
+    await _locationService.getCurrentLocation();
+    currentCity.value = _locationService.currentCity.isEmpty
+        ? 'Jhansi'
+        : _locationService.currentCity;
+    await _fetchInitialData();
   }
 
   Future<void> _fetchInitialData() async {
@@ -51,12 +60,47 @@ class ExploreController extends GetxController {
   Future<void> loadProperties() async {
     // Load popular homes for current city
     final popularProperties = await _propertiesService.getListings(
-      location: currentCity,
+      location: currentCity.value,
       limit: 10,
     );
     popularHomes.value = popularProperties;
     
     // You can add another call for nearby properties if needed
+  }
+
+  // NEW: Method to change location and reload data
+  Future<void> changeLocation(String newCity) async {
+    if (newCity.isNotEmpty && newCity != currentCity.value) {
+      currentCity.value = newCity;
+      Get.back(); // Close the dialog
+      await _fetchInitialData(); // Reload all data for the new city
+    }
+  }
+
+  // NEW: Method to show a dialog to change location
+  void showLocationChangeDialog() {
+    final textController = TextEditingController(text: currentCity.value);
+    Get.defaultDialog(
+      title: "Change Location",
+      content: TextField(
+        controller: textController,
+        decoration: const InputDecoration(
+          labelText: "Enter a city name",
+          border: OutlineInputBorder(),
+        ),
+        autofocus: true,
+      ),
+      confirm: ElevatedButton(
+        onPressed: () {
+          changeLocation(textController.text);
+        },
+        child: const Text("Search"),
+      ),
+      cancel: TextButton(
+        onPressed: () => Get.back(),
+        child: const Text("Cancel"),
+      ),
+    );
   }
 
   Future<void> refreshData() async {

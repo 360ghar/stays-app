@@ -3,37 +3,21 @@ import 'package:get/get.dart';
 
 import '../controllers/auth/auth_controller.dart';
 import '../routes/app_routes.dart';
-import '../data/services/storage_service.dart';
 import '../utils/logger/app_logger.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     try {
-      // Check if AuthController exists and user is authenticated
-      if (Get.isRegistered<AuthController>()) {
-        final auth = Get.find<AuthController>();
-        if (!auth.isAuthenticated.value) {
-          AppLogger.info('User not authenticated, redirecting to login');
-          return const RouteSettings(name: Routes.login);
-        }
+      final authController = Get.find<AuthController>();
+      if (authController.isAuthenticated.value) {
         return null;
-      }
-      
-      // If controller doesn't exist, check storage directly for token
-      final storage = Get.find<StorageService>();
-      final hasToken = storage.hasAccessTokenSync();
-      
-      if (!hasToken) {
-        AppLogger.info('No token found, redirecting to login');
+      } else {
+        AppLogger.info('AuthMiddleware: User not authenticated. Redirecting to login.');
         return const RouteSettings(name: Routes.login);
       }
-      
-      // Token exists, allow navigation (controller will be created by binding)
-      return null;
     } catch (e) {
-      AppLogger.error('Auth middleware error', e);
-      // If any error occurs, redirect to login
+      AppLogger.error('Auth middleware error: $e. Redirecting to login as fallback.', e);
       return const RouteSettings(name: Routes.login);
     }
   }

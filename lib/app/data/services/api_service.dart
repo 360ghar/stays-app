@@ -318,6 +318,10 @@ class ApiService extends getx.GetConnect {
     return token;
   }
 
+  // Public read-only accessors for Supabase client and session
+  SupabaseClient? get supabaseClient => _supabase;
+  Session? get currentSupabaseSession => _supabase?.auth.currentSession;
+
 
   /// Handles authentication failure by redirecting to login
   void _handleAuthenticationFailure() {

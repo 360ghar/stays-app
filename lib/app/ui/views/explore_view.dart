@@ -21,6 +21,7 @@ class ExploreView extends GetView<ExploreController> {
             ),
             slivers: [
               _buildSliverAppBar(context),
+              _buildLocationHeader(context),
               _buildPopularHomes(),
               _buildNearbyHotels(),
               _buildRecommendedSection(),
@@ -50,10 +51,49 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
+  Widget _buildLocationHeader(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Explore Nearby',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                // Obx makes this widget rebuild when controller.currentCity changes
+                Obx(() => Text(
+                      'Properties in ${controller.currentCity.value}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                      ),
+                    )),
+              ],
+            ),
+            // This is the NEW button to change the location
+            IconButton(
+              icon: Icon(Icons.edit_location_alt_outlined, color: Theme.of(context).primaryColor),
+              onPressed: controller.showLocationChangeDialog,
+              tooltip: 'Change Location',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPopularHomes() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final city = controller.currentCity;
+        final city = controller.currentCity.value;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(

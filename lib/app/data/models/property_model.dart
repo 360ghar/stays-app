@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'property_image_model.dart';
+import '../../../app/utils/logger/app_logger.dart';
 
 part 'property_model.g.dart';
 
@@ -191,25 +192,64 @@ class Property {
   // Safe converters to handle non-list values gracefully
   static List<PropertyImage>? _imagesFromJson(dynamic value) {
     try {
+      if (value == null) return null;
       if (value is List) {
         return value
             .whereType<Map>()
-            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       }
-    } catch (_) {}
+      // Handle case where value is not a list but might be a single image object
+      if (value is Map<String, dynamic>) {
+        return [PropertyImage.fromJson(value)];
+      }
+    } catch (e) {
+      // Log the error in debug mode but return null to prevent crashes
+      AppLogger.warning('Failed to parse images from JSON: $e, value: $value');
+    }
     return null;
   }
 
   static List<String>? _stringListFromJson(dynamic value) {
     try {
+      if (value == null) return null;
+      
+      // Handle List types
       if (value is List) {
-        return value.map((e) => e?.toString()).whereType<String>().toList();
+        return value
+            .map((e) => e?.toString())
+            .where((e) => e != null && e.isNotEmpty)
+            .cast<String>()
+            .toList();
       }
+      
+      // Handle String types (convert to list)
       if (value is String && value.isNotEmpty) {
+        // Try to parse as comma-separated values first
+        if (value.contains(',')) {
+          return value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        }
         return [value];
       }
-    } catch (_) {}
+      
+      // Handle numeric types (convert to string)
+      if (value is num) {
+        return [value.toString()];
+      }
+      
+      // Handle boolean types (convert to string)
+      if (value is bool) {
+        return [value.toString()];
+      }
+      
+      // Handle any other type by converting to string
+      if (value.toString().isNotEmpty && value.toString() != 'null') {
+        return [value.toString()];
+      }
+    } catch (e) {
+      // Log the error in debug mode but return null to prevent crashes
+      AppLogger.warning('Failed to parse string list from JSON: $e, value: $value (${value.runtimeType})');
+    }
     return null;
   }
 

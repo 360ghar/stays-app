@@ -14,7 +14,6 @@ class AuthBinding extends Bindings {
     Get.lazyPut<AuthRepository>(() => AuthRepository(provider: Get.find<AuthProvider>()));
     Get.lazyPut<AuthController>(() => AuthController(
           authRepository: Get.find<AuthRepository>(),
-          storageService: Get.find<StorageService>(),
         ));
     Get.lazyPut<OTPController>(() => OTPController());
     // Ensure PhoneAuthController is immediately available and permanent

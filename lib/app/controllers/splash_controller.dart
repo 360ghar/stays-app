@@ -79,35 +79,33 @@ class SplashController extends GetxController {
   }
 
   Future<void> _navigateToNextScreen({bool forceLogin = false}) async {
+    // Ensure we don't navigate multiple times
+    if (_navigated) return;
+    _navigated = true;
+    _watchdog?.cancel();
+
     // Keep splash visible briefly for UX consistency
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (forceLogin) {
-      _navigated = true;
-      _watchdog?.cancel();
       Get.offAllNamed(Routes.login);
       return;
     }
 
     try {
-      final storage = Get.find<StorageService>();
-      final token = await storage.getAccessToken();
+      // Use Supabase session as single source of truth
+      final api = ApiService.instance;
+      final hasSession = api.currentSupabaseSession != null;
 
-      if (token != null) {
-        AppLogger.info('Token found. Navigating to home.');
-        _navigated = true;
-        _watchdog?.cancel();
+      if (hasSession) {
+        AppLogger.info('✅ Supabase session found. Navigating to home.');
         Get.offAllNamed(Routes.home);
       } else {
-        AppLogger.info('No token found. Navigating to login.');
-        _navigated = true;
-        _watchdog?.cancel();
+        AppLogger.info('❌ No active Supabase session. Navigating to login.');
         Get.offAllNamed(Routes.login);
       }
     } catch (e) {
       AppLogger.error('Error during navigation check: $e. Navigating to login.', e);
-      _navigated = true;
-      _watchdog?.cancel();
       Get.offAllNamed(Routes.login);
     }
   }
