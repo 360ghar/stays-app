@@ -37,7 +37,8 @@ class AppTheme {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 48),
+        // Avoid infinite width in Rows/List views. Only enforce height.
+        minimumSize: const Size(0, 48),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -75,4 +76,3 @@ class AppTheme {
     ),
   );
 }
-
