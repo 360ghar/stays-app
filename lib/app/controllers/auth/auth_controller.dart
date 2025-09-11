@@ -197,9 +197,7 @@ class AuthController extends GetxController {
     }
   }
 
-  // Backwards-compat: legacy phone signup path triggers OTP screen.
-  // If your backend supports phone-based signup, implement it in AuthProvider
-  // and call the repository here. For now, surface a clear message.
+  // Phone signup via Supabase: sends OTP for first-time validation
   Future<bool> registerWithPhone({required String phone, required String password}) async {
     try {
       isLoading.value = true;
@@ -213,14 +211,17 @@ class AuthController extends GetxController {
         passwordError.value = passwordValidation;
         return false;
       }
-      // Optional: attempt direct login if account already exists
-      await loginWithPhone(phone: phone, password: password);
-      return true;
+
+      final sent = await _authRepository.signUpWithPhone(phone: phone, password: password);
+      if (sent) {
+        _showSuccessSnackbar(title: 'OTP Sent', message: 'We have sent an OTP to +91 $phone');
+      }
+      return sent;
     } on ApiException catch (e) {
       _showErrorSnackbar(title: 'Signup Failed', message: e.message);
       return false;
-    } catch (_) {
-      _showErrorSnackbar(title: 'Signup Failed', message: 'Phone-based signup not supported.');
+    } catch (e) {
+      _showErrorSnackbar(title: 'Signup Failed', message: 'Unable to sign up right now.');
       return false;
     } finally {
       isLoading.value = false;
@@ -308,10 +309,13 @@ class AuthController extends GetxController {
 
       // Build a sensible full name for backend
       final computedName = () {
-        if (name != null && name!.trim().isNotEmpty) return name!.trim();
+        final n = name;
+        if (n != null && n.trim().isNotEmpty) return n.trim();
         final parts = <String>[];
-        if ((firstName ?? '').trim().isNotEmpty) parts.add(firstName!.trim());
-        if ((lastName ?? '').trim().isNotEmpty) parts.add(lastName!.trim());
+        final fn = firstName;
+        final ln = lastName;
+        if ((fn ?? '').trim().isNotEmpty) parts.add(fn!.trim());
+        if ((ln ?? '').trim().isNotEmpty) parts.add(ln!.trim());
         if (parts.isNotEmpty) return parts.join(' ');
         // Fallback: use email username
         final at = email.indexOf('@');

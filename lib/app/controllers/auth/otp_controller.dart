@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../routes/app_routes.dart';
 import 'auth_controller.dart';
 
@@ -14,8 +15,8 @@ class OTPController extends GetxController {
   final RxInt countdown = 30.obs;
   final RxBool canResend = false.obs;
   
-  final List<TextEditingController> otpControllers = List.generate(4, (index) => TextEditingController());
-  final List<FocusNode> otpFocusNodes = List.generate(4, (index) => FocusNode());
+  final List<TextEditingController> otpControllers = List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> otpFocusNodes = List.generate(6, (index) => FocusNode());
   
   late OTPType otpType;
   late String phoneNumber;
@@ -72,7 +73,7 @@ class OTPController extends GetxController {
     if (value.isNotEmpty) {
       if (value.length == 1) {
         // Move to next field if not the last one
-        if (index < 3) {
+        if (index < otpControllers.length - 1) {
           otpFocusNodes[index + 1].requestFocus();
         } else {
           // If last field, unfocus
@@ -83,12 +84,12 @@ class OTPController extends GetxController {
       } else if (value.length > 1) {
         // Handle paste - split the value across fields
         final chars = value.split('');
-        for (int i = 0; i < chars.length && (index + i) < 4; i++) {
+        for (int i = 0; i < chars.length && (index + i) < otpControllers.length; i++) {
           otpControllers[index + i].text = chars[i];
         }
         // Focus the last filled field or unfocus if complete
-        final lastFilledIndex = (index + chars.length - 1).clamp(0, 3);
-        if (lastFilledIndex == 3) {
+        final lastFilledIndex = (index + chars.length - 1).clamp(0, otpControllers.length - 1);
+        if (lastFilledIndex == otpControllers.length - 1) {
           otpFocusNodes[lastFilledIndex].unfocus();
           _autoVerifyIfComplete();
         } else {
@@ -108,7 +109,7 @@ class OTPController extends GetxController {
   
   void _autoVerifyIfComplete() {
     final otp = getEnteredOTP();
-    if (otp.length == 4) {
+    if (otp.length == 6) {
       verifyOTP();
     }
   }
@@ -135,34 +136,30 @@ class OTPController extends GetxController {
       
       final enteredOTP = getEnteredOTP();
       
-      if (enteredOTP.length != 4) {
+      if (enteredOTP.length != 6) {
         otpError.value = 'Please enter complete OTP';
         return;
       }
       
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 1000));
+      // Verify using Supabase
+      final formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+91$phoneNumber';
+      await Supabase.instance.client.auth.verifyOTP(
+        phone: formattedPhone,
+        token: enteredOTP,
+        type: OtpType.sms,
+      );
       
-      // Demo OTP verification
-      const String validOTP = '0000';
-      
-      if (enteredOTP == validOTP) {
-        // Handle different OTP types
-        switch (otpType) {
-          case OTPType.signup:
-            await _handleSignupSuccess();
-            break;
-          case OTPType.forgotPassword:
-            _handleForgotPasswordSuccess();
-            break;
-        }
-      } else {
-        otpError.value = 'Invalid OTP. Please try again';
-        // Clear OTP fields
-        clearOTP();
+      // Handle different OTP types
+      switch (otpType) {
+        case OTPType.signup:
+          await _handleSignupSuccess();
+          break;
+        case OTPType.forgotPassword:
+          _handleForgotPasswordSuccess();
+          break;
       }
     } catch (e) {
-      _showErrorSnackbar('Verification failed. Please try again.');
+      otpError.value = 'Invalid or expired OTP. Please try again';
     } finally {
       isLoading.value = false;
     }
@@ -192,11 +189,12 @@ class OTPController extends GetxController {
   Future<void> resendOTP() async {
     try {
       isLoading.value = true;
-      
-      // Simulate API delay
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      _showSuccessSnackbar('OTP sent successfully!');
+      final formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+91$phoneNumber';
+      await Supabase.instance.client.auth.resend(
+        type: OtpType.sms,
+        phone: formattedPhone,
+      );
+      _showSuccessSnackbar('OTP resent successfully!');
       _startCountdown();
       clearOTP();
     } catch (e) {

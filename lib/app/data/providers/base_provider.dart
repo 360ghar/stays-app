@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
 import '../services/storage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 
 abstract class BaseProvider extends GetConnect {
@@ -14,10 +15,14 @@ abstract class BaseProvider extends GetConnect {
     httpClient.timeout = const Duration(seconds: 30);
 
     httpClient.addRequestModifier<Object?>((request) async {
-      // Use sync version for middleware compatibility, but prefer async when possible
-      final token = _storage.getAccessTokenSync() ?? await _storage.getAccessToken();
+      // Prefer Supabase session token; fallback to legacy storage
+      final supabaseToken = Supabase.instance.client.auth.currentSession?.accessToken;
+      final legacyToken = _storage.getAccessTokenSync() ?? await _storage.getAccessToken();
+      final token = supabaseToken ?? legacyToken;
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
+      } else {
+        request.headers.remove('Authorization');
       }
       request.headers['Content-Type'] = 'application/json';
       request.headers['Accept'] = 'application/json';
@@ -90,4 +95,3 @@ abstract class BaseProvider extends GetConnect {
            url.path.contains('/register');
   }
 }
-

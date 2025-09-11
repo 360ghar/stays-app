@@ -83,10 +83,10 @@ class VerificationView extends GetView<OTPController> {
               
               const SizedBox(height: 48),
               
-              // OTP Input Fields
+              // OTP Input Fields (6 digits)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(4, (index) => _buildOTPField(index)),
+                children: List.generate(6, (index) => _buildOTPField(index)),
               ),
               
               // Error Message
@@ -202,23 +202,7 @@ class VerificationView extends GetView<OTPController> {
               
               const SizedBox(height: 60),
               
-              // Footer hint
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'For demo purposes, use OTP: 0000',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                    fontStyle: FontStyle.italic,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              // Footer hint (removed hardcoded demo OTP)
               
               const SizedBox(height: 20),
               

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
-import '../controllers/auth/phone_auth_controller.dart';
+import '../controllers/auth/auth_controller.dart';
+import '../data/repositories/auth_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../controllers/listing/listing_controller.dart';
 import '../controllers/navigation_controller.dart';
@@ -12,10 +13,14 @@ import '../data/services/storage_service.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
-    // Ensure PhoneAuthController is available
-    if (!Get.isRegistered<PhoneAuthController>()) {
-      Get.put<PhoneAuthController>(
-        PhoneAuthController(
+    // Ensure AuthController is available for home/profile flows
+    if (!Get.isRegistered<AuthRepository>()) {
+      Get.put<AuthRepository>(AuthRepository(), permanent: true);
+    }
+    if (!Get.isRegistered<AuthController>()) {
+      Get.put<AuthController>(
+        AuthController(
+          authRepository: Get.find<AuthRepository>(),
           storageService: Get.find<StorageService>(),
         ),
         permanent: true,

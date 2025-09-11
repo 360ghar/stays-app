@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../bindings/home_binding.dart';
 import '../../../bindings/message_binding.dart';
 import '../../../bindings/profile_binding.dart';
-import '../../../controllers/auth/phone_auth_controller.dart';
+import '../../../controllers/auth/auth_controller.dart';
 import '../../views/home/simple_home_view.dart';
 
 class HomeShellView extends StatefulWidget {
@@ -24,10 +24,9 @@ class _HomeShellViewState extends State<HomeShellView> {
     MessageBinding().dependencies();
     ProfileBinding().dependencies();
     
-    // Ensure PhoneAuthController is initialized and check auth status
-    if (Get.isRegistered<PhoneAuthController>()) {
-      final authController = Get.find<PhoneAuthController>();
-      // Trigger auth check if not already authenticated
+    // Ensure auth state is hydrated via AuthController
+    if (Get.isRegistered<AuthController>()) {
+      final authController = Get.find<AuthController>();
       if (!authController.isAuthenticated.value) {
         authController.onInit();
       }

@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/trip_model.dart';
 import '../../routes/app_routes.dart';
-import 'phone_auth_controller.dart';
+import 'auth_controller.dart';
 
 class ProfileController extends GetxController {
   final Rx<UserModel?> profile = Rx<UserModel?>(null);
@@ -15,12 +15,12 @@ class ProfileController extends GetxController {
   final RxString userType = 'Guest'.obs;
   final RxString userPhone = ''.obs;
   
-  late final PhoneAuthController _authController;
+  late final AuthController _authController;
 
   @override
   void onInit() {
     super.onInit();
-    _authController = Get.find<PhoneAuthController>();
+    _authController = Get.find<AuthController>();
     fetchUserData();
   }
 
@@ -191,4 +191,3 @@ class ProfileController extends GetxController {
     }
   }
 }
-

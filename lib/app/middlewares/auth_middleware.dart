@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import '../controllers/auth/auth_controller.dart';
 import '../routes/app_routes.dart';
-import '../data/services/storage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/logger/app_logger.dart';
 
 class AuthMiddleware extends GetMiddleware {
@@ -20,11 +20,10 @@ class AuthMiddleware extends GetMiddleware {
         return null;
       }
       
-      // If controller doesn't exist, check storage directly for token
-      final storage = Get.find<StorageService>();
-      final hasToken = storage.hasAccessTokenSync();
-      
-      if (!hasToken) {
+      // If controller doesn't exist, check Supabase session
+      final session = Supabase.instance.client.auth.currentSession;
+      final hasSession = session != null && session.accessToken.isNotEmpty;
+      if (!hasSession) {
         AppLogger.info('No token found, redirecting to login');
         return const RouteSettings(name: Routes.login);
       }
@@ -45,4 +44,3 @@ class AuthMiddleware extends GetMiddleware {
     return super.onPageCalled(page);
   }
 }
-

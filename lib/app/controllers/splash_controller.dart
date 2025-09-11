@@ -5,6 +5,7 @@ import 'package:stays_app/app/data/services/api_service.dart';
 import 'package:stays_app/app/data/services/properties_service.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/data/services/wishlist_service.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
@@ -90,11 +91,9 @@ class SplashController extends GetxController {
     }
 
     try {
-      final storage = Get.find<StorageService>();
-      final token = await storage.getAccessToken();
-
-      if (token != null) {
-        AppLogger.info('Token found. Navigating to home.');
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.accessToken.isNotEmpty) {
+        AppLogger.info('Active session found. Navigating to home.');
         _navigated = true;
         _watchdog?.cancel();
         Get.offAllNamed(Routes.home);
