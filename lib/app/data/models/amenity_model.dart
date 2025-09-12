@@ -7,6 +7,11 @@ class AmenityModel {
   factory AmenityModel.fromMap(Map<String, dynamic> map) =>
       AmenityModel(key: map['key'] as String, name: map['name'] as String);
 
+  factory AmenityModel.fromJson(Map<String, dynamic> json) =>
+      AmenityModel(key: json['key'] as String, name: json['name'] as String);
+
   Map<String, dynamic> toMap() => {'key': key, 'name': name};
+
+  Map<String, dynamic> toJson() => {'key': key, 'name': name};
 }
 

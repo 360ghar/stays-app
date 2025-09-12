@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
-// ignore: unused_import
 import 'package:get/get.dart';
 
 import '../../../bindings/home_binding.dart';
 import '../../../bindings/message_binding.dart';
 import '../../../bindings/profile_binding.dart';
-import '../../views/home/home_view.dart';
-import '../../views/booking/trips_view.dart';
-import '../../views/messaging/inbox_view.dart';
-import '../../views/profile/profile_view.dart';
+import '../../../controllers/auth/auth_controller.dart';
+import '../../views/home/simple_home_view.dart';
 
 class HomeShellView extends StatefulWidget {
   const HomeShellView({super.key});
@@ -18,7 +15,6 @@ class HomeShellView extends StatefulWidget {
 }
 
 class _HomeShellViewState extends State<HomeShellView> {
-  int _index = 0;
 
   @override
   void initState() {
@@ -27,30 +23,18 @@ class _HomeShellViewState extends State<HomeShellView> {
     HomeBinding().dependencies();
     MessageBinding().dependencies();
     ProfileBinding().dependencies();
+    
+    // Ensure auth state is hydrated via AuthController
+    if (Get.isRegistered<AuthController>()) {
+      final authController = Get.find<AuthController>();
+      if (!authController.isAuthenticated.value) {
+        authController.onInit();
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          HomeView(),
-          TripsView(),
-          InboxView(),
-          ProfileView(),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.search), label: 'Explore'),
-          NavigationDestination(icon: Icon(Icons.card_travel), label: 'Trips'),
-          NavigationDestination(icon: Icon(Icons.inbox), label: 'Inbox'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
+    return const SimpleHomeView();
   }
 }

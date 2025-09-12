@@ -5,6 +5,10 @@ class CustomTextField extends StatelessWidget {
   final String hint;
   const CustomTextField({super.key, required this.controller, required this.hint});
   @override
-  Widget build(BuildContext context) => TextField(controller: controller, decoration: InputDecoration(hintText: hint));
+  Widget build(BuildContext context) => TextField(
+    controller: controller, 
+    decoration: InputDecoration(hintText: hint),
+    style: const TextStyle(color: Colors.black),
+  );
 }
 

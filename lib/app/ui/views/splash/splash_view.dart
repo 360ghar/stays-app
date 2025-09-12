@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../controllers/splash_controller.dart';
 import '../../../utils/constants/app_constants.dart';
 
-class SplashView extends StatefulWidget {
+class SplashView extends GetView<SplashController> {
   const SplashView({super.key});
-
-  @override
-  State<SplashView> createState() => _SplashViewState();
-}
-
-class _SplashViewState extends State<SplashView> {
-  @override
-  void initState() {
-    super.initState();
-    // Let middleware handle redirection; just show splash
-  }
 
   @override
   Widget build(BuildContext context) {
