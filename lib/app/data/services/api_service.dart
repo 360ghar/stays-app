@@ -4,16 +4,13 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart' as getx;
 import '../models/property_model.dart';
 import '../models/user_model.dart';
-import '../models/visit_model.dart';
 import '../models/unified_property_response.dart';
 import '../models/unified_filter_model.dart';
-import '../models/agent_model.dart';
 
 import '../models/amenity_model.dart';
 import '../models/api_response_models.dart';
 import '../../utils/debug_logger.dart';
 import '../../utils/error_handler.dart';
-import '../../utils/json_sanitizer.dart';
 import '../../utils/theme.dart';
 
 class ApiAuthException implements Exception {
@@ -96,54 +93,7 @@ class PaginatedResponse<T> {
 }
 
 // Response wrapper for visits API
-class VisitListResponse {
-  final List<VisitModel> visits;
-  final int total;
-  final int upcoming;
-  final int completed;
-  final int cancelled;
-
-  VisitListResponse({
-    required this.visits,
-    required this.total,
-    required this.upcoming,
-    required this.completed,
-    required this.cancelled,
-  });
-
-  factory VisitListResponse.fromJson(Map<String, dynamic> json) {
-    try {
-      final safeJson = Map<String, dynamic>.from(json);
-      
-      // Parse visits array
-      List<VisitModel> visits = [];
-      if (safeJson['visits'] is List) {
-        final visitsData = safeJson['visits'] as List;
-        visits = visitsData.map((item) => VisitModel.fromJson(item)).toList();
-      }
-      
-      return VisitListResponse(
-        visits: visits,
-        total: safeJson['total'] ?? visits.length,
-        upcoming: safeJson['upcoming'] ?? visits.where((v) => v.isUpcoming).length,
-        completed: safeJson['completed'] ?? visits.where((v) => v.isCompleted).length,
-        cancelled: safeJson['cancelled'] ?? visits.where((v) => v.isCancelled).length,
-      );
-    } catch (e, stackTrace) {
-      DebugLogger.error('Error in VisitListResponse.fromJson', e, stackTrace);
-      DebugLogger.api('Raw JSON: $json');
-      rethrow;
-    }
-  }
-
-  Map<String, dynamic> toJson() => {
-    'visits': visits.map((v) => v.toJson()).toList(),
-    'total': total,
-    'upcoming': upcoming,
-    'completed': completed,
-    'cancelled': cancelled,
-  };
-}
+// Removed VisitListResponse tied to VisitModel
 
 // Search center location model
 class SearchCenter {
@@ -355,7 +305,6 @@ class ApiService extends getx.GetConnect {
     Map<String, String>? queryParams,
     int retries = 1,
     String? operationName,
-    bool enableChunking = false,
   }) async {
     Exception? lastException;
     final operation = operationName ?? '$method $endpoint';
@@ -365,57 +314,42 @@ class ApiService extends getx.GetConnect {
         // Prepend /api/v1 to all endpoints
         final fullEndpoint = '/api/v1$endpoint';
         
-        // Sanitize request body if present
-        Map<String, dynamic>? sanitizedBody;
-        if (body != null) {
+        // Prepare request body and query params directly
+        final Map<String, dynamic>? requestBody = body;
+        final Map<String, String>? requestQuery = queryParams;
+        // Optionally validate body encodability for debug purposes
+        if (requestBody != null) {
           try {
-            // Use JsonSanitizer to clean the body
-            if (enableChunking) {
-              sanitizedBody = JsonSanitizer.prepareRequestBody(body);
-            } else {
-              sanitizedBody = JsonSanitizer.sanitizeJson(body) as Map<String, dynamic>;
-            }
-            
-            // Validate the sanitized body can be encoded
-            final testEncode = jsonEncode(sanitizedBody);
-            DebugLogger.api('✅ Request body sanitized successfully (${testEncode.length} chars)');
+            final testEncode = jsonEncode(requestBody);
+            DebugLogger.api('✅ Request body JSON-encodable (${testEncode.length} chars)');
           } catch (e) {
-            DebugLogger.error('Failed to sanitize request body', e);
-            // Fall back to original body if sanitization fails
-            sanitizedBody = body;
+            DebugLogger.warning('⚠️ Request body not JSON-encodable: $e');
           }
         }
         
-        // Sanitize query parameters
-        Map<String, String>? sanitizedQueryParams;
-        if (queryParams != null) {
-          sanitizedQueryParams = queryParams.map((key, value) => 
-            MapEntry(key, JsonSanitizer.sanitizeString(value)));
-        }
-        
         // Single-line API request log for debugging
-        DebugLogger.api('🚀 API $method $fullEndpoint${sanitizedQueryParams != null && sanitizedQueryParams.isNotEmpty ? ' | Query: $sanitizedQueryParams' : ''}${sanitizedBody != null && sanitizedBody.isNotEmpty ? ' | Body: [sanitized]' : ''}');
+        DebugLogger.api('🚀 API $method $fullEndpoint${requestQuery != null && requestQuery.isNotEmpty ? ' | Query: $requestQuery' : ''}${requestBody != null && requestBody.isNotEmpty ? ' | Body: [present]' : ''}');
 
         DebugLogger.logAPIRequest(
           method,
           fullEndpoint,
-          body: sanitizedBody,
+          body: requestBody,
         );
 
         getx.Response response;
 
         switch (method.toUpperCase()) {
           case 'GET':
-            response = await get(fullEndpoint, query: sanitizedQueryParams);
+            response = await get(fullEndpoint, query: requestQuery);
             break;
           case 'POST':
-            response = await post(fullEndpoint, sanitizedBody, query: sanitizedQueryParams);
+            response = await post(fullEndpoint, requestBody, query: requestQuery);
             break;
           case 'PUT':
-            response = await put(fullEndpoint, sanitizedBody, query: sanitizedQueryParams);
+            response = await put(fullEndpoint, requestBody, query: requestQuery);
             break;
           case 'DELETE':
-            response = await delete(fullEndpoint, query: sanitizedQueryParams);
+            response = await delete(fullEndpoint, query: requestQuery);
             break;
           default:
             throw Exception('Unsupported HTTP method: $method');
@@ -1148,79 +1082,7 @@ class ApiService extends getx.GetConnect {
   // Location Services
 
 
-  // Visit Scheduling
-  Future<Map<String, dynamic>> scheduleVisit({
-    required int propertyId,
-    required String scheduledDate,
-    String? specialRequirements,
-  }) async {
-    return await _makeRequest(
-      '/visits/',
-      (json) => json,
-      method: 'POST',
-      body: {
-        'property_id': propertyId,
-        'scheduled_date': scheduledDate,
-        if (specialRequirements != null) 'special_requirements': specialRequirements,
-      },
-      operationName: 'Schedule Visit',
-    );
-  }
-
-  Future<List<VisitModel>> getMyVisits({String? visitType}) async {
-    final queryParams = <String, String>{};
-    if (visitType != null) {
-      queryParams['visit_type'] = visitType;
-    }
-
-    final response = await _makeRequest<List<dynamic>>(
-      '/visits/',
-      (json) => json['visits'] as List<dynamic>,
-      queryParams: queryParams,
-      operationName: 'Get My Visits',
-    );
-
-    // Convert the list to VisitModel objects
-    return response.map((item) => VisitModel.fromJson(item as Map<String, dynamic>)).toList();
-  }
-
-  
-
-  // Generic method to update visit (reschedule or cancel)
-  Future<VisitModel> updateVisit(int visitId, Map<String, dynamic> updateData) async {
-    return await _makeRequest(
-      '/visits/$visitId',
-      (json) => VisitModel.fromJson(json),
-      method: 'PATCH',
-      body: updateData,
-      operationName: 'Update Visit',
-    );
-  }
-
-  // Convenience method for rescheduling
-  Future<VisitModel> rescheduleVisit(int visitId, String newScheduledDate) async {
-    return await updateVisit(visitId, {'scheduled_date': newScheduledDate});
-  }
-
-  // Convenience method for cancelling  
-  Future<VisitModel> cancelVisit(int visitId, {String? reason}) async {
-    final updateData = <String, dynamic>{};
-    if (reason != null) {
-      updateData['cancellation_reason'] = reason;
-    }
-    return await updateVisit(visitId, updateData);
-  }
-
-  Future<AgentModel> getRelationshipManager() async {
-    return await _makeRequest(
-      '/agents/assigned/',
-      (json) {
-        // The API returns the agent object directly, not wrapped in 'data'
-        return AgentModel.fromJson(json);
-      },
-      operationName: 'Get Assigned Agent',
-    );
-  }
+  // Visit APIs removed (VisitModel/AgentModel no longer used)
 
 
 
@@ -1314,47 +1176,7 @@ class ApiService extends getx.GetConnect {
     );
   }
 
-  /// Makes a request with enhanced Unicode sanitization for AI/ML APIs
-  Future<T> _makeAIRequest<T>(
-    String endpoint,
-    T Function(Map<String, dynamic>) fromJson, {
-    String method = 'POST',
-    required Map<String, dynamic> body,
-    Map<String, String>? queryParams,
-    int retries = 1,
-    String? operationName,
-  }) async {
-    return await _makeRequest<T>(
-      endpoint,
-      fromJson,
-      method: method,
-      body: body,
-      queryParams: queryParams,
-      retries: retries,
-      operationName: operationName,
-      enableChunking: true, // Enable chunking for AI requests
-    );
-  }
-
-  /// Example method for sending large text to AI services
-  Future<Map<String, dynamic>> sendToAI({
-    required String prompt,
-    String? systemPrompt,
-    Map<String, dynamic>? additionalParams,
-  }) async {
-    final body = {
-      'prompt': prompt,
-      if (systemPrompt != null) 'system_prompt': systemPrompt,
-      ...?additionalParams,
-    };
-
-    return await _makeAIRequest(
-      '/ai/process',
-      (json) => json,
-      body: body,
-      operationName: 'Send to AI',
-    );
-  }
+  // AI request helpers removed (Claude/AI flows deprecated)
 
   /// Initialize the ApiService - required for dependency injection
   Future<ApiService> init() async {
