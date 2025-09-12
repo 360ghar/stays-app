@@ -16,6 +16,19 @@ class PropertiesService extends GetxService {
     return this;
   }
 
+  Map<String, String> _stringifyQuery(Map<String, dynamic> source) {
+    final Map<String, String> out = {};
+    source.forEach((key, value) {
+      if (value == null) return;
+      if (value is List) {
+        if (value.isNotEmpty) out[key] = value.join(',');
+      } else {
+        out[key] = value.toString();
+      }
+    });
+    return out;
+  }
+
   /// Robust helper to safely parse properties list from any response format
   List<Property> _parsePropertiesList(dynamic responseBody, String context) {
     if (responseBody == null) {
@@ -102,7 +115,7 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/properties',
-        query: queryParams,
+        query: _stringifyQuery(queryParams),
       );
       
       return _parsePropertiesList(response.body, 'getListings');
@@ -136,7 +149,7 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/properties',
-        query: queryParams,
+        query: _stringifyQuery(queryParams),
       );
       
       return _parsePropertiesList(response.body, 'getProperties');
@@ -205,7 +218,7 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/search',
-        query: queryParams,
+        query: _stringifyQuery(queryParams),
       );
 
       if (response.statusCode == 200) {
@@ -239,7 +252,7 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/nearby',
-        query: queryParams,
+        query: _stringifyQuery(queryParams),
       );
 
       if (response.statusCode == 200) {
@@ -266,7 +279,7 @@ class PropertiesService extends GetxService {
 
       final response = await _apiService.get(
         '/listings/recommended',
-        query: queryParams,
+        query: _stringifyQuery(queryParams),
       );
 
       if (response.statusCode == 200) {

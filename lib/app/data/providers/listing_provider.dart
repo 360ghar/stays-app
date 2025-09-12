@@ -3,7 +3,23 @@ import '../models/listing_model.dart';
 
 class ListingProvider extends BaseProvider {
   Future<List<ListingModel>> getListings({Map<String, dynamic>? filters, int page = 1, int limit = 20}) async {
-    final response = await get('/listings', query: {...?filters, 'page': page, 'limit': limit});
+    // Stringify query params to avoid Uri builder type errors
+    final Map<String, String> query = {
+      'page': page.toString(),
+      'limit': limit.toString(),
+    };
+    if (filters != null) {
+      filters.forEach((key, value) {
+        if (value == null) return;
+        if (value is List) {
+          if (value.isNotEmpty) query[key] = value.join(',');
+        } else {
+          query[key] = value.toString();
+        }
+      });
+    }
+
+    final response = await get('/listings', query: query);
     return handleResponse(response, (json) {
       final list = (json['listings'] as List? ?? []);
       return list.map((e) => ListingModel.fromMap(e as Map<String, dynamic>)).toList();

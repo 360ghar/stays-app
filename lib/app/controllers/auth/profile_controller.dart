@@ -5,6 +5,8 @@ import '../../data/models/user_model.dart';
 import '../../data/models/trip_model.dart';
 import '../../routes/app_routes.dart';
 import 'auth_controller.dart';
+import '../../data/repositories/auth_repository.dart';
+import '../../data/services/storage_service.dart';
 
 class ProfileController extends GetxController {
   final Rx<UserModel?> profile = Rx<UserModel?>(null);
@@ -20,6 +22,24 @@ class ProfileController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // Ensure AuthController is available to prevent DI crash
+    if (!Get.isRegistered<AuthController>()) {
+      try {
+        // Try to register dependencies if missing
+        if (!Get.isRegistered<AuthRepository>()) {
+          Get.put<AuthRepository>(AuthRepository(), permanent: true);
+        }
+        _authController = Get.put<AuthController>(
+          AuthController(
+            authRepository: Get.find<AuthRepository>(),
+            storageService: Get.find<StorageService>(),
+          ),
+          permanent: true,
+        );
+      } catch (_) {
+        // If registration fails, postpone crash and keep graceful UI
+      }
+    }
     _authController = Get.find<AuthController>();
     fetchUserData();
   }
