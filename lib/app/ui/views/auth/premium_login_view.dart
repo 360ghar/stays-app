@@ -29,7 +29,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
@@ -44,29 +44,18 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
 
     // Start animations
     _fadeController.forward();
@@ -111,14 +100,14 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
               ),
             ),
           ),
-          
+
           // Glassmorphism overlay
           Container(
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.1),
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: FadeTransition(
@@ -131,7 +120,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                   child: Column(
                     children: [
                       const SizedBox(height: 40),
-                      
+
                       // Logo with animation
                       ScaleTransition(
                         scale: _scaleAnimation,
@@ -158,46 +147,52 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Title with animation
-                      Obx(() => AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 500),
-                        child: Text(
-                          isLoginMode.value ? 'Welcome Back' : 'Create Account',
-                          key: ValueKey(isLoginMode.value),
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: -0.5,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 10,
-                                color: Colors.black26,
-                                offset: Offset(0, 3),
-                              ),
-                            ],
+                      Obx(
+                        () => AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          child: Text(
+                            isLoginMode.value
+                                ? 'Welcome Back'
+                                : 'Create Account',
+                            key: ValueKey(isLoginMode.value),
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 10,
+                                  color: Colors.black26,
+                                  offset: Offset(0, 3),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      )),
-                      
+                      ),
+
                       const SizedBox(height: 8),
-                      
-                      Obx(() => Text(
-                        isLoginMode.value
-                            ? 'Sign in to continue your journey'
-                            : 'Join us and explore amazing stays',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.9),
-                          fontWeight: FontWeight.w400,
+
+                      Obx(
+                        () => Text(
+                          isLoginMode.value
+                              ? 'Sign in to continue your journey'
+                              : 'Join us and explore amazing stays',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
-                      )),
-                      
+                      ),
+
                       const SizedBox(height: 40),
-                      
+
                       // Glassmorphic card container
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
@@ -222,59 +217,69 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                   icon: Icons.mail_outline_rounded,
                                   keyboardType: TextInputType.emailAddress,
                                 ),
-                                
+
                                 const SizedBox(height: 16),
-                                
+
                                 // Password field
-                                Obx(() => _buildGlassTextField(
-                                  controller: passwordController,
-                                  hint: 'Password',
-                                  icon: Icons.lock_outline_rounded,
-                                  obscureText: !isPasswordVisible.value,
-                                  suffixIcon: IconButton(
-                                    onPressed: () => isPasswordVisible.toggle(),
-                                    icon: Icon(
-                                      isPasswordVisible.value
-                                          ? Icons.visibility_off_rounded
-                                          : Icons.visibility_rounded,
-                                      color: Colors.white70,
+                                Obx(
+                                  () => _buildGlassTextField(
+                                    controller: passwordController,
+                                    hint: 'Password',
+                                    icon: Icons.lock_outline_rounded,
+                                    obscureText: !isPasswordVisible.value,
+                                    suffixIcon: IconButton(
+                                      onPressed: () =>
+                                          isPasswordVisible.toggle(),
+                                      icon: Icon(
+                                        isPasswordVisible.value
+                                            ? Icons.visibility_off_rounded
+                                            : Icons.visibility_rounded,
+                                        color: Colors.white70,
+                                      ),
                                     ),
                                   ),
-                                )),
-                                
+                                ),
+
                                 const SizedBox(height: 24),
-                                
+
                                 // Continue button
-                                Obx(() => _buildGradientButton(
-                                  text: isLoginMode.value ? 'Sign In' : 'Create Account',
-                                  isLoading: authController.isLoading.value,
-                                  onPressed: () => _handleAuth(),
-                                )),
-                                
+                                Obx(
+                                  () => _buildGradientButton(
+                                    text: isLoginMode.value
+                                        ? 'Sign In'
+                                        : 'Create Account',
+                                    isLoading: authController.isLoading.value,
+                                    onPressed: () => _handleAuth(),
+                                  ),
+                                ),
+
                                 const SizedBox(height: 20),
-                                
+
                                 // Forgot password
-                                Obx(() => isLoginMode.value
-                                    ? TextButton(
-                                        onPressed: () => _showComingSoon('Password reset'),
-                                        child: const Text(
-                                          'Forgot your password?',
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
+                                Obx(
+                                  () => isLoginMode.value
+                                      ? TextButton(
+                                          onPressed: () =>
+                                              _showComingSoon('Password reset'),
+                                          child: const Text(
+                                            'Forgot your password?',
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
-                                        ),
-                                      )
-                                    : const SizedBox.shrink()),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
                               ],
                             ),
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Divider
                       Row(
                         children: [
@@ -317,9 +322,9 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Social login buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -340,52 +345,56 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Switch mode
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Obx(() => Text(
-                            isLoginMode.value
-                                ? "Don't have an account? "
-                                : "Already have an account? ",
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 15,
+                          Obx(
+                            () => Text(
+                              isLoginMode.value
+                                  ? "Don't have an account? "
+                                  : "Already have an account? ",
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 15,
+                              ),
                             ),
-                          )),
+                          ),
                           GestureDetector(
                             onTap: () {
                               isLoginMode.toggle();
                               _scaleController.reset();
                               _scaleController.forward();
                             },
-                            child: Obx(() => AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.only(bottom: 2),
-                              decoration: BoxDecoration(
-                                border: Border(
-                                  bottom: BorderSide(
+                            child: Obx(
+                              () => AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                padding: const EdgeInsets.only(bottom: 2),
+                                decoration: BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  isLoginMode.value ? 'Sign up' : 'Sign in',
+                                  style: const TextStyle(
                                     color: Colors.white,
-                                    width: 2,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
-                              child: Text(
-                                isLoginMode.value ? 'Sign up' : 'Sign in',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            )),
+                            ),
                           ),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -430,10 +439,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
             color: Colors.white.withValues(alpha: 0.5),
             fontSize: 16,
           ),
-          prefixIcon: Icon(
-            icon,
-            color: Colors.white70,
-          ),
+          prefixIcon: Icon(icon, color: Colors.white70),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -464,10 +470,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           height: 56,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [
-                Color(0xFFFF6B6B),
-                Color(0xFFFF8E53),
-              ],
+              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
@@ -490,7 +493,9 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : Text(
@@ -534,11 +539,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
             child: InkWell(
               onTap: onPressed,
               borderRadius: BorderRadius.circular(16),
-              child: Icon(
-                icon,
-                color: Colors.white,
-                size: 28,
-              ),
+              child: Icon(icon, color: Colors.white, size: 28),
             ),
           ),
         ),
@@ -561,10 +562,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
         ),
         messageText: const Text(
           'Please fill in all fields',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.white70, fontSize: 14),
         ),
         backgroundColor: Colors.red.withValues(alpha: 0.8),
         borderRadius: 16,
@@ -600,10 +598,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
       ),
       messageText: Text(
         '$feature will be available soon',
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFF667eea).withValues(alpha: 0.9),
       borderRadius: 16,

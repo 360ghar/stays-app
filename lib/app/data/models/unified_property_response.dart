@@ -17,9 +17,11 @@ class UnifiedPropertyResponse {
 
   factory UnifiedPropertyResponse.fromJson(Map<String, dynamic> json) {
     return UnifiedPropertyResponse(
-      properties: (json['properties'] as List?)
-          ?.map((e) => Property.fromJson(e))
-          .toList() ?? [],
+      properties:
+          (json['properties'] as List?)
+              ?.map((e) => Property.fromJson(e))
+              .toList() ??
+          [],
       totalCount: json['totalCount'] ?? 0,
       currentPage: json['currentPage'] ?? 1,
       totalPages: json['totalPages'] ?? 1,

@@ -7,4 +7,3 @@ class AnalyticsService {
     // Integrate analytics provider here
   }
 }
-

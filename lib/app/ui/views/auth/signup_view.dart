@@ -49,7 +49,7 @@ class _SignupViewState extends State<SignupView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              
+
               // Welcome Section
               const Text(
                 'Create Account',
@@ -63,14 +63,11 @@ class _SignupViewState extends State<SignupView> {
               const SizedBox(height: 6),
               Text(
                 'Sign up to get started',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
-              
+
               // Phone Number Field
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,90 +81,104 @@ class _SignupViewState extends State<SignupView> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Obx(() => Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: controller.phoneError.value.isEmpty 
-                            ? Colors.grey.shade300 
-                            : Colors.red,
-                        width: controller.phoneError.value.isEmpty ? 1 : 2,
+                  Obx(
+                    () => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: controller.phoneError.value.isEmpty
+                              ? Colors.grey.shade300
+                              : Colors.red,
+                          width: controller.phoneError.value.isEmpty ? 1 : 2,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        // Country Code
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              bottomLeft: Radius.circular(12),
+                      child: Row(
+                        children: [
+                          // Country Code
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 18,
                             ),
-                            border: Border(
-                              right: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.phone_outlined, color: Colors.grey, size: 20),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '+91',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
                               ),
-                            ],
-                          ),
-                        ),
-                        // Phone Input
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            onChanged: (_) => controller.phoneError.value = '',
-                            decoration: const InputDecoration(
-                              hintText: '9876543210',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                              hintStyle: TextStyle(color: Colors.grey),
+                              border: Border(
+                                right: BorderSide(color: Colors.grey.shade300),
+                              ),
                             ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.phone_outlined,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  '+91',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
-                  Obx(() => controller.phoneError.value.isEmpty
-                    ? const SizedBox(height: 4)
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          controller.phoneError.value,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
+                          // Phone Input
+                          Expanded(
+                            child: TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              onChanged: (_) =>
+                                  controller.phoneError.value = '',
+                              decoration: const InputDecoration(
+                                hintText: '9876543210',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 18,
+                                ),
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
+                    ),
+                  ),
+                  Obx(
+                    () => controller.phoneError.value.isEmpty
+                        ? const SizedBox(height: 4)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              controller.phoneError.value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              
+
               // Password Field
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,118 +192,133 @@ class _SignupViewState extends State<SignupView> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Obx(() => Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: controller.passwordError.value.isEmpty 
-                            ? Colors.grey.shade300 
-                            : Colors.red,
-                        width: controller.passwordError.value.isEmpty ? 1 : 2,
+                  Obx(
+                    () => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: controller.passwordError.value.isEmpty
+                              ? Colors.grey.shade300
+                              : Colors.red,
+                          width: controller.passwordError.value.isEmpty ? 1 : 2,
+                        ),
                       ),
-                    ),
-                    child: TextFormField(
-                      controller: _passwordController,
-                      obscureText: !controller.isPasswordVisible.value,
-                      onChanged: (_) => controller.passwordError.value = '',
-                      decoration: InputDecoration(
-                        hintText: 'Create a password (min. 6 characters)',
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.grey),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            controller.isPasswordVisible.value 
-                              ? Icons.visibility_off_outlined 
-                              : Icons.visibility_outlined,
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: !controller.isPasswordVisible.value,
+                        onChanged: (_) => controller.passwordError.value = '',
+                        decoration: InputDecoration(
+                          hintText: 'Create a password (min. 6 characters)',
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 18,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.lock_outline,
                             color: Colors.grey,
                           ),
-                          onPressed: controller.togglePasswordVisibility,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              controller.isPasswordVisible.value
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: Colors.grey,
+                            ),
+                            onPressed: controller.togglePasswordVisibility,
+                          ),
+                          hintStyle: const TextStyle(color: Colors.grey),
                         ),
-                        hintStyle: const TextStyle(color: Colors.grey),
-                      ),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  )),
-                  Obx(() => controller.passwordError.value.isEmpty
-                    ? const SizedBox(height: 4)
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          controller.passwordError.value,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
+                  ),
+                  Obx(
+                    () => controller.passwordError.value.isEmpty
+                        ? const SizedBox(height: 4)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              controller.passwordError.value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Password Requirements (Compact)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'Password must be at least 6 characters long',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.blue.shade700,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.blue.shade700),
                   textAlign: TextAlign.center,
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Sign Up Button
-              Obx(() => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: controller.isLoading.value 
-                    ? null 
-                    : _handleSignup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50),
-                    foregroundColor: Colors.white,
-                    elevation: 2,
-                    shadowColor: const Color(0xFF4CAF50).withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: controller.isLoading.value
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+              Obx(
+                () => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : _handleSignup,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4CAF50),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shadowColor: const Color(
+                        0xFF4CAF50,
+                      ).withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Sign Up',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ),
-              )),
-              
+              ),
+
               const SizedBox(height: 50),
-              
+
               // Terms and Privacy (Compact)
               RichText(
                 textAlign: TextAlign.center,
@@ -303,9 +329,7 @@ class _SignupViewState extends State<SignupView> {
                     height: 1.3,
                   ),
                   children: [
-                    const TextSpan(
-                      text: 'By signing up, you agree to our ',
-                    ),
+                    const TextSpan(text: 'By signing up, you agree to our '),
                     TextSpan(
                       text: 'Terms',
                       style: TextStyle(
@@ -324,9 +348,9 @@ class _SignupViewState extends State<SignupView> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Divider
               Row(
                 children: [
@@ -344,19 +368,16 @@ class _SignupViewState extends State<SignupView> {
                   Expanded(child: Divider(color: Colors.grey.shade300)),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Login Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     "Already have an account? ",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),
@@ -371,9 +392,9 @@ class _SignupViewState extends State<SignupView> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 20),
-              
+
               // Extra spacing for keyboard
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],
@@ -386,18 +407,19 @@ class _SignupViewState extends State<SignupView> {
   void _handleSignup() async {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text;
-    
+
     // Validate locally first
     bool hasError = false;
-    
+
     if (phone.isEmpty) {
       controller.phoneError.value = 'Phone number is required';
       hasError = true;
     } else if (phone.length != 10) {
-      controller.phoneError.value = 'Please enter a valid 10-digit phone number';
+      controller.phoneError.value =
+          'Please enter a valid 10-digit phone number';
       hasError = true;
     }
-    
+
     if (password.isEmpty) {
       controller.passwordError.value = 'Password is required';
       hasError = true;
@@ -405,14 +427,14 @@ class _SignupViewState extends State<SignupView> {
       controller.passwordError.value = 'Password must be at least 6 characters';
       hasError = true;
     }
-    
+
     if (hasError) return;
-    
+
     final success = await controller.registerWithPhone(
       phone: phone,
       password: password,
     );
-    
+
     if (success) {
       // Initialize OTP controller and navigate to verification
       final otpController = Get.find<OTPController>();

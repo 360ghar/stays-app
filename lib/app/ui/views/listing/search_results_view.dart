@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/listing/listing_controller.dart';
-import '../../../ui/widgets/cards/listing_card.dart';
+import '../../../ui/widgets/cards/property_card.dart';
 import '../../../utils/helpers/responsive_helper.dart';
 
 class SearchResultsView extends GetView<ListingController> {
@@ -33,7 +33,11 @@ class SearchResultsView extends GetView<ListingController> {
             childAspectRatio: 16 / 14,
           ),
           itemCount: controller.listings.length,
-          itemBuilder: (_, i) => ListingCard(listing: controller.listings[i]),
+          itemBuilder: (_, i) => PropertyCard(
+            property: controller.listings[i],
+            heroPrefix: 'search_$i',
+            onTap: () => Get.toNamed('/listing/${controller.listings[i].id}'),
+          ),
         );
       }),
     );

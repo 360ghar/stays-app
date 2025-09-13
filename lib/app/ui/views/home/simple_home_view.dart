@@ -4,6 +4,7 @@ import '../../../controllers/navigation_controller.dart';
 import '../../../bindings/wishlist_binding.dart';
 import '../../../bindings/trips_binding.dart';
 import '../../../bindings/message_binding.dart';
+import '../../../controllers/messaging/hotels_map_controller.dart';
 import '../../../bindings/profile_binding.dart';
 import '../wishlist/wishlist_view.dart';
 import '../trips/trips_view.dart';
@@ -26,7 +27,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
     super.initState();
     // Get the navigation controller
     controller = Get.find<NavigationController>();
-    
+
     // Initialize bindings for all tabs
     WishlistBinding().dependencies();
     TripsBinding().dependencies();
@@ -42,6 +43,14 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
         controller: controller.pageController,
         onPageChanged: (index) {
           controller.currentIndex.value = index;
+          // When navigating to Locate tab (index 3), refresh precise location
+          if (index == 3) {
+            try {
+              Get.find<HotelsMapController>().getCurrentLocation();
+            } catch (_) {
+              // Controller will be lazily created on first access by LocateView
+            }
+          }
         },
         children: [
           const ExploreView(),
@@ -51,7 +60,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
           const ProfileView(),
         ],
       ),
-      
+
       // Bottom navigation
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -68,29 +77,35 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
           child: Container(
             height: 60,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Obx(() => Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: controller.tabs.asMap().entries.map((entry) {
-                final index = entry.key;
-                final tab = entry.value;
-                return Expanded(
-                  child: _buildNavItem(
-                    tab.icon,
-                    tab.label,
-                    controller.currentIndex.value == index,
-                    () => controller.changeTab(index),
-                  ),
-                );
-              }).toList(),
-            )),
+            child: Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: controller.tabs.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final tab = entry.value;
+                  return Expanded(
+                    child: _buildNavItem(
+                      tab.icon,
+                      tab.label,
+                      controller.currentIndex.value == index,
+                      () => controller.changeTab(index),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
         ),
       ),
     );
   }
 
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive, VoidCallback onTap) {
+  Widget _buildNavItem(
+    IconData icon,
+    String label,
+    bool isActive,
+    VoidCallback onTap,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -121,5 +136,4 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
       ),
     );
   }
-
 }

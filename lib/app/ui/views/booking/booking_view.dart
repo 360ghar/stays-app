@@ -16,4 +16,3 @@ class BookingView extends StatelessWidget {
     );
   }
 }
-

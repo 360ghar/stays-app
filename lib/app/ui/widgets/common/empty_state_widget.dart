@@ -6,4 +6,3 @@ class EmptyStateWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(child: Text(title));
 }
-

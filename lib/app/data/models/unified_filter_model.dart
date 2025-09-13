@@ -39,7 +39,8 @@ class UnifiedFilterModel {
     if (minPrice != null) 'minPrice': minPrice,
     if (maxPrice != null) 'maxPrice': maxPrice,
     if (amenities != null && amenities!.isNotEmpty) 'amenities': amenities,
-    if (propertyTypes != null && propertyTypes!.isNotEmpty) 'propertyTypes': propertyTypes,
+    if (propertyTypes != null && propertyTypes!.isNotEmpty)
+      'propertyTypes': propertyTypes,
     if (minBedrooms != null) 'minBedrooms': minBedrooms,
     if (maxBedrooms != null) 'maxBedrooms': maxBedrooms,
     if (minBathrooms != null) 'minBathrooms': minBathrooms,

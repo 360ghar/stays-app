@@ -29,7 +29,7 @@ class Hotel {
     required this.rating,
     required this.reviews,
     required this.pricePerNight,
-    this.currency = '\$',
+    this.currency = '₹',
     this.propertyType = 'Hotel',
     this.isFavorite = false,
     this.latitude,
@@ -40,14 +40,15 @@ class Hotel {
 
   factory Hotel.fromJson(Map<String, dynamic> json) => _$HotelFromJson(json);
   Map<String, dynamic> toJson() => _$HotelToJson(this);
-  
+
   // Mock data generator
   static List<Hotel> getMockHotels(String city) {
     final hotels = [
       Hotel(
         id: '1',
         name: 'The Grand Plaza',
-        imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945',
+        imageUrl:
+            'https://images.unsplash.com/photo-1566073771259-6a8506099945',
         city: city,
         country: 'USA',
         rating: 4.8,
@@ -60,7 +61,8 @@ class Hotel {
       Hotel(
         id: '2',
         name: 'Sunset Boutique Hotel',
-        imageUrl: 'https://images.unsplash.com/photo-1582719508461-905c673771fd',
+        imageUrl:
+            'https://images.unsplash.com/photo-1582719508461-905c673771fd',
         city: city,
         country: 'USA',
         rating: 4.6,
@@ -73,7 +75,8 @@ class Hotel {
       Hotel(
         id: '3',
         name: 'Urban Comfort Suites',
-        imageUrl: 'https://images.unsplash.com/photo-1564501049412-61c2a3083791',
+        imageUrl:
+            'https://images.unsplash.com/photo-1564501049412-61c2a3083791',
         city: city,
         country: 'USA',
         rating: 4.5,
@@ -112,7 +115,8 @@ class Hotel {
       Hotel(
         id: '6',
         name: 'Garden Retreat',
-        imageUrl: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4',
+        imageUrl:
+            'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4',
         city: city,
         country: 'USA',
         rating: 4.4,
@@ -123,7 +127,7 @@ class Hotel {
         description: 'Peaceful retreat surrounded by beautiful gardens.',
       ),
     ];
-    
+
     return hotels;
   }
 }

@@ -12,26 +12,27 @@ class LocateView extends GetView<HotelsMapController> {
     return Scaffold(
       body: Stack(
         children: [
-          Obx(() => FlutterMap(
-            mapController: controller.mapController,
-            options: MapOptions(
-              initialCenter: controller.currentLocation.value,
-              initialZoom: 12,
-              minZoom: 5,
-              maxZoom: 18,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.stays_app',
+          Obx(
+            () => FlutterMap(
+              mapController: controller.mapController,
+              options: MapOptions(
+                initialCenter: controller.currentLocation.value,
+                initialZoom: 12,
+                minZoom: 5,
                 maxZoom: 18,
               ),
-              MarkerLayer(
-                markers: controller.markers,
-              ),
-            ],
-          )),
-          
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.stays_app',
+                  maxZoom: 18,
+                ),
+                // Rebuild only markers when the list changes
+                Obx(() => MarkerLayer(markers: controller.markers.toList())),
+              ],
+            ),
+          ),
+
           // Search Bar
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
@@ -51,25 +52,30 @@ class LocateView extends GetView<HotelsMapController> {
               ),
               child: TextField(
                 controller: controller.searchController,
+                onChanged: controller.onSearchChanged,
                 onSubmitted: controller.onSearchSubmitted,
                 decoration: InputDecoration(
                   hintText: 'Search location...',
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: Obx(() => controller.isLoadingLocation.value
-                    ? const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.grey),
-                        onPressed: () {
-                          controller.searchController.clear();
-                        },
-                      ),
+                  suffixIcon: Obx(
+                    () =>
+                        (controller.isLoadingLocation.value ||
+                            controller.isSearching.value)
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.clear, color: Colors.grey),
+                            onPressed: () {
+                              controller.searchController.clear();
+                              controller.onSearchChanged('');
+                            },
+                          ),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -81,6 +87,37 @@ class LocateView extends GetView<HotelsMapController> {
             ),
           ),
 
+          // Autocomplete results
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 76,
+            left: 16,
+            right: 16,
+            child: Obx(() {
+              if (controller.predictions.isEmpty)
+                return const SizedBox.shrink();
+              return Material(
+                elevation: 6,
+                borderRadius: BorderRadius.circular(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: controller.predictions.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final p = controller.predictions[index];
+                      return ListTile(
+                        leading: const Icon(Icons.place_outlined),
+                        title: Text(p.description),
+                        onTap: () => controller.selectPrediction(p),
+                      );
+                    },
+                  ),
+                ),
+              );
+            }),
+          ),
+
           // Current Location Button
           Positioned(
             bottom: 120,
@@ -89,81 +126,88 @@ class LocateView extends GetView<HotelsMapController> {
               mini: true,
               backgroundColor: Colors.white,
               onPressed: controller.getCurrentLocation,
-              child: Obx(() => controller.isLoadingLocation.value
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.my_location, color: Colors.blue),
+              child: Obx(
+                () => controller.isLoadingLocation.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location, color: Colors.blue),
               ),
             ),
           ),
 
           // Hotels Loading Indicator
-          Obx(() => controller.isLoadingHotels.value
-            ? Positioned(
-                bottom: 80,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black87,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
+          Obx(
+            () => controller.isLoadingHotels.value
+                ? Positioned(
+                    bottom: 80,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Loading hotels...',
-                          style: TextStyle(color: Colors.white),
+                        decoration: BoxDecoration(
+                          color: Colors.black87,
+                          borderRadius: BorderRadius.circular(20),
                         ),
-                      ],
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Loading hotels...',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              )
-            : const SizedBox.shrink(),
+                  )
+                : const SizedBox.shrink(),
           ),
 
           // Hotels Count
           Positioned(
             bottom: 80,
             left: 16,
-            child: Obx(() => controller.hotels.isNotEmpty && !controller.isLoadingHotels.value
-              ? Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    '${controller.hotels.length} hotels',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
+            child: Obx(
+              () =>
+                  controller.hotels.isNotEmpty &&
+                      !controller.isLoadingHotels.value
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '${controller.hotels.length} hotels',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
         ],

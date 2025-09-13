@@ -64,17 +64,11 @@ class PropertyCard extends StatelessWidget {
         placeholder: (context, url) => Shimmer.fromColors(
           baseColor: Colors.grey[300]!,
           highlightColor: Colors.grey[100]!,
-          child: Container(
-            color: Colors.white,
-          ),
+          child: Container(color: Colors.white),
         ),
         errorWidget: (context, url, error) => Container(
           color: Colors.grey[200],
-          child: const Icon(
-            Icons.hotel,
-            size: 48,
-            color: Colors.grey,
-          ),
+          child: const Icon(Icons.hotel, size: 48, color: Colors.grey),
         ),
       ),
     );
@@ -88,10 +82,7 @@ class PropertyCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.7),
-            ],
+            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
             stops: const [0.5, 1.0],
           ),
         ),
@@ -143,11 +134,7 @@ class PropertyCard extends StatelessWidget {
               if (showRating && property.rating != null)
                 Row(
                   children: [
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       property.ratingText,
@@ -202,11 +189,7 @@ class PropertyCardShimmer extends StatelessWidget {
   final double width;
   final double height;
 
-  const PropertyCardShimmer({
-    super.key,
-    this.width = 280,
-    this.height = 200,
-  });
+  const PropertyCardShimmer({super.key, this.width = 280, this.height = 200});
 
   @override
   Widget build(BuildContext context) {

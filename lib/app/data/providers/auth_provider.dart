@@ -41,9 +41,7 @@ class AuthProvider extends BaseProvider {
 
   /// Logout using a refresh token (or access token if backend requires)
   Future<void> logout(String refreshToken) async {
-    final response = await post('/auth/logout', {
-      'refreshToken': refreshToken,
-    });
+    final response = await post('/auth/logout', {'refreshToken': refreshToken});
     handleResponse(response, (json) => json);
   }
 }

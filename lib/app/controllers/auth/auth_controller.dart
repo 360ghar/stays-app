@@ -10,11 +10,9 @@ import '../../utils/exceptions/app_exceptions.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
-  final StorageService _storageService;
 
-  AuthController({required AuthRepository authRepository, required StorageService storageService})
-      : _authRepository = authRepository,
-        _storageService = storageService;
+  AuthController({required AuthRepository authRepository})
+    : _authRepository = authRepository;
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
@@ -34,7 +32,7 @@ class AuthController extends GetxController {
     super.onInit();
     _checkAuthStatus();
   }
-  
+
   @override
   void onReady() {
     super.onReady();
@@ -76,13 +74,17 @@ class AuthController extends GetxController {
     try {
       final isAuth = await _authRepository.isAuthenticated();
       isAuthenticated.value = isAuth;
-      AppLogger.info(isAuth ? 'User is authenticated' : 'No token found. Navigating to login.');
+      AppLogger.info(
+        isAuth
+            ? 'User is authenticated'
+            : 'No token found. Navigating to login.',
+      );
     } catch (e) {
       AppLogger.error('Auth check failed', e);
       isAuthenticated.value = false;
     }
   }
-  
+
   Future<void> _loadSavedUser() async {
     try {
       final user = await _authRepository.getCurrentUser();
@@ -117,20 +119,27 @@ class AuthController extends GetxController {
       UserModel user;
       // Check if input is email or phone
       if (GetUtils.isEmail(email)) {
-        user = await _authRepository.loginWithEmail(email: email, password: password);
+        user = await _authRepository.loginWithEmail(
+          email: email,
+          password: password,
+        );
       } else {
-        user = await _authRepository.loginWithPhone(phone: email, password: password);
+        user = await _authRepository.loginWithPhone(
+          phone: email,
+          password: password,
+        );
       }
-      
+
       currentUser.value = user;
       isAuthenticated.value = true;
 
-      final displayName = user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
+      final displayName =
+          user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
       _showSuccessSnackbar(
         title: 'Welcome Back!',
         message: 'Hello $displayName',
       );
-      
+
       // Navigate to home
       await Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
@@ -138,14 +147,20 @@ class AuthController extends GetxController {
       _handleApiError('Login Failed', e);
     } catch (e) {
       AppLogger.error('Login error', e);
-      _showErrorSnackbar(title: 'Login Failed', message: 'An unexpected error occurred. Please try again.');
+      _showErrorSnackbar(
+        title: 'Login Failed',
+        message: 'An unexpected error occurred. Please try again.',
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
   // Phone-based login (if backend supports phone on same endpoint)
-  Future<void> loginWithPhone({required String phone, required String password}) async {
+  Future<void> loginWithPhone({
+    required String phone,
+    required String password,
+  }) async {
     AppLogger.info('Attempting to log in with phone: $phone');
     try {
       isLoading.value = true;
@@ -167,18 +182,22 @@ class AuthController extends GetxController {
       }
       // --- End of validation ---
 
-      final user = await _authRepository.loginWithPhone(phone: phone, password: password);
+      final user = await _authRepository.loginWithPhone(
+        phone: phone,
+        password: password,
+      );
       currentUser.value = user;
       isAuthenticated.value = true;
-      
-      AppLogger.info('✅ Login successful for user: ${user.name ?? user.firstName ?? user.phone}');
+
+      AppLogger.info(
+        '✅ Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
+      );
 
       _showSuccessSnackbar(
         title: 'Welcome Back!',
         message: 'Hello ${user.name ?? user.firstName ?? user.phone}',
       );
       Get.offAllNamed(Routes.home);
-
     } catch (e, stackTrace) {
       // Corrected logging for AppLogger
       AppLogger.error('LOGIN FAILED!', e, stackTrace);
@@ -186,11 +205,11 @@ class AuthController extends GetxController {
       // Show the actual error message from the server
       String errorMessage = e.toString();
       if (e is ApiException) {
-        errorMessage = e.message; // Use the specific message from your custom exception
+        errorMessage =
+            e.message; // Use the specific message from your custom exception
       }
-      
-      _showErrorSnackbar(title: 'Login Failed', message: errorMessage);
 
+      _showErrorSnackbar(title: 'Login Failed', message: errorMessage);
     } finally {
       AppLogger.info('Login process finished. Setting isLoading to false.');
       isLoading.value = false;
@@ -198,7 +217,10 @@ class AuthController extends GetxController {
   }
 
   // Phone signup via Supabase: sends OTP for first-time validation
-  Future<bool> registerWithPhone({required String phone, required String password}) async {
+  Future<bool> registerWithPhone({
+    required String phone,
+    required String password,
+  }) async {
     try {
       isLoading.value = true;
       final phoneValidation = _validateEmailOrPhone(phone);
@@ -212,16 +234,25 @@ class AuthController extends GetxController {
         return false;
       }
 
-      final sent = await _authRepository.signUpWithPhone(phone: phone, password: password);
+      final sent = await _authRepository.signUpWithPhone(
+        phone: phone,
+        password: password,
+      );
       if (sent) {
-        _showSuccessSnackbar(title: 'OTP Sent', message: 'We have sent an OTP to +91 $phone');
+        _showSuccessSnackbar(
+          title: 'OTP Sent',
+          message: 'We have sent an OTP to +91 $phone',
+        );
       }
       return sent;
     } on ApiException catch (e) {
       _showErrorSnackbar(title: 'Signup Failed', message: e.message);
       return false;
     } catch (e) {
-      _showErrorSnackbar(title: 'Signup Failed', message: 'Unable to sign up right now.');
+      _showErrorSnackbar(
+        title: 'Signup Failed',
+        message: 'Unable to sign up right now.',
+      );
       return false;
     } finally {
       isLoading.value = false;
@@ -236,14 +267,23 @@ class AuthController extends GetxController {
       emailOrPhoneError.value = validation;
       return false;
     }
-    _showErrorSnackbar(title: 'Not Supported', message: 'Forgot password via phone OTP is not supported.');
+    _showErrorSnackbar(
+      title: 'Not Supported',
+      message: 'Forgot password via phone OTP is not supported.',
+    );
     return false;
   }
 
   // Backwards-compat stub, replace with real backend call when available
-  Future<void> resetPassword({required String newPassword, required String confirmPassword}) async {
+  Future<void> resetPassword({
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
     final passwordValidation = _validatePassword(newPassword);
-    final confirmValidation = _validateConfirmPassword(newPassword, confirmPassword);
+    final confirmValidation = _validateConfirmPassword(
+      newPassword,
+      confirmPassword,
+    );
     if (passwordValidation != null) {
       passwordError.value = passwordValidation;
       return;
@@ -252,7 +292,10 @@ class AuthController extends GetxController {
       confirmPasswordError.value = confirmValidation;
       return;
     }
-    _showErrorSnackbar(title: 'Not Supported', message: 'Password reset via OTP is not supported.');
+    _showErrorSnackbar(
+      title: 'Not Supported',
+      message: 'Password reset via OTP is not supported.',
+    );
   }
 
   Future<void> logout() async {
@@ -261,17 +304,29 @@ class AuthController extends GetxController {
       await _authRepository.logout();
       currentUser.value = null;
       isAuthenticated.value = false;
-      
+
+      // Reset form/UI state before navigating so login screen starts enabled
+      emailOrPhoneError.value = '';
+      passwordError.value = '';
+      confirmPasswordError.value = '';
+      isPasswordVisible.value = false;
+      isLoading.value = false;
+
       _showSuccessSnackbar(
         title: 'Logged Out',
         message: 'You have been successfully logged out.',
       );
-      
+
+      // Navigate to login after local state is reset
       await Get.offAllNamed(Routes.login);
     } catch (e) {
       AppLogger.error('Logout failed', e);
-      _showErrorSnackbar(title: 'Logout Failed', message: 'Failed to logout properly.');
+      _showErrorSnackbar(
+        title: 'Logout Failed',
+        message: 'Failed to logout properly.',
+      );
     } finally {
+      // Ensure loading is not stuck true in any race condition
       isLoading.value = false;
     }
   }
@@ -293,7 +348,10 @@ class AuthController extends GetxController {
 
       final emailValidation = _validateEmailOrPhone(email);
       final passwordValidation = _validatePassword(password);
-      final confirmValidation = _validateConfirmPassword(password, confirmPassword ?? password);
+      final confirmValidation = _validateConfirmPassword(
+        password,
+        confirmPassword ?? password,
+      );
       if (emailValidation != null) {
         emailOrPhoneError.value = emailValidation;
         return;
@@ -322,19 +380,27 @@ class AuthController extends GetxController {
         return at > 0 ? email.substring(0, at) : email;
       }();
 
-      final user = await _authRepository.register(name: computedName, email: email, password: password);
+      final user = await _authRepository.register(
+        name: computedName,
+        email: email,
+        password: password,
+      );
       currentUser.value = user;
       isAuthenticated.value = true;
 
       _showSuccessSnackbar(
         title: 'Welcome!',
-        message: 'Account created, logged in as ${user.firstName ?? user.email}',
+        message:
+            'Account created, logged in as ${user.firstName ?? user.email}',
       );
       Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
       _showErrorSnackbar(title: 'Registration Failed', message: e.message);
     } catch (e) {
-      _showErrorSnackbar(title: 'Error', message: 'An error occurred. Please try again.');
+      _showErrorSnackbar(
+        title: 'Error',
+        message: 'An error occurred. Please try again.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -354,10 +420,7 @@ class AuthController extends GetxController {
       ),
       messageText: Text(
         message,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.9),
       borderRadius: 16,
@@ -371,11 +434,7 @@ class AuthController extends GetxController {
           color: Colors.white24,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.check_circle,
-          color: Colors.white,
-          size: 24,
-        ),
+        child: const Icon(Icons.check_circle, color: Colors.white, size: 24),
       ),
     );
   }
@@ -384,10 +443,12 @@ class AuthController extends GetxController {
     String message;
     switch (e.statusCode) {
       case 401:
-        message = 'Invalid credentials. Please check your email/phone and password.';
+        message =
+            'Invalid credentials. Please check your email/phone and password.';
         break;
       case 404:
-        message = 'Account not found. Please check your credentials or sign up.';
+        message =
+            'Account not found. Please check your credentials or sign up.';
         break;
       case 422:
         message = 'Invalid input. Please check your information and try again.';
@@ -399,11 +460,13 @@ class AuthController extends GetxController {
         message = 'Server error. Please try again later.';
         break;
       default:
-        message = e.message.isNotEmpty ? e.message : 'An error occurred. Please try again.';
+        message = e.message.isNotEmpty
+            ? e.message
+            : 'An error occurred. Please try again.';
     }
     _showErrorSnackbar(title: title, message: message);
   }
-  
+
   void _showErrorSnackbar({required String title, required String message}) {
     Get.snackbar(
       '',
@@ -418,10 +481,7 @@ class AuthController extends GetxController {
       ),
       messageText: Text(
         message,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.9),
       borderRadius: 16,
@@ -435,11 +495,7 @@ class AuthController extends GetxController {
           color: Colors.white24,
           shape: BoxShape.circle,
         ),
-        child: const Icon(
-          Icons.error_outline,
-          color: Colors.white,
-          size: 24,
-        ),
+        child: const Icon(Icons.error_outline, color: Colors.white, size: 24),
       ),
     );
   }

@@ -23,9 +23,7 @@ class TripsView extends GetView<TripsController> {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.pastBookings.isEmpty) {
@@ -38,7 +36,7 @@ class TripsView extends GetView<TripsController> {
             children: [
               // Stats Section
               _buildStatsSection(),
-              
+
               // Bookings List
               Expanded(
                 child: ListView.builder(
@@ -64,11 +62,7 @@ class TripsView extends GetView<TripsController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.luggage_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.luggage_outlined, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 24),
             const Text(
               'No past bookings yet',
@@ -103,10 +97,7 @@ class TripsView extends GetView<TripsController> {
               ),
               child: const Text(
                 'Explore Hotels',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -130,48 +121,50 @@ class TripsView extends GetView<TripsController> {
           ),
         ],
       ),
-      child: Obx(() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Your Travel Stats',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+      child: Obx(
+        () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Travel Stats',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.hotel,
-                  value: controller.totalBookings.toString(),
-                  label: 'Total Stays',
-                  color: Colors.blue,
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.hotel,
+                    value: controller.totalBookings.toString(),
+                    label: 'Total Stays',
+                    color: Colors.blue,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.attach_money,
-                  value: '\$${controller.totalSpent.toInt()}',
-                  label: 'Total Spent',
-                  color: Colors.green,
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.attach_money,
+                    value: '₹${controller.totalSpent.toInt()}',
+                    label: 'Total Spent',
+                    color: Colors.green,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.location_on,
-                  value: controller.favoriteDestination,
-                  label: 'Top Destination',
-                  color: Colors.orange,
+                Expanded(
+                  child: _buildStatItem(
+                    icon: Icons.location_on,
+                    value: controller.favoriteDestination,
+                    label: 'Top Destination',
+                    color: Colors.orange,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      )),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -206,10 +199,7 @@ class TripsView extends GetView<TripsController> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -249,21 +239,20 @@ class TripsView extends GetView<TripsController> {
                     height: 160,
                     width: double.infinity,
                     color: Colors.grey[300],
-                    child: Icon(
-                      Icons.image,
-                      size: 50,
-                      color: Colors.grey[400],
-                    ),
+                    child: Icon(Icons.image, size: 50, color: Colors.grey[400]),
                   ),
                 ),
                 Positioned(
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: booking['status'] == 'completed' 
-                          ? Colors.green 
+                      color: booking['status'] == 'completed'
+                          ? Colors.green
                           : Colors.orange,
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -279,7 +268,7 @@ class TripsView extends GetView<TripsController> {
                 ),
               ],
             ),
-            
+
             // Content
             Padding(
               padding: const EdgeInsets.all(16),
@@ -319,9 +308,9 @@ class TripsView extends GetView<TripsController> {
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Dates and details
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -333,7 +322,11 @@ class TripsView extends GetView<TripsController> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                            Icon(
+                              Icons.calendar_today,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '${_formatDate(booking['checkIn'])} - ${_formatDate(booking['checkOut'])}',
@@ -347,7 +340,11 @@ class TripsView extends GetView<TripsController> {
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.group, size: 16, color: Colors.grey[600]),
+                            Icon(
+                              Icons.group,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '${booking['guests']} guests • ${booking['rooms']} room(s)',
@@ -361,22 +358,22 @@ class TripsView extends GetView<TripsController> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   // Price and actions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '\$${booking['totalAmount'].toStringAsFixed(2)}',
+                        '₹${booking['totalAmount'].toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1A1A1A),
                         ),
                       ),
-                      
+
                       Row(
                         children: [
                           if (booking['canReview'] == true)
@@ -422,8 +419,18 @@ class TripsView extends GetView<TripsController> {
     try {
       final date = DateTime.parse(dateStr);
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${date.day} ${months[date.month - 1]}, ${date.year}';
     } catch (e) {

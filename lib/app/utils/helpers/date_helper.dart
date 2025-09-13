@@ -5,4 +5,3 @@ class DateHelper {
     return DateFormat(pattern).format(date);
   }
 }
-

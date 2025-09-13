@@ -6,7 +6,8 @@ import '../../data/models/trip_model.dart';
 import '../../routes/app_routes.dart';
 import 'auth_controller.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/services/storage_service.dart';
+import '../../data/repositories/booking_repository.dart';
+import '../../data/repositories/profile_repository.dart';
 
 class ProfileController extends GetxController {
   final Rx<UserModel?> profile = Rx<UserModel?>(null);
@@ -16,41 +17,47 @@ class ProfileController extends GetxController {
   final RxString userName = 'Guest User'.obs;
   final RxString userType = 'Guest'.obs;
   final RxString userPhone = ''.obs;
-  
+
   late final AuthController _authController;
 
   @override
   void onInit() {
     super.onInit();
-    // Ensure AuthController is available to prevent DI crash
-    if (!Get.isRegistered<AuthController>()) {
-      try {
-        // Try to register dependencies if missing
+    // Ensure AuthController is available and assign exactly once
+    try {
+      if (Get.isRegistered<AuthController>()) {
+        _authController = Get.find<AuthController>();
+      } else {
+        // Register dependencies if missing, then create AuthController
         if (!Get.isRegistered<AuthRepository>()) {
           Get.put<AuthRepository>(AuthRepository(), permanent: true);
         }
         _authController = Get.put<AuthController>(
-          AuthController(
-            authRepository: Get.find<AuthRepository>(),
-            storageService: Get.find<StorageService>(),
-          ),
+          AuthController(authRepository: Get.find<AuthRepository>()),
           permanent: true,
         );
-      } catch (_) {
-        // If registration fails, postpone crash and keep graceful UI
       }
+    } catch (_) {
+      // Keep UI graceful; errors will surface via usage
+      rethrow;
     }
-    _authController = Get.find<AuthController>();
     fetchUserData();
   }
 
   Future<void> fetchUserData() async {
     try {
       isLoading.value = true;
-      
+
       // Get user data from existing auth controller
       profile.value = _authController.currentUser.value;
-      
+
+      // Refresh profile from backend when authenticated
+      try {
+        final repo = Get.find<ProfileRepository>();
+        final serverUser = await repo.getProfile();
+        profile.value = serverUser;
+      } catch (_) {}
+
       if (profile.value != null) {
         _updateUserInfo(profile.value!);
       } else {
@@ -60,10 +67,8 @@ class ProfileController extends GetxController {
         userType.value = 'Guest';
         userPhone.value = '';
       }
-      
-      // Load past trips
-      await _loadPastTrips();
-      
+
+      // Defer past trips loading to Trips screen to avoid unnecessary API calls
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -76,29 +81,52 @@ class ProfileController extends GetxController {
   }
 
   void _updateUserInfo(UserModel user) {
-    final firstName = user.firstName ?? '';
-    final lastName = user.lastName ?? '';
-    
+    final firstName = (user.firstName ?? '').trim();
+    final lastName = (user.lastName ?? '').trim();
+    final fullName = (user.name ?? '').trim();
+
+    // Prefer explicit first/last; then full_name; then email/phone
     if (firstName.isNotEmpty || lastName.isNotEmpty) {
       userName.value = '$firstName $lastName'.trim();
-      userInitials.value = _generateInitials(firstName, lastName);
+    } else if (fullName.isNotEmpty) {
+      userName.value = fullName;
+    } else if ((user.email ?? '').isNotEmpty) {
+      userName.value = user.email!;
     } else {
       userName.value = user.phone ?? 'User';
-      userInitials.value = userName.value.substring(0, 1).toUpperCase();
     }
-    
+
+    userInitials.value = _generateInitials(
+      firstName,
+      lastName,
+      fallbackName: userName.value,
+    );
     userPhone.value = user.phone ?? '';
     userType.value = user.isSuperHost ? 'Superhost' : 'Guest';
   }
 
-  String _generateInitials(String firstName, String lastName) {
+  String _generateInitials(
+    String firstName,
+    String lastName, {
+    required String fallbackName,
+  }) {
     String initials = '';
-    if (firstName.isNotEmpty) {
-      initials += firstName[0].toUpperCase();
+    if (firstName.isNotEmpty) initials += firstName[0].toUpperCase();
+    if (lastName.isNotEmpty) initials += lastName[0].toUpperCase();
+
+    // If first/last not available, try splitting fallback name (e.g., full_name)
+    if (initials.isEmpty && fallbackName.trim().isNotEmpty) {
+      final parts = fallbackName
+          .trim()
+          .split(RegExp(r"\s+"))
+          .where((e) => e.isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) {
+        initials += parts.first[0].toUpperCase();
+        if (parts.length > 1) initials += parts[1][0].toUpperCase();
+      }
     }
-    if (lastName.isNotEmpty) {
-      initials += lastName[0].toUpperCase();
-    }
+
     if (initials.isEmpty && userPhone.value.isNotEmpty) {
       initials = userPhone.value[0].toUpperCase();
     }
@@ -106,23 +134,31 @@ class ProfileController extends GetxController {
   }
 
   Future<void> _loadPastTrips() async {
-    // Mock past trips data - replace with actual API call
-    pastTrips.value = [
-      TripModel(
-        id: '1',
-        propertyName: 'Cozy Apartment in Downtown',
-        checkIn: DateTime.now().subtract(const Duration(days: 30)),
-        checkOut: DateTime.now().subtract(const Duration(days: 27)),
-        status: 'completed',
-      ),
-      TripModel(
-        id: '2',
-        propertyName: 'Beach House Paradise',
-        checkIn: DateTime.now().subtract(const Duration(days: 60)),
-        checkOut: DateTime.now().subtract(const Duration(days: 55)),
-        status: 'completed',
-      ),
-    ];
+    try {
+      final repo = Get.isRegistered<BookingRepository>()
+          ? Get.find<BookingRepository>()
+          : null;
+      if (repo == null) return;
+      final data = await repo.listBookings();
+      final list = (data['bookings'] as List? ?? [])
+          .cast<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      pastTrips.value = list.map((b) {
+        return TripModel(
+          id: b['id']?.toString() ?? '',
+          propertyName:
+              b['property_title'] ?? b['property']?['title'] ?? 'Stay',
+          checkIn:
+              DateTime.tryParse(b['check_in_date'] ?? '') ?? DateTime.now(),
+          checkOut:
+              DateTime.tryParse(b['check_out_date'] ?? '') ?? DateTime.now(),
+          status: b['booking_status'] ?? 'pending',
+        );
+      }).toList();
+    } catch (_) {
+      pastTrips.clear();
+    }
   }
 
   void navigateToPastTrips() {
@@ -152,7 +188,7 @@ class ProfileController extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
-      
+
       Get.dialog(
         AlertDialog(
           title: const Text('Confirm Logout'),
@@ -180,7 +216,7 @@ class ProfileController extends GetxController {
   Future<void> _performLogout() async {
     try {
       isLoading.value = true;
-      
+
       // Clear user data
       profile.value = null;
       pastTrips.clear();
@@ -188,13 +224,13 @@ class ProfileController extends GetxController {
       userName.value = 'Guest User';
       userType.value = 'Guest';
       userPhone.value = '';
-      
+
       // Call auth controller logout
       await _authController.logout();
-      
+
       // Navigate to login
       Get.offAllNamed(Routes.login);
-      
+
       Get.snackbar(
         'Success',
         'Logged out successfully',

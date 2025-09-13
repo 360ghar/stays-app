@@ -27,20 +27,26 @@ class RegisterView extends GetView<AuthController> {
                 decoration: const InputDecoration(labelText: 'First name'),
                 controller: firstNameCtrl,
                 validator: ValidatorHelper.requiredField,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Last name'),
                 controller: lastNameCtrl,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Email'),
                 controller: emailCtrl,
                 validator: ValidatorHelper.email,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -48,26 +54,34 @@ class RegisterView extends GetView<AuthController> {
                 controller: passwordCtrl,
                 obscureText: true,
                 validator: ValidatorHelper.requiredField,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               const SizedBox(height: 20),
-              Obx(() => ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () async {
-                            if (formKey.currentState?.validate() ?? false) {
-                              await controller.register(
-                                firstName: firstNameCtrl.text.trim(),
-                                lastName: lastNameCtrl.text.trim(),
-                                email: emailCtrl.text.trim(),
-                                password: passwordCtrl.text,
-                              );
-                            }
-                          },
-                    child: controller.isLoading.value
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Sign Up'),
-                  )),
+              Obx(
+                () => ElevatedButton(
+                  onPressed: controller.isLoading.value
+                      ? null
+                      : () async {
+                          if (formKey.currentState?.validate() ?? false) {
+                            await controller.register(
+                              firstName: firstNameCtrl.text.trim(),
+                              lastName: lastNameCtrl.text.trim(),
+                              email: emailCtrl.text.trim(),
+                              password: passwordCtrl.text,
+                            );
+                          }
+                        },
+                  child: controller.isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Sign Up'),
+                ),
+              ),
             ],
           ),
         ),

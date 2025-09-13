@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/data/services/api_service.dart';
-import 'package:stays_app/app/data/services/properties_service.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:stays_app/app/data/services/wishlist_service.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
@@ -19,7 +16,9 @@ class SplashController extends GetxController {
     // Watchdog: if init/navigate stalls, force fallback after 12s
     _watchdog = Timer(const Duration(seconds: 12), () {
       if (!_navigated) {
-        AppLogger.warning('Splash watchdog triggered. Forcing navigation to login.');
+        AppLogger.warning(
+          'Splash watchdog triggered. Forcing navigation to login.',
+        );
         _navigateToNextScreen(forceLogin: true);
       }
     });
@@ -30,39 +29,29 @@ class SplashController extends GetxController {
     AppLogger.info('Starting app initialization...');
     try {
       // 1) Storage (critical) with timeout guard
-      final storageService = await Get
-          .putAsync(() => StorageService().initialize(), permanent: true)
-          .timeout(const Duration(seconds: 5));
+      final storageService = await Get.putAsync(
+        () => StorageService().initialize(),
+        permanent: true,
+      ).timeout(const Duration(seconds: 5));
       AppLogger.info('StorageService initialized.');
 
-      // 2) ApiService (critical) — register eagerly; let onInit run once
-      // Avoid calling a custom init that re-calls onInit (which caused LateInitializationError)
-      Get.put<ApiService>(ApiService(), permanent: true);
-      // Allow a brief tick for onInit to schedule
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      final apiService = ApiService.instance;
-      AppLogger.info('ApiService initialized.');
+      // 2) Non-critical services: kick off in parallel, do not await
 
-      // 3) Non-critical services: kick off in parallel, do not await
-      Get
-          .putAsync(() => PropertiesService(apiService).init(), permanent: true)
-          .timeout(const Duration(seconds: 6))
-          .then((_) => AppLogger.info('PropertiesService initialized.'))
-          .catchError((e, _) => AppLogger.warning('PropertiesService init failed/timeout: $e'));
-
-      Get
-          .putAsync(() => WishlistService(apiService).init(), permanent: true)
-          .timeout(const Duration(seconds: 6))
-          .then((_) => AppLogger.info('WishlistService initialized.'))
-          .catchError((e, _) => AppLogger.warning('WishlistService init failed/timeout: $e'));
-
-      Get
-          .putAsync(() => PushNotificationService(storageService).init(), permanent: true)
+      Get.putAsync(
+            () => PushNotificationService(storageService).init(),
+            permanent: true,
+          )
           .timeout(const Duration(seconds: 6))
           .then((_) => AppLogger.info('PushNotificationService initialized.'))
-          .catchError((e, _) => AppLogger.warning('PushNotificationService init failed/timeout: $e'));
+          .catchError(
+            (e, _) => AppLogger.warning(
+              'PushNotificationService init failed/timeout: $e',
+            ),
+          );
 
-      AppLogger.info('Core initialization finished. Proceeding to auth check...');
+      AppLogger.info(
+        'Core initialization finished. Proceeding to auth check...',
+      );
       _navigateToNextScreen();
     } catch (e, stackTrace) {
       AppLogger.error('CRITICAL STARTUP ERROR: $e', e, stackTrace);
@@ -104,7 +93,10 @@ class SplashController extends GetxController {
         Get.offAllNamed(Routes.login);
       }
     } catch (e) {
-      AppLogger.error('Error during navigation check: $e. Navigating to login.', e);
+      AppLogger.error(
+        'Error during navigation check: $e. Navigating to login.',
+        e,
+      );
       _navigated = true;
       _watchdog?.cancel();
       Get.offAllNamed(Routes.login);

@@ -47,7 +47,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              
+
               // Icon
               Center(
                 child: Container(
@@ -64,9 +64,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Title
               const Text(
                 'Forgot Password?',
@@ -77,9 +77,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Subtitle
               Text(
                 'No worries! Enter your phone number and we\'ll send you a code to reset your password.',
@@ -90,9 +90,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // Phone Number Field
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,139 +106,156 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Obx(() => Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: controller.phoneError.value.isEmpty 
-                            ? Colors.grey.shade300 
-                            : Colors.red,
-                        width: controller.phoneError.value.isEmpty ? 1 : 2,
+                  Obx(
+                    () => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: controller.phoneError.value.isEmpty
+                              ? Colors.grey.shade300
+                              : Colors.red,
+                          width: controller.phoneError.value.isEmpty ? 1 : 2,
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        // Country Code
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              bottomLeft: Radius.circular(12),
+                      child: Row(
+                        children: [
+                          // Country Code
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 18,
                             ),
-                            border: Border(
-                              right: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.phone_outlined, color: Colors.grey, size: 20),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '+91',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
                               ),
-                            ],
-                          ),
-                        ),
-                        // Phone Input
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            onChanged: (_) => controller.phoneError.value = '',
-                            decoration: const InputDecoration(
-                              hintText: '9876543210',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                              hintStyle: TextStyle(color: Colors.grey),
+                              border: Border(
+                                right: BorderSide(color: Colors.grey.shade300),
+                              ),
                             ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.phone_outlined,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  '+91',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )),
-                  Obx(() => controller.phoneError.value.isEmpty
-                    ? const SizedBox(height: 4)
-                    : Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          controller.phoneError.value,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontSize: 12,
+                          // Phone Input
+                          Expanded(
+                            child: TextFormField(
+                              controller: _phoneController,
+                              keyboardType: TextInputType.phone,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ],
+                              onChanged: (_) =>
+                                  controller.phoneError.value = '',
+                              decoration: const InputDecoration(
+                                hintText: '9876543210',
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 18,
+                                ),
+                                hintStyle: TextStyle(color: Colors.grey),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
+                    ),
+                  ),
+                  Obx(
+                    () => controller.phoneError.value.isEmpty
+                        ? const SizedBox(height: 4)
+                        : Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              controller.phoneError.value,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 48),
-              
+
               // Send OTP Button
-              Obx(() => AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: controller.isLoading.value 
-                    ? null 
-                    : _handleSendOTP,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF9800),
-                    foregroundColor: Colors.white,
-                    elevation: 2,
-                    shadowColor: const Color(0xFFFF9800).withValues(alpha: 0.3),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: controller.isLoading.value
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        'Send Code',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+              Obx(
+                () => AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : _handleSendOTP,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF9800),
+                      foregroundColor: Colors.white,
+                      elevation: 2,
+                      shadowColor: const Color(
+                        0xFFFF9800,
+                      ).withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    child: controller.isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text(
+                            'Send Code',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ),
-              )),
-              
+              ),
+
               const SizedBox(height: 60),
-              
+
               // Back to Login
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     "Remember your password? ",
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                   ),
                   GestureDetector(
                     onTap: () => Get.back(),
@@ -253,9 +270,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Extra spacing for keyboard
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],
@@ -267,25 +284,23 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
   Future<void> _handleSendOTP() async {
     final phone = _phoneController.text.trim();
-    
+
     // Validate locally first
     if (phone.isEmpty) {
       controller.phoneError.value = 'Phone number is required';
       return;
     } else if (phone.length != 10) {
-      controller.phoneError.value = 'Please enter a valid 10-digit phone number';
+      controller.phoneError.value =
+          'Please enter a valid 10-digit phone number';
       return;
     }
-    
+
     final success = await controller.sendForgotPasswordOTP(phone);
-    
+
     if (success) {
       // Initialize OTP controller and navigate to verification
       final otpController = Get.find<OTPController>();
-      otpController.initializeOTP(
-        type: OTPType.forgotPassword,
-        phone: phone,
-      );
+      otpController.initializeOTP(type: OTPType.forgotPassword, phone: phone);
       Get.toNamed(Routes.verification);
     }
   }

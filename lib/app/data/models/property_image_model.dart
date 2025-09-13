@@ -24,6 +24,7 @@ class PropertyImage {
     this.isMainImage = false,
   });
 
-  factory PropertyImage.fromJson(Map<String, dynamic> json) => _$PropertyImageFromJson(json);
+  factory PropertyImage.fromJson(Map<String, dynamic> json) =>
+      _$PropertyImageFromJson(json);
   Map<String, dynamic> toJson() => _$PropertyImageToJson(this);
 }

@@ -10,4 +10,3 @@ class MessageBinding extends Bindings {
     Get.lazyPut<ChatController>(() => ChatController());
   }
 }
-

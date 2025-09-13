@@ -21,7 +21,7 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -54,14 +54,15 @@ class ProfileHeader extends StatelessWidget {
                     child: Image.network(
                       avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(theme),
+                      errorBuilder: (context, error, stackTrace) =>
+                          _buildInitialsAvatar(theme),
                     ),
                   )
                 : _buildInitialsAvatar(theme),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // User Info
           Expanded(
             child: Column(
@@ -124,7 +125,9 @@ class ProfileHeader extends StatelessWidget {
                     Text(
                       userEmail,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],

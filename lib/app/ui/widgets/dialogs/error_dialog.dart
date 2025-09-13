@@ -6,8 +6,12 @@ Future<void> showErrorDialog(BuildContext context, {required String message}) {
     builder: (_) => AlertDialog(
       title: const Text('Error'),
       content: Text(message),
-      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('OK'))],
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
     ),
   );
 }
-

@@ -7,13 +7,13 @@ class InputTheme {
     color: Colors.black,
     fontSize: 16,
   );
-  
+
   // Default hint text style
   static TextStyle defaultHintTextStyle = TextStyle(
     color: Colors.grey.shade500,
     fontSize: 16,
   );
-  
+
   // Create a decorated TextField with default black text
   static TextField textField({
     TextEditingController? controller,
@@ -38,13 +38,12 @@ class InputTheme {
       enabled: enabled,
       focusNode: focusNode,
       style: style ?? defaultInputTextStyle,
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: defaultHintTextStyle,
-      ),
+      decoration:
+          decoration ??
+          InputDecoration(hintText: hintText, hintStyle: defaultHintTextStyle),
     );
   }
-  
+
   // Create a decorated TextFormField with default black text
   static TextFormField textFormField({
     TextEditingController? controller,
@@ -71,10 +70,9 @@ class InputTheme {
       enabled: enabled,
       focusNode: focusNode,
       style: style ?? defaultInputTextStyle,
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: defaultHintTextStyle,
-      ),
+      decoration:
+          decoration ??
+          InputDecoration(hintText: hintText, hintStyle: defaultHintTextStyle),
     );
   }
 }

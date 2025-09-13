@@ -15,7 +15,6 @@ class HomeShellView extends StatefulWidget {
 }
 
 class _HomeShellViewState extends State<HomeShellView> {
-
   @override
   void initState() {
     super.initState();
@@ -23,7 +22,7 @@ class _HomeShellViewState extends State<HomeShellView> {
     HomeBinding().dependencies();
     MessageBinding().dependencies();
     ProfileBinding().dependencies();
-    
+
     // Ensure auth state is hydrated via AuthController
     if (Get.isRegistered<AuthController>()) {
       final authController = Get.find<AuthController>();

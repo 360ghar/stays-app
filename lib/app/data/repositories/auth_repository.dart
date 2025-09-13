@@ -14,9 +14,15 @@ class AuthRepository {
   AuthRepository();
 
   // Email + password sign-in (kept for backward compatibility)
-  Future<UserModel> loginWithEmail({required String email, required String password}) async {
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
     try {
-      final res = await _supabase.auth.signInWithPassword(email: email, password: password);
+      final res = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
       final session = res.session;
       final user = res.user;
       if (user == null) {
@@ -33,10 +39,16 @@ class AuthRepository {
   }
 
   // Phone + password sign-in
-  Future<UserModel> loginWithPhone({required String phone, required String password}) async {
+  Future<UserModel> loginWithPhone({
+    required String phone,
+    required String password,
+  }) async {
     try {
       final formatted = _ensureE164(phone);
-      final res = await _supabase.auth.signInWithPassword(phone: formatted, password: password);
+      final res = await _supabase.auth.signInWithPassword(
+        phone: formatted,
+        password: password,
+      );
       final session = res.session;
       final user = res.user;
       if (user == null) {
@@ -52,14 +64,24 @@ class AuthRepository {
   }
 
   // Email signup (optional)
-  Future<UserModel> register({required String name, required String email, required String password}) async {
+  Future<UserModel> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
     try {
-      final res = await _supabase.auth.signUp(email: email, password: password, data: {
-        'full_name': name,
-      });
+      final res = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: {'full_name': name},
+      );
       final user = res.user;
       if (user == null) {
-        throw ApiException(message: 'Registration requires verification. Please check your email.', statusCode: 202);
+        throw ApiException(
+          message:
+              'Registration requires verification. Please check your email.',
+          statusCode: 202,
+        );
       }
       final mapped = _mapUser(user);
       await _persistUserData(mapped);
@@ -71,12 +93,20 @@ class AuthRepository {
   }
 
   // Phone signup -> triggers SMS OTP. Returns true if OTP sent.
-  Future<bool> signUpWithPhone({required String phone, required String password}) async {
+  Future<bool> signUpWithPhone({
+    required String phone,
+    required String password,
+  }) async {
     try {
       final formatted = _ensureE164(phone);
-      final res = await _supabase.auth.signUp(phone: formatted, password: password);
+      final res = await _supabase.auth.signUp(
+        phone: formatted,
+        password: password,
+      );
       // For phone sign-up, session is usually null until OTP verified
-      AppLogger.info('SignUp (phone) response: user=${res.user?.id}, session=${res.session != null}');
+      AppLogger.info(
+        'SignUp (phone) response: user=${res.user?.id}, session=${res.session != null}',
+      );
       return true;
     } on supabase.AuthException catch (e) {
       // If already registered, surface a helpful message

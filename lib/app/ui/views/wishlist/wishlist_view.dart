@@ -23,22 +23,19 @@ class WishlistView extends GetView<WishlistController> {
           ),
         ),
         actions: [
-          Obx(() => controller.wishlistItems.isNotEmpty
-              ? IconButton(
-                  onPressed: controller.clearWishlist,
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                  ),
-                )
-              : const SizedBox.shrink()),
+          Obx(
+            () => controller.wishlistItems.isNotEmpty
+                ? IconButton(
+                    onPressed: controller.clearWishlist,
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.wishlistItems.isEmpty) {
@@ -67,11 +64,7 @@ class WishlistView extends GetView<WishlistController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.favorite_border,
-              size: 80,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.favorite_border, size: 80, color: Colors.grey[400]),
             const SizedBox(height: 24),
             const Text(
               'Your wishlist is empty',
@@ -106,10 +99,7 @@ class WishlistView extends GetView<WishlistController> {
               ),
               child: const Text(
                 'Start Exploring',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
           ],
@@ -133,14 +123,7 @@ class WishlistView extends GetView<WishlistController> {
         ],
       ),
       child: InkWell(
-        onTap: () {
-          Get.snackbar(
-            'Opening Details',
-            'Property details will open here',
-            snackPosition: SnackPosition.TOP,
-            duration: const Duration(seconds: 2),
-          );
-        },
+        onTap: () => Get.toNamed('/listing/${item.id}'),
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,9 +142,7 @@ class WishlistView extends GetView<WishlistController> {
                     fit: BoxFit.cover,
                     placeholder: (context, url) => Container(
                       color: Colors.grey[300],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                      child: const Center(child: CircularProgressIndicator()),
                     ),
                     errorWidget: (context, url, error) => Container(
                       color: Colors.grey[300],
@@ -199,7 +180,7 @@ class WishlistView extends GetView<WishlistController> {
                 ),
               ],
             ),
-            
+
             // Content
             Padding(
               padding: const EdgeInsets.all(16),
@@ -229,7 +210,7 @@ class WishlistView extends GetView<WishlistController> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Name
                   Text(
                     item.name,
@@ -242,7 +223,7 @@ class WishlistView extends GetView<WishlistController> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Rating and Price
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -250,13 +231,9 @@ class WishlistView extends GetView<WishlistController> {
                       // Rating
                       Row(
                         children: [
-                          const Icon(
-                            Icons.star,
-                            size: 18,
-                            color: Colors.amber,
-                          ),
+                          const Icon(Icons.star, size: 18, color: Colors.amber),
                           const SizedBox(width: 4),
-                          if (item.rating != null) ...[  
+                          if (item.rating != null) ...[
                             Text(
                               item.ratingText,
                               style: const TextStyle(
@@ -283,7 +260,7 @@ class WishlistView extends GetView<WishlistController> {
                             ),
                         ],
                       ),
-                      
+
                       // Price
                       Row(
                         children: [

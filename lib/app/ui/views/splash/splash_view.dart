@@ -13,7 +13,10 @@ class SplashView extends GetView<SplashController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            Text(AppConstants.appName, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text(
+              AppConstants.appName,
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
             Text(AppConstants.tagLine),
             SizedBox(height: 24),

@@ -24,9 +24,7 @@ class ExploreView extends GetView<ExploreController> {
               _buildPopularHomes(),
               _buildNearbyHotels(),
               _buildRecommendedSection(),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
@@ -53,7 +51,7 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildPopularHomes() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final city = controller.currentCity;
+        final city = controller.locationName;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
@@ -62,7 +60,7 @@ class ExploreView extends GetView<ExploreController> {
             children: [
               const SizedBox(height: 24),
               SectionHeader(
-                title: 'Popular homes in $city',
+                title: 'Popular stays near $city',
                 onViewAll: () => controller.navigateToAllProperties(city),
               ),
               const SizedBox(height: 16),
@@ -82,7 +80,7 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildNearbyHotels() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final nearbyCity = controller.nearbyCity;
+        final nearbyCity = controller.locationName;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
@@ -112,22 +110,23 @@ class ExploreView extends GetView<ExploreController> {
     return SliverToBoxAdapter(
       child: Obx(() {
         if (controller.recommendedHotels.isEmpty) return const SizedBox();
-        
+
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              const SectionHeader(
-                title: 'Recommended for you',
-              ),
+              const SectionHeader(title: 'Recommended for you'),
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
                 child: controller.isLoading.value
                     ? _buildShimmerList()
-                    : _buildHotelsList(controller.recommendedHotels, 'recommended'),
+                    : _buildHotelsList(
+                        controller.recommendedHotels,
+                        'recommended',
+                      ),
               ),
             ],
           ),
@@ -144,18 +143,11 @@ class ExploreView extends GetView<ExploreController> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.hotel_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.hotel_outlined, size: 48, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 'No hotels available',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 16),
               ),
             ],
           ),

@@ -15,7 +15,7 @@ class PremiumHomeView extends StatefulWidget {
 class _PremiumHomeViewState extends State<PremiumHomeView>
     with TickerProviderStateMixin {
   final AuthController authController = Get.find<AuthController>();
-  
+
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _rotationController;
@@ -26,7 +26,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -40,21 +40,14 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
       vsync: this,
     )..repeat();
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _rotationAnimation = Tween<double>(
       begin: 0,
@@ -111,14 +104,14 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               );
             },
           ),
-          
+
           // Glass overlay
           Container(
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.05),
             ),
           ),
-          
+
           // Main content
           SafeArea(
             child: FadeTransition(
@@ -134,14 +127,16 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                     backgroundColor: Colors.transparent,
                     elevation: 0,
                     flexibleSpace: FlexibleSpaceBar(
-                      title: Obx(() => Text(
-                        'Hello, ${authController.currentUser.value?.firstName ?? 'Explorer'}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
+                      title: Obx(
+                        () => Text(
+                          'Hello, ${authController.currentUser.value?.firstName ?? 'Explorer'}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )),
+                      ),
                       background: Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -178,7 +173,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                       const SizedBox(width: 8),
                     ],
                   ),
-                  
+
                   // Content
                   SliverPadding(
                     padding: const EdgeInsets.all(20),
@@ -189,28 +184,28 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                           position: _slideAnimation,
                           child: _buildWelcomeCard(),
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Quick Stats
                         _buildSectionTitle('Your Journey'),
                         const SizedBox(height: 16),
                         _buildStatsRow(),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Featured Destinations
                         _buildSectionTitle('Featured Destinations'),
                         const SizedBox(height: 16),
                         _buildDestinationsGrid(),
-                        
+
                         const SizedBox(height: 32),
-                        
+
                         // Recent Activity
                         _buildSectionTitle('Recent Activity'),
                         const SizedBox(height: 16),
                         _buildActivityCard(),
-                        
+
                         const SizedBox(height: 100),
                       ]),
                     ),
@@ -219,14 +214,9 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               ),
             ),
           ),
-          
+
           // Bottom Navigation
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomNav(),
-          ),
+          Positioned(bottom: 0, left: 0, right: 0, child: _buildBottomNav()),
         ],
       ),
     );
@@ -287,10 +277,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                         SizedBox(height: 4),
                         Text(
                           'Discover amazing stays near you',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
                     ),
@@ -299,13 +286,13 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFF6B6B),
-                      Color(0xFFFF8E53),
-                    ],
+                    colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -321,11 +308,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                       ),
                     ),
                     SizedBox(width: 8),
-                    Icon(
-                      Icons.arrow_forward,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    Icon(Icons.arrow_forward, color: Colors.white, size: 18),
                   ],
                 ),
               ),
@@ -344,11 +327,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
         fontSize: 22,
         fontWeight: FontWeight.w700,
         shadows: [
-          Shadow(
-            blurRadius: 10,
-            color: Colors.black26,
-            offset: Offset(0, 2),
-          ),
+          Shadow(blurRadius: 10, color: Colors.black26, offset: Offset(0, 2)),
         ],
       ),
     );
@@ -531,10 +510,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                     SizedBox(height: 4),
                     Text(
                       'Start exploring to see your activity here',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
@@ -622,28 +598,25 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                 const CircleAvatar(
                   radius: 40,
                   backgroundColor: Color(0xFF667eea),
-                  child: Icon(
-                    Icons.person,
-                    size: 40,
-                    color: Colors.white,
-                  ),
+                  child: Icon(Icons.person, size: 40, color: Colors.white),
                 ),
                 const SizedBox(height: 16),
-                Obx(() => Text(
-                  authController.currentUser.value?.firstName ?? 'User',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                Obx(
+                  () => Text(
+                    authController.currentUser.value?.firstName ?? 'User',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 8),
-                Obx(() => Text(
-                  authController.currentUser.value?.email ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+                Obx(
+                  () => Text(
+                    authController.currentUser.value?.email ?? '',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
-                )),
+                ),
                 const SizedBox(height: 24),
                 ListTile(
                   leading: const Icon(Icons.settings, color: Color(0xFF667eea)),
@@ -654,7 +627,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.help_outline, color: Color(0xFF667eea)),
+                  leading: const Icon(
+                    Icons.help_outline,
+                    color: Color(0xFF667eea),
+                  ),
                   title: const Text('Help & Support'),
                   onTap: () {
                     Get.back();
@@ -664,7 +640,10 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text('Logout', style: TextStyle(color: Colors.red)),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.red),
+                  ),
                   onTap: () {
                     Get.back();
                     _confirmLogout();
@@ -730,10 +709,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
       ),
       messageText: Text(
         '$feature will be available soon',
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFF667eea).withValues(alpha: 0.9),
       borderRadius: 16,

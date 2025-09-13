@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import '../controllers/auth/profile_controller.dart';
 import '../controllers/auth/auth_controller.dart';
 import '../data/repositories/auth_repository.dart';
-import '../data/services/storage_service.dart';
+import '../data/providers/users_provider.dart';
+import '../data/repositories/profile_repository.dart';
 
 class ProfileBinding extends Bindings {
   @override
@@ -14,13 +15,14 @@ class ProfileBinding extends Bindings {
     }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
-        AuthController(
-          authRepository: Get.find<AuthRepository>(),
-          storageService: Get.find<StorageService>(),
-        ),
+        AuthController(authRepository: Get.find<AuthRepository>()),
         permanent: true,
       );
     }
+    Get.lazyPut<UsersProvider>(() => UsersProvider());
+    Get.lazyPut<ProfileRepository>(
+      () => ProfileRepository(provider: Get.find<UsersProvider>()),
+    );
     Get.lazyPut<ProfileController>(() => ProfileController());
   }
 }

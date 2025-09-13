@@ -4,7 +4,8 @@ import '../../data/repositories/booking_repository.dart';
 
 class BookingController extends GetxController {
   final BookingRepository _repository;
-  BookingController({required BookingRepository repository}) : _repository = repository;
+  BookingController({required BookingRepository repository})
+    : _repository = repository;
 
   final RxBool isSubmitting = false.obs;
   final RxString statusMessage = ''.obs;
@@ -21,4 +22,3 @@ class BookingController extends GetxController {
     }
   }
 }
-

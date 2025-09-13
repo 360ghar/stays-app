@@ -6,4 +6,3 @@ class ErrorDisplay extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(child: Text(message));
 }
-

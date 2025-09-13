@@ -68,11 +68,18 @@ class DebugLogger {
   }
 
   // JWT Token logging
-  static void logJWTToken(String token, {DateTime? expiresAt, String? userId, String? userEmail}) {
+  static void logJWTToken(
+    String token, {
+    DateTime? expiresAt,
+    String? userId,
+    String? userEmail,
+  }) {
     if (kDebugMode) {
-      final tokenPreview = token.length > 20 ? '${token.substring(0, 20)}...' : token;
+      final tokenPreview = token.length > 20
+          ? '${token.substring(0, 20)}...'
+          : token;
       var message = 'JWT Token: $tokenPreview';
-      
+
       if (expiresAt != null) {
         message += '\nExpires: $expiresAt';
       }
@@ -82,13 +89,18 @@ class DebugLogger {
       if (userEmail != null) {
         message += '\nEmail: $userEmail';
       }
-      
+
       log(message, tag: 'JWT');
     }
   }
 
   // API Request logging
-  static void logAPIRequest(String method, String url, {dynamic body, Map<String, dynamic>? headers}) {
+  static void logAPIRequest(
+    String method,
+    String url, {
+    dynamic body,
+    Map<String, dynamic>? headers,
+  }) {
     if (kDebugMode) {
       var message = '$method $url';
       if (headers != null) {

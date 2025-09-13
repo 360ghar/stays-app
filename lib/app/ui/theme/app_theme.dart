@@ -6,13 +6,14 @@ import 'app_text_styles.dart';
 class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
-    ).copyWith(
-      // Override onSurface which affects TextField text color
-      onSurface: Colors.black,
-    ),
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          brightness: Brightness.light,
+        ).copyWith(
+          // Override onSurface which affects TextField text color
+          onSurface: Colors.black,
+        ),
     // Set primary text selection theme
     textSelectionTheme: const TextSelectionThemeData(
       cursorColor: Colors.black,
@@ -39,9 +40,7 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         // Avoid infinite width in Rows/List views. Only enforce height.
         minimumSize: const Size(0, 48),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         textStyle: AppTextStyles.button,
       ),
     ),
@@ -52,10 +51,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       // Set hint text color to grey
       hintStyle: TextStyle(color: Colors.grey.shade500),
       // Set label colors

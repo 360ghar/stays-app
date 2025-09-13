@@ -25,10 +25,7 @@ class ProfileView extends GetView<ProfileController> {
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
-            slivers: [
-              _buildSliverAppBar(),
-              _buildProfileContent(),
-            ],
+            slivers: [_buildSliverAppBar(), _buildProfileContent()],
           ),
         );
       }),
@@ -48,10 +45,7 @@ class ProfileView extends GetView<ProfileController> {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFFF8F9FA),
-                Color(0xFFE3F2FD),
-              ],
+              colors: [Color(0xFFF8F9FA), Color(0xFFE3F2FD)],
             ),
           ),
           child: SafeArea(
@@ -78,29 +72,56 @@ class ProfileView extends GetView<ProfileController> {
                               gradient: const LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Color(0xFF3B82F6),
-                                  Color(0xFF1D4ED8),
-                                ],
+                                colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                                  color: const Color(
+                                    0xFF3B82F6,
+                                  ).withValues(alpha: 0.3),
                                   blurRadius: 20,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 10),
                                 ),
                               ],
                             ),
-                            child: Center(
-                              child: Text(
-                                controller.userInitials.value,
-                                style: const TextStyle(
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            child: Builder(
+                              builder: (_) {
+                                final avatarUrl =
+                                    controller.profile.value?.avatarUrl;
+                                if (avatarUrl != null && avatarUrl.isNotEmpty) {
+                                  return ClipOval(
+                                    child: Image.network(
+                                      avatarUrl,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Center(
+                                                child: Text(
+                                                  controller.userInitials.value,
+                                                  style: const TextStyle(
+                                                    fontSize: 36,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                    ),
+                                  );
+                                }
+                                return Center(
+                                  child: Text(
+                                    controller.userInitials.value,
+                                    style: const TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         );
@@ -135,17 +156,23 @@ class ProfileView extends GetView<ProfileController> {
                                 ),
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                    colors: controller.userType.value == 'Superhost'
+                                    colors:
+                                        controller.userType.value == 'Superhost'
                                         ? [Colors.amber, Colors.orange]
-                                        : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
+                                        : [
+                                            const Color(0xFF3B82F6),
+                                            const Color(0xFF1D4ED8),
+                                          ],
                                   ),
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (controller.userType.value == 'Superhost'
-                                              ? Colors.amber
-                                              : const Color(0xFF3B82F6))
-                                          .withValues(alpha: 0.3),
+                                      color:
+                                          (controller.userType.value ==
+                                                      'Superhost'
+                                                  ? Colors.amber
+                                                  : const Color(0xFF3B82F6))
+                                              .withValues(alpha: 0.3),
                                       blurRadius: 8,
                                       offset: const Offset(0, 4),
                                     ),
@@ -159,6 +186,29 @@ class ProfileView extends GetView<ProfileController> {
                                     color: Colors.white,
                                   ),
                                 ),
+                              ),
+                              const SizedBox(height: 6),
+                              Builder(
+                                builder: (_) {
+                                  final email =
+                                      controller.profile.value?.email ?? '';
+                                  final phone =
+                                      controller.profile.value?.phone ??
+                                      controller.userPhone.value;
+                                  final contact = (email.isNotEmpty)
+                                      ? email
+                                      : (phone.isNotEmpty ? phone : '');
+                                  if (contact.isEmpty)
+                                    return const SizedBox.shrink();
+                                  return Text(
+                                    contact,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF6B7280),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -183,9 +233,9 @@ class ProfileView extends GetView<ProfileController> {
           children: [
             // Stats Section
             _buildStatsSection(),
-            
+
             const SizedBox(height: 24),
-            
+
             // Past Bookings Section
             _buildAnimatedSection(
               delay: 100,
@@ -199,9 +249,9 @@ class ProfileView extends GetView<ProfileController> {
                 gradient: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Account Section
             _buildAnimatedSection(
               delay: 200,
@@ -229,9 +279,9 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ]),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Legal Section
             _buildAnimatedSection(
               delay: 300,
@@ -252,9 +302,9 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ]),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Logout Section
             _buildAnimatedSection(
               delay: 400,
@@ -267,9 +317,9 @@ class ProfileView extends GetView<ProfileController> {
                 showArrow: false,
               ),
             ),
-            
+
             const SizedBox(height: 40),
-            
+
             // Version Info
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0.0, end: 1.0),
@@ -303,7 +353,7 @@ class ProfileView extends GetView<ProfileController> {
                 );
               },
             ),
-            
+
             const SizedBox(height: 40),
           ],
         ),
@@ -320,10 +370,7 @@ class ProfileView extends GetView<ProfileController> {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Color(0xFFF8FAFC),
-            ],
+            colors: [Colors.white, Color(0xFFF8FAFC)],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
@@ -349,11 +396,7 @@ class ProfileView extends GetView<ProfileController> {
                 const Color(0xFF3B82F6),
               ),
             ),
-            Container(
-              width: 1,
-              height: 40,
-              color: const Color(0xFFE5E7EB),
-            ),
+            Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
             Expanded(
               child: _buildStatItem(
                 'Wishlist',
@@ -362,11 +405,7 @@ class ProfileView extends GetView<ProfileController> {
                 const Color(0xFFEF4444),
               ),
             ),
-            Container(
-              width: 1,
-              height: 40,
-              color: const Color(0xFFE5E7EB),
-            ),
+            Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
             Expanded(
               child: _buildStatItem(
                 'Reviews',
@@ -381,7 +420,12 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Container(
@@ -390,11 +434,7 @@ class ProfileView extends GetView<ProfileController> {
             color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
+          child: Icon(icon, color: color, size: 20),
         ),
         const SizedBox(height: 8),
         Text(
@@ -426,10 +466,7 @@ class ProfileView extends GetView<ProfileController> {
       builder: (context, value, _) {
         return Transform.translate(
           offset: Offset(0, 30 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
     );
@@ -457,11 +494,11 @@ class ProfileView extends GetView<ProfileController> {
         children: children.asMap().entries.map((entry) {
           int index = entry.key;
           Widget child = entry.value;
-          
+
           if (index == children.length - 1) {
             return child;
           }
-          
+
           return Column(
             children: [
               child,
@@ -513,11 +550,7 @@ class ProfileView extends GetView<ProfileController> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                child: Icon(icon, color: Colors.white, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(

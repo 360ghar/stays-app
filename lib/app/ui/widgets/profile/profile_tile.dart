@@ -23,17 +23,14 @@ class ProfileTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
               // Icon
@@ -41,7 +38,9 @@ class ProfileTile extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: (iconColor ?? theme.colorScheme.primary).withValues(alpha: 0.1),
+                  color: (iconColor ?? theme.colorScheme.primary).withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -50,9 +49,9 @@ class ProfileTile extends StatelessWidget {
                   color: iconColor ?? theme.colorScheme.primary,
                 ),
               ),
-              
+
               const SizedBox(width: 16),
-              
+
               // Content
               Expanded(
                 child: Column(
@@ -70,14 +69,16 @@ class ProfileTile extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
                   ],
                 ),
               ),
-              
+
               // Arrow
               if (showArrow)
                 Icon(

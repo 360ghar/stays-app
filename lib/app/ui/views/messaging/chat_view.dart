@@ -14,25 +14,34 @@ class ChatView extends GetView<ChatController> {
       body: Column(
         children: [
           Expanded(
-            child: Obx(() => ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: controller.messages.length,
-                  itemBuilder: (_, i) => Align(
-                    alignment: i.isEven ? Alignment.centerRight : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: i.isEven ? Colors.black87 : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        controller.messages[i],
-                        style: TextStyle(color: i.isEven ? Colors.white : Colors.black87),
+            child: Obx(
+              () => ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: controller.messages.length,
+                itemBuilder: (_, i) => Align(
+                  alignment: i.isEven
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: i.isEven ? Colors.black87 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      controller.messages[i],
+                      style: TextStyle(
+                        color: i.isEven ? Colors.white : Colors.black87,
                       ),
                     ),
                   ),
-                )),
+                ),
+              ),
+            ),
           ),
           SafeArea(
             top: false,
@@ -44,7 +53,9 @@ class ChatView extends GetView<ChatController> {
                     child: TextField(
                       controller: input,
                       style: const TextStyle(color: Colors.black),
-                      decoration: const InputDecoration(hintText: 'Type a message'),
+                      decoration: const InputDecoration(
+                        hintText: 'Type a message',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -56,11 +67,11 @@ class ChatView extends GetView<ChatController> {
                       controller.messages.add(text);
                       input.clear();
                     },
-                  )
+                  ),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );

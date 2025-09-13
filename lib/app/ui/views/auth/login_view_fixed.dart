@@ -14,20 +14,20 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _passwordFocusNode = FocusNode();
-  
+
   bool _isPasswordVisible = false;
   bool _isLoginMode = true;
   String _emailError = '';
   String _passwordError = '';
   bool _isLoading = false;
-  
+
   late final AuthController authController;
 
   @override
   void initState() {
     super.initState();
     authController = Get.find<AuthController>();
-    
+
     // Listen to auth controller loading state
     ever(authController.isLoading, (loading) {
       if (mounted) {
@@ -76,7 +76,7 @@ class _LoginViewState extends State<LoginView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 32),
-                      
+
                       // Welcome Text
                       Text(
                         _isLoginMode ? 'Welcome back' : 'Create your account',
@@ -88,17 +88,14 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _isLoginMode 
-                          ? 'Sign in to your account to continue'
-                          : 'Join us and start your journey',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        _isLoginMode
+                            ? 'Sign in to your account to continue'
+                            : 'Join us and start your journey',
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
-                      
+
                       const SizedBox(height: 40),
-                      
+
                       // Email Input
                       _buildInputField(
                         controller: _emailController,
@@ -116,9 +113,9 @@ class _LoginViewState extends State<LoginView> {
                           }
                         },
                       ),
-                      
+
                       const SizedBox(height: 20),
-                      
+
                       // Password Input
                       _buildPasswordField(
                         controller: _passwordController,
@@ -140,9 +137,9 @@ class _LoginViewState extends State<LoginView> {
                           }
                         },
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       // Forgot Password
                       if (_isLoginMode)
                         Align(
@@ -166,18 +163,18 @@ class _LoginViewState extends State<LoginView> {
                             ),
                           ),
                         ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Login/Signup Button
                       _buildPrimaryButton(
                         text: _isLoginMode ? 'Sign in' : 'Create account',
                         isLoading: _isLoading,
                         onPressed: _handleSubmit,
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Divider
                       Row(
                         children: [
@@ -195,9 +192,9 @@ class _LoginViewState extends State<LoginView> {
                           Expanded(child: Divider(color: Colors.grey[300])),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Social Login Buttons
                       _buildSocialButton(
                         text: 'Continue with Google',
@@ -207,9 +204,9 @@ class _LoginViewState extends State<LoginView> {
                         borderColor: Colors.grey[300]!,
                         onPressed: () => _showComingSoon('Google login'),
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       _buildSocialButton(
                         text: 'Continue with Facebook',
                         icon: Icons.facebook,
@@ -217,9 +214,9 @@ class _LoginViewState extends State<LoginView> {
                         textColor: Colors.white,
                         onPressed: () => _showComingSoon('Facebook login'),
                       ),
-                      
+
                       const SizedBox(height: 12),
-                      
+
                       _buildSocialButton(
                         text: 'Continue with Apple',
                         icon: Icons.apple,
@@ -227,13 +224,13 @@ class _LoginViewState extends State<LoginView> {
                         textColor: Colors.white,
                         onPressed: () => _showComingSoon('Apple login'),
                       ),
-                      
+
                       const SizedBox(height: 32),
                     ],
                   ),
                 ),
               ),
-              
+
               // Switch Login/Signup Mode
               Padding(
                 padding: const EdgeInsets.only(bottom: 24),
@@ -242,12 +239,9 @@ class _LoginViewState extends State<LoginView> {
                   children: [
                     Text(
                       _isLoginMode
-                        ? "Don't have an account? "
-                        : "Already have an account? ",
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 16,
-                      ),
+                          ? "Don't have an account? "
+                          : "Already have an account? ",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
                     TextButton(
                       onPressed: () {
@@ -285,18 +279,18 @@ class _LoginViewState extends State<LoginView> {
   void _handleSubmit() {
     // Dismiss keyboard first to prevent flickering
     FocusScope.of(context).unfocus();
-    
+
     // Clear previous errors
     setState(() {
       _emailError = '';
       _passwordError = '';
     });
-    
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    
+
     bool hasError = false;
-    
+
     // Validate email
     if (email.isEmpty) {
       setState(() {
@@ -309,7 +303,7 @@ class _LoginViewState extends State<LoginView> {
       });
       hasError = true;
     }
-    
+
     // Validate password
     if (password.isEmpty) {
       setState(() {
@@ -322,9 +316,9 @@ class _LoginViewState extends State<LoginView> {
       });
       hasError = true;
     }
-    
+
     if (hasError) return;
-    
+
     if (_isLoginMode) {
       authController.login(email: email, password: password);
     } else {
@@ -392,10 +386,7 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
       ],
@@ -463,10 +454,7 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
       ],
@@ -493,21 +481,21 @@ class _LoginViewState extends State<LoginView> {
           ),
         ),
         child: isLoading
-          ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            )
-          : Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
       ),
     );
   }
@@ -533,8 +521,8 @@ class _LoginViewState extends State<LoginView> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: borderColor != null
-              ? BorderSide(color: borderColor)
-              : BorderSide.none,
+                ? BorderSide(color: borderColor)
+                : BorderSide.none,
           ),
         ),
         child: Row(
@@ -544,10 +532,7 @@ class _LoginViewState extends State<LoginView> {
             const SizedBox(width: 12),
             Text(
               text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           ],
         ),

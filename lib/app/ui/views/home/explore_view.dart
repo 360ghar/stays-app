@@ -4,6 +4,7 @@ import 'package:stays_app/app/controllers/explore_controller.dart';
 import 'package:stays_app/app/ui/widgets/cards/property_card.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
+import 'package:stays_app/app/ui/widgets/common/banner_carousel.dart';
 
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
@@ -21,12 +22,11 @@ class ExploreView extends GetView<ExploreController> {
             ),
             slivers: [
               _buildSliverAppBar(context),
+              _buildBannerSection(),
               _buildPopularHomes(),
               _buildNearbyHotels(),
               _buildRecommendedSection(),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
         ),
@@ -45,7 +45,37 @@ class ExploreView extends GetView<ExploreController> {
         background: SearchBarWidget(
           placeholder: 'Start your search',
           onTap: controller.navigateToSearch,
+          trailing: TextButton.icon(
+            onPressed: controller.useMyLocation,
+            icon: const Icon(Icons.my_location, size: 18),
+            label: const Text('Use my location'),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              foregroundColor: Colors.blue[700],
+              textStyle: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
+      ),
+    );
+  }
+
+  // Banners carousel section (hardcoded URLs for now)
+  Widget _buildBannerSection() {
+    const bannerUrls = <String>[
+      'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1551776235-dde6d4829808?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1541427468627-a89a96e5ca0c?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop',
+    ];
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: BannerCarousel(imageUrls: bannerUrls, aspectRatio: 16 / 6),
       ),
     );
   }
@@ -53,7 +83,7 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildPopularHomes() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final city = controller.currentCity;
+        final city = controller.locationName;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
@@ -62,7 +92,7 @@ class ExploreView extends GetView<ExploreController> {
             children: [
               const SizedBox(height: 24),
               SectionHeader(
-                title: 'Popular homes in $city',
+                title: 'Popular stays near $city',
                 onViewAll: () => controller.navigateToAllProperties(city),
               ),
               const SizedBox(height: 16),
@@ -82,7 +112,7 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildNearbyHotels() {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final nearbyCity = controller.nearbyCity;
+        final nearbyCity = controller.locationName;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
@@ -112,22 +142,23 @@ class ExploreView extends GetView<ExploreController> {
     return SliverToBoxAdapter(
       child: Obx(() {
         if (controller.recommendedHotels.isEmpty) return const SizedBox();
-        
+
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 500),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              const SectionHeader(
-                title: 'Recommended for you',
-              ),
+              const SectionHeader(title: 'Recommended for you'),
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
                 child: controller.isLoading.value
                     ? _buildShimmerList()
-                    : _buildHotelsList(controller.recommendedHotels, 'recommended'),
+                    : _buildHotelsList(
+                        controller.recommendedHotels,
+                        'recommended',
+                      ),
               ),
             ],
           ),
@@ -144,18 +175,11 @@ class ExploreView extends GetView<ExploreController> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.hotel_outlined,
-                size: 48,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.hotel_outlined, size: 48, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 'No hotels available',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 16),
               ),
             ],
           ),

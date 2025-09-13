@@ -11,7 +11,12 @@ class AppException implements Exception {
 
 class NetworkException extends AppException {
   final int? statusCode;
-  NetworkException({required super.message, this.statusCode, super.code, super.originalError});
+  NetworkException({
+    required super.message,
+    this.statusCode,
+    super.code,
+    super.originalError,
+  });
 }
 
 class ApiException extends NetworkException {
@@ -24,6 +29,8 @@ class AuthException extends AppException {
 
 class ValidationException extends AppException {
   final Map<String, List<String>> errors;
-  ValidationException({required this.errors, super.message = 'Validation failed'});
+  ValidationException({
+    required this.errors,
+    super.message = 'Validation failed',
+  });
 }
-

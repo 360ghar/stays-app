@@ -14,4 +14,3 @@ class AmenityModel {
 
   Map<String, dynamic> toJson() => {'key': key, 'name': name};
 }
-

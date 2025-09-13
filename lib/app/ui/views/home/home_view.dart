@@ -8,7 +8,7 @@ class HomeView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AuthController authController = Get.find<AuthController>();
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -47,7 +47,7 @@ class HomeView extends StatelessWidget {
                           await authController.logout();
                         } catch (e) {
                           Get.snackbar(
-                            'Logout Failed', 
+                            'Logout Failed',
                             'An error occurred. Please try again.',
                             snackPosition: SnackPosition.BOTTOM,
                           );
@@ -97,34 +97,29 @@ class HomeView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.waving_hand,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                  const Icon(Icons.waving_hand, color: Colors.white, size: 32),
                   const SizedBox(height: 16),
-                  Obx(() => Text(
-                    'Hello, ${authController.currentUser.value?.firstName ?? 'User'}!',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  Obx(
+                    () => Text(
+                      'Hello, ${authController.currentUser.value?.firstName ?? 'User'}!',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )),
+                  ),
                   const SizedBox(height: 8),
                   const Text(
                     'Welcome to your StaysApp dashboard. Your journey begins here!',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Quick Actions
             const Text(
               'Quick Actions',
@@ -135,7 +130,7 @@ class HomeView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               children: [
                 Expanded(
@@ -159,9 +154,9 @@ class HomeView extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
-            
+
             Row(
               children: [
                 Expanded(
@@ -185,9 +180,9 @@ class HomeView extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Stats Card
             Container(
               width: double.infinity,
@@ -243,9 +238,9 @@ class HomeView extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Info Card
             Container(
               width: double.infinity,
@@ -275,10 +270,7 @@ class HomeView extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'This is a demo version of StaysApp. Full features will be available in the complete version.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.amber[700],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.amber[700]),
                   ),
                 ],
               ),
@@ -334,10 +326,7 @@ class HomeView extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -364,10 +353,7 @@ class HomeView extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
           textAlign: TextAlign.center,
         ),
       ],

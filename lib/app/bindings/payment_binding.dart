@@ -9,9 +9,10 @@ class PaymentBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<PaymentProvider>(() => PaymentProvider());
-    Get.lazyPut<PaymentRepository>(() => PaymentRepository(provider: Get.find<PaymentProvider>()));
+    Get.lazyPut<PaymentRepository>(
+      () => PaymentRepository(provider: Get.find<PaymentProvider>()),
+    );
     Get.lazyPut<PaymentController>(() => PaymentController());
     Get.lazyPut<PaymentMethodController>(() => PaymentMethodController());
   }
 }
-

@@ -19,6 +19,7 @@ import '../ui/views/auth/verification_view.dart';
 import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/home/explore_view.dart';
+import '../ui/views/listing/location_search_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/search_results_view.dart';
 import '../ui/views/booking/booking_view.dart';
@@ -78,21 +79,24 @@ class AppPages {
     ),
     GetPage(
       name: Routes.search,
-      page: () => const ExploreView(),
+      page: () => const LocationSearchView(),
       binding: HomeBinding(),
       transition: Transition.fadeIn,
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.searchResults,
       page: () => const SearchResultsView(),
       binding: HomeBinding(),
       transition: Transition.cupertino,
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.listingDetail,
       page: () => const ListingDetailView(),
       binding: ListingBinding(),
       transition: Transition.rightToLeft,
+      middlewares: [AuthMiddleware()],
     ),
     GetPage(
       name: Routes.booking,
@@ -128,6 +132,7 @@ class AppPages {
       name: Routes.profile,
       page: () => const ProfileView(),
       binding: ProfileBinding(),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

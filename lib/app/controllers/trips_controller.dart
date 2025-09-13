@@ -1,73 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/data/repositories/booking_repository.dart';
 
 class TripsController extends GetxController {
-  final RxList<Map<String, dynamic>> pastBookings = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> pastBookings =
+      <Map<String, dynamic>>[].obs;
   final RxBool isLoading = false.obs;
+  late final BookingRepository _bookingRepository;
 
   @override
   void onInit() {
     super.onInit();
-    loadPastBookings();
+    _bookingRepository = Get.find<BookingRepository>();
+    // Defer loading until screen is visible
   }
 
-  void loadPastBookings() {
-    isLoading.value = true;
-    
-    // Simulate loading past bookings - in real app this would come from API
-    Future.delayed(const Duration(seconds: 1), () {
-      pastBookings.value = [
-        {
-          'id': 'booking_001',
-          'hotelName': 'Grand Hotel Marina',
-          'image': 'https://images.unsplash.com/photo-1566073771259-6a8506099945',
-          'location': 'Miami Beach, Florida',
-          'checkIn': '2024-01-15',
-          'checkOut': '2024-01-18',
-          'guests': 2,
-          'rooms': 1,
-          'totalAmount': 890.00,
-          'bookingDate': '2023-12-20',
-          'status': 'completed',
-          'rating': 4.8,
-          'canReview': true,
-          'canRebook': true,
-        },
-        {
-          'id': 'booking_002',
-          'hotelName': 'Mountain View Resort',
-          'image': 'https://images.unsplash.com/photo-1587061949409-02df41d5e562',
-          'location': 'Aspen, Colorado',
-          'checkIn': '2023-12-22',
-          'checkOut': '2023-12-26',
-          'guests': 4,
-          'rooms': 2,
-          'totalAmount': 1250.00,
-          'bookingDate': '2023-11-10',
-          'status': 'completed',
-          'rating': 4.9,
-          'canReview': false,
-          'canRebook': true,
-        },
-        {
-          'id': 'booking_003',
-          'hotelName': 'City Center Boutique',
-          'image': 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2',
-          'location': 'New York, NY',
-          'checkIn': '2023-10-05',
-          'checkOut': '2023-10-08',
-          'guests': 2,
-          'rooms': 1,
-          'totalAmount': 720.00,
-          'bookingDate': '2023-09-15',
-          'status': 'completed',
-          'rating': 4.6,
-          'canReview': false,
-          'canRebook': true,
-        },
-      ];
+  Future<void> loadPastBookings() async {
+    try {
+      isLoading.value = true;
+      final data = await _bookingRepository.listBookings();
+      final bookings = (data['bookings'] as List? ?? [])
+          .cast<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+      pastBookings.value = bookings
+          .map(
+            (b) => {
+              'id': b['id']?.toString() ?? '',
+              'hotelName':
+                  b['property_title'] ?? b['property']?['title'] ?? 'Stay',
+              'image': b['property']?['main_image_url'] ?? '',
+              'location': b['property']?['city'] ?? '',
+              'checkIn': b['check_in_date'] ?? '',
+              'checkOut': b['check_out_date'] ?? '',
+              'guests': b['guests'] ?? 0,
+              'rooms': 1,
+              'totalAmount': (b['total_amount'] ?? 0).toDouble(),
+              'bookingDate': b['created_at'] ?? '',
+              'status': b['booking_status'] ?? 'pending',
+              'rating': 0.0,
+              'canReview': false,
+              'canRebook': true,
+            },
+          )
+          .toList();
+    } catch (e) {
+      pastBookings.clear();
+    } finally {
       isLoading.value = false;
-    });
+    }
   }
 
   void rebookHotel(Map<String, dynamic> booking) {
@@ -106,17 +87,18 @@ class TripsController extends GetxController {
                       duration: const Duration(seconds: 2),
                     );
                   },
-                  icon: const Icon(Icons.star_border, color: Colors.amber, size: 32),
+                  icon: const Icon(
+                    Icons.star_border,
+                    color: Colors.amber,
+                    size: 32,
+                  ),
                 );
               }),
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
         ],
       ),
     );
@@ -146,17 +128,14 @@ class TripsController extends GetxController {
               ),
             ),
             const SizedBox(height: 24),
-            
+
             // Title
             Text(
               'Booking Details',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             // Details
             _buildDetailRow('Booking ID', booking['id']),
             _buildDetailRow('Hotel', booking['hotelName']),
@@ -165,11 +144,17 @@ class TripsController extends GetxController {
             _buildDetailRow('Check-out', _formatDate(booking['checkOut'])),
             _buildDetailRow('Guests', '${booking['guests']} guests'),
             _buildDetailRow('Rooms', '${booking['rooms']} room(s)'),
-            _buildDetailRow('Total Amount', '\$${booking['totalAmount'].toStringAsFixed(2)}'),
-            _buildDetailRow('Status', booking['status'].toString().toUpperCase()),
-            
+            _buildDetailRow(
+              'Total Amount',
+              '\$${booking['totalAmount'].toStringAsFixed(2)}',
+            ),
+            _buildDetailRow(
+              'Status',
+              booking['status'].toString().toUpperCase(),
+            ),
+
             const SizedBox(height: 24),
-            
+
             // Actions
             Row(
               children: [
@@ -208,19 +193,13 @@ class TripsController extends GetxController {
             width: 100,
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
             ),
           ),
         ],
@@ -232,8 +211,18 @@ class TripsController extends GetxController {
     try {
       final date = DateTime.parse(dateStr);
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       return '${date.day} ${months[date.month - 1]}, ${date.year}';
     } catch (e) {
@@ -242,9 +231,10 @@ class TripsController extends GetxController {
   }
 
   int get totalBookings => pastBookings.length;
-  
-  double get totalSpent => pastBookings.fold(0, (sum, booking) => sum + booking['totalAmount']);
-  
+
+  double get totalSpent =>
+      pastBookings.fold(0, (sum, booking) => sum + booking['totalAmount']);
+
   String get favoriteDestination {
     if (pastBookings.isEmpty) return 'None';
     final locations = <String, int>{};

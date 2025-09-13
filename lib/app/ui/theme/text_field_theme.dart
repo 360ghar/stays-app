@@ -9,7 +9,7 @@ extension TextFieldThemeExtension on TextField {
   );
 }
 
-/// Extension to provide consistent black text color for all TextFormField widgets  
+/// Extension to provide consistent black text color for all TextFormField widgets
 extension TextFormFieldThemeExtension on TextFormField {
   static const TextStyle defaultInputStyle = TextStyle(
     color: Colors.black,
@@ -31,7 +31,7 @@ class ThemedTextField extends StatelessWidget {
   final bool? enabled;
   final int? maxLines;
   final TextStyle? style;
-  
+
   const ThemedTextField({
     super.key,
     this.controller,
@@ -47,7 +47,7 @@ class ThemedTextField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return TextField(
@@ -62,10 +62,12 @@ class ThemedTextField extends StatelessWidget {
       maxLines: maxLines,
       // Always use black color for text, merge with provided style
       style: const TextStyle(color: Colors.black).merge(style),
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-      ),
+      decoration:
+          decoration ??
+          InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+          ),
     );
   }
 }
@@ -85,7 +87,7 @@ class ThemedTextFormField extends StatelessWidget {
   final bool? enabled;
   final int? maxLines;
   final TextStyle? style;
-  
+
   const ThemedTextFormField({
     super.key,
     this.controller,
@@ -102,7 +104,7 @@ class ThemedTextFormField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
-  
+
   @override
   Widget build(BuildContext context) {
     return TextFormField(
@@ -118,10 +120,12 @@ class ThemedTextFormField extends StatelessWidget {
       maxLines: maxLines,
       // Always use black color for text, merge with provided style
       style: const TextStyle(color: Colors.black).merge(style),
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-      ),
+      decoration:
+          decoration ??
+          InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: Colors.grey.shade500),
+          ),
     );
   }
 }

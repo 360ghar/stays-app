@@ -1,47 +1,39 @@
 # Repository Guidelines
 
-## Project Structure & Architecture
-- `lib/app/`: core layers.
-  - `bindings/` (e.g., `initial_binding.dart`, `auth_binding.dart`, `listing_binding.dart`).
-  - `controllers/` by domain: `auth/`, `listing/`, `booking/`, `payment/`, `messaging/`, `review/`, `notification/`.
-  - `data/`: `models/` (POJOs), `providers/` (GetConnect), `repositories/` (abstraction), `services/` (supabase, storage, location, push, analytics).
-  - `routes/`: `app_pages.dart`, `app_routes.dart`.
-  - `ui/`: `views/` (auth, home, listing, booking, payment, messaging, profile, settings), `widgets/` (common, cards, forms, dialogs), `theme/`.
-  - `utils/`: `constants/`, `helpers/`, `extensions/`, `exceptions/`, `logger/`.
-- `lib/config/`: `app_config.dart`, `environments/{dev,staging,prod}_config.dart`.
-- `l10n/`: `en.json`, `es.json`, `fr.json`, `localization_service.dart`.
-- Entrypoints: `lib/main_dev.dart`, `lib/main_staging.dart`, `lib/main_prod.dart` (loads `.env.*`).
-- Tests: `test/{unit,widget,integration}`; name files `*_test.dart`.
-
-## File Responsibilities
-- `main.dart|main_*.dart`: initializes env, DI, routes, theme; runs app.
-- `app/bindings/initial_binding.dart`: registers core services/controllers.
-- `config/app_config.dart`: environment selection and values.
-- Controllers: manage feature flows and state (auth, listing, booking, payment, messaging, review, notification).
-- Data layer: models (JSON), providers (API), repositories (domain access), services (external SDKs).
+## Project Structure & Module Organization
+- Source lives under `lib/app/`: `bindings/`, domain `controllers/` (`auth/`, `listing/`, `booking/`, etc.), `data/` (`models/`, `providers/`, `repositories/`, `services/`), `routes/`, `ui/` (`views/`, `widgets/`, `theme/`), and `utils/` (`constants/`, `helpers/`, `extensions/`, `exceptions/`, `logger/`).
+- Configuration in `lib/config/` (`app_config.dart`, `environments/*.dart`).
+- Localization in `l10n/` (`en.json`, `es.json`, `fr.json`, `localization_service.dart`).
+- Entrypoints: `lib/main_dev.dart`, `lib/main_staging.dart`, `lib/main_prod.dart`.
+- Tests mirror source under `test/{unit,widget,integration}` with `*_test.dart` names.
 
 ## Build, Test, and Development Commands
-- Deps: `flutter pub get`.
-- Analyze: `flutter analyze`; Format: `dart format .`.
-- Codegen: `dart run build_runner build --delete-conflicting-outputs`.
-- Run dev: `flutter run -t lib/main_dev.dart` (or `--flavor dev`).
-- Tests: `flutter test` (coverage: `--coverage`).
-- Release: `flutter build apk|ios --flavor prod -t lib/main_prod.dart`.
+```sh
+flutter pub get                     # Install dependencies
+flutter analyze                     # Static analysis
+dart format .                       # Format code
+dart run build_runner build --delete-conflicting-outputs  # Codegen
+flutter run -t lib/main_dev.dart    # Run dev (or --flavor dev)
+flutter test --coverage             # Run tests with coverage
+flutter build apk --flavor prod -t lib/main_prod.dart     # Android release
+```
 
-## Coding Style & Naming
-- Lints: `flutter_lints` (see `analysis_options.yaml`); 2-space indent; avoid `print`, use `logger`.
-- Names: files `lower_snake_case.dart`; types `PascalCase`; members `camelCase`; constants `SCREAMING_SNAKE_CASE`.
-- Separation: business logic in `controllers/` + `repositories/`; UI in `views/` + `widgets/`.
+## Coding Style & Naming Conventions
+- Lints: `flutter_lints` (see `analysis_options.yaml`). Use 2‑space indentation.
+- Avoid `print`; use the project `logger` utilities.
+- Naming: files `lower_snake_case.dart`; types `PascalCase`; members `camelCase`; constants `SCREAMING_SNAKE_CASE`.
+- Keep business logic in `controllers/` + `repositories/`; UI in `views/` + `widgets/`.
 
 ## Testing Guidelines
-- Frameworks: `flutter_test`, `mockito`; add `integration_test` as needed.
-- Layout: `test/unit`, `test/widget`, `test/integration`; mirror source; suffix `_test.dart`.
-- Scope: cover controllers, providers, middleware/route guards, and critical navigation.
+- Frameworks: `flutter_test`, `mockito` (add `integration_test` as needed).
+- Place tests in `test/unit`, `test/widget`, `test/integration`; mirror source and suffix with `_test.dart`.
+- Cover controllers, providers, route guards, and critical navigation.
+- Run: `flutter test` (add `--coverage` for reports).
 
-## Commit & PR Guidelines
-- Commits: prefer Conventional Commits (e.g., `feat: listing create flow`, `fix: token refresh`).
-- PRs: clear description, linked issues, UI screenshots, and green `flutter analyze`, `dart format .`, `flutter test`.
+## Commit & Pull Request Guidelines
+- Use Conventional Commits (e.g., `feat: listing create flow`, `fix: token refresh`).
+- PRs should include: clear description, linked issues, relevant screenshots, and passing `flutter analyze`, `dart format .`, and `flutter test`.
 
-## Security & Config
-- Env: `.env.dev`, `.env.staging`, `.env.prod` (`API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`). Do not commit secrets.
-- Env loading via `flutter_dotenv` and `AppConfig`; select entrypoint/`--flavor` per environment.
+## Security & Configuration
+- Do not commit secrets. Use `.env.dev`, `.env.staging`, `.env.prod` with `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
+- Envs load via `flutter_dotenv` and `AppConfig`; select by entrypoint or `--flavor`.

@@ -9,27 +9,33 @@ enum OTPType { signup, forgotPassword }
 
 class OTPController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
-  
+
   final RxBool isLoading = false.obs;
   final RxString otpError = ''.obs;
   final RxInt countdown = 30.obs;
   final RxBool canResend = false.obs;
-  
-  final List<TextEditingController> otpControllers = List.generate(6, (index) => TextEditingController());
-  final List<FocusNode> otpFocusNodes = List.generate(6, (index) => FocusNode());
-  
+
+  final List<TextEditingController> otpControllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
+  final List<FocusNode> otpFocusNodes = List.generate(
+    6,
+    (index) => FocusNode(),
+  );
+
   late OTPType otpType;
   late String phoneNumber;
   String? signupPassword;
-  
+
   Timer? _timer;
-  
+
   @override
   void onInit() {
     super.onInit();
     _startCountdown();
   }
-  
+
   @override
   void onClose() {
     _timer?.cancel();
@@ -41,7 +47,7 @@ class OTPController extends GetxController {
     }
     super.onClose();
   }
-  
+
   void initializeOTP({
     required OTPType type,
     required String phone,
@@ -51,11 +57,11 @@ class OTPController extends GetxController {
     phoneNumber = phone;
     signupPassword = password;
   }
-  
+
   void _startCountdown() {
     canResend.value = false;
     countdown.value = 30;
-    
+
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (countdown.value > 0) {
@@ -66,10 +72,10 @@ class OTPController extends GetxController {
       }
     });
   }
-  
+
   void onOTPChanged(int index, String value) {
     otpError.value = '';
-    
+
     if (value.isNotEmpty) {
       if (value.length == 1) {
         // Move to next field if not the last one
@@ -84,11 +90,18 @@ class OTPController extends GetxController {
       } else if (value.length > 1) {
         // Handle paste - split the value across fields
         final chars = value.split('');
-        for (int i = 0; i < chars.length && (index + i) < otpControllers.length; i++) {
+        for (
+          int i = 0;
+          i < chars.length && (index + i) < otpControllers.length;
+          i++
+        ) {
           otpControllers[index + i].text = chars[i];
         }
         // Focus the last filled field or unfocus if complete
-        final lastFilledIndex = (index + chars.length - 1).clamp(0, otpControllers.length - 1);
+        final lastFilledIndex = (index + chars.length - 1).clamp(
+          0,
+          otpControllers.length - 1,
+        );
         if (lastFilledIndex == otpControllers.length - 1) {
           otpFocusNodes[lastFilledIndex].unfocus();
           _autoVerifyIfComplete();
@@ -98,7 +111,7 @@ class OTPController extends GetxController {
       }
     }
   }
-  
+
   void onOTPBackspace(int index) {
     if (otpControllers[index].text.isEmpty && index > 0) {
       // Move to previous field and clear it
@@ -106,18 +119,18 @@ class OTPController extends GetxController {
       otpControllers[index - 1].clear();
     }
   }
-  
+
   void _autoVerifyIfComplete() {
     final otp = getEnteredOTP();
     if (otp.length == 6) {
       verifyOTP();
     }
   }
-  
+
   String getEnteredOTP() {
     return otpControllers.map((controller) => controller.text).join();
   }
-  
+
   void clearOTP() {
     for (var controller in otpControllers) {
       controller.clear();
@@ -125,30 +138,32 @@ class OTPController extends GetxController {
     otpError.value = '';
     otpFocusNodes[0].requestFocus();
   }
-  
+
   Future<void> verifyOTP() async {
     // Add guard clause to prevent double-submits
     if (isLoading.value) return;
-    
+
     try {
       isLoading.value = true;
       otpError.value = '';
-      
+
       final enteredOTP = getEnteredOTP();
-      
+
       if (enteredOTP.length != 6) {
         otpError.value = 'Please enter complete OTP';
         return;
       }
-      
+
       // Verify using Supabase
-      final formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+91$phoneNumber';
+      final formattedPhone = phoneNumber.startsWith('+')
+          ? phoneNumber
+          : '+91$phoneNumber';
       await Supabase.instance.client.auth.verifyOTP(
         phone: formattedPhone,
         token: enteredOTP,
         type: OtpType.sms,
       );
-      
+
       // Handle different OTP types
       switch (otpType) {
         case OTPType.signup:
@@ -164,11 +179,11 @@ class OTPController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   Future<void> _handleSignupSuccess() async {
     // Complete signup process
     _showSuccessSnackbar('Account created successfully!');
-    
+
     // Auto login after successful signup
     if (signupPassword != null) {
       await _authController.loginWithPhone(
@@ -179,17 +194,19 @@ class OTPController extends GetxController {
       Get.offAllNamed(Routes.login);
     }
   }
-  
+
   void _handleForgotPasswordSuccess() {
     _showSuccessSnackbar('OTP verified successfully!');
     // Navigate to reset password screen
     Get.toNamed(Routes.resetPassword, arguments: phoneNumber);
   }
-  
+
   Future<void> resendOTP() async {
     try {
       isLoading.value = true;
-      final formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : '+91$phoneNumber';
+      final formattedPhone = phoneNumber.startsWith('+')
+          ? phoneNumber
+          : '+91$phoneNumber';
       await Supabase.instance.client.auth.resend(
         type: OtpType.sms,
         phone: formattedPhone,
@@ -203,7 +220,7 @@ class OTPController extends GetxController {
       isLoading.value = false;
     }
   }
-  
+
   void _showSuccessSnackbar(String message) {
     Get.snackbar(
       '',
@@ -218,10 +235,7 @@ class OTPController extends GetxController {
       ),
       messageText: Text(
         message,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.9),
       borderRadius: 12,
@@ -235,7 +249,7 @@ class OTPController extends GetxController {
       ),
     );
   }
-  
+
   void _showErrorSnackbar(String message) {
     Get.snackbar(
       '',
@@ -250,21 +264,14 @@ class OTPController extends GetxController {
       ),
       messageText: Text(
         message,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
       ),
       backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.9),
       borderRadius: 12,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 2),
       snackPosition: SnackPosition.TOP,
-      icon: const Icon(
-        Icons.error_outline,
-        color: Colors.white,
-        size: 20,
-      ),
+      icon: const Icon(Icons.error_outline, color: Colors.white, size: 20),
     );
   }
 }

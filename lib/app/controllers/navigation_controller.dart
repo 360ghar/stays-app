@@ -2,15 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class NavigationController extends GetxController {
+  // Default to the Home/Explore tab (index 0)
   final RxInt currentIndex = 0.obs;
-  final PageController pageController = PageController();
+  final PageController pageController = PageController(initialPage: 0);
 
   final List<NavigationTab> tabs = [
-    NavigationTab(
-      icon: Icons.explore,
-      label: 'Explore',
-      route: '/explore',
-    ),
+    NavigationTab(icon: Icons.explore, label: 'Explore', route: '/explore'),
     NavigationTab(
       icon: Icons.favorite_outline,
       label: 'Wishlist',
@@ -58,9 +55,5 @@ class NavigationTab {
   final String label;
   final String route;
 
-  NavigationTab({
-    required this.icon,
-    required this.label,
-    required this.route,
-  });
+  NavigationTab({required this.icon, required this.label, required this.route});
 }

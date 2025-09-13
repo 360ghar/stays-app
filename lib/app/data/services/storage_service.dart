@@ -16,7 +16,7 @@ class StorageService extends GetxService {
   static const AndroidOptions _androidOptions = AndroidOptions(
     encryptedSharedPreferences: true,
   );
-  
+
   static const IOSOptions _iosOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
   );
@@ -32,7 +32,10 @@ class StorageService extends GetxService {
   }
 
   // Secure token management
-  Future<void> saveTokens({required String accessToken, String? refreshToken}) async {
+  Future<void> saveTokens({
+    required String accessToken,
+    String? refreshToken,
+  }) async {
     await _secureStorage.write(key: _accessTokenKey, value: accessToken);
     if (refreshToken != null) {
       await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
@@ -44,27 +47,27 @@ class StorageService extends GetxService {
   Future<String?> getAccessToken() async {
     return await _secureStorage.read(key: _accessTokenKey);
   }
-  
+
   Future<String?> getRefreshToken() async {
     return await _secureStorage.read(key: _refreshTokenKey);
   }
-  
+
   // Synchronous versions for middleware (fallback to async)
   String? getAccessTokenSync() {
     // Note: This should be avoided, but kept for backward compatibility
     // Consider refactoring middleware to be async
     return _box.read<String>('temp_$_accessTokenKey');
   }
-  
+
   String? getRefreshTokenSync() {
     return _box.read<String>('temp_$_refreshTokenKey');
   }
-  
+
   Future<bool> hasAccessToken() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
-  
+
   // Legacy sync version
   bool hasAccessTokenSync() {
     return getAccessTokenSync() != null;
@@ -76,22 +79,22 @@ class StorageService extends GetxService {
     await _box.remove('temp_$_accessTokenKey');
     await _box.remove('temp_$_refreshTokenKey');
   }
-  
+
   // User data management
   Future<void> saveUserData(Map<String, dynamic> userData) async {
     await _box.write(_userDataKey, jsonEncode(userData));
   }
-  
+
   Future<Map<String, dynamic>?> getUserData() async {
     final raw = _box.read<String>(_userDataKey);
     if (raw == null) return null;
     return jsonDecode(raw) as Map<String, dynamic>;
   }
-  
+
   Future<void> clearUserData() async {
     await _box.remove(_userDataKey);
   }
-  
+
   // Sync tokens to temp storage for middleware (called after login)
   Future<void> _syncTokensToTemp() async {
     final accessToken = await getAccessToken();
@@ -115,4 +118,3 @@ class StorageService extends GetxService {
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 }
-

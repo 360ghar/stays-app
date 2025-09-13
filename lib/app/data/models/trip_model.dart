@@ -20,24 +20,24 @@ class TripModel {
   });
 
   factory TripModel.fromMap(Map<String, dynamic> map) => TripModel(
-        id: map['id']?.toString() ?? '',
-        propertyName: map['propertyName'] as String? ?? '',
-        checkIn: DateTime.parse(map['checkIn'] as String),
-        checkOut: DateTime.parse(map['checkOut'] as String),
-        status: map['status'] as String? ?? 'pending',
-        propertyImage: map['propertyImage'] as String?,
-        totalCost: (map['totalCost'] as num?)?.toDouble(),
-        hostName: map['hostName'] as String?,
-      );
+    id: map['id']?.toString() ?? '',
+    propertyName: map['propertyName'] as String? ?? '',
+    checkIn: DateTime.parse(map['checkIn'] as String),
+    checkOut: DateTime.parse(map['checkOut'] as String),
+    status: map['status'] as String? ?? 'pending',
+    propertyImage: map['propertyImage'] as String?,
+    totalCost: (map['totalCost'] as num?)?.toDouble(),
+    hostName: map['hostName'] as String?,
+  );
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'propertyName': propertyName,
-        'checkIn': checkIn.toIso8601String(),
-        'checkOut': checkOut.toIso8601String(),
-        'status': status,
-        'propertyImage': propertyImage,
-        'totalCost': totalCost,
-        'hostName': hostName,
-      };
+    'id': id,
+    'propertyName': propertyName,
+    'checkIn': checkIn.toIso8601String(),
+    'checkOut': checkOut.toIso8601String(),
+    'status': status,
+    'propertyImage': propertyImage,
+    'totalCost': totalCost,
+    'hostName': hostName,
+  };
 }

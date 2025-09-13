@@ -14,10 +14,10 @@ class LocalizationService extends Translations {
 
   @override
   Map<String, Map<String, String>> get keys => {
-        'en_US': enUS,
-        'es_ES': esES,
-        'fr_FR': frFR,
-      };
+    'en_US': enUS,
+    'es_ES': esES,
+    'fr_FR': frFR,
+  };
 
   static void changeLocale(String lang) {
     final locale = _getLocaleFromLanguage(lang);
@@ -52,4 +52,3 @@ const Map<String, String> frFR = {
   'auth.signup': "S'inscrire",
   'home.explore_nearby': 'Explorer à proximité',
 };
-

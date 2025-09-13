@@ -1,22 +1,23 @@
 import 'package:get/get.dart';
 
 import '../controllers/listing/listing_detail_controller.dart';
-import '../data/providers/listing_provider.dart';
-import '../data/repositories/listing_repository.dart';
-import '../data/services/storage_service.dart';
+import '../data/providers/properties_provider.dart';
+import '../data/repositories/properties_repository.dart';
 
 class ListingBinding extends Bindings {
   @override
   void dependencies() {
-    if (!Get.isRegistered<ListingProvider>()) {
-      Get.put<ListingProvider>(ListingProvider());
+    if (!Get.isRegistered<PropertiesProvider>()) {
+      Get.put<PropertiesProvider>(PropertiesProvider());
     }
-    if (!Get.isRegistered<ListingRepository>()) {
-      Get.put<ListingRepository>(ListingRepository(
-        provider: Get.find<ListingProvider>(),
-        storage: Get.find<StorageService>(),
-      ));
+    if (!Get.isRegistered<PropertiesRepository>()) {
+      Get.put<PropertiesRepository>(
+        PropertiesRepository(provider: Get.find<PropertiesProvider>()),
+      );
     }
-    Get.lazyPut<ListingDetailController>(() => ListingDetailController(repository: Get.find<ListingRepository>()));
+    Get.lazyPut<ListingDetailController>(
+      () =>
+          ListingDetailController(repository: Get.find<PropertiesRepository>()),
+    );
   }
 }

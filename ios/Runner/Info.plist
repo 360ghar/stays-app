@@ -49,5 +49,10 @@
 	<string>This app needs location access to show nearby hotels and provide better search results.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>This app needs location access to show nearby hotels and provide better search results.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>PreciseLocation</key>
+		<string>We use your precise location to show nearby properties and accurate pricing/availability.</string>
+	</dict>
 </dict>
 </plist>

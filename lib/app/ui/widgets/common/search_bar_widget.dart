@@ -52,11 +52,13 @@ class SearchBarWidget extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: leading ?? Icon(
-                    Icons.search_rounded,
-                    color: Colors.grey[600],
-                    size: 24,
-                  ),
+                  child:
+                      leading ??
+                      Icon(
+                        Icons.search_rounded,
+                        color: Colors.grey[600],
+                        size: 24,
+                      ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
