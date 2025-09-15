@@ -40,7 +40,7 @@ class PropertyGridCard extends StatelessWidget {
           children: [
             _buildImage(context),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
               child: _buildInfo(context),
             ),
           ],
@@ -162,7 +162,7 @@ class PropertyGridCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -193,7 +193,7 @@ class PropertyGridCard extends StatelessWidget {
         ),
         if (property.description != null && property.description!.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 6),
             child: Text(
               property.description!,
               maxLines: 2,

@@ -59,13 +59,33 @@ class SearchResultsView extends GetView<ListingController> {
             tablet: 2,
             desktop: 3,
           );
+          if (crossAxisCount == 1) {
+            // Single-column list for phones: allow dynamic card height (no wasted space)
+            return ListView.separated(
+              padding: const EdgeInsets.all(12),
+              physics: const BouncingScrollPhysics(),
+              itemCount: controller.listings.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, i) {
+                final p = controller.listings[i];
+                return PropertyGridCard(
+                  property: p,
+                  heroPrefix: 'search_$i',
+                  onTap: () => Get.toNamed('/listing/${p.id}'),
+                );
+              },
+            );
+          }
+
+          // Multi-column grid for larger screens: tune aspect ratio to reduce whitespace
+          final ratio = crossAxisCount == 2 ? 0.68 : 0.66;
           return GridView.builder(
             padding: const EdgeInsets.all(12),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 3 / 4,
+              childAspectRatio: ratio,
             ),
             itemCount: controller.listings.length,
             itemBuilder: (_, i) {
