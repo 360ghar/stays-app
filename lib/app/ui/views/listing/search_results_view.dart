@@ -11,35 +11,53 @@ class SearchResultsView extends GetView<ListingController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Search Results')),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (controller.listings.isEmpty) {
-          return const Center(child: Text('No results'));
-        }
-        final crossAxisCount = ResponsiveHelper.value<int>(
-          context: context,
-          mobile: 1,
-          tablet: 2,
-          desktop: 3,
-        );
-        return GridView.builder(
-          padding: const EdgeInsets.all(12),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 16 / 14,
-          ),
-          itemCount: controller.listings.length,
-          itemBuilder: (_, i) => PropertyCard(
-            property: controller.listings[i],
-            heroPrefix: 'search_$i',
-            onTap: () => Get.toNamed('/listing/${controller.listings[i].id}'),
-          ),
-        );
-      }),
+      body: RefreshIndicator(
+        onRefresh: controller.refresh,
+        child: Obx(() {
+          if (controller.isLoading.value && controller.listings.isEmpty) {
+            // Keep scrollable to allow pull even when loading
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 200),
+                Center(child: CircularProgressIndicator()),
+                SizedBox(height: 200),
+              ],
+            );
+          }
+          if (controller.listings.isEmpty) {
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: const [
+                SizedBox(height: 200),
+                Center(child: Text('No results')),
+                SizedBox(height: 200),
+              ],
+            );
+          }
+          final crossAxisCount = ResponsiveHelper.value<int>(
+            context: context,
+            mobile: 1,
+            tablet: 2,
+            desktop: 3,
+          );
+          return GridView.builder(
+            padding: const EdgeInsets.all(12),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 16 / 14,
+            ),
+            itemCount: controller.listings.length,
+            itemBuilder: (_, i) => PropertyCard(
+              property: controller.listings[i],
+              heroPrefix: 'search_$i',
+              onTap: () => Get.toNamed('/listing/${controller.listings[i].id}'),
+            ),
+          );
+        }),
+      ),
     );
   }
 }

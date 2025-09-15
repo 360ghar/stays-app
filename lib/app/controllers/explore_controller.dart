@@ -34,6 +34,8 @@ class ExploreController extends GetxController {
   Future<void> useMyLocation() async {
     try {
       isLoading.value = true;
+      // Clear any previously selected (manual) location so repository uses GPS
+      _locationService.clearSelectedLocation();
       await _locationService.updateLocation(ensurePrecise: true);
       await loadProperties();
       Get.snackbar(
@@ -79,12 +81,69 @@ class ExploreController extends GetxController {
   }
 
   Future<void> loadProperties() async {
-    // Load nearby homes strictly by lat/lng/radius
-    final resp = await _propertiesRepository.explore(limit: 10);
-    popularHomes.value = resp.properties;
+    // Fetch within a broader radius so nearby cities are included
+    const double radiusKm = 100.0;
+    final resp = await _propertiesRepository.explore(
+      limit: 30,
+      radiusKm: radiusKm,
+    );
 
-    // You can add another call for nearby properties if needed
+    final props = resp.properties;
+
+    // Determine selected city for grouping
+    final selectedCity = _selectedCityNormalized();
+
+    // Partition into in-city and nearby, then sort by distance
+    final inCity = <Property>[];
+    final nearby = <Property>[];
+    for (final p in props) {
+      if (_isInSelectedCity(p.city, selectedCity)) {
+        inCity.add(p);
+      } else {
+        nearby.add(p);
+      }
+    }
+
+    int cmp(Property a, Property b) {
+      final da = a.distanceKm ?? double.maxFinite;
+      final db = b.distanceKm ?? double.maxFinite;
+      return da.compareTo(db);
+    }
+    inCity.sort(cmp);
+    nearby.sort(cmp);
+
+    // Bind to UI sections
+    popularHomes.value = inCity; // "Popular stays near {city}"
+    nearbyHotels.value = nearby; // "Popular hotels near {city}" (nearby cities)
   }
+
+  String _selectedCityNormalized() {
+    // Prefer geocoded currentCity, fallback to last component of locationName
+    final city = (_locationService.currentCity.isNotEmpty
+            ? _locationService.currentCity
+            : _locationService.locationName.split(',').last)
+        .trim();
+    return _normalizeCity(city);
+  }
+
+  bool _isInSelectedCity(String propertyCity, String normalizedTarget) {
+    final pc = _normalizeCity(propertyCity);
+    if (pc == normalizedTarget) return true;
+
+    // Handle common synonyms
+    String canonical(String s) {
+      const map = {
+        'gurgaon': 'gurugram',
+        'bangalore': 'bengaluru',
+        'bombay': 'mumbai',
+        'delhi ncr': 'delhi',
+      };
+      return map[s] ?? s;
+    }
+    return canonical(pc) == canonical(normalizedTarget);
+  }
+
+  String _normalizeCity(String s) => s.toLowerCase().trim();
 
   Future<void> refreshData() async {
     await _fetchInitialData();
@@ -134,6 +193,16 @@ class ExploreController extends GetxController {
   }
 
   void navigateToAllProperties(String categoryType) {
-    Get.toNamed('/search-results', arguments: {'category': categoryType});
+    final lat = _locationService.latitude;
+    final lng = _locationService.longitude;
+    Get.toNamed(
+      '/search-results',
+      arguments: {
+        'category': categoryType,
+        if (lat != null) 'lat': lat,
+        if (lng != null) 'lng': lng,
+        'radius_km': 100.0,
+      },
+    );
   }
 }

@@ -10,6 +10,7 @@ class LocationService extends GetxService {
   final RxnDouble _selectedLat = RxnDouble();
   final RxnDouble _selectedLng = RxnDouble();
   final RxString _locationName = ''.obs; // Human-readable name for UI
+  final RxString _currentCity = ''.obs; // City-level name for grouping
   final _isLocationEnabled = false.obs;
   final _isLoadingLocation = false.obs;
 
@@ -17,6 +18,9 @@ class LocationService extends GetxService {
   // UI-friendly name of location to display
   String get locationName => _locationName.value;
   RxString get locationNameRx => _locationName;
+  // City-level name derived from geocoding
+  String get currentCity => _currentCity.value;
+  RxString get currentCityRx => _currentCity;
   bool get isLocationEnabled => _isLocationEnabled.value;
   bool get isLoadingLocation => _isLoadingLocation.value;
   double? get latitude =>
@@ -156,6 +160,9 @@ class LocationService extends GetxService {
         _locationName.value = parts.isNotEmpty
             ? parts.join(', ')
             : (place.administrativeArea ?? 'Unknown');
+
+        // Update city-level name for grouping
+        _currentCity.value = _deriveCityFromPlacemark(place);
       } else {
         _setDefaultLocation();
       }
@@ -167,6 +174,7 @@ class LocationService extends GetxService {
 
   void _setDefaultLocation() {
     _locationName.value = 'Your area';
+    _currentCity.value = '';
   }
 
   Future<void> updateLocation({bool ensurePrecise = false}) async {
@@ -182,5 +190,38 @@ class LocationService extends GetxService {
     _selectedLat.value = lat;
     _selectedLng.value = lng;
     _locationName.value = locationName;
+    // Best-effort: resolve and update city in background
+    _updateCityFromCoordinates(lat, lng);
+  }
+
+  // Clear manual selection so queries use current GPS location
+  void clearSelectedLocation() {
+    _selectedLat.value = null;
+    _selectedLng.value = null;
+  }
+
+  String _deriveCityFromPlacemark(Placemark place) {
+    return [
+          place.locality,
+          place.subAdministrativeArea,
+          place.administrativeArea,
+        ]
+            .whereType<String>()
+            .map((e) => e.trim())
+            .firstWhere(
+              (e) => e.isNotEmpty,
+              orElse: () => '',
+            );
+  }
+
+  Future<void> _updateCityFromCoordinates(double lat, double lng) async {
+    try {
+      final placemarks = await placemarkFromCoordinates(lat, lng);
+      if (placemarks.isNotEmpty) {
+        _currentCity.value = _deriveCityFromPlacemark(placemarks[0]);
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to resolve city from coordinates', e);
+    }
   }
 }

@@ -15,7 +15,7 @@ class ExploreView extends GetView<ExploreController> {
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
         child: RefreshIndicator(
-          onRefresh: controller.refreshLocation,
+          onRefresh: controller.refreshData,
           child: CustomScrollView(
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
