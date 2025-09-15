@@ -26,10 +26,12 @@ class PropertyGridCard extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Card(
-        elevation: 0.6,
+        color: Colors.white,
+        elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -183,8 +185,8 @@ class PropertyGridCard extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               property.description!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+              overflow: TextOverflow.fade,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.grey[800],
               ),
@@ -194,4 +196,3 @@ class PropertyGridCard extends StatelessWidget {
     );
   }
 }
-
