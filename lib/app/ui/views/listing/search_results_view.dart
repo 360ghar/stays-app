@@ -10,6 +10,7 @@ class SearchResultsView extends GetView<ListingController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Explore Properties'),
         actions: [
