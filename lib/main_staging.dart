@@ -33,6 +33,8 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.black),
         ),
       ),
+      // Ensure staging builds stay in light mode
+      themeMode: ThemeMode.light,
       darkTheme: AppTheme.darkTheme,
       translations: LocalizationService(),
       locale: LocalizationService.locale,

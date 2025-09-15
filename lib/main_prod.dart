@@ -33,6 +33,8 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: Colors.black),
         ),
       ),
+      // Force light theme for production UX consistency
+      themeMode: ThemeMode.light,
       darkTheme: AppTheme.darkTheme,
       translations: LocalizationService(),
       locale: LocalizationService.locale,

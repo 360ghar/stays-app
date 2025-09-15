@@ -38,7 +38,8 @@ class MyApp extends StatelessWidget {
         ),
       ),
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      // Keep default/main runner in light mode as well
+      themeMode: ThemeMode.light,
       translations: LocalizationService(),
       locale: LocalizationService.locale,
       fallbackLocale: LocalizationService.fallbackLocale,

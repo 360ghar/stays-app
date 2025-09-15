@@ -19,12 +19,14 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   late final WebViewController _controller;
   int _progress = 0;
   bool _hasError = false;
-  bool _isFullscreen = false;
-  OverlayEntry? _overlayEntry;
+  bool _isInitializing = true;
 
   @override
   void initState() {
     super.initState();
+    // Prefer Surface-based WebView on Android to avoid ImageReader buffer issues
+    // For webview_flutter v4+, Surface composition is handled internally.
+    // No manual platform override needed here.
     // Create controller with platform-specific params for better compatibility
     final PlatformWebViewControllerCreationParams baseParams =
         const PlatformWebViewControllerCreationParams();
@@ -40,7 +42,8 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
 
     _controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.black)
+      // Keep background consistent with light theme while page loads
+      ..setBackgroundColor(Colors.white)
       ..setUserAgent(
         // Modern mobile Safari UA improves compatibility with some 360 providers
         'Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Mobile/15E148 Safari/604.1',
@@ -71,9 +74,18 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
       final AndroidWebViewController androidController =
           _controller.platform as AndroidWebViewController;
       androidController.setMediaPlaybackRequiresUserGesture(false);
+      // Try to minimize auto-darkening in WebView content (best-effort; API may be ignored on some versions)
+      // Note: These methods are no-ops on unsupported Android versions.
+      try {
+        // Some plugin versions expose these; calls are guarded by try to avoid runtime errors.
+        // ignore: deprecated_member_use_from_same_package
+        // ignore: undefined_function
+        // androidController.setForceDark(null);
+      } catch (_) {}
     }
 
     _controller.loadRequest(Uri.parse(widget.url));
+    _isInitializing = false;
 
     // iOS requires an explicit platform view initialization in some cases
     if (Platform.isAndroid) {
@@ -83,36 +95,15 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
 
   @override
   void dispose() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
     super.dispose();
   }
 
-  void _enterFullscreen() {
-    if (_isFullscreen) return;
-    _isFullscreen = true;
-    _overlayEntry = OverlayEntry(
-      builder: (ctx) => _FullscreenOverlay(
-        controller: _controller,
-        onClose: _exitFullscreen,
-        onReload: () {
-          setState(() {
-            _hasError = false;
-            _progress = 0;
-          });
-          _controller.reload();
-        },
+  void _openFullscreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _VirtualTourFullScreenPage(url: widget.url),
       ),
     );
-    Overlay.of(context, rootOverlay: true).insert(_overlayEntry!);
-    setState(() {});
-  }
-
-  void _exitFullscreen() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-    _isFullscreen = false;
-    if (mounted) setState(() {});
   }
 
   @override
@@ -132,7 +123,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
       height: widget.height,
       child: Stack(
         children: [
-          if (!_isFullscreen) WebViewWidget(controller: _controller),
+          if (!_hasError) WebViewWidget(controller: _controller),
           if (_progress < 100)
             LinearProgressIndicator(
               value: _progress / 100,
@@ -153,7 +144,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
                   IconButton(
                     tooltip: 'Full screen',
                     icon: const Icon(Icons.fullscreen, color: Colors.white),
-                    onPressed: _enterFullscreen,
+                    onPressed: _openFullscreen,
                   ),
                   IconButton(
                     tooltip: 'Reload',
@@ -209,53 +200,92 @@ class _ErrorPlaceholder extends StatelessWidget {
   }
 }
 
-class _FullscreenOverlay extends StatelessWidget {
-  final WebViewController controller;
-  final VoidCallback onClose;
-  final VoidCallback onReload;
+class _VirtualTourFullScreenPage extends StatefulWidget {
+  final String url;
+  const _VirtualTourFullScreenPage({required this.url});
 
-  const _FullscreenOverlay({
-    required this.controller,
-    required this.onClose,
-    required this.onReload,
-  });
+  @override
+  State<_VirtualTourFullScreenPage> createState() => _VirtualTourFullScreenPageState();
+}
+
+class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> {
+  late final WebViewController _controller;
+  int _progress = 0;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // No explicit platform override needed for v4+.
+    final PlatformWebViewControllerCreationParams baseParams =
+        const PlatformWebViewControllerCreationParams();
+    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
+      final params = WebKitWebViewControllerCreationParams(
+        allowsInlineMediaPlayback: true,
+        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
+      );
+      _controller = WebViewController.fromPlatformCreationParams(params);
+    } else {
+      _controller = WebViewController.fromPlatformCreationParams(baseParams);
+    }
+    _controller
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Colors.white)
+      ..setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Mobile/15E148 Safari/604.1')
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) => setState(() => _progress = progress),
+          onNavigationRequest: (request) {
+            final uri = Uri.tryParse(request.url);
+            if (uri == null) return NavigationDecision.prevent;
+            const allowed = {'http', 'https', 'about', 'data', 'blob'};
+            return allowed.contains(uri.scheme)
+                ? NavigationDecision.navigate
+                : NavigationDecision.prevent;
+          },
+          onWebResourceError: (_) => setState(() => _hasError = true),
+        ),
+      );
+    if (_controller.platform is AndroidWebViewController) {
+      AndroidWebViewController.enableDebugging(true);
+      final AndroidWebViewController androidController =
+          _controller.platform as AndroidWebViewController;
+      androidController.setMediaPlaybackRequiresUserGesture(false);
+    }
+    _controller.loadRequest(Uri.parse(widget.url));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black,
-      child: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 48,
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close, color: Colors.white),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Virtual Tour',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: onReload,
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                  ),
-                ],
-              ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Virtual Tour'),
+        actions: [
+          IconButton(
+            tooltip: 'Reload',
+            onPressed: () {
+              setState(() {
+                _hasError = false;
+                _progress = 0;
+              });
+              _controller.reload();
+            },
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          if (_hasError)
+            const Center(child: Text('Unable to load virtual tour'))
+          else
+            WebViewWidget(controller: _controller),
+          if (_progress < 100)
+            LinearProgressIndicator(
+              value: _progress / 100,
+              minHeight: 2,
             ),
-            const Divider(color: Colors.white24, height: 1),
-            Expanded(child: WebViewWidget(controller: controller)),
-          ],
-        ),
+        ],
       ),
     );
   }

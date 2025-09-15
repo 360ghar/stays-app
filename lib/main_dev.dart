@@ -45,6 +45,8 @@ class MyApp extends StatelessWidget {
           titleSmall: TextStyle(color: Colors.black),
         ),
       ),
+      // Force light mode to keep UI consistent across all pages
+      themeMode: ThemeMode.light,
       darkTheme: AppTheme.darkTheme,
       translations: LocalizationService(),
       locale: LocalizationService.locale,
