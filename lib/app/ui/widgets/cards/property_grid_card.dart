@@ -31,10 +31,11 @@ class PropertyGridCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
+          side: const BorderSide(color: Color(0xFFDDDDDD), width: 2),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildImage(context),
@@ -51,72 +52,82 @@ class PropertyGridCard extends StatelessWidget {
   Widget _buildImage(BuildContext context) {
     final heroTag = '${heroPrefix ?? 'grid'}-${property.id}';
     final img = property.displayImage;
-    return Stack(
-      children: [
-        Hero(
-          tag: heroTag,
-          child: AspectRatio(
-            aspectRatio: 16 / 10,
-            child: CachedNetworkImage(
-              imageUrl: img,
-              fit: BoxFit.cover,
-              placeholder: (context, url) => Shimmer.fromColors(
-                baseColor: Colors.grey[300]!,
-                highlightColor: Colors.grey[100]!,
-                child: Container(color: Colors.white),
-              ),
-              errorWidget: (_, __, ___) => Container(
-                color: Colors.grey[200],
-                alignment: Alignment.center,
-                child: const Icon(Icons.photo, color: Colors.grey, size: 32),
-              ),
-            ),
-          ),
-        ),
-        if (onFavoriteToggle != null)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Material(
-              color: Colors.black.withOpacity(0.35),
-              shape: const CircleBorder(),
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: onFavoriteToggle,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: isFavorite ? Colors.redAccent : Colors.white,
-                    size: 20,
-                  ),
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(14),
+        topRight: Radius.circular(14),
+      ),
+      child: SizedBox(
+        height: 150,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Hero(
+              tag: heroTag,
+              child: CachedNetworkImage(
+                imageUrl: img,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(color: Colors.white),
+                ),
+                errorWidget: (_, __, ___) => Container(
+                  color: Colors.grey[200],
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.photo, color: Colors.grey, size: 32),
                 ),
               ),
             ),
-          ),
-        if (property.distanceKm != null)
-          Positioned(
-            left: 8,
-            bottom: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.place, color: Colors.white, size: 14),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${property.distanceKm!.toStringAsFixed(1)} km',
-                    style: const TextStyle(color: Colors.white, fontSize: 12),
+            if (onFavoriteToggle != null)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Material(
+                  color: Colors.black.withOpacity(0.35),
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: onFavoriteToggle,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? Colors.redAccent : Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-      ],
+            if (property.distanceKm != null)
+              Positioned(
+                left: 8,
+                bottom: 8,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.place, color: Colors.white, size: 14),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${property.distanceKm!.toStringAsFixed(1)} km',
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
