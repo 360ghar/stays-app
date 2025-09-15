@@ -27,11 +27,12 @@ class PropertyGridCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: Card(
         color: Colors.white,
-        elevation: 0,
+        elevation: 2,
+        shadowColor: Colors.black.withOpacity(0.08),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
+          side: const BorderSide(color: Colors.black, width: 1),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
