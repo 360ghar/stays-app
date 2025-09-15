@@ -31,7 +31,7 @@ class PropertyGridCard extends StatelessWidget {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Color(0xFFDDDDDD), width: 2),
+          side: const BorderSide(color: Color(0xFFDDDDDD), width: 1),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -58,7 +58,7 @@ class PropertyGridCard extends StatelessWidget {
         topRight: Radius.circular(14),
       ),
       child: SizedBox(
-        height: 150,
+        height: 160,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -196,7 +196,7 @@ class PropertyGridCard extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               property.description!,
-              maxLines: 3,
+              maxLines: 2,
               overflow: TextOverflow.fade,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: Colors.grey[800],
