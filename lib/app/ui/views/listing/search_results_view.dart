@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/listing/listing_controller.dart';
-import '../../../ui/widgets/cards/property_card.dart';
+import '../../../ui/widgets/cards/property_grid_card.dart';
 import '../../../utils/helpers/responsive_helper.dart';
 
 class SearchResultsView extends GetView<ListingController> {
@@ -10,7 +10,25 @@ class SearchResultsView extends GetView<ListingController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search Results')),
+      appBar: AppBar(
+        title: const Text('Explore Properties'),
+        actions: [
+          IconButton(
+            tooltip: 'Sort',
+            icon: const Icon(Icons.sort_rounded),
+            onPressed: () {
+              Get.snackbar('Sort', 'Sorting options coming soon');
+            },
+          ),
+          IconButton(
+            tooltip: 'Map',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () {
+              Get.snackbar('Map', 'Map view coming soon');
+            },
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: controller.refresh,
         child: Obx(() {
@@ -47,14 +65,17 @@ class SearchResultsView extends GetView<ListingController> {
               crossAxisCount: crossAxisCount,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
-              childAspectRatio: 16 / 14,
+              childAspectRatio: 3 / 4,
             ),
             itemCount: controller.listings.length,
-            itemBuilder: (_, i) => PropertyCard(
-              property: controller.listings[i],
-              heroPrefix: 'search_$i',
-              onTap: () => Get.toNamed('/listing/${controller.listings[i].id}'),
-            ),
+            itemBuilder: (_, i) {
+              final p = controller.listings[i];
+              return PropertyGridCard(
+                property: p,
+                heroPrefix: 'search_$i',
+                onTap: () => Get.toNamed('/listing/${p.id}'),
+              );
+            },
           );
         }),
       ),
