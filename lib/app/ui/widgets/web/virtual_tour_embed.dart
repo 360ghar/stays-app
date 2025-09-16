@@ -45,13 +45,17 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
       // Keep background consistent with light theme while page loads
       ..setBackgroundColor(Colors.white)
       ..setUserAgent(
-        // Modern mobile Safari UA improves compatibility with some 360 providers
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Mobile/15E148 Safari/604.1',
+        Platform.isAndroid
+            ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
+            : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1',
       )
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
             if (mounted) setState(() => _progress = progress);
+          },
+          onPageFinished: (url) async {
+            await _maybeCheckIosMotionPermission();
           },
           onNavigationRequest: (request) {
             // Keep navigation embedded; allow common in-app schemes used by tours.
@@ -98,6 +102,32 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
     super.dispose();
   }
 
+  bool _showMotionPrompt = false;
+
+  Future<void> _maybeCheckIosMotionPermission() async {
+    if (!Platform.isIOS) return;
+    try {
+      final result = await _controller.runJavaScriptReturningResult(
+        "(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function')",
+      );
+      final needsPermission = result.toString().toLowerCase().contains('true');
+      if (mounted && needsPermission && !_showMotionPrompt) {
+        setState(() => _showMotionPrompt = true);
+      }
+    } catch (_) {
+      // Ignore failures
+    }
+  }
+
+  Future<void> _requestIosMotionPermission() async {
+    try {
+      await _controller.runJavaScript(
+        "try { if (DeviceMotionEvent && DeviceMotionEvent.requestPermission) { DeviceMotionEvent.requestPermission().then(function(r){ console.log('motion permission', r); }); } } catch(e) { console.log(e); }",
+      );
+    } catch (_) {}
+    if (mounted) setState(() => _showMotionPrompt = false);
+  }
+
   void _openFullscreen() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -129,6 +159,38 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
               value: _progress / 100,
               minHeight: 2,
               backgroundColor: Colors.black.withValues(alpha: 0.05),
+            ),
+          if (_showMotionPrompt)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.screen_rotation, color: Colors.white),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Enable motion controls for 360° view',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _requestIosMotionPermission,
+                        child: const Text(
+                          'Enable',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           Positioned(
             top: 8,
@@ -212,6 +274,7 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
   late final WebViewController _controller;
   int _progress = 0;
   bool _hasError = false;
+  bool _showMotionPromptFs = false;
 
   @override
   void initState() {
@@ -231,10 +294,15 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
     _controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
-      ..setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 15_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Mobile/15E148 Safari/604.1')
+      ..setUserAgent(Platform.isAndroid
+          ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
+          : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1')
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) => setState(() => _progress = progress),
+          onPageFinished: (url) async {
+            await _maybeCheckIosMotionPermissionFs();
+          },
           onNavigationRequest: (request) {
             final uri = Uri.tryParse(request.url);
             if (uri == null) return NavigationDecision.prevent;
@@ -253,6 +321,28 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
       androidController.setMediaPlaybackRequiresUserGesture(false);
     }
     _controller.loadRequest(Uri.parse(widget.url));
+  }
+
+  Future<void> _maybeCheckIosMotionPermissionFs() async {
+    if (!Platform.isIOS) return;
+    try {
+      final result = await _controller.runJavaScriptReturningResult(
+        "(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function')",
+      );
+      final needsPermission = result.toString().toLowerCase().contains('true');
+      if (mounted && needsPermission && !_showMotionPromptFs) {
+        setState(() => _showMotionPromptFs = true);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _requestIosMotionPermissionFs() async {
+    try {
+      await _controller.runJavaScript(
+        "try { if (DeviceMotionEvent && DeviceMotionEvent.requestPermission) { DeviceMotionEvent.requestPermission().then(function(r){ console.log('motion permission', r); }); } } catch(e) { console.log(e); }",
+      );
+    } catch (_) {}
+    if (mounted) setState(() => _showMotionPromptFs = false);
   }
 
   @override
@@ -284,6 +374,38 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
             LinearProgressIndicator(
               value: _progress / 100,
               minHeight: 2,
+            ),
+          if (_showMotionPromptFs)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Material(
+                color: Colors.black.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.screen_rotation, color: Colors.white),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Enable motion controls for 360° view',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _requestIosMotionPermissionFs,
+                        child: const Text(
+                          'Enable',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
         ],
       ),

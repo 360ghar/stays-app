@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../widgets/web/virtual_tour_embed.dart';
 
 import '../../../controllers/listing/listing_detail_controller.dart';
 import '../../../utils/helpers/currency_helper.dart';
-import '../../widgets/web/virtual_tour_embed.dart';
 import '../../../data/models/property_model.dart';
 
 class ListingDetailView extends GetView<ListingDetailController> {

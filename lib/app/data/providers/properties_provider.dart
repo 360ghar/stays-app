@@ -53,7 +53,7 @@ class PropertiesProvider extends BaseProvider {
   }
 
   Future<Property> getDetails(int id) async {
-    final res = await get('/api/v1/properties/$id/');
+    final res = await get('/api/v1/properties/$id');
     return handleResponse(res, (json) {
       final data = json['data'] ?? json;
       return Property.fromJson(Map<String, dynamic>.from(data as Map));
