@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+
+import 'filter_controller.dart';
 
 class ExploreController extends GetxController {
   // Services are guaranteed to be available by the time this controller is created.
@@ -12,6 +15,10 @@ class ExploreController extends GetxController {
   final PropertiesRepository _propertiesRepository =
       Get.find<PropertiesRepository>();
   final WishlistRepository _wishlistRepository = Get.find<WishlistRepository>();
+  late final FilterController _filterController;
+
+  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
+  Worker? _filterWorker;
 
   final RxList<Property> popularHomes = <Property>[].obs;
   final RxList<Property> nearbyHotels =
@@ -20,16 +27,16 @@ class ExploreController extends GetxController {
   final RxBool isLoading = true.obs; // Start with loading true
   final RxString errorMessage = ''.obs;
 
-  String get locationName => _locationService.locationName.isEmpty
-      ? 'this area'
-      : _locationService.locationName;
+  String get locationName =>
+      _locationService.locationName.isEmpty
+          ? 'this area'
+          : _locationService.locationName;
   List<Property> get recommendedHotels => nearbyHotels.toList();
 
   Future<void> Function() get refreshLocation =>
       () async =>
           await _locationService.getCurrentLocation(ensurePrecise: true);
-  VoidCallback get navigateToSearch =>
-      () => Get.toNamed('/search');
+  VoidCallback get navigateToSearch => () => Get.toNamed('/search');
 
   Future<void> useMyLocation() async {
     try {
@@ -59,11 +66,28 @@ class ExploreController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _filterController = Get.find<FilterController>();
+    _activeFilters = _filterController.filterFor(FilterScope.explore);
+    _filterWorker = debounce<UnifiedFilterModel>(
+      _filterController.rxFor(FilterScope.explore),
+      (filters) async {
+        if (_activeFilters == filters) return;
+        _activeFilters = filters;
+        await _reloadWithFilters();
+      },
+      time: const Duration(milliseconds: 180),
+    );
     _fetchInitialData();
     // Reload properties when user selects a new location
     ever<String>(_locationService.locationNameRx, (_) {
-      loadProperties();
+      _reloadWithFilters();
     });
+  }
+
+  @override
+  void onClose() {
+    _filterWorker?.dispose();
+    super.onClose();
   }
 
   Future<void> _fetchInitialData() async {
@@ -82,13 +106,19 @@ class ExploreController extends GetxController {
 
   Future<void> loadProperties() async {
     // Fetch within a broader radius so nearby cities are included
-    const double radiusKm = 100.0;
+    final double radiusKm = _activeFilters.radiusKm ?? 100.0;
     final resp = await _propertiesRepository.explore(
       limit: 30,
       radiusKm: radiusKm,
+      filters: _activeFilters.toQueryParameters(),
     );
 
-    final props = resp.properties;
+    final props =
+        _activeFilters.isEmpty
+            ? resp.properties
+            : resp.properties
+                .where((property) => _activeFilters.matchesProperty(property))
+                .toList();
 
     // Determine selected city for grouping
     final selectedCity = _selectedCityNormalized();
@@ -109,6 +139,7 @@ class ExploreController extends GetxController {
       final db = b.distanceKm ?? double.maxFinite;
       return da.compareTo(db);
     }
+
     inCity.sort(cmp);
     nearby.sort(cmp);
 
@@ -117,12 +148,26 @@ class ExploreController extends GetxController {
     nearbyHotels.value = nearby; // "Popular hotels near {city}" (nearby cities)
   }
 
+  Future<void> _reloadWithFilters() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      await loadProperties();
+    } catch (e) {
+      errorMessage.value = 'Unable to apply filters. Please pull to refresh.';
+      AppLogger.error('Error applying explore filters', e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   String _selectedCityNormalized() {
     // Prefer geocoded currentCity, fallback to last component of locationName
-    final city = (_locationService.currentCity.isNotEmpty
-            ? _locationService.currentCity
-            : _locationService.locationName.split(',').last)
-        .trim();
+    final city =
+        (_locationService.currentCity.isNotEmpty
+                ? _locationService.currentCity
+                : _locationService.locationName.split(',').last)
+            .trim();
     return _normalizeCity(city);
   }
 
@@ -140,6 +185,7 @@ class ExploreController extends GetxController {
       };
       return map[s] ?? s;
     }
+
     return canonical(pc) == canonical(normalizedTarget);
   }
 

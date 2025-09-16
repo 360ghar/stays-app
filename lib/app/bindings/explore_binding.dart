@@ -6,6 +6,8 @@ import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/providers/swipes_provider.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 
+import '../controllers/filter_controller.dart';
+
 class ExploreBinding extends Bindings {
   @override
   void dependencies() {
@@ -18,6 +20,9 @@ class ExploreBinding extends Bindings {
     Get.lazyPut<WishlistRepository>(
       () => WishlistRepository(provider: Get.find<SwipesProvider>()),
     );
+    if (!Get.isRegistered<FilterController>()) {
+      Get.put<FilterController>(FilterController(), permanent: true);
+    }
     Get.lazyPut<ExploreController>(() => ExploreController());
   }
 }

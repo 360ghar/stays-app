@@ -5,6 +5,7 @@ import '../data/repositories/auth_repository.dart';
 import '../controllers/explore_controller.dart';
 import '../controllers/listing/listing_controller.dart';
 import '../controllers/navigation_controller.dart';
+import '../controllers/filter_controller.dart';
 import '../data/providers/properties_provider.dart';
 import '../data/repositories/properties_repository.dart';
 import '../data/providers/swipes_provider.dart';
@@ -33,6 +34,10 @@ class HomeBinding extends Bindings {
 
     // Navigation controller
     Get.lazyPut<NavigationController>(() => NavigationController());
+
+    if (!Get.isRegistered<FilterController>()) {
+      Get.put<FilterController>(FilterController(), permanent: true);
+    }
 
     // REMOVE THE OLD SERVICE REGISTRATIONS. They are now permanent
     // and initialized at startup in SplashController.

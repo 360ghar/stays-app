@@ -9,6 +9,8 @@ import '../../data/repositories/properties_repository.dart';
 import '../../data/models/property_model.dart';
 import '../../data/services/places_service.dart';
 import '../../data/services/location_service.dart';
+import '../../data/models/unified_filter_model.dart';
+import '../filter_controller.dart';
 
 class HotelModel {
   final String id;
@@ -18,6 +20,7 @@ class HotelModel {
   final double rating;
   final LatLng position;
   final String description;
+  final String propertyType;
 
   HotelModel({
     required this.id,
@@ -27,6 +30,7 @@ class HotelModel {
     required this.rating,
     required this.position,
     required this.description,
+    required this.propertyType,
   });
 }
 
@@ -34,10 +38,8 @@ class HotelsMapController extends GetxController {
   late MapController mapController;
   final RxList<Marker> markers = <Marker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
-  final Rx<LatLng> currentLocation = const LatLng(
-    28.6139,
-    77.2090,
-  ).obs; // Delhi default
+  final Rx<LatLng> currentLocation =
+      const LatLng(28.6139, 77.2090).obs; // Delhi default
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
   final RxList<PlacePrediction> predictions = <PlacePrediction>[].obs;
@@ -47,6 +49,11 @@ class HotelsMapController extends GetxController {
   PropertiesRepository? _propertiesService;
   PlacesService? _placesService;
   LocationService? _locationService;
+  FilterController? _filterController;
+  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
+  Worker? _filterWorker;
+  final List<HotelModel> _allHotels = [];
+  double _lastRadius = 10;
 
   @override
   void onInit() {
@@ -66,12 +73,14 @@ class HotelsMapController extends GetxController {
       (q) => _searchAutocomplete(q),
       time: const Duration(milliseconds: 250),
     );
+    _initializeFilterSync();
     _requestLocationPermission();
   }
 
   @override
   void onClose() {
     searchController.dispose();
+    _filterWorker?.dispose();
     super.onClose();
   }
 
@@ -82,6 +91,50 @@ class HotelsMapController extends GetxController {
     } else {
       _loadSampleHotels();
     }
+  }
+
+  void _initializeFilterSync() {
+    if (!Get.isRegistered<FilterController>()) return;
+    _filterController = Get.find<FilterController>();
+    _activeFilters = _filterController!.filterFor(FilterScope.locate);
+    _filterWorker = debounce<UnifiedFilterModel>(
+      _filterController!.rxFor(FilterScope.locate),
+      (filters) {
+        if (_activeFilters == filters) return;
+        _activeFilters = filters;
+        _applyFilters();
+      },
+      time: const Duration(milliseconds: 150),
+    );
+  }
+
+  void _applyFilters({bool fromRemoteFetch = false}) {
+    final desiredRadius = _activeFilters.radiusKm ?? 10;
+    if (!fromRemoteFetch && (_lastRadius - desiredRadius).abs() > 0.5) {
+      _loadHotelsNearLocation(currentLocation.value, radiusKm: desiredRadius);
+      return;
+    }
+    if (_allHotels.isEmpty) {
+      hotels.clear();
+      markers.clear();
+      return;
+    }
+    if (_activeFilters.isEmpty) {
+      hotels.assignAll(_allHotels);
+    } else {
+      final filtered =
+          _allHotels
+              .where(
+                (hotel) => _activeFilters.matchesHotel(
+                  price: hotel.price,
+                  rating: hotel.rating,
+                  propertyType: hotel.propertyType,
+                ),
+              )
+              .toList();
+      hotels.assignAll(filtered);
+    }
+    _updateMapMarkers();
   }
 
   Future<void> getCurrentLocation() async {
@@ -127,22 +180,32 @@ class HotelsMapController extends GetxController {
     }
   }
 
-  Future<void> _loadHotelsNearLocation(LatLng location) async {
+  Future<void> _loadHotelsNearLocation(
+    LatLng location, {
+    double? radiusKm,
+  }) async {
     isLoadingHotels.value = true;
     try {
       if (_propertiesService == null) {
+        _allHotels.clear();
         hotels.clear();
+        markers.clear();
         return;
       }
+      final double radius = radiusKm ?? _activeFilters.radiusKm ?? _lastRadius;
       final resp = await _propertiesService!.explore(
         lat: location.latitude,
         lng: location.longitude,
-        radiusKm: 10,
+        radiusKm: radius,
         limit: 50,
+        filters: _activeFilters.toQueryParameters(),
       );
+      _lastRadius = radius;
       final mapped = resp.properties.map((p) => _toHotelModel(p)).toList();
-      hotels.assignAll(mapped);
-      _updateMapMarkers();
+      _allHotels
+        ..clear()
+        ..addAll(mapped);
+      _applyFilters(fromRemoteFetch: true);
     } finally {
       isLoadingHotels.value = false;
     }
@@ -154,44 +217,48 @@ class HotelsMapController extends GetxController {
   }
 
   void _updateMapMarkers() {
-    final List<Marker> newMarkers = hotels.map((hotel) {
-      return Marker(
-        width: 80.0,
-        height: 80.0,
-        point: hotel.position,
-        child: GestureDetector(
-          onTap: () => _showHotelDetails(hotel),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+    final List<Marker> newMarkers =
+        hotels.map((hotel) {
+          return Marker(
+            width: 80.0,
+            height: 80.0,
+            point: hotel.position,
+            child: GestureDetector(
+              onTap: () => _showHotelDetails(hotel),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                  ],
-                ),
-                child: Text(
-                  '₹${hotel.price.toInt()}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      '₹${hotel.price.toInt()}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 2),
+                  const Icon(Icons.location_pin, color: Colors.red, size: 24),
+                ],
               ),
-              const SizedBox(height: 2),
-              const Icon(Icons.location_pin, color: Colors.red, size: 24),
-            ],
-          ),
-        ),
-      );
-    }).toList();
+            ),
+          );
+        }).toList();
 
     // Replace markers in one go to ensure rebuilds
     markers.assignAll(newMarkers);
@@ -209,6 +276,7 @@ class HotelsMapController extends GetxController {
         p.longitude ?? currentLocation.value.longitude,
       ),
       description: p.description ?? '${p.propertyType} in ${p.city}',
+      propertyType: p.propertyType.toLowerCase(),
     );
   }
 

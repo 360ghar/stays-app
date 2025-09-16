@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/filter_controller.dart';
+import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
+
 import '../../../controllers/trips_controller.dart';
 
 class TripsView extends GetView<TripsController> {
@@ -7,6 +10,8 @@ class TripsView extends GetView<TripsController> {
 
   @override
   Widget build(BuildContext context) {
+    final filterController = Get.find<FilterController>();
+    final filtersRx = filterController.rxFor(FilterScope.booking);
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -20,20 +25,51 @@ class TripsView extends GetView<TripsController> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          Obx(() {
+            final isActive = filtersRx.value.isNotEmpty;
+            return Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: SizedBox(
+                height: 36,
+                child: FilterButton(
+                  isActive: isActive,
+                  onPressed:
+                      () => filterController.openFilterSheet(
+                        context,
+                        FilterScope.booking,
+                      ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
+        final hasFilters = filtersRx.value.isNotEmpty;
         if (controller.pastBookings.isEmpty) {
+          if (hasFilters && controller.totalHistoryCount > 0) {
+            return _buildFilteredEmptyState(context, filterController);
+          }
           return _buildEmptyState();
         }
+
+        final tags = filtersRx.value.activeTags();
+        final showTags = tags.isNotEmpty;
 
         return RefreshIndicator(
           onRefresh: () async => controller.loadPastBookings(),
           child: Column(
             children: [
+              if (showTags)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: _buildFilterTags(tags, filterController),
+                ),
               // Stats Section
               _buildStatsSection(),
 
@@ -103,6 +139,100 @@ class TripsView extends GetView<TripsController> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildFilteredEmptyState(
+    BuildContext context,
+    FilterController filterController,
+  ) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.filter_alt_off, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 24),
+            const Text(
+              'No trips match the filters',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Try adjusting your filter options or clear them to revisit all your stays.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed:
+                  () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.booking,
+                  ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Adjust Filters',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+            TextButton(
+              onPressed: () => filterController.clear(FilterScope.booking),
+              child: const Text('Clear filters'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterTags(
+    List<String> tags,
+    FilterController filterController,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              tags
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag),
+                      backgroundColor: Colors.blue[50],
+                    ),
+                  )
+                  .toList(),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: () => filterController.clear(FilterScope.booking),
+            child: const Text('Clear filters'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -251,9 +381,10 @@ class TripsView extends GetView<TripsController> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: booking['status'] == 'completed'
-                          ? Colors.green
-                          : Colors.orange,
+                      color:
+                          booking['status'] == 'completed'
+                              ? Colors.green
+                              : Colors.orange,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(

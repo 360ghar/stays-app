@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/explore_controller.dart';
+import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/ui/widgets/cards/property_card.dart';
+import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 
@@ -21,6 +23,7 @@ class ExploreView extends GetView<ExploreController> {
             ),
             slivers: [
               _buildSliverAppBar(context),
+              _buildActiveFilters(),
               _buildPopularHomes(),
               _buildNearbyHotels(),
               _buildRecommendedSection(),
@@ -33,18 +36,81 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   Widget _buildSliverAppBar(BuildContext context) {
+    final filterController = Get.find<FilterController>();
+    final filtersRx = filterController.rxFor(FilterScope.explore);
     return SliverAppBar(
       floating: true,
       snap: true,
       backgroundColor: const Color(0xFFF8F9FA),
       elevation: 0,
       toolbarHeight: 70,
-      flexibleSpace: FlexibleSpaceBar(
-        background: SearchBarWidget(
-          placeholder: 'Start your search',
-          onTap: controller.navigateToSearch,
-        ),
+      titleSpacing: 16,
+      automaticallyImplyLeading: false,
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: SearchBarWidget(
+              placeholder: 'Search',
+              onTap: controller.navigateToSearch,
+              margin: EdgeInsets.zero,
+              height: 52,
+              borderRadius: BorderRadius.circular(18),
+              shadowColor: Colors.black.withValues(alpha: 0.06),
+              backgroundColor: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Obx(
+            () => FilterButton(
+              isActive: filtersRx.value.isNotEmpty,
+              onPressed:
+                  () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.explore,
+                  ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildActiveFilters() {
+    final filterController = Get.find<FilterController>();
+    final filtersRx = filterController.rxFor(FilterScope.explore);
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        final tags = filtersRx.value.activeTags();
+        if (tags.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children:
+                      tags
+                          .map(
+                            (tag) => Chip(
+                              label: Text(tag),
+                              backgroundColor: Colors.blue[50],
+                            ),
+                          )
+                          .toList(),
+                ),
+              ),
+              TextButton(
+                onPressed: () => filterController.clear(FilterScope.explore),
+                child: const Text('Clear'),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -66,9 +132,10 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child: controller.isLoading.value
-                    ? _buildShimmerList()
-                    : _buildHotelsList(controller.popularHomes, 'popular'),
+                child:
+                    controller.isLoading.value
+                        ? _buildShimmerList()
+                        : _buildHotelsList(controller.popularHomes, 'popular'),
               ),
             ],
           ),
@@ -95,9 +162,10 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child: controller.isLoading.value
-                    ? _buildShimmerList()
-                    : _buildHotelsList(controller.nearbyHotels, 'nearby'),
+                child:
+                    controller.isLoading.value
+                        ? _buildShimmerList()
+                        : _buildHotelsList(controller.nearbyHotels, 'nearby'),
               ),
             ],
           ),
@@ -121,12 +189,13 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child: controller.isLoading.value
-                    ? _buildShimmerList()
-                    : _buildHotelsList(
-                        controller.recommendedHotels,
-                        'recommended',
-                      ),
+                child:
+                    controller.isLoading.value
+                        ? _buildShimmerList()
+                        : _buildHotelsList(
+                          controller.recommendedHotels,
+                          'recommended',
+                        ),
               ),
             ],
           ),

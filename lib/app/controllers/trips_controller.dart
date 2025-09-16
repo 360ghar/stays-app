@@ -1,55 +1,110 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/data/repositories/booking_repository.dart';
+
+import '../data/models/unified_filter_model.dart';
+import '../data/repositories/booking_repository.dart';
+import 'filter_controller.dart';
 
 class TripsController extends GetxController {
   final RxList<Map<String, dynamic>> pastBookings =
       <Map<String, dynamic>>[].obs;
   final RxBool isLoading = false.obs;
+
   late final BookingRepository _bookingRepository;
+  FilterController? _filterController;
+
+  final List<Map<String, dynamic>> _allBookings = [];
+  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
+  Worker? _filterWorker;
 
   @override
   void onInit() {
     super.onInit();
     _bookingRepository = Get.find<BookingRepository>();
-    // Defer loading until screen is visible
+    _initializeFilterSync();
+  }
+
+  void _initializeFilterSync() {
+    if (!Get.isRegistered<FilterController>()) return;
+    _filterController = Get.find<FilterController>();
+    _activeFilters = _filterController!.filterFor(FilterScope.booking);
+    _filterWorker = debounce<UnifiedFilterModel>(
+      _filterController!.rxFor(FilterScope.booking),
+      (filters) {
+        if (_activeFilters == filters) return;
+        _activeFilters = filters;
+        _applyFilters();
+      },
+      time: const Duration(milliseconds: 120),
+    );
+  }
+
+  @override
+  void onClose() {
+    _filterWorker?.dispose();
+    super.onClose();
   }
 
   Future<void> loadPastBookings() async {
     try {
       isLoading.value = true;
       final data = await _bookingRepository.listBookings();
-      final bookings = (data['bookings'] as List? ?? [])
-          .cast<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-      pastBookings.value = bookings
-          .map(
-            (b) => {
-              'id': b['id']?.toString() ?? '',
-              'hotelName':
-                  b['property_title'] ?? b['property']?['title'] ?? 'Stay',
-              'image': b['property']?['main_image_url'] ?? '',
-              'location': b['property']?['city'] ?? '',
-              'checkIn': b['check_in_date'] ?? '',
-              'checkOut': b['check_out_date'] ?? '',
-              'guests': b['guests'] ?? 0,
-              'rooms': 1,
-              'totalAmount': (b['total_amount'] ?? 0).toDouble(),
-              'bookingDate': b['created_at'] ?? '',
-              'status': b['booking_status'] ?? 'pending',
-              'rating': 0.0,
-              'canReview': false,
-              'canRebook': true,
-            },
-          )
-          .toList();
+      final bookings =
+          (data['bookings'] as List? ?? [])
+              .cast<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .map(_mapBooking)
+              .toList();
+      _allBookings
+        ..clear()
+        ..addAll(bookings);
+      _applyFilters();
     } catch (e) {
+      _allBookings.clear();
       pastBookings.clear();
     } finally {
       isLoading.value = false;
     }
   }
+
+  Map<String, dynamic> _mapBooking(Map<String, dynamic> b) {
+    return {
+      'id': b['id']?.toString() ?? '',
+      'hotelName': b['property_title'] ?? b['property']?['title'] ?? 'Stay',
+      'image': b['property']?['main_image_url'] ?? '',
+      'location': b['property']?['city'] ?? '',
+      'checkIn': b['check_in_date'] ?? '',
+      'checkOut': b['check_out_date'] ?? '',
+      'guests': b['guests'] ?? 0,
+      'rooms': 1,
+      'totalAmount': (b['total_amount'] ?? 0).toDouble(),
+      'bookingDate': b['created_at'] ?? '',
+      'status': b['booking_status'] ?? 'pending',
+      'rating': 0.0,
+      'canReview': false,
+      'canRebook': true,
+    };
+  }
+
+  void _applyFilters() {
+    if (_allBookings.isEmpty) {
+      pastBookings.clear();
+      return;
+    }
+    if (_activeFilters.isEmpty) {
+      pastBookings.assignAll(_allBookings);
+      return;
+    }
+    final filtered =
+        _allBookings
+            .where((booking) => _activeFilters.matchesBooking(booking))
+            .toList();
+    pastBookings.assignAll(filtered);
+  }
+
+  bool get hasActiveFilters => _activeFilters.isNotEmpty;
+
+  int get totalHistoryCount => _allBookings.length;
 
   void rebookHotel(Map<String, dynamic> booking) {
     Get.snackbar(
@@ -130,9 +185,9 @@ class TripsController extends GetxController {
             const SizedBox(height: 24),
 
             // Title
-            Text(
+            const Text(
               'Booking Details',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
