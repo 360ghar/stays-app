@@ -115,6 +115,19 @@ class TripsController extends GetxController {
     pastBookings.assignAll(filtered);
   }
 
+  void addOrUpdateBooking(Booking booking) {
+    final mapped = _mapBooking(booking);
+    final index = _allBookings.indexWhere(
+      (existing) => existing['id'] == mapped['id'],
+    );
+    if (index >= 0) {
+      _allBookings[index] = mapped;
+    } else {
+      _allBookings.insert(0, mapped);
+    }
+    _applyFilters();
+  }
+
   bool get hasActiveFilters => _activeFilters.isNotEmpty;
 
   int get totalHistoryCount => _allBookings.length;

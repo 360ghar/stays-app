@@ -50,9 +50,32 @@ class Booking {
             : checkIn.add(const Duration(days: 1));
     final propertyData = json['property'];
     Property? property;
-    if (propertyData is Map<String, dynamic>) {
-      property = Property.fromJson(Map<String, dynamic>.from(propertyData));
+    if (propertyData is Map) {
+      property = _safePropertyFromJson(propertyData);
+    } else if (propertyData is List && propertyData.isNotEmpty) {
+      final first = propertyData.first;
+      if (first is Map) {
+        property = _safePropertyFromJson(first);
+      }
     }
+
+    final propertyTitleSource =
+        json['property_title'] ??
+        _readPropertyField(propertyData, ['title', 'name']);
+    final propertyCitySource =
+        json['property_city'] ?? _readPropertyField(propertyData, ['city']);
+    final propertyCountrySource =
+        json['property_country'] ??
+        _readPropertyField(propertyData, ['country']);
+    final propertyImageSource =
+        json['property_image_url'] ??
+        json['property_main_image'] ??
+        _readPropertyField(propertyData, [
+          'property_image_url',
+          'main_image_url',
+          'coverImage',
+          'image_url',
+        ]);
 
     return Booking(
       id: _parseInt(json['id']),
@@ -74,12 +97,10 @@ class Booking {
               ? DateTime.parse(json['created_at'] as String)
               : DateTime.now(),
       property: property,
-      propertyTitle: json['property_title']?.toString(),
-      propertyCity: json['property_city']?.toString(),
-      propertyCountry: json['property_country']?.toString(),
-      propertyImageUrl:
-          json['property_image_url']?.toString() ??
-          json['property_main_image']?.toString(),
+      propertyTitle: _stringOrNull(propertyTitleSource),
+      propertyCity: _stringOrNull(propertyCitySource),
+      propertyCountry: _stringOrNull(propertyCountrySource),
+      propertyImageUrl: _stringOrNull(propertyImageSource),
     );
   }
 
@@ -123,6 +144,39 @@ class Booking {
       'property_image_url': propertyImageUrl,
       if (property != null) 'property': property!.toJson(),
     };
+  }
+
+  static Property? _safePropertyFromJson(Map<dynamic, dynamic> value) {
+    try {
+      final mapped = value.map((key, val) => MapEntry(key.toString(), val));
+      return Property.fromJson(Map<String, dynamic>.from(mapped));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static String? _stringOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is num || value is bool) return value.toString();
+    if (value is List) {
+      return value.whereType<String>().join(', ');
+    }
+    return value.toString();
+  }
+
+  static dynamic _readPropertyField(dynamic source, List<String> keys) {
+    if (source is List && source.isNotEmpty) {
+      return _readPropertyField(source.first, keys);
+    }
+    if (source is Map) {
+      for (final key in keys) {
+        if (source.containsKey(key) && source[key] != null) {
+          return source[key];
+        }
+      }
+    }
+    return null;
   }
 
   static int _parseInt(dynamic value, {int fallback = 0}) {

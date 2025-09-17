@@ -6,6 +6,7 @@ import '../../../controllers/auth/auth_controller.dart';
 import '../../../controllers/booking/booking_controller.dart';
 import '../../../controllers/navigation_controller.dart';
 import '../../../controllers/trips_controller.dart';
+import '../../../controllers/filter_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../data/models/user_model.dart';
 import '../../../routes/app_routes.dart';
@@ -37,18 +38,36 @@ class _BookingViewState extends State<BookingView> {
 
   final DateFormat _dateFormat = DateFormat('EEE, MMM d, yyyy');
   void _ensureDependencies() {
-    if (!Get.isRegistered<BookingsProvider>()) {
-      Get.lazyPut<BookingsProvider>(() => BookingsProvider());
+    final bookingsProvider =
+        Get.isRegistered<BookingsProvider>()
+            ? Get.find<BookingsProvider>()
+            : Get.put(BookingsProvider(), permanent: true);
+
+    final bookingRepository =
+        Get.isRegistered<BookingRepository>()
+            ? Get.find<BookingRepository>()
+            : Get.put(
+              BookingRepository(provider: bookingsProvider),
+              permanent: true,
+            );
+
+    if (!Get.isRegistered<FilterController>()) {
+      Get.put<FilterController>(FilterController(), permanent: true);
     }
-    if (!Get.isRegistered<BookingRepository>()) {
-      Get.lazyPut<BookingRepository>(
-        () => BookingRepository(provider: Get.find<BookingsProvider>()),
-      );
+
+    if (!Get.isRegistered<TripsController>()) {
+      Get.lazyPut<TripsController>(() => TripsController(), fenix: true);
     }
+    if (Get.isRegistered<TripsController>()) {
+      Get.find<TripsController>();
+    }
+
     if (!Get.isRegistered<BookingController>()) {
-      Get.lazyPut<BookingController>(
-        () => BookingController(repository: Get.find<BookingRepository>()),
+      Get.put<BookingController>(
+        BookingController(repository: bookingRepository),
       );
+    } else {
+      Get.find<BookingController>();
     }
   }
 
@@ -142,9 +161,28 @@ class _BookingViewState extends State<BookingView> {
     return checkOutDate!.difference(checkInDate!).inDays.clamp(1, 365);
   }
 
+  double get nightlyRate {
+    return property?.pricePerNight ?? 0;
+  }
+
+  double get baseAmount {
+    return nightlyRate * nights;
+  }
+
+  double get serviceCharges {
+    return baseAmount * 0.10; // 10% service charge
+  }
+
+  double get taxesAmount {
+    return baseAmount * 0.05; // 5% tax
+  }
+
+  double get discountAmount {
+    return 0.0; // No discount
+  }
+
   double get estimatedTotal {
-    final nightly = property?.pricePerNight ?? 0;
-    return nightly * nights;
+    return baseAmount + serviceCharges + taxesAmount - discountAmount;
   }
 
   Future<void> _submitBooking() async {
@@ -169,31 +207,66 @@ class _BookingViewState extends State<BookingView> {
       return;
     }
 
-    final payload = <String, dynamic>{
-      'property_id': property!.id,
-      'check_in_date': checkInDate!.toIso8601String(),
-      'check_out_date': checkOutDate!.toIso8601String(),
-      'guests': guests,
-      'nights': nights,
-      'primary_guest_name': nameController.text.trim(),
-      'primary_guest_phone': phoneController.text.trim(),
-      'primary_guest_email': emailController.text.trim(),
+    final trimmedEmail = emailController.text.trim();
+    final checkInIso = checkInDate!.toIso8601String();
+    final checkOutIso = checkOutDate!.toIso8601String();
+
+    final localBaseAmount = baseAmount;
+    final localTaxesAmount = taxesAmount;
+    final localServiceCharges = serviceCharges;
+    final localDiscountAmount = discountAmount;
+    final localTotalAmount = estimatedTotal;
+
+    final fallbackPricing = <String, num>{
+      'base_amount': localBaseAmount,
+      'taxes_amount': localTaxesAmount,
+      'service_charges': localServiceCharges,
+      'discount_amount': localDiscountAmount,
+      'total_amount': localTotalAmount,
     };
 
-    await bookingController.createBooking(payload);
+    await bookingController.createBookingWithoutPayment(
+      propertyId: property!.id,
+      checkInIso: checkInIso,
+      checkOutIso: checkOutIso,
+      guests: guests,
+      primaryGuestName: nameController.text.trim(),
+      primaryGuestPhone: phoneController.text.trim(),
+      primaryGuestEmail: trimmedEmail.isEmpty ? null : trimmedEmail,
+      nights: nights,
+      fallbackPricing: fallbackPricing,
+    );
 
-    if (bookingController.statusMessage.value == 'Booking created' &&
-        bookingController.latestBooking.value != null) {
-      Get.snackbar('Success', 'Your booking has been confirmed!');
-      await tripsController?.loadPastBookings(forceRefresh: true);
+    final latestBooking = bookingController.latestBooking.value;
+    final isSuccessful =
+        bookingController.statusMessage.value == 'Booking created' &&
+        latestBooking != null;
+
+    if (isSuccessful) {
+      if (tripsController != null) {
+        tripsController!.addOrUpdateBooking(latestBooking);
+        await tripsController!.loadPastBookings(forceRefresh: true);
+      }
+      Get.snackbar(
+        'Success',
+        'Your booking has been confirmed with pending payment.',
+      );
       navigationController?.changeTab(2);
-      Get.offAllNamed(Routes.home);
+      Get.offAllNamed(Routes.home, arguments: {'tabIndex': 2});
     } else {
       final error =
           bookingController.errorMessage.value.isNotEmpty
               ? bookingController.errorMessage.value
               : 'Failed to create booking. Please try again.';
-      Get.snackbar('Booking failed', error);
+      final truncatedError =
+          error.length > 100 ? '${error.substring(0, 97)}...' : error;
+      Get.snackbar(
+        'Booking failed',
+        truncatedError,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      );
     }
   }
 
@@ -202,8 +275,8 @@ class _BookingViewState extends State<BookingView> {
     final prop = property;
     final buttonLabel =
         nights > 0
-            ? 'Confirm and pay ${CurrencyHelper.format(estimatedTotal)}'
-            : 'Confirm Booking';
+            ? 'Pay & Confirm ${CurrencyHelper.format(estimatedTotal)}'
+            : 'Pay & Confirm';
     return Scaffold(
       appBar: AppBar(title: Text(prop?.name ?? 'Confirm booking')),
       body:
@@ -227,30 +300,44 @@ class _BookingViewState extends State<BookingView> {
               ? null
               : SafeArea(
                 minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Obx(
-                  () => SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed:
-                          bookingController.isSubmitting.value
-                              ? null
-                              : _submitBooking,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Obx(() {
+                  final isLoading = bookingController.isSubmitting.value;
+                  final message = bookingController.statusMessage.value;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isLoading && message.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _submitBooking,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child:
+                              isLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : Text(buttonLabel),
+                        ),
                       ),
-                      child:
-                          bookingController.isSubmitting.value
-                              ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                              : Text(buttonLabel),
-                    ),
-                  ),
-                ),
+                    ],
+                  );
+                }),
               ),
     );
   }
@@ -462,7 +549,6 @@ class _BookingViewState extends State<BookingView> {
   }
 
   Widget _buildPriceSummaryCard(Property prop) {
-    final nightly = prop.pricePerNight;
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -475,19 +561,42 @@ class _BookingViewState extends State<BookingView> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 12),
-            _buildPriceRow(
-              '${CurrencyHelper.format(nightly)} x $nights night${nights == 1 ? '' : 's'}',
-              CurrencyHelper.format(nightly * nights),
-            ),
-            const SizedBox(height: 8),
-            _buildPriceRow('Guests', '$guests'),
-            const Divider(height: 24),
-            _buildPriceRow(
-              'Total due',
-              nights > 0 ? CurrencyHelper.format(estimatedTotal) : '--',
-              isTotal: true,
-            ),
-            if (nights == 0)
+            if (nights > 0) ...[
+              _buildPriceRow(
+                '${CurrencyHelper.format(nightlyRate)} x $nights night${nights == 1 ? '' : 's'}',
+                CurrencyHelper.format(baseAmount),
+              ),
+              const SizedBox(height: 8),
+              _buildPriceRow(
+                'Service charges (10%)',
+                CurrencyHelper.format(serviceCharges),
+              ),
+              const SizedBox(height: 8),
+              _buildPriceRow('Taxes (5%)', CurrencyHelper.format(taxesAmount)),
+              if (discountAmount > 0) ...[
+                const SizedBox(height: 8),
+                _buildPriceRow(
+                  'Discount',
+                  '-${CurrencyHelper.format(discountAmount)}',
+                ),
+              ],
+              const SizedBox(height: 8),
+              _buildPriceRow('Guests', '$guests'),
+              const Divider(height: 24),
+              _buildPriceRow(
+                'Total due',
+                CurrencyHelper.format(estimatedTotal),
+                isTotal: true,
+              ),
+            ] else ...[
+              _buildPriceRow(
+                '${CurrencyHelper.format(nightlyRate)} per night',
+                '--',
+              ),
+              const SizedBox(height: 8),
+              _buildPriceRow('Guests', '$guests'),
+              const Divider(height: 24),
+              _buildPriceRow('Total due', '--', isTotal: true),
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
@@ -495,6 +604,7 @@ class _BookingViewState extends State<BookingView> {
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               ),
+            ],
           ],
         ),
       ),
