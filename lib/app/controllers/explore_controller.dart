@@ -113,12 +113,7 @@ class ExploreController extends GetxController {
       filters: _activeFilters.toQueryParameters(),
     );
 
-    final props =
-        _activeFilters.isEmpty
-            ? resp.properties
-            : resp.properties
-                .where((property) => _activeFilters.matchesProperty(property))
-                .toList();
+    final props = resp.properties;
 
     // Determine selected city for grouping
     final selectedCity = _selectedCityNormalized();
@@ -252,3 +247,4 @@ class ExploreController extends GetxController {
     );
   }
 }
+

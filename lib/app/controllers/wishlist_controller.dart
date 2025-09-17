@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
@@ -9,14 +9,20 @@ import 'filter_controller.dart';
 
 class WishlistController extends GetxController {
   WishlistRepository? _wishlistRepository;
-  late final FilterController _filterController;
+  FilterController? _filterController;
 
   final RxList<Property> wishlistItems = <Property>[].obs;
   final RxBool isLoading = false.obs;
+  final RxBool isRefreshing = false.obs;
   final RxString errorMessage = ''.obs;
-  final List<Property> _allWishlist = [];
+  final RxInt currentPage = 1.obs;
+  final RxInt totalPages = 1.obs;
+  final RxInt pageSize = 20.obs;
+  final RxInt totalCount = 0.obs;
+
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
+  final Set<int> _favoriteIds = <int>{};
 
   @override
   void onInit() {
@@ -35,21 +41,21 @@ class WishlistController extends GetxController {
   }
 
   void _initializeFilterSync() {
-    try {
-      _filterController = Get.find<FilterController>();
-      _activeFilters = _filterController.filterFor(FilterScope.wishlist);
-      _filterWorker = debounce<UnifiedFilterModel>(
-        _filterController.rxFor(FilterScope.wishlist),
-        (filters) {
-          if (_activeFilters == filters) return;
-          _activeFilters = filters;
-          _applyFilters();
-        },
-        time: const Duration(milliseconds: 120),
-      );
-    } catch (e) {
-      AppLogger.warning('FilterController not available for wishlist: $e');
+    if (!Get.isRegistered<FilterController>()) {
+      AppLogger.warning('FilterController not available for wishlist');
+      return;
     }
+    _filterController = Get.find<FilterController>();
+    _activeFilters = _filterController!.filterFor(FilterScope.wishlist);
+    _filterWorker = debounce<UnifiedFilterModel>(
+      _filterController!.rxFor(FilterScope.wishlist),
+      (filters) async {
+        if (_activeFilters == filters) return;
+        _activeFilters = filters;
+        await loadWishlist(pageOverride: 1);
+      },
+      time: const Duration(milliseconds: 160),
+    );
   }
 
   @override
@@ -58,36 +64,83 @@ class WishlistController extends GetxController {
     super.onClose();
   }
 
-  Future<void> loadWishlist() async {
+  Map<String, dynamic>? _buildFilterQuery() {
+    final query = _activeFilters.toQueryParameters();
+    return query.isEmpty ? null : query;
+  }
+
+  Future<void> loadWishlist({int? pageOverride, bool showLoader = true}) async {
     if (_wishlistRepository == null) {
       errorMessage.value = 'Wishlist service unavailable';
       wishlistItems.clear();
       return;
     }
-    isLoading.value = true;
+    final targetPage = pageOverride ?? currentPage.value;
+    if (targetPage < 1) {
+      await loadWishlist(pageOverride: 1, showLoader: showLoader);
+      return;
+    }
+    if (showLoader) {
+      isLoading.value = true;
+    } else {
+      isRefreshing.value = true;
+    }
     errorMessage.value = '';
     try {
-      final properties = await _wishlistRepository!.listFavorites();
-      _allWishlist
-        ..clear()
-        ..addAll(properties);
-      _applyFilters();
+      final response = await _wishlistRepository!.listFavorites(
+        page: targetPage,
+        limit: pageSize.value,
+        filters: _buildFilterQuery(),
+      );
+      currentPage.value = response.currentPage;
+      totalPages.value = response.totalPages;
+      totalCount.value = response.totalCount;
+      pageSize.value = response.pageSize;
+      wishlistItems.assignAll(response.properties);
+      _favoriteIds.addAll(response.properties.map((e) => e.id));
     } catch (e) {
       errorMessage.value = 'Failed to load wishlist';
       AppLogger.error('Error loading wishlist', e);
-      _allWishlist.clear();
+      if (pageOverride != null && pageOverride > 1) {
+        currentPage.value = pageOverride - 1;
+      }
       wishlistItems.clear();
     } finally {
-      isLoading.value = false;
+      if (showLoader) {
+        isLoading.value = false;
+      } else {
+        isRefreshing.value = false;
+      }
     }
+  }
+
+  @override
+  Future<void> refresh() async {
+    await loadWishlist(showLoader: false);
+  }
+
+  Future<void> goToPage(int page) async {
+    if (page == currentPage.value) return;
+    if (page < 1 || page > totalPages.value) return;
+    await loadWishlist(pageOverride: page);
+  }
+
+  Future<void> nextPage() async {
+    if (currentPage.value >= totalPages.value) return;
+    await goToPage(currentPage.value + 1);
+  }
+
+  Future<void> previousPage() async {
+    if (currentPage.value <= 1) return;
+    await goToPage(currentPage.value - 1);
   }
 
   Future<void> addToWishlist(Property property) async {
     if (isInWishlist(property.id)) return;
-
     if (_wishlistRepository == null) {
-      // Local add if service not available
-      wishlistItems.add(property);
+      wishlistItems.insert(0, property);
+      totalCount.value = wishlistItems.length;
+      _favoriteIds.add(property.id);
       Get.snackbar(
         'Added to Wishlist',
         '${property.name} has been added to your wishlist',
@@ -96,14 +149,10 @@ class WishlistController extends GetxController {
       );
       return;
     }
-
     try {
       await _wishlistRepository!.add(property.id);
-
-      _allWishlist.add(property);
-      if (_activeFilters.isEmpty || _activeFilters.matchesProperty(property)) {
-        wishlistItems.add(property);
-      }
+      _favoriteIds.add(property.id);
+      await loadWishlist(pageOverride: currentPage.value);
       Get.snackbar(
         'Added to Wishlist',
         '${property.name} has been added to your wishlist',
@@ -122,26 +171,28 @@ class WishlistController extends GetxController {
   }
 
   Future<void> removeFromWishlist(int propertyId) async {
-    final property = wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
-
+    Property? property;
     if (_wishlistRepository == null) {
-      // Local remove if service not available
-      _allWishlist.removeWhere((p) => p.id == propertyId);
+      property =
+          wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
       wishlistItems.removeWhere((p) => p.id == propertyId);
+      _favoriteIds.remove(propertyId);
+      totalCount.value = wishlistItems.length;
       Get.snackbar(
         'Removed from Wishlist',
-        'Item has been removed from your wishlist',
+        property != null
+            ? '${property.name} has been removed from your wishlist'
+            : 'Item has been removed from your wishlist',
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 2),
       );
       return;
     }
-
+    property = wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
     try {
       await _wishlistRepository!.remove(propertyId);
-
-      _allWishlist.removeWhere((p) => p.id == propertyId);
-      wishlistItems.removeWhere((p) => p.id == propertyId);
+      _favoriteIds.remove(propertyId);
+      await loadWishlist(pageOverride: currentPage.value);
       Get.snackbar(
         'Removed from Wishlist',
         property != null
@@ -161,9 +212,7 @@ class WishlistController extends GetxController {
     }
   }
 
-  bool isInWishlist(int propertyId) {
-    return _allWishlist.any((p) => p.id == propertyId);
-  }
+  bool isInWishlist(int propertyId) => _favoriteIds.contains(propertyId);
 
   Future<void> toggleWishlist(Property property) async {
     if (isInWishlist(property.id)) {
@@ -185,15 +234,13 @@ class WishlistController extends GetxController {
           ElevatedButton(
             onPressed: () async {
               Get.back();
-
               if (_wishlistRepository != null) {
                 try {
-                  // No bulk clear; iterate
-                  for (final p in wishlistItems.toList()) {
-                    await _wishlistRepository!.remove(p.id);
+                  for (final item in wishlistItems.toList()) {
+                    await _wishlistRepository!.remove(item.id);
                   }
-                  _allWishlist.clear();
-                  wishlistItems.clear();
+                  _favoriteIds.clear();
+                  await loadWishlist(pageOverride: 1);
                   Get.snackbar(
                     'Wishlist Cleared',
                     'All items have been removed from your wishlist',
@@ -210,9 +257,9 @@ class WishlistController extends GetxController {
                   );
                 }
               } else {
-                // Local clear if service not available
-                _allWishlist.clear();
                 wishlistItems.clear();
+                _favoriteIds.clear();
+                totalCount.value = 0;
                 Get.snackbar(
                   'Wishlist Cleared',
                   'All items have been removed from your wishlist',
@@ -229,28 +276,12 @@ class WishlistController extends GetxController {
     );
   }
 
-  @override
-  Future<void> refresh() async {
-    await loadWishlist();
-  }
-
   bool get hasActiveFilters => _activeFilters.isNotEmpty;
 
-  int get totalItems => _allWishlist.length;
-
-  void _applyFilters() {
-    if (_allWishlist.isEmpty) {
-      wishlistItems.clear();
-      return;
-    }
-    if (_activeFilters.isEmpty) {
-      wishlistItems.assignAll(_allWishlist);
-      return;
-    }
-    final filtered =
-        _allWishlist
-            .where((property) => _activeFilters.matchesProperty(property))
-            .toList();
-    wishlistItems.assignAll(filtered);
-  }
+  int get totalItems => totalCount.value;
 }
+
+
+
+
+

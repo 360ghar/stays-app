@@ -18,7 +18,6 @@ import '../ui/views/auth/forgot_password_view.dart';
 import '../ui/views/auth/verification_view.dart';
 import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/home/home_shell_view.dart';
-import '../ui/views/home/explore_view.dart';
 import '../ui/views/listing/location_search_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/search_results_view.dart';

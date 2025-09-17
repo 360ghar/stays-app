@@ -24,30 +24,45 @@ class PropertiesProvider extends BaseProvider {
     double radiusKm = 10,
     Map<String, dynamic>? filters,
   }) async {
-    final query = {
+    final query = <String, dynamic>{
       'lat': lat,
       'lng': lng,
       'page': page,
       'limit': limit,
-      'radius': radiusKm.toInt(),
+      if (radiusKm > 0 && !(filters?.containsKey('radius') ?? false))
+        'radius': radiusKm,
       ...?filters,
     };
     final res = await get('/api/v1/properties/', query: _stringify(query));
     return handleResponse(res, (json) {
-      final props =
-          (json['properties'] as List?)
+      final rawList = (json['properties'] as List?) ??
+          (json['data'] is Map<String, dynamic>
+              ? (json['data'] as Map<String, dynamic>)['properties'] as List?
+              : null);
+      final props = rawList
               ?.map((e) => Property.fromJson(Map<String, dynamic>.from(e)))
               .toList() ??
-          [];
-      final total = (json['total'] as num?)?.toInt() ?? props.length;
-      final totalPages = (json['total_pages'] as num?)?.toInt() ?? 1;
-      final current = (json['page'] as num?)?.toInt() ?? page;
+          <Property>[];
+      final total = ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
+          props.length;
+      final totalPages =
+          ((json['total_pages'] ?? json['totalPages']) as num?)?.toInt() ?? 1;
+      final current =
+          ((json['page'] ?? json['currentPage']) as num?)?.toInt() ?? page;
+      final resolvedLimit = ((json['limit'] ?? json['pageSize'] ?? json['per_page'] ??
+                  limit) as num?)
+              ?.toInt() ??
+          limit;
+      final filtersApplied = json['filters_applied'] ?? json['filters'];
       return UnifiedPropertyResponse(
         properties: props,
         totalCount: total,
         currentPage: current,
         totalPages: totalPages,
-        filters: json['filters_applied'] as Map<String, dynamic>?,
+        pageSize: resolvedLimit,
+        filters: filtersApplied is Map
+            ? Map<String, dynamic>.from(filtersApplied)
+            : null,
       );
     });
   }
@@ -56,7 +71,7 @@ class PropertiesProvider extends BaseProvider {
     final res = await get('/api/v1/properties/$id');
     return handleResponse(res, (json) {
       final data = json['data'] ?? json;
-      return Property.fromJson(Map<String, dynamic>.from(data as Map));
+      return Property.fromJson(Map<String, dynamic>.from(data));
     });
   }
 

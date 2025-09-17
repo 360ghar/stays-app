@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/repositories/auth_repository.dart';
-import '../../data/services/storage_service.dart';
 import '../../data/models/user_model.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/logger/app_logger.dart';

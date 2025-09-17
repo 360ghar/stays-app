@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/auth/profile_controller.dart';
@@ -198,8 +198,9 @@ class ProfileView extends GetView<ProfileController> {
                                   final contact = (email.isNotEmpty)
                                       ? email
                                       : (phone.isNotEmpty ? phone : '');
-                                  if (contact.isEmpty)
+                                  if (contact.isEmpty) {
                                     return const SizedBox.shrink();
+                                  }
                                   return Text(
                                     contact,
                                     style: const TextStyle(

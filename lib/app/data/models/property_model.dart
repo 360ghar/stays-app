@@ -196,7 +196,7 @@ class Property {
             .whereType<Map>()
             .map(
               (e) =>
-                  PropertyImage.fromJson(Map<String, dynamic>.from(e as Map)),
+                  PropertyImage.fromJson(Map<String, dynamic>.from(e)),
             )
             .toList();
       }

@@ -1,30 +1,51 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-import '../../data/repositories/properties_repository.dart';
+
 import '../../data/models/property_model.dart';
+import '../../data/models/unified_filter_model.dart';
+import '../../data/repositories/properties_repository.dart';
 import '../../data/services/location_service.dart';
+import '../filter_controller.dart';
 
 class ListingController extends GetxController {
+  ListingController({required PropertiesRepository repository})
+      : _repository = repository;
+
   final PropertiesRepository _repository;
   final LocationService _locationService = Get.find<LocationService>();
 
-  ListingController({required PropertiesRepository repository})
-      : _repository = repository;
+  final ScrollController scrollController = ScrollController();
 
   final RxList<Property> listings = <Property>[].obs;
   final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
+  final RxString errorMessage = ''.obs;
+  final RxInt currentPage = 1.obs;
+  final RxInt totalPages = 1.obs;
+  final RxInt pageSize = 20.obs;
+  final RxInt totalCount = 0.obs;
 
-  // Query snapshot (does not auto-change on refresh)
   double? _queryLat;
   double? _queryLng;
-  double _radiusKm = 100.0; // default explore radius
-  Map<String, dynamic>? _filters;
+  double _radiusKm = 100.0;
+  Map<String, dynamic>? _filtersFromArgs;
+  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
+  FilterController? _filterController;
+  Worker? _filterWorker;
 
   @override
   void onInit() {
     super.onInit();
     _initQueryFromArgsOrService();
+    _attachFilterController();
     fetch();
+  }
+
+  @override
+  void onClose() {
+    scrollController.dispose();
+    _filterWorker?.dispose();
+    super.onClose();
   }
 
   void _initQueryFromArgsOrService() {
@@ -33,42 +54,124 @@ class ListingController extends GetxController {
       _queryLat = (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
       _queryLng = (args['lng'] as num?)?.toDouble() ?? _locationService.longitude;
       _radiusKm = (args['radius_km'] as num?)?.toDouble() ?? _radiusKm;
-      final filters = args['filters'];
-      if (filters is Map<String, dynamic>) _filters = filters;
+      final rawFilters = args['filters'];
+      if (rawFilters is Map<String, dynamic>) {
+        _filtersFromArgs = Map<String, dynamic>.from(rawFilters)
+          ..removeWhere((_, value) => value == null)
+          ..remove('page')
+          ..remove('limit')
+          ..remove('lat')
+          ..remove('lng');
+      }
+      final initialScopeFilters = args['scopeFilters'] as UnifiedFilterModel?;
+      if (initialScopeFilters != null) {
+        _activeFilters = initialScopeFilters;
+      }
     } else {
       _queryLat = _locationService.latitude;
       _queryLng = _locationService.longitude;
     }
   }
 
-  Future<void> fetch() async {
-    try {
+  void _attachFilterController() {
+    if (!Get.isRegistered<FilterController>()) return;
+    _filterController = Get.find<FilterController>();
+    // Use locate scope for detail search, fall back to explore if empty.
+    final locateFilters = _filterController!.filterFor(FilterScope.locate);
+    if (locateFilters.isNotEmpty) {
+      _activeFilters = locateFilters;
+    } else {
+      _activeFilters = _filterController!.filterFor(FilterScope.explore);
+    }
+    _filterWorker = debounce<UnifiedFilterModel>(
+      _filterController!.rxFor(FilterScope.locate),
+      (filters) async {
+        if (_activeFilters == filters) return;
+        _activeFilters = filters;
+        await fetch(pageOverride: 1, jumpToTop: true);
+      },
+      time: const Duration(milliseconds: 150),
+    );
+  }
+
+  Map<String, dynamic>? _buildFilters() {
+    final combined = <String, dynamic>{};
+    if (_filtersFromArgs != null) {
+      combined.addAll(_filtersFromArgs!);
+    }
+    final scoped = _activeFilters.toQueryParameters();
+    if (scoped.isNotEmpty) combined.addAll(scoped);
+    return combined.isEmpty ? null : combined;
+  }
+
+  Future<void> fetch({int? pageOverride, bool showLoader = true, bool jumpToTop = false}) async {
+    final targetPage = pageOverride ?? currentPage.value;
+    if (targetPage < 1) {
+      await fetch(pageOverride: 1, showLoader: showLoader, jumpToTop: jumpToTop);
+      return;
+    }
+    if (showLoader) {
       isLoading.value = true;
-      final resp = await _repository.explore(
+    } else {
+      isRefreshing.value = true;
+    }
+    errorMessage.value = '';
+    try {
+      final response = await _repository.explore(
         lat: _queryLat,
         lng: _queryLng,
+        page: targetPage,
+        limit: pageSize.value,
         radiusKm: _radiusKm,
-        filters: _filters,
+        filters: _buildFilters(),
       );
-      listings.assignAll(resp.properties);
-    } catch (_) {
+      currentPage.value = response.currentPage;
+      totalPages.value = response.totalPages;
+      totalCount.value = response.totalCount;
+      pageSize.value = response.pageSize;
+      listings.assignAll(response.properties);
+    } catch (e) {
+      errorMessage.value = 'Failed to load properties';
       listings.clear();
     } finally {
-      isLoading.value = false;
+      if (showLoader) {
+        isLoading.value = false;
+      } else {
+        isRefreshing.value = false;
+      }
+      if (jumpToTop) {
+        _scrollToTop();
+      }
     }
   }
 
-  // Public refresh entry used by RefreshIndicator. Does not change location.
+  @override
   Future<void> refresh() async {
-    try {
-      isRefreshing.value = true;
-      await fetch();
-    } finally {
-      isRefreshing.value = false;
-    }
+    await fetch(showLoader: false);
   }
 
-  // Explicitly change the query location when user selects a new city.
+  Future<void> goToPage(int page) async {
+    if (page == currentPage.value) return;
+    if (page < 1 || page > totalPages.value) return;
+    await fetch(pageOverride: page, jumpToTop: true);
+  }
+
+  Future<void> nextPage() async {
+    if (currentPage.value >= totalPages.value) return;
+    await goToPage(currentPage.value + 1);
+  }
+
+  Future<void> previousPage() async {
+    if (currentPage.value <= 1) return;
+    await goToPage(currentPage.value - 1);
+  }
+
+  Future<void> changePageSize(int newSize) async {
+    if (newSize == pageSize.value) return;
+    pageSize.value = newSize;
+    await fetch(pageOverride: 1, jumpToTop: true);
+  }
+
   Future<void> setQueryLocation({
     required double lat,
     required double lng,
@@ -78,7 +181,23 @@ class ListingController extends GetxController {
     _queryLat = lat;
     _queryLng = lng;
     if (radiusKm != null) _radiusKm = radiusKm;
-    _filters = filters ?? _filters;
-    await fetch();
+    if (filters != null) {
+      _filtersFromArgs = Map<String, dynamic>.from(filters)
+        ..removeWhere((_, value) => value == null);
+    }
+    await fetch(pageOverride: 1, jumpToTop: true);
+  }
+
+  void _scrollToTop() {
+    if (!scrollController.hasClients) return;
+    scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOut,
+    );
   }
 }
+
+
+
+

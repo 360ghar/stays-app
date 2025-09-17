@@ -6,7 +6,7 @@ class UsersProvider extends BaseProvider {
     final res = await get('/api/v1/users/profile/');
     return handleResponse(res, (json) {
       final data = json['data'] ?? json;
-      return UserModel.fromJson(Map<String, dynamic>.from(data as Map));
+      return UserModel.fromJson(Map<String, dynamic>.from(data));
     });
   }
 
@@ -32,7 +32,7 @@ class UsersProvider extends BaseProvider {
     final res = await put('/api/v1/users/profile/', body);
     return handleResponse(res, (json) {
       final data = json['data'] ?? json;
-      return UserModel.fromJson(Map<String, dynamic>.from(data as Map));
+      return UserModel.fromJson(Map<String, dynamic>.from(data));
     });
   }
 }

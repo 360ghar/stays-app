@@ -139,6 +139,7 @@ class UnifiedFilterModel {
     if (petsAllowed != null) 'pets_allowed': petsAllowed,
     if (smokingAllowed != null) 'smoking_allowed': smokingAllowed,
     if (city != null && city!.trim().isNotEmpty) 'city': city,
+    if (radiusKm != null) 'radius': radiusKm,
   };
 
   bool matchesProperty(Property property) {

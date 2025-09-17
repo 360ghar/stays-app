@@ -1,4 +1,4 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -19,8 +19,6 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   late final WebViewController _controller;
   int _progress = 0;
   bool _hasError = false;
-  bool _isInitializing = true;
-
   @override
   void initState() {
     super.initState();
@@ -62,8 +60,9 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
             final uri = Uri.tryParse(request.url);
             if (uri == null) return NavigationDecision.prevent;
             const allowed = {'http', 'https', 'about', 'data', 'blob'};
-            if (allowed.contains(uri.scheme))
+            if (allowed.contains(uri.scheme)) {
               return NavigationDecision.navigate;
+            }
             return NavigationDecision.prevent; // block external app intents
           },
           onWebResourceError: (_) {
@@ -89,7 +88,6 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
     }
 
     _controller.loadRequest(Uri.parse(widget.url));
-    _isInitializing = false;
 
     // iOS requires an explicit platform view initialization in some cases
     if (Platform.isAndroid) {

@@ -26,24 +26,9 @@ class PropertiesRepository {
         ln = loc.longitude!;
       }
     } catch (_) {}
-    // Sanitize filters: remove non-lat/lng location filters, ensure default purpose
-    final sanitized = <String, dynamic>{}..addAll(filters ?? {});
-    const disallowed = {
-      'city',
-      'pincode',
-      'locality',
-      'sub_locality',
-      'zip',
-      'zipcode',
-      'location',
-      'country',
-      'nearbyCity',
-      'currentCity',
-    };
-    for (final k in disallowed) {
-      sanitized.remove(k);
-    }
-    sanitized.putIfAbsent('purpose', () => 'short_stay');
+    final queryFilters = <String, dynamic>{...?filters}
+      ..removeWhere((key, value) => value == null);
+    queryFilters.putIfAbsent('purpose', () => 'short_stay');
 
     return _provider.explore(
       lat: la,
@@ -51,7 +36,7 @@ class PropertiesRepository {
       page: page,
       limit: limit,
       radiusKm: radiusKm,
-      filters: sanitized,
+      filters: queryFilters,
     );
   }
 

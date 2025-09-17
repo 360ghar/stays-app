@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/user_model.dart';
@@ -6,7 +6,6 @@ import '../../data/models/trip_model.dart';
 import '../../routes/app_routes.dart';
 import 'auth_controller.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/booking_repository.dart';
 import '../../data/repositories/profile_repository.dart';
 
 class ProfileController extends GetxController {
@@ -131,34 +130,6 @@ class ProfileController extends GetxController {
       initials = userPhone.value[0].toUpperCase();
     }
     return initials;
-  }
-
-  Future<void> _loadPastTrips() async {
-    try {
-      final repo = Get.isRegistered<BookingRepository>()
-          ? Get.find<BookingRepository>()
-          : null;
-      if (repo == null) return;
-      final data = await repo.listBookings();
-      final list = (data['bookings'] as List? ?? [])
-          .cast<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-      pastTrips.value = list.map((b) {
-        return TripModel(
-          id: b['id']?.toString() ?? '',
-          propertyName:
-              b['property_title'] ?? b['property']?['title'] ?? 'Stay',
-          checkIn:
-              DateTime.tryParse(b['check_in_date'] ?? '') ?? DateTime.now(),
-          checkOut:
-              DateTime.tryParse(b['check_out_date'] ?? '') ?? DateTime.now(),
-          status: b['booking_status'] ?? 'pending',
-        );
-      }).toList();
-    } catch (_) {
-      pastTrips.clear();
-    }
   }
 
   void navigateToPastTrips() {

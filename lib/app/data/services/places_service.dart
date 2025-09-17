@@ -24,7 +24,7 @@ class PlacesService {
   PlacesService({Dio? dio}) : _dio = dio ?? Dio();
 
   String get _apiKey =>
-      (AppConfig.I as AppConfig).googleMapsApiKey ?? 'YOUR_GOOGLE_MAPS_API_KEY';
+      AppConfig.I.googleMapsApiKey ?? 'YOUR_GOOGLE_MAPS_API_KEY';
 
   Future<List<PlacePrediction>> autocomplete(
     String input, {
@@ -54,7 +54,7 @@ class PlacesService {
       final preds = (data['predictions'] as List? ?? []);
       return preds
           .map((e) {
-            final m = Map<String, dynamic>.from(e as Map);
+            final m = Map<String, dynamic>.from(e);
             return PlacePrediction(
               description: (m['description'] as String?) ?? '',
               placeId: (m['place_id'] as String?) ?? '',
@@ -86,9 +86,9 @@ class PlacesService {
         AppLogger.warning('Place details status: $status');
         return null;
       }
-      final result = Map<String, dynamic>.from(data['result'] as Map);
-      final geometry = Map<String, dynamic>.from(result['geometry'] as Map);
-      final location = Map<String, dynamic>.from(geometry['location'] as Map);
+      final result = Map<String, dynamic>.from(data['result']);
+      final geometry = Map<String, dynamic>.from(result['geometry']);
+      final location = Map<String, dynamic>.from(geometry['location']);
       final lat = (location['lat'] as num?)?.toDouble();
       final lng = (location['lng'] as num?)?.toDouble();
       if (lat == null || lng == null) return null;
