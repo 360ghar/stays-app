@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../data/models/unified_filter_model.dart';
+import '../data/models/booking_model.dart';
 import '../data/repositories/booking_repository.dart';
 import 'filter_controller.dart';
 
@@ -22,6 +23,7 @@ class TripsController extends GetxController {
     super.onInit();
     _bookingRepository = Get.find<BookingRepository>();
     _initializeFilterSync();
+    loadPastBookings();
   }
 
   void _initializeFilterSync() {
@@ -45,44 +47,55 @@ class TripsController extends GetxController {
     super.onClose();
   }
 
-  Future<void> loadPastBookings() async {
+  Future<void> loadPastBookings({bool forceRefresh = false}) async {
+    if (!forceRefresh && _allBookings.isNotEmpty) {
+      _applyFilters();
+      return;
+    }
+    final hadBookings = _allBookings.isNotEmpty;
+    if (isLoading.value && !forceRefresh) {
+      return;
+    }
     try {
       isLoading.value = true;
-      final data = await _bookingRepository.listBookings();
-      final bookings =
-          (data['bookings'] as List? ?? [])
-              .cast<Map>()
-              .map((e) => Map<String, dynamic>.from(e))
-              .map(_mapBooking)
-              .toList();
+      final bookings = await _bookingRepository.fetchBookings();
+      final mapped = bookings.map(_mapBooking).toList();
       _allBookings
         ..clear()
-        ..addAll(bookings);
+        ..addAll(mapped);
       _applyFilters();
     } catch (e) {
       _allBookings.clear();
       pastBookings.clear();
+      if (forceRefresh || !hadBookings) {
+        Get.snackbar(
+          'Bookings unavailable',
+          'We could not load your bookings right now. Please try again.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
-  Map<String, dynamic> _mapBooking(Map<String, dynamic> b) {
+  Map<String, dynamic> _mapBooking(Booking booking) {
     return {
-      'id': b['id']?.toString() ?? '',
-      'hotelName': b['property_title'] ?? b['property']?['title'] ?? 'Stay',
-      'image': b['property']?['main_image_url'] ?? '',
-      'location': b['property']?['city'] ?? '',
-      'checkIn': b['check_in_date'] ?? '',
-      'checkOut': b['check_out_date'] ?? '',
-      'guests': b['guests'] ?? 0,
+      'id': booking.id.toString(),
+      'hotelName': booking.displayTitle,
+      'image': booking.displayImage,
+      'location': booking.displayLocation,
+      'checkIn': booking.checkInDate.toIso8601String(),
+      'checkOut': booking.checkOutDate.toIso8601String(),
+      'guests': booking.guests,
       'rooms': 1,
-      'totalAmount': (b['total_amount'] ?? 0).toDouble(),
-      'bookingDate': b['created_at'] ?? '',
-      'status': b['booking_status'] ?? 'pending',
+      'totalAmount': booking.totalAmount,
+      'bookingDate': booking.createdAt.toIso8601String(),
+      'status': booking.bookingStatus,
       'rating': 0.0,
       'canReview': false,
       'canRebook': true,
+      'model': booking,
     };
   }
 

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/filter_controller.dart';
-import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 
+import '../../../controllers/filter_controller.dart';
 import '../../../controllers/trips_controller.dart';
+import '../../widgets/common/filter_button.dart';
+import '../../../utils/helpers/currency_helper.dart';
 
 class TripsView extends GetView<TripsController> {
   const TripsView({super.key});
@@ -12,6 +13,7 @@ class TripsView extends GetView<TripsController> {
   Widget build(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.booking);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
@@ -46,7 +48,7 @@ class TripsView extends GetView<TripsController> {
         ],
       ),
       body: Obx(() {
-        if (controller.isLoading.value) {
+        if (controller.isLoading.value && controller.pastBookings.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -59,32 +61,33 @@ class TripsView extends GetView<TripsController> {
         }
 
         final tags = filtersRx.value.activeTags();
-        final showTags = tags.isNotEmpty;
+        final headerWidgets = <Widget>[];
+        if (tags.isNotEmpty) {
+          headerWidgets.add(
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildFilterTags(tags, filterController),
+            ),
+          );
+        }
+        headerWidgets.add(_buildStatsSection());
+
+        final bookings = controller.pastBookings;
 
         return RefreshIndicator(
-          onRefresh: () async => controller.loadPastBookings(),
-          child: Column(
-            children: [
-              if (showTags)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: _buildFilterTags(tags, filterController),
-                ),
-              // Stats Section
-              _buildStatsSection(),
-
-              // Bookings List
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: controller.pastBookings.length,
-                  itemBuilder: (context, index) {
-                    final booking = controller.pastBookings[index];
-                    return _buildBookingCard(booking);
-                  },
-                ),
-              ),
-            ],
+          onRefresh:
+              () async => controller.loadPastBookings(forceRefresh: true),
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            itemCount: headerWidgets.length + bookings.length,
+            itemBuilder: (context, index) {
+              if (index < headerWidgets.length) {
+                return headerWidgets[index];
+              }
+              final booking = bookings[index - headerWidgets.length];
+              return _buildBookingCard(booking);
+            },
           ),
         );
       }),
@@ -132,7 +135,7 @@ class TripsView extends GetView<TripsController> {
                 ),
               ),
               child: const Text(
-                'Explore Hotels',
+                'Browse stays',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -191,7 +194,7 @@ class TripsView extends GetView<TripsController> {
                 ),
               ),
               child: const Text(
-                'Adjust Filters',
+                'Adjust filters',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -238,62 +241,60 @@ class TripsView extends GetView<TripsController> {
 
   Widget _buildStatsSection() {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Obx(
-        () => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Your Travel Stats',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Your Travel Stats',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  icon: Icons.hotel,
+                  value: controller.totalBookings.toString(),
+                  label: 'Total stays',
+                  color: Colors.blue,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.hotel,
-                    value: controller.totalBookings.toString(),
-                    label: 'Total Stays',
-                    color: Colors.blue,
-                  ),
+              Expanded(
+                child: _buildStatItem(
+                  icon: Icons.attach_money,
+                  value: CurrencyHelper.format(controller.totalSpent),
+                  label: 'Total spent',
+                  color: Colors.green,
                 ),
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.attach_money,
-                    value: '₹${controller.totalSpent.toInt()}',
-                    label: 'Total Spent',
-                    color: Colors.green,
-                  ),
+              ),
+              Expanded(
+                child: _buildStatItem(
+                  icon: Icons.location_on,
+                  value: controller.favoriteDestination,
+                  label: 'Top destination',
+                  color: Colors.orange,
                 ),
-                Expanded(
-                  child: _buildStatItem(
-                    icon: Icons.location_on,
-                    value: controller.favoriteDestination,
-                    label: 'Top Destination',
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -309,7 +310,7 @@ class TripsView extends GetView<TripsController> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: color, size: 24),
@@ -322,23 +323,37 @@ class TripsView extends GetView<TripsController> {
             fontWeight: FontWeight.bold,
             color: Color(0xFF1A1A1A),
           ),
-          textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-          textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
   Widget _buildBookingCard(Map<String, dynamic> booking) {
+    final status = (booking['status'] ?? 'pending').toString();
+    final statusColor = status == 'completed' ? Colors.green : Colors.orange;
+    final guests = booking['guests'];
+    final rooms = booking['rooms'];
+    final guestsLabel = "${guests ?? '-'} guests - ${rooms ?? '-'} room(s)";
+    final totalAmount = (booking['totalAmount'] as num?)?.toDouble() ?? 0;
+    final totalDisplay = CurrencyHelper.format(totalAmount);
+    final dateRange =
+        "${_formatDate(booking['checkIn'] ?? '')} - ${_formatDate(booking['checkOut'] ?? '')}";
+    final title = (booking['hotelName'] ?? 'Stay').toString();
+    final location = (booking['location'] ?? '').toString();
+    final imageUrl = (booking['image'] ?? '').toString();
+    final canReview = booking['canReview'] == true;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -346,7 +361,7 @@ class TripsView extends GetView<TripsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -358,19 +373,30 @@ class TripsView extends GetView<TripsController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image with status badge
             Stack(
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: Container(
-                    height: 160,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.image, size: 50, color: Colors.grey[400]),
-                  ),
+                  child:
+                      imageUrl.isNotEmpty
+                          ? Image.network(
+                            imageUrl,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                          : Container(
+                            height: 160,
+                            width: double.infinity,
+                            color: Colors.grey[300],
+                            child: const Icon(
+                              Icons.image,
+                              size: 50,
+                              color: Colors.white70,
+                            ),
+                          ),
                 ),
                 Positioned(
                   top: 12,
@@ -381,14 +407,11 @@ class TripsView extends GetView<TripsController> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color:
-                          booking['status'] == 'completed'
-                              ? Colors.green
-                              : Colors.orange,
+                      color: statusColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      booking['status'].toString().toUpperCase(),
+                      status.toUpperCase(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -399,16 +422,13 @@ class TripsView extends GetView<TripsController> {
                 ),
               ],
             ),
-
-            // Content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Hotel name and location
                   Text(
-                    booking['hotelName'] ?? '',
+                    title,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -428,7 +448,7 @@ class TripsView extends GetView<TripsController> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          booking['location'] ?? '',
+                          location,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
@@ -439,10 +459,7 @@ class TripsView extends GetView<TripsController> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Dates and details
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -460,7 +477,7 @@ class TripsView extends GetView<TripsController> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '${_formatDate(booking['checkIn'])} - ${_formatDate(booking['checkOut'])}',
+                              dateRange,
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -478,7 +495,7 @@ class TripsView extends GetView<TripsController> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '${booking['guests']} guests • ${booking['rooms']} room(s)',
+                              guestsLabel,
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -489,25 +506,21 @@ class TripsView extends GetView<TripsController> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                  // Price and actions
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '₹${booking['totalAmount'].toStringAsFixed(2)}',
+                        totalDisplay,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1A1A1A),
                         ),
                       ),
-
                       Row(
                         children: [
-                          if (booking['canReview'] == true)
+                          if (canReview)
                             TextButton(
                               onPressed: () => controller.leaveReview(booking),
                               child: const Text(
@@ -548,7 +561,9 @@ class TripsView extends GetView<TripsController> {
 
   String _formatDate(String dateStr) {
     try {
-      final date = DateTime.parse(dateStr);
+      final clean =
+          dateStr.isEmpty ? DateTime.now().toIso8601String() : dateStr;
+      final date = DateTime.parse(clean);
       const months = [
         'Jan',
         'Feb',
@@ -564,7 +579,7 @@ class TripsView extends GetView<TripsController> {
         'Dec',
       ];
       return '${date.day} ${months[date.month - 1]}, ${date.year}';
-    } catch (e) {
+    } catch (_) {
       return dateStr;
     }
   }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../widgets/web/virtual_tour_embed.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../controllers/listing/listing_detail_controller.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../../data/models/property_model.dart';
+import '../../../bindings/booking_binding.dart';
+import '../booking/booking_view.dart';
 
 class ListingDetailView extends GetView<ListingDetailController> {
   const ListingDetailView({super.key});
@@ -36,23 +38,27 @@ class ListingDetailView extends GetView<ListingDetailController> {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: (listing.images != null && listing.images!.isNotEmpty)
-                    ? PageView(
-                        children: listing.images!
-                            .map(
-                              (img) => Image.network(
-                                img.imageUrl,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                            .toList(),
-                      )
-                    : (listing.displayImage.isNotEmpty)
-                    ? Image.network(listing.displayImage, fit: BoxFit.cover)
-                    : Container(
-                        color: Colors.grey[200],
-                        child: const Center(child: Icon(Icons.image, size: 48)),
-                      ),
+                child:
+                    (listing.images != null && listing.images!.isNotEmpty)
+                        ? PageView(
+                          children:
+                              listing.images!
+                                  .map(
+                                    (img) => Image.network(
+                                      img.imageUrl,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                  .toList(),
+                        )
+                        : (listing.displayImage.isNotEmpty)
+                        ? Image.network(listing.displayImage, fit: BoxFit.cover)
+                        : Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(Icons.image, size: 48),
+                          ),
+                        ),
               ),
               if ((listing.virtualTourUrl ?? '').isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -72,9 +78,48 @@ class ListingDetailView extends GetView<ListingDetailController> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: VirtualTourEmbed(
-                    url: listing.virtualTourUrl!,
-                    height: 260,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.threesixty),
+                      label: const Text('Start Virtual Tour'),
+                      onPressed: () async {
+                        final raw = listing.virtualTourUrl!;
+                        final uri = Uri.tryParse(raw);
+                        if (uri == null) {
+                          Get.snackbar(
+                            'Invalid link',
+                            'Virtual tour link is malformed',
+                          );
+                          return;
+                        }
+                        try {
+                          final ok = await canLaunchUrl(uri);
+                          if (!ok) {
+                            Get.snackbar(
+                              'Cannot open',
+                              'Unable to open the virtual tour link',
+                            );
+                            return;
+                          }
+                          await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        } catch (_) {
+                          Get.snackbar(
+                            'Error',
+                            'Failed to launch the virtual tour',
+                          );
+                        }
+                      },
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -116,15 +161,22 @@ class ListingDetailView extends GetView<ListingDetailController> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: (listing.amenities ?? [])
-                          .map((a) => Chip(label: Text(a)))
-                          .toList(),
+                      children:
+                          (listing.amenities ?? [])
+                              .map((a) => Chip(label: Text(a)))
+                              .toList(),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Get.to(
+                            () => const BookingView(),
+                            binding: BookingBinding(),
+                            arguments: listing,
+                          );
+                        },
                         child: const Text('Book Now'),
                       ),
                     ),

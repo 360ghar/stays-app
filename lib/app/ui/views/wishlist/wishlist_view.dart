@@ -6,6 +6,7 @@ import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 
 import '../../../controllers/wishlist_controller.dart';
 import '../../../data/models/property_model.dart';
+import '../../../routes/app_routes.dart';
 
 class WishlistView extends GetView<WishlistController> {
   const WishlistView({super.key});
@@ -251,7 +252,11 @@ class WishlistView extends GetView<WishlistController> {
         ],
       ),
       child: InkWell(
-        onTap: () => Get.toNamed('/listing/${item.id}'),
+        onTap:
+            () => Get.toNamed(
+              Routes.listingDetail.replaceFirst(':id', item.id.toString()),
+              arguments: item,
+            ),
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
