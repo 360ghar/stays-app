@@ -9,7 +9,7 @@ import '../filter_controller.dart';
 
 class ListingController extends GetxController {
   ListingController({required PropertiesRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   final PropertiesRepository _repository;
   final LocationService _locationService = Get.find<LocationService>();
@@ -51,8 +51,10 @@ class ListingController extends GetxController {
   void _initQueryFromArgsOrService() {
     final args = Get.arguments as Map<String, dynamic>?;
     if (args != null) {
-      _queryLat = (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
-      _queryLng = (args['lng'] as num?)?.toDouble() ?? _locationService.longitude;
+      _queryLat =
+          (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
+      _queryLng =
+          (args['lng'] as num?)?.toDouble() ?? _locationService.longitude;
       _radiusKm = (args['radius_km'] as num?)?.toDouble() ?? _radiusKm;
       final rawFilters = args['filters'];
       if (rawFilters is Map<String, dynamic>) {
@@ -104,10 +106,18 @@ class ListingController extends GetxController {
     return combined.isEmpty ? null : combined;
   }
 
-  Future<void> fetch({int? pageOverride, bool showLoader = true, bool jumpToTop = false}) async {
+  Future<void> fetch({
+    int? pageOverride,
+    bool showLoader = true,
+    bool jumpToTop = false,
+  }) async {
     final targetPage = pageOverride ?? currentPage.value;
     if (targetPage < 1) {
-      await fetch(pageOverride: 1, showLoader: showLoader, jumpToTop: jumpToTop);
+      await fetch(
+        pageOverride: 1,
+        showLoader: showLoader,
+        jumpToTop: jumpToTop,
+      );
       return;
     }
     if (showLoader) {
@@ -197,7 +207,3 @@ class ListingController extends GetxController {
     );
   }
 }
-
-
-
-

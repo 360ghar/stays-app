@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../data/models/property_model.dart';
+import '../../theme/theme_extensions.dart';
 
 class PropertyGridCard extends StatelessWidget {
   final Property property;
@@ -22,17 +23,23 @@ class PropertyGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Card(
-        color: Colors.white,
+        color: colors.surface,
         elevation: 2,
-        shadowColor: Colors.black.withValues(alpha: 0.08),
+        shadowColor: context.isDark
+            ? Colors.black.withValues(alpha: 0.4)
+            : Colors.black.withValues(alpha: 0.08),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: Colors.black, width: 1),
+          side: BorderSide(
+            color: colors.outlineVariant.withValues(alpha: 0.6),
+            width: 1,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -53,6 +60,7 @@ class PropertyGridCard extends StatelessWidget {
   Widget _buildImage(BuildContext context) {
     final heroTag = '${heroPrefix ?? 'grid'}-${property.id}';
     final img = property.displayImage;
+    final colors = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(14),
@@ -70,14 +78,26 @@ class PropertyGridCard extends StatelessWidget {
                 imageUrl: img,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
-                  child: Container(color: Colors.white),
+                  baseColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  highlightColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest,
+                  child: Container(
+                    color: Theme.of(context).colorScheme.surface,
+                  ),
                 ),
                 errorWidget: (_, __, ___) => Container(
-                  color: Colors.grey[200],
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   alignment: Alignment.center,
-                  child: const Icon(Icons.photo, color: Colors.grey, size: 32),
+                  child: Icon(
+                    Icons.photo,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    size: 32,
+                  ),
                 ),
               ),
             ),
@@ -86,7 +106,9 @@ class PropertyGridCard extends StatelessWidget {
                 top: 8,
                 right: 8,
                 child: Material(
-                  color: Colors.black.withValues(alpha: 0.35),
+                  color: colors.surface.withValues(
+                    alpha: context.isDark ? 0.55 : 0.35,
+                  ),
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
@@ -95,7 +117,7 @@ class PropertyGridCard extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? Colors.redAccent : Colors.white,
+                        color: isFavorite ? colors.error : Colors.white,
                         size: 20,
                       ),
                     ),
@@ -107,10 +129,12 @@ class PropertyGridCard extends StatelessWidget {
                 left: 8,
                 bottom: 8,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
@@ -119,8 +143,10 @@ class PropertyGridCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${property.distanceKm!.toStringAsFixed(1)} km',
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -134,6 +160,7 @@ class PropertyGridCard extends StatelessWidget {
 
   Widget _buildInfo(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -148,8 +175,11 @@ class PropertyGridCard extends StatelessWidget {
         const SizedBox(height: 4),
         Row(
           children: [
-            Icon(Icons.location_on_outlined,
-                size: 14, color: Colors.grey[600]),
+            Icon(
+              Icons.location_on_outlined,
+              size: 14,
+              color: colors.onSurface.withValues(alpha: 0.7),
+            ),
             const SizedBox(width: 4),
             Expanded(
               child: Text(
@@ -157,7 +187,7 @@ class PropertyGridCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey[700],
+                  color: colors.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ),
@@ -171,16 +201,16 @@ class PropertyGridCard extends StatelessWidget {
               children: [
                 const Icon(Icons.star, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
-                Text(
-                  property.ratingText,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(property.ratingText, style: theme.textTheme.bodyMedium),
                 if (property.reviewsCount != null) ...[
                   const SizedBox(width: 4),
-                  Text('(${property.reviewsCount})',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.grey[600])),
-                ]
+                  Text(
+                    '(${property.reviewsCount})',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colors.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
               ],
             ),
             Text(
@@ -200,7 +230,7 @@ class PropertyGridCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.fade,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[800],
+                color: colors.onSurface.withValues(alpha: 0.8),
               ),
             ),
           ),

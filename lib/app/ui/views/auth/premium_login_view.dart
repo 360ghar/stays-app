@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
+
 import '../../../controllers/auth/auth_controller.dart';
+import '../../theme/theme_extensions.dart';
 
 class PremiumLoginView extends StatefulWidget {
   const PremiumLoginView({super.key});
@@ -30,7 +33,6 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   void initState() {
     super.initState();
 
-    // Initialize animations
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -50,14 +52,13 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+    );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
 
-    // Start animations
     _fadeController.forward();
     _slideController.forward();
     _scaleController.forward();
@@ -75,40 +76,46 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    final isDark = context.isDark;
+
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+      SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
     );
 
+    final gradientColors = [
+      colors.primary,
+      colors.secondary,
+      colors.tertiary ?? colors.primaryContainer,
+    ];
+
+    final glassTint = Colors.white.withValues(alpha: isDark ? 0.12 : 0.2);
+    final glassBorder = Colors.white.withValues(alpha: isDark ? 0.18 : 0.32);
+
     return Scaffold(
+      backgroundColor: colors.surface,
       body: Stack(
         children: [
-          // Animated gradient background
           AnimatedContainer(
             duration: const Duration(seconds: 3),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF667eea),
-                  Color(0xFF764ba2),
-                  Color(0xFFf093fb),
-                ],
+                colors: gradientColors,
               ),
             ),
           ),
-
-          // Glassmorphism overlay
           Container(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: colors.surface.withValues(alpha: isDark ? 0.1 : 0.15),
             ),
           ),
-
-          // Main content
           SafeArea(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -120,8 +127,6 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                   child: Column(
                     children: [
                       const SizedBox(height: 40),
-
-                      // Logo with animation
                       ScaleTransition(
                         scale: _scaleAnimation,
                         child: Container(
@@ -129,28 +134,30 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           height: 100,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Colors.white, Color(0xFFf0f0f0)],
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.95),
+                                Colors.white.withValues(alpha: 0.8),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
+                                color: colors.onSurface.withValues(alpha: 0.2),
                                 blurRadius: 20,
                                 offset: const Offset(0, 10),
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.apartment_rounded,
                             size: 50,
-                            color: Color(0xFF667eea),
+                            color: colors.primary,
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // Title with animation
                       Obx(
                         () => AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
@@ -159,12 +166,12 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 ? 'Welcome Back'
                                 : 'Create Account',
                             key: ValueKey(isLoginMode.value),
-                            style: const TextStyle(
+                            style: textStyles.headlineMedium?.copyWith(
                               fontSize: 32,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: -0.5,
-                              shadows: [
+                              shadows: const [
                                 Shadow(
                                   blurRadius: 10,
                                   color: Colors.black26,
@@ -175,25 +182,18 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 8),
-
                       Obx(
                         () => Text(
                           isLoginMode.value
                               ? 'Sign in to continue your journey'
                               : 'Join us and explore amazing stays',
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: textStyles.bodyMedium?.copyWith(
                             color: Colors.white.withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 40),
-
-                      // Glassmorphic card container
                       ClipRRect(
                         borderRadius: BorderRadius.circular(24),
                         child: BackdropFilter(
@@ -201,26 +201,19 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           child: Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
+                              color: glassTint,
                               borderRadius: BorderRadius.circular(24),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3),
-                                width: 1.5,
-                              ),
+                              border: Border.all(color: glassBorder, width: 1.5),
                             ),
                             child: Column(
                               children: [
-                                // Email field
                                 _buildGlassTextField(
                                   controller: emailController,
                                   hint: 'Email address',
                                   icon: Icons.mail_outline_rounded,
                                   keyboardType: TextInputType.emailAddress,
                                 ),
-
                                 const SizedBox(height: 16),
-
-                                // Password field
                                 Obx(
                                   () => _buildGlassTextField(
                                     controller: passwordController,
@@ -239,33 +232,28 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                     ),
                                   ),
                                 ),
-
                                 const SizedBox(height: 24),
-
-                                // Continue button
                                 Obx(
                                   () => _buildGradientButton(
                                     text: isLoginMode.value
                                         ? 'Sign In'
                                         : 'Create Account',
                                     isLoading: authController.isLoading.value,
-                                    onPressed: () => _handleAuth(),
+                                    onPressed: _handleAuth,
+                                    colors: colors,
                                   ),
                                 ),
-
                                 const SizedBox(height: 20),
-
-                                // Forgot password
                                 Obx(
                                   () => isLoginMode.value
                                       ? TextButton(
                                           onPressed: () =>
                                               _showComingSoon('Password reset'),
-                                          child: const Text(
+                                          child: Text(
                                             'Forgot your password?',
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 14,
+                                            style: textStyles.bodySmall?.copyWith(
+                                              color:
+                                                  Colors.white.withValues(alpha: 0.7),
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
@@ -277,10 +265,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 32),
-
-                      // Divider
                       Row(
                         children: [
                           Expanded(
@@ -300,9 +285,8 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               'or continue with',
-                              style: TextStyle(
+                              style: textStyles.bodySmall?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -322,33 +306,36 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 24),
-
-                      // Social login buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           _buildSocialButton(
                             icon: Icons.g_mobiledata_rounded,
                             onPressed: () => _showComingSoon('Google login'),
+                            colors: colors,
+                            glassTint: glassTint,
+                            glassBorder: glassBorder,
                           ),
                           const SizedBox(width: 16),
                           _buildSocialButton(
                             icon: Icons.facebook_rounded,
                             onPressed: () => _showComingSoon('Facebook login'),
+                            colors: colors,
+                            glassTint: glassTint,
+                            glassBorder: glassBorder,
                           ),
                           const SizedBox(width: 16),
                           _buildSocialButton(
                             icon: Icons.apple_rounded,
                             onPressed: () => _showComingSoon('Apple login'),
+                            colors: colors,
+                            glassTint: glassTint,
+                            glassBorder: glassBorder,
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 32),
-
-                      // Switch mode
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -357,23 +344,23 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                               isLoginMode.value
                                   ? "Don't have an account? "
                                   : "Already have an account? ",
-                              style: TextStyle(
+                              style: textStyles.bodyMedium?.copyWith(
                                 color: Colors.white.withValues(alpha: 0.8),
-                                fontSize: 15,
                               ),
                             ),
                           ),
                           GestureDetector(
                             onTap: () {
                               isLoginMode.toggle();
-                              _scaleController.reset();
-                              _scaleController.forward();
+                              _scaleController
+                                ..reset()
+                                ..forward();
                             },
                             child: Obx(
                               () => AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 padding: const EdgeInsets.only(bottom: 2),
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   border: Border(
                                     bottom: BorderSide(
                                       color: Colors.white,
@@ -383,9 +370,8 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 ),
                                 child: Text(
                                   isLoginMode.value ? 'Sign up' : 'Sign in',
-                                  style: const TextStyle(
+                                  style: textStyles.bodyMedium?.copyWith(
                                     color: Colors.white,
-                                    fontSize: 15,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -394,7 +380,6 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -417,10 +402,10 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: Colors.white.withValues(alpha: 0.18),
           width: 1,
         ),
       ),
@@ -435,8 +420,8 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
         ),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
+          hintStyle: const TextStyle(
+            color: Colors.white54,
             fontSize: 16,
           ),
           prefixIcon: Icon(icon, color: Colors.white70),
@@ -455,6 +440,7 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
     required String text,
     required bool isLoading,
     required VoidCallback onPressed,
+    required ColorScheme colors,
   }) {
     return GestureDetector(
       onTapDown: (_) => _scaleController.reverse(),
@@ -469,13 +455,13 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
+            gradient: LinearGradient(
+              colors: [colors.secondary, colors.primary],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF6B6B).withValues(alpha: 0.4),
+                color: colors.primary.withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -488,13 +474,13 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
               borderRadius: BorderRadius.circular(16),
               child: Center(
                 child: isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                            colors.onPrimary,
                           ),
                         ),
                       )
@@ -518,6 +504,9 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   Widget _buildSocialButton({
     required IconData icon,
     required VoidCallback onPressed,
+    required ColorScheme colors,
+    required Color glassTint,
+    required Color glassBorder,
   }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -527,12 +516,9 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: glassTint,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1,
-            ),
+            border: Border.all(color: glassBorder, width: 1),
           ),
           child: Material(
             color: Colors.transparent,
@@ -549,27 +535,17 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
 
   void _handleAuth() {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
+      final colors = context.colors;
       Get.snackbar(
-        '',
-        '',
-        titleText: const Text(
-          'Oops!',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        messageText: const Text(
-          'Please fill in all fields',
-          style: TextStyle(color: Colors.white70, fontSize: 14),
-        ),
-        backgroundColor: Colors.red.withValues(alpha: 0.8),
+        'Oops!',
+        'Please fill in all fields',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: colors.errorContainer.withValues(alpha: 0.9),
+        colorText: colors.onErrorContainer,
         borderRadius: 16,
         margin: const EdgeInsets.all(16),
         duration: const Duration(seconds: 3),
         animationDuration: const Duration(milliseconds: 500),
-        snackPosition: SnackPosition.TOP,
       );
       return;
     }
@@ -585,27 +561,17 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
   }
 
   void _showComingSoon(String feature) {
+    final colors = context.colors;
     Get.snackbar(
-      '',
-      '',
-      titleText: const Text(
-        'Coming Soon!',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        ),
-      ),
-      messageText: Text(
-        '$feature will be available soon',
-        style: const TextStyle(color: Colors.white70, fontSize: 14),
-      ),
-      backgroundColor: const Color(0xFF667eea).withValues(alpha: 0.9),
+      'Coming Soon!',
+      '$feature will be available soon',
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: colors.secondaryContainer.withValues(alpha: 0.9),
+      colorText: colors.onSecondaryContainer,
       borderRadius: 16,
       margin: const EdgeInsets.all(16),
       duration: const Duration(seconds: 2),
       animationDuration: const Duration(milliseconds: 500),
-      snackPosition: SnackPosition.TOP,
     );
   }
 }

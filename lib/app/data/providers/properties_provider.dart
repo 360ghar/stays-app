@@ -35,22 +35,26 @@ class PropertiesProvider extends BaseProvider {
     };
     final res = await get('/api/v1/properties/', query: _stringify(query));
     return handleResponse(res, (json) {
-      final rawList = (json['properties'] as List?) ??
+      final rawList =
+          (json['properties'] as List?) ??
           (json['data'] is Map<String, dynamic>
               ? (json['data'] as Map<String, dynamic>)['properties'] as List?
               : null);
-      final props = rawList
+      final props =
+          rawList
               ?.map((e) => Property.fromJson(Map<String, dynamic>.from(e)))
               .toList() ??
           <Property>[];
-      final total = ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
+      final total =
+          ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
           props.length;
       final totalPages =
           ((json['total_pages'] ?? json['totalPages']) as num?)?.toInt() ?? 1;
       final current =
           ((json['page'] ?? json['currentPage']) as num?)?.toInt() ?? page;
-      final resolvedLimit = ((json['limit'] ?? json['pageSize'] ?? json['per_page'] ??
-                  limit) as num?)
+      final resolvedLimit =
+          ((json['limit'] ?? json['pageSize'] ?? json['per_page'] ?? limit)
+                  as num?)
               ?.toInt() ??
           limit;
       final filtersApplied = json['filters_applied'] ?? json['filters'];

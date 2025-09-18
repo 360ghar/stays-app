@@ -1,237 +1,210 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
 import '../../../controllers/auth/otp_controller.dart';
+import '../../theme/theme_extensions.dart';
 
 class VerificationView extends GetView<OTPController> {
   const VerificationView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new, color: colors.onSurface),
           onPressed: () => Get.back(),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 20),
-
-                // Icon
-                Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.message_outlined,
-                      size: 40,
-                      color: Colors.blue.shade600,
-                    ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 20),
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer.withValues(alpha: 0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.message_outlined,
+                    size: 40,
+                    color: colors.primary,
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // Title
-                const Text(
-                  'Verify Your Number',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                  textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Verify Your Number',
+                style: textStyles.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colors.onSurface,
                 ),
-
-                const SizedBox(height: 12),
-
-                // Subtitle
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade600,
-                      height: 1.4,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: textStyles.bodyMedium?.copyWith(
+                    color: colors.onSurface.withValues(alpha: 0.7),
+                    height: 1.4,
+                  ),
+                  children: [
+                    const TextSpan(text: 'We sent a 4-digit code to '),
+                    TextSpan(
+                      text: '+91 ${controller.phoneNumber}',
+                      style: textStyles.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface,
+                      ),
                     ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 48),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children:
+                    List.generate(6, (index) => _buildOTPField(context, index)),
+              ),
+              const SizedBox(height: 16),
+              Obx(() {
+                if (controller.otpError.value.isEmpty) {
+                  return const SizedBox(height: 20);
+                }
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colors.errorContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.errorContainer),
+                  ),
+                  child: Row(
                     children: [
-                      const TextSpan(text: 'We sent a 4-digit code to '),
-                      TextSpan(
-                        text: '+91 ${controller.phoneNumber}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
+                      Icon(
+                        Icons.error_outline,
+                        color: colors.error,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          controller.otpError.value,
+                          style: textStyles.bodySmall?.copyWith(
+                            color: colors.error,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 48),
-
-                // OTP Input Fields (6 digits)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) => _buildOTPField(index)),
-                ),
-
-                // Error Message
-                const SizedBox(height: 16),
-                Obx(() {
-                  if (controller.otpError.value.isEmpty) {
-                    return const SizedBox(height: 20);
-                  }
-                  return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.red.shade200),
+                );
+              }),
+              const SizedBox(height: 32),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 56,
+                child: Obx(
+                  () => ElevatedButton(
+                    onPressed:
+                        controller.isLoading.value ? null : controller.verifyOTP,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
+                      elevation: 2,
+                      shadowColor: colors.primary.withValues(alpha: 0.25),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          color: Colors.red.shade600,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            controller.otpError.value,
-                            style: TextStyle(
-                              color: Colors.red.shade600,
-                              fontSize: 12,
+                    child: controller.isLoading.value
+                        ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                colors.onPrimary,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            'Verify Code',
+                            style: textStyles.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colors.onPrimary,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 32),
-
-                // Verify Button
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 56,
-                  child: Obx(
-                    () => ElevatedButton(
-                      onPressed: controller.isLoading.value
-                          ? null
-                          : controller.verifyOTP,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2196F3),
-                        foregroundColor: Colors.white,
-                        elevation: 2,
-                        shadowColor: const Color(
-                          0xFF2196F3,
-                        ).withValues(alpha: 0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: controller.isLoading.value
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : const Text(
-                              'Verify Code',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // Resend Section
-                Column(
-                  children: [
-                    Text(
-                      'Didn\'t receive the code?',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              Column(
+                children: [
+                  Text(
+                    'Didn\'t receive the code?',
+                    style: textStyles.bodySmall?.copyWith(
+                      color: colors.onSurface.withValues(alpha: 0.7),
                     ),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      if (!controller.canResend.value) {
-                        return Text(
-                          'Resend in ${controller.countdown.value}s',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          textAlign: TextAlign.center,
-                        );
-                      } else {
-                        return GestureDetector(
-                          onTap: controller.resendOTP,
-                          child: const Text(
-                            'Resend',
-                            style: TextStyle(
-                              color: Color(0xFF2196F3),
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
-                      }
-                    }),
-                  ],
-                ),
-
-                const SizedBox(height: 60),
-
-                // Footer hint (removed hardcoded demo OTP)
-                const SizedBox(height: 20),
-
-                // Extra bottom spacing for better scrolling
-                SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
-              ],
-            ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    if (!controller.canResend.value) {
+                      return Text(
+                        'Resend in ${controller.countdown.value}s',
+                        style: textStyles.bodySmall?.copyWith(
+                          color: colors.onSurface.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                        textAlign: TextAlign.center,
+                      );
+                    }
+                    return GestureDetector(
+                      onTap: controller.resendOTP,
+                      child: Text(
+                        'Resend',
+                        style: textStyles.bodyMedium?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 60),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOTPField(int index) {
+  Widget _buildOTPField(BuildContext context, int index) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return Container(
-      width: 64,
+      width: 56,
       height: 64,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300, width: 2),
+        border: Border.all(color: colors.outlineVariant, width: 1.5),
+        color: context.elevatedSurface(0.06),
       ),
       child: TextFormField(
         controller: controller.otpControllers[index],
@@ -240,10 +213,9 @@ class VerificationView extends GetView<OTPController> {
         textAlign: TextAlign.center,
         maxLength: 1,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        style: const TextStyle(
-          fontSize: 24,
+        style: textStyles.headlineSmall?.copyWith(
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: colors.onSurface,
         ),
         decoration: const InputDecoration(
           counterText: '',
@@ -252,11 +224,10 @@ class VerificationView extends GetView<OTPController> {
         ),
         onChanged: (value) => controller.onOTPChanged(index, value),
         onTap: () {
-          // Clear field on tap for better UX
-          controller
-              .otpControllers[index]
-              .selection = TextSelection.fromPosition(
-            TextPosition(offset: controller.otpControllers[index].text.length),
+          final selection = controller.otpControllers[index].selection;
+          controller.otpControllers[index].selection = selection.copyWith(
+            baseOffset: 0,
+            extentOffset: controller.otpControllers[index].text.length,
           );
         },
       ),

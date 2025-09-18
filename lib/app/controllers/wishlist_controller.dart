@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
@@ -173,8 +173,7 @@ class WishlistController extends GetxController {
   Future<void> removeFromWishlist(int propertyId) async {
     Property? property;
     if (_wishlistRepository == null) {
-      property =
-          wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
+      property = wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
       wishlistItems.removeWhere((p) => p.id == propertyId);
       _favoriteIds.remove(propertyId);
       totalCount.value = wishlistItems.length;
@@ -280,8 +279,3 @@ class WishlistController extends GetxController {
 
   int get totalItems => totalCount.value;
 }
-
-
-
-
-

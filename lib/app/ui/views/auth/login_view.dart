@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../controllers/auth/auth_controller.dart';
+import '../../theme/theme_extensions.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -28,12 +30,9 @@ class _LoginViewState extends State<LoginView> {
     super.initState();
     authController = Get.find<AuthController>();
 
-    // Listen to auth controller loading state
     ever(authController.isLoading, (loading) {
       if (mounted) {
-        setState(() {
-          _isLoading = loading;
-        });
+        setState(() => _isLoading = loading);
       }
     });
   }
@@ -49,25 +48,26 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colors.surface,
         elevation: 0,
         title: Text(
           _isLoginMode ? 'Log in or Sign up' : 'Create Account',
-          style: const TextStyle(
-            color: Colors.black87,
-            fontSize: 18,
+          style: textStyles.titleMedium?.copyWith(
             fontWeight: FontWeight.w600,
+            color: colors.onSurface,
           ),
         ),
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: colors.onSurface),
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
               Expanded(
@@ -76,14 +76,11 @@ class _LoginViewState extends State<LoginView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 32),
-
-                      // Welcome Text
                       Text(
                         _isLoginMode ? 'Welcome back' : 'Create your account',
-                        style: const TextStyle(
-                          fontSize: 28,
+                        style: textStyles.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: colors.onSurface,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -91,12 +88,11 @@ class _LoginViewState extends State<LoginView> {
                         _isLoginMode
                             ? 'Sign in to your account to continue'
                             : 'Join us and start your journey',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: textStyles.bodyMedium?.copyWith(
+                          color: colors.onSurface.withValues(alpha: 0.7),
+                        ),
                       ),
-
                       const SizedBox(height: 40),
-
-                      // Email Input
                       _buildInputField(
                         controller: _emailController,
                         focusNode: _emailFocusNode,
@@ -107,16 +103,11 @@ class _LoginViewState extends State<LoginView> {
                         error: _emailError,
                         onChanged: (value) {
                           if (_emailError.isNotEmpty) {
-                            setState(() {
-                              _emailError = '';
-                            });
+                            setState(() => _emailError = '');
                           }
                         },
                       ),
-
                       const SizedBox(height: 20),
-
-                      // Password Input
                       _buildPasswordField(
                         controller: _passwordController,
                         focusNode: _passwordFocusNode,
@@ -124,114 +115,103 @@ class _LoginViewState extends State<LoginView> {
                         hint: 'Enter your password',
                         isVisible: _isPasswordVisible,
                         onToggleVisibility: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
+                          setState(() => _isPasswordVisible = !_isPasswordVisible);
                         },
                         error: _passwordError,
                         onChanged: (value) {
                           if (_passwordError.isNotEmpty) {
-                            setState(() {
-                              _passwordError = '';
-                            });
+                            setState(() => _passwordError = '');
                           }
                         },
                       ),
-
                       const SizedBox(height: 12),
-
-                      // Forgot Password
                       if (_isLoginMode)
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
                               Get.snackbar(
-                                'Feature Coming Soon',
-                                'Password reset feature will be available soon.',
-                                backgroundColor: Colors.blue[50],
-                                colorText: Colors.blue[800],
+                                'Feature coming soon',
+                                'Password reset will be available shortly.',
                                 snackPosition: SnackPosition.TOP,
+                                backgroundColor:
+                                    colors.primaryContainer.withValues(alpha: 0.9),
+                                colorText: colors.onPrimaryContainer,
                               );
                             },
-                            child: Text(
-                              'Forgot password?',
-                              style: TextStyle(
-                                color: Colors.blue[700],
-                                fontWeight: FontWeight.w500,
+                            style: TextButton.styleFrom(
+                              foregroundColor: colors.primary,
+                              padding: EdgeInsets.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: textStyles.labelLarge?.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                            child: const Text('Forgot password?'),
                           ),
                         ),
-
                       const SizedBox(height: 24),
-
-                      // Login/Signup Button
                       _buildPrimaryButton(
                         text: _isLoginMode ? 'Sign in' : 'Create account',
                         isLoading: _isLoading,
                         onPressed: _handleSubmit,
                       ),
-
                       const SizedBox(height: 24),
-
-                      // Divider
                       Row(
                         children: [
-                          Expanded(child: Divider(color: Colors.grey[300])),
+                          Expanded(
+                            child: Divider(
+                              color: colors.outlineVariant.withValues(alpha: 0.6),
+                            ),
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               'or',
-                              style: TextStyle(
-                                color: Colors.grey[600],
+                              style: textStyles.bodyMedium?.copyWith(
+                                color:
+                                    colors.onSurface.withValues(alpha: 0.6),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: Colors.grey[300])),
+                          Expanded(
+                            child: Divider(
+                              color: colors.outlineVariant.withValues(alpha: 0.6),
+                            ),
+                          ),
                         ],
                       ),
-
                       const SizedBox(height: 24),
-
-                      // Social Login Buttons
                       _buildSocialButton(
                         text: 'Continue with Google',
                         icon: Icons.g_mobiledata,
-                        backgroundColor: Colors.white,
-                        textColor: Colors.black87,
-                        borderColor: Colors.grey[300]!,
+                        backgroundColor: colors.surface,
+                        foregroundColor: colors.onSurface,
+                        borderColor: colors.outlineVariant,
                         onPressed: () => _showComingSoon('Google login'),
                       ),
-
                       const SizedBox(height: 12),
-
                       _buildSocialButton(
                         text: 'Continue with Facebook',
                         icon: Icons.facebook,
                         backgroundColor: const Color(0xFF1877F2),
-                        textColor: Colors.white,
+                        foregroundColor: Colors.white,
                         onPressed: () => _showComingSoon('Facebook login'),
                       ),
-
                       const SizedBox(height: 12),
-
                       _buildSocialButton(
                         text: 'Continue with Apple',
                         icon: Icons.apple,
-                        backgroundColor: Colors.black,
-                        textColor: Colors.white,
+                        backgroundColor: colors.onSurface,
+                        foregroundColor: colors.surface,
                         onPressed: () => _showComingSoon('Apple login'),
                       ),
-
                       const SizedBox(height: 32),
                     ],
                   ),
                 ),
               ),
-
-              // Switch Login/Signup Mode
               Padding(
                 padding: const EdgeInsets.only(bottom: 24),
                 child: Row(
@@ -241,30 +221,28 @@ class _LoginViewState extends State<LoginView> {
                       _isLoginMode
                           ? "Don't have an account? "
                           : "Already have an account? ",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      style: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         setState(() {
                           _isLoginMode = !_isLoginMode;
-                          // Clear errors when switching modes
                           _emailError = '';
                           _passwordError = '';
                         });
                       },
                       style: TextButton.styleFrom(
+                        foregroundColor: colors.primary,
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      child: Text(
-                        _isLoginMode ? 'Sign up' : 'Sign in',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: 16,
+                        textStyle: textStyles.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      child: Text(_isLoginMode ? 'Sign up' : 'Sign in'),
                     ),
                   ],
                 ),
@@ -277,10 +255,8 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void _handleSubmit() {
-    // Dismiss keyboard first to prevent flickering
     FocusScope.of(context).unfocus();
 
-    // Clear previous errors
     setState(() {
       _emailError = '';
       _passwordError = '';
@@ -289,31 +265,21 @@ class _LoginViewState extends State<LoginView> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    bool hasError = false;
+    var hasError = false;
 
-    // Validate email
     if (email.isEmpty) {
-      setState(() {
-        _emailError = 'Email is required';
-      });
+      setState(() => _emailError = 'Email is required');
       hasError = true;
     } else if (!GetUtils.isEmail(email)) {
-      setState(() {
-        _emailError = 'Please enter a valid email';
-      });
+      setState(() => _emailError = 'Please enter a valid email');
       hasError = true;
     }
 
-    // Validate password
     if (password.isEmpty) {
-      setState(() {
-        _passwordError = 'Password is required';
-      });
+      setState(() => _passwordError = 'Password is required');
       hasError = true;
     } else if (password.length < 6) {
-      setState(() {
-        _passwordError = 'Password must be at least 6 characters';
-      });
+      setState(() => _passwordError = 'Password must be at least 6 characters');
       hasError = true;
     }
 
@@ -322,12 +288,13 @@ class _LoginViewState extends State<LoginView> {
     if (_isLoginMode) {
       authController.login(email: email, password: password);
     } else {
+      final colors = context.colors;
       Get.snackbar(
-        'Feature Coming Soon',
-        'Sign up feature will be available soon.',
-        backgroundColor: Colors.blue[50],
-        colorText: Colors.blue[800],
+        'Feature coming soon',
+        'Sign up will be available shortly.',
         snackPosition: SnackPosition.TOP,
+        backgroundColor: colors.primaryContainer.withValues(alpha: 0.9),
+        colorText: colors.onPrimaryContainer,
       );
     }
   }
@@ -342,37 +309,54 @@ class _LoginViewState extends State<LoginView> {
     required Function(String) onChanged,
     TextInputType? keyboardType,
   }) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
+    final labelStyle = textStyles.titleSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: colors.onSurface,
+    );
+    final fieldStyle = textStyles.bodyMedium?.copyWith(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.onSurface,
+        ) ??
+        TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.onSurface,
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
+        Text(label, style: labelStyle),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: context.elevatedSurface(0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: error.isEmpty ? Colors.grey[200]! : Colors.red,
-              width: error.isEmpty ? 1 : 2,
+              color: error.isEmpty ? colors.outlineVariant : colors.error,
+              width: error.isEmpty ? 1 : 1.5,
             ),
           ),
           child: TextField(
             controller: controller,
             focusNode: focusNode,
             keyboardType: keyboardType,
-            style: const TextStyle(fontSize: 16, color: Colors.black),
+            style: fieldStyle,
             onChanged: onChanged,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              prefixIcon: Icon(icon, color: Colors.grey[600]),
+              hintStyle: fieldStyle.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(
+                icon,
+                color: colors.onSurface.withValues(alpha: 0.6),
+              ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
@@ -386,7 +370,8 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                  TextStyle(color: colors.error, fontSize: 12),
             ),
           ),
       ],
@@ -403,42 +388,59 @@ class _LoginViewState extends State<LoginView> {
     required String error,
     required Function(String) onChanged,
   }) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
+    final labelStyle = textStyles.titleSmall?.copyWith(
+      fontWeight: FontWeight.w600,
+      color: colors.onSurface,
+    );
+    final fieldStyle = textStyles.bodyMedium?.copyWith(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.onSurface,
+        ) ??
+        TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: colors.onSurface,
+        );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
+        Text(label, style: labelStyle),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: context.elevatedSurface(0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: error.isEmpty ? Colors.grey[200]! : Colors.red,
-              width: error.isEmpty ? 1 : 2,
+              color: error.isEmpty ? colors.outlineVariant : colors.error,
+              width: error.isEmpty ? 1 : 1.5,
             ),
           ),
           child: TextField(
             controller: controller,
             focusNode: focusNode,
             obscureText: !isVisible,
-            style: const TextStyle(fontSize: 16, color: Colors.black),
+            style: fieldStyle,
             onChanged: onChanged,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[600]),
+              hintStyle: fieldStyle.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Icon(
+                Icons.lock_outline,
+                color: colors.onSurface.withValues(alpha: 0.6),
+              ),
               suffixIcon: IconButton(
                 onPressed: onToggleVisibility,
                 icon: Icon(
                   isVisible ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey[600],
+                  color: colors.onSurface.withValues(alpha: 0.6),
                 ),
               ),
               border: InputBorder.none,
@@ -454,7 +456,8 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                  TextStyle(color: colors.error, fontSize: 12),
             ),
           ),
       ],
@@ -466,35 +469,43 @@ class _LoginViewState extends State<LoginView> {
     required bool isLoading,
     required VoidCallback onPressed,
   }) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue[600],
-          foregroundColor: Colors.white,
+          backgroundColor: colors.primary,
+          foregroundColor: colors.onPrimary,
           elevation: 2,
-          shadowColor: Colors.blue[600]!.withValues(alpha: 0.3),
+          shadowColor: colors.primary.withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(colors.onPrimary),
                 ),
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: textStyles.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: colors.onPrimary,
+                    ) ??
+                    TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.onPrimary,
+                    ),
               ),
       ),
     );
@@ -504,10 +515,12 @@ class _LoginViewState extends State<LoginView> {
     required String text,
     required IconData icon,
     required Color backgroundColor,
-    required Color textColor,
+    required Color foregroundColor,
     Color? borderColor,
     required VoidCallback onPressed,
   }) {
+    final textStyles = context.textStyles;
+
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -515,9 +528,9 @@ class _LoginViewState extends State<LoginView> {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor,
-          foregroundColor: textColor,
+          foregroundColor: foregroundColor,
           elevation: borderColor != null ? 0 : 1,
-          shadowColor: Colors.black.withValues(alpha: 0.1),
+          shadowColor: Theme.of(context).shadowColor.withValues(alpha: 0.15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: borderColor != null
@@ -532,7 +545,16 @@ class _LoginViewState extends State<LoginView> {
             const SizedBox(width: 12),
             Text(
               text,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: textStyles.titleMedium?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: foregroundColor,
+                  ) ??
+                  TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: foregroundColor,
+                  ),
             ),
           ],
         ),
@@ -541,12 +563,13 @@ class _LoginViewState extends State<LoginView> {
   }
 
   void _showComingSoon(String feature) {
+    final colors = context.colors;
     Get.snackbar(
-      'Coming Soon',
+      'Coming soon',
       '$feature will be available in a future update.',
-      backgroundColor: Colors.orange[50],
-      colorText: Colors.orange[800],
       snackPosition: SnackPosition.TOP,
+      backgroundColor: colors.secondaryContainer.withValues(alpha: 0.9),
+      colorText: colors.onSecondaryContainer,
       duration: const Duration(seconds: 2),
     );
   }

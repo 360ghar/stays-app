@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_extensions.dart';
+
 class SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onViewAll;
@@ -22,10 +24,10 @@ class SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: context.textStyles.titleMedium?.copyWith(
                 fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                color: context.colors.onSurface,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -42,7 +44,7 @@ class SectionHeader extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward_ios_rounded,
                       size: 16,
-                      color: Theme.of(context).primaryColor,
+                      color: context.colors.primary,
                     ),
                   ],
                 ),

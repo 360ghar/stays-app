@@ -206,12 +206,9 @@ class LocationService extends GetxService {
           place.subAdministrativeArea,
           place.administrativeArea,
         ]
-            .whereType<String>()
-            .map((e) => e.trim())
-            .firstWhere(
-              (e) => e.isNotEmpty,
-              orElse: () => '',
-            );
+        .whereType<String>()
+        .map((e) => e.trim())
+        .firstWhere((e) => e.isNotEmpty, orElse: () => '');
   }
 
   Future<void> _updateCityFromCoordinates(double lat, double lng) async {

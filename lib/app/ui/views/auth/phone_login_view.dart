@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+
 import '../../../controllers/auth/auth_controller.dart';
 import '../../../routes/app_routes.dart';
+import '../../theme/theme_extensions.dart';
 
 class PhoneLoginView extends StatefulWidget {
   const PhoneLoginView({super.key});
@@ -31,232 +33,61 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new, color: colors.onSurface),
           onPressed: () => Get.back(),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-
-              // Welcome Section
-              const Text(
+              Text(
                 'Welcome Back',
-                style: TextStyle(
-                  fontSize: 32,
+                style: textStyles.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: colors.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 'Sign in to continue',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                style: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-
-              // Phone Number Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Phone Number',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Row(
-                      children: [
-                        // Country Code
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 18,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              bottomLeft: Radius.circular(12),
-                            ),
-                            border: Border(
-                              right: BorderSide(color: Colors.grey.shade300),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.phone_outlined,
-                                color: Colors.grey,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                '+91',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Phone Input
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            decoration: const InputDecoration(
-                              hintText: '9876543210',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 18,
-                              ),
-                              hintStyle: TextStyle(color: Colors.grey),
-                            ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Obx(
-                    () => controller.phoneError.value.isEmpty
-                        ? const SizedBox(height: 4)
-                        : Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              controller.phoneError.value,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
+              _buildPhoneField(colors, textStyles),
               const SizedBox(height: 24),
-
-              // Password Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Password',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Obx(
-                    () => Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
-                      ),
-                      child: TextFormField(
-                        controller: _passwordController,
-                        obscureText: !controller.isPasswordVisible.value,
-                        decoration: InputDecoration(
-                          hintText: 'Enter your password',
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 18,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              controller.isPasswordVisible.value
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: Colors.grey,
-                            ),
-                            onPressed: controller.togglePasswordVisibility,
-                          ),
-                          hintStyle: const TextStyle(color: Colors.grey),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Obx(
-                    () => controller.passwordError.value.isEmpty
-                        ? const SizedBox(height: 4)
-                        : Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              controller.passwordError.value,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-
-              // Forgot Password
+              _buildPasswordField(colors, textStyles),
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () => Get.toNamed(Routes.forgotPassword),
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(
-                      color: Color(0xFF2196F3),
+                  style: TextButton.styleFrom(
+                    foregroundColor: colors.primary,
+                    textStyle: textStyles.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  child: const Text('Forgot Password?'),
                 ),
               ),
-
               const SizedBox(height: 32),
-
-              // Login Button
               Obx(
                 () => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -264,84 +95,262 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                   child: ElevatedButton(
                     onPressed: controller.isLoading.value ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2196F3),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       elevation: 2,
-                      shadowColor: const Color(
-                        0xFF2196F3,
-                      ).withValues(alpha: 0.3),
+                      shadowColor: colors.primary.withValues(alpha: 0.25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: controller.isLoading.value
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                colors.onPrimary,
                               ),
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Sign In',
-                            style: TextStyle(
-                              fontSize: 18,
+                            style: textStyles.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: colors.onPrimary,
                             ),
                           ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
-
-              // Divider
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(
+                    child: Divider(
+                      color: colors.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'or',
-                      style: TextStyle(color: Colors.grey.shade600),
+                      style: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.grey.shade300)),
+                  Expanded(
+                    child: Divider(
+                      color: colors.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
                 ],
               ),
-
               const SizedBox(height: 24),
-
-              // Sign Up Link
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     "Don't have an account? ",
-                    style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
+                    style: textStyles.bodyMedium?.copyWith(
+                      color: colors.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
                   GestureDetector(
                     onTap: () => Get.toNamed(Routes.register),
-                    child: const Text(
+                    child: Text(
                       'Sign Up',
-                      style: TextStyle(
-                        color: Color(0xFF2196F3),
-                        fontSize: 16,
+                      style: textStyles.titleSmall?.copyWith(
+                        color: colors.primary,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 32),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneField(ColorScheme colors, TextTheme textStyles) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Phone Number',
+          style: textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colors.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: context.elevatedSurface(0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                decoration: BoxDecoration(
+                  color: context.elevatedSurface(0.04),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    bottomLeft: Radius.circular(12),
+                  ),
+                  border: Border(
+                    right: BorderSide(color: colors.outlineVariant),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.phone_outlined,
+                      color: colors.onSurface.withValues(alpha: 0.6),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '+91',
+                      style: textStyles.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: '9876543210',
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
+                    hintStyle: textStyles.bodyMedium?.copyWith(
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  style: textStyles.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Obx(
+          () => controller.phoneError.value.isEmpty
+              ? const SizedBox(height: 4)
+              : Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    controller.phoneError.value,
+                    style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                        TextStyle(color: colors.error, fontSize: 12),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordField(ColorScheme colors, TextTheme textStyles) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Password',
+          style: textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colors.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () {
+            final hasError = controller.passwordError.value.isNotEmpty;
+            return Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.elevatedSurface(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: hasError ? colors.error : colors.outlineVariant,
+                      width: hasError ? 1.5 : 1,
+                    ),
+                  ),
+                  child: TextFormField(
+                    controller: _passwordController,
+                    obscureText: !controller.isPasswordVisible.value,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordVisible.value
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: colors.onSurface.withValues(alpha: 0.6),
+                        ),
+                        onPressed: controller.togglePasswordVisibility,
+                      ),
+                      hintStyle: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    style: textStyles.bodyMedium?.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: colors.onSurface,
+                    ),
+                    onChanged: (_) => controller.passwordError.value = '',
+                  ),
+                ),
+                if (hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      controller.passwordError.value,
+                      style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                          TextStyle(color: colors.error, fontSize: 12),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 4),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 

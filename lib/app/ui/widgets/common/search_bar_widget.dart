@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_extensions.dart';
+
 class SearchBarWidget extends StatelessWidget {
   final String placeholder;
   final VoidCallback onTap;
@@ -36,6 +38,16 @@ class SearchBarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    final borderRadiusValue = borderRadius ?? BorderRadius.circular(30);
+    final resolvedShadowColor =
+        shadowColor ??
+        colors.shadow.withValues(alpha: context.isDark ? 0.4 : 0.1);
+    final resolvedBackground = backgroundColor ?? colors.surface;
+    final borderColor = colors.outlineVariant.withValues(alpha: 0.4);
+    final hintColor = colors.onSurface.withValues(alpha: 0.6);
+
     return GestureDetector(
       onTap: enabled ? null : onTap,
       child: AnimatedContainer(
@@ -44,17 +56,14 @@ class SearchBarWidget extends StatelessWidget {
         margin: margin,
         child: Material(
           elevation: elevation,
-          borderRadius: borderRadius ?? BorderRadius.circular(30),
-          shadowColor: shadowColor ?? Colors.black.withValues(alpha: 0.1),
+          borderRadius: borderRadiusValue,
+          shadowColor: resolvedShadowColor,
           child: Container(
             height: height,
             decoration: BoxDecoration(
-              color: backgroundColor ?? Colors.white,
-              borderRadius: borderRadius ?? BorderRadius.circular(30),
-              border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.2),
-                width: 0.5,
-              ),
+              color: resolvedBackground,
+              borderRadius: borderRadiusValue,
+              border: Border.all(color: borderColor, width: 0.5),
             ),
             child: Row(
               children: [
@@ -64,43 +73,43 @@ class SearchBarWidget extends StatelessWidget {
                       leading ??
                       Icon(
                         Icons.search_rounded,
-                        color: Colors.grey[600],
+                        color: colors.onSurfaceVariant,
                         size: 24,
                       ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child:
-                      enabled
-                          ? TextField(
-                            controller: controller,
-                            onChanged: onChanged,
-                            onSubmitted: onSubmitted,
-                            autofocus: true,
-                            style: const TextStyle(
+                  child: enabled
+                      ? TextField(
+                          controller: controller,
+                          onChanged: onChanged,
+                          onSubmitted: onSubmitted,
+                          autofocus: true,
+                          style: textStyles.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: colors.onSurface,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: placeholder,
+                            hintStyle: textStyles.bodyMedium?.copyWith(
                               fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: placeholder,
-                              hintStyle: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[500],
-                                fontWeight: FontWeight.w400,
-                              ),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
-                          )
-                          : Text(
-                            placeholder,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[500],
+                              color: hintColor,
                               fontWeight: FontWeight.w400,
                             ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
                           ),
+                        )
+                      : Text(
+                          placeholder,
+                          style: textStyles.bodyMedium?.copyWith(
+                            fontSize: 16,
+                            color: hintColor,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
                 ),
                 if (trailing != null)
                   Padding(

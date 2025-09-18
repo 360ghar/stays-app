@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_extensions.dart';
+
 class FilterButton extends StatelessWidget {
   const FilterButton({
     super.key,
@@ -12,11 +14,14 @@ class FilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = context.colors;
     final activeColor = colorScheme.primary;
-    final inactiveBorder = Colors.grey[300]!;
+    final inactiveBorder = colorScheme.outlineVariant.withValues(alpha: 0.5);
+    final baseSurface = isActive
+        ? activeColor.withValues(alpha: context.isDark ? 0.25 : 0.15)
+        : colorScheme.surface;
     return Material(
-      color: isActive ? activeColor.withValues(alpha: 0.15) : Colors.white,
+      color: baseSurface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onPressed,
@@ -38,7 +43,9 @@ class FilterButton extends StatelessWidget {
                 child: Icon(
                   Icons.tune,
                   size: 24,
-                  color: isActive ? activeColor : Colors.grey[700],
+                  color: isActive
+                      ? activeColor
+                      : colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               if (isActive)

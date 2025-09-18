@@ -27,8 +27,9 @@ class _HomeShellViewState extends State<HomeShellView> {
     TripsBinding().dependencies();
 
     final args = Get.arguments;
-    final tabIndex =
-        args is Map<String, dynamic> ? args['tabIndex'] as int? : null;
+    final tabIndex = args is Map<String, dynamic>
+        ? args['tabIndex'] as int?
+        : null;
     if (tabIndex != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         try {

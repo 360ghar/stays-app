@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:stays_app/app/data/models/property_model.dart';
+
+import '../../theme/theme_extensions.dart';
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -41,10 +43,10 @@ class PropertyCard extends StatelessWidget {
             color: Colors.transparent,
             child: Stack(
               children: [
-                _buildImage(),
+                _buildImage(context),
                 _buildGradientOverlay(),
-                _buildContent(),
-                if (onFavoriteToggle != null) _buildFavoriteButton(),
+                _buildContent(context),
+                if (onFavoriteToggle != null) _buildFavoriteButton(context),
               ],
             ),
           ),
@@ -53,7 +55,8 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: CachedNetworkImage(
@@ -62,13 +65,19 @@ class PropertyCard extends StatelessWidget {
         height: height,
         fit: BoxFit.cover,
         placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(color: Colors.white),
+          baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+          highlightColor: colors.surfaceContainerHighest.withValues(
+            alpha: 0.15,
+          ),
+          child: Container(color: colors.surface),
         ),
         errorWidget: (context, url, error) => Container(
-          color: Colors.grey[200],
-          child: const Icon(Icons.hotel, size: 48, color: Colors.grey),
+          color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+          child: Icon(
+            Icons.hotel,
+            size: 48,
+            color: colors.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       ),
     );
@@ -90,7 +99,7 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Positioned(
       left: 16,
       right: 16,
@@ -162,7 +171,8 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoriteButton() {
+  Widget _buildFavoriteButton(BuildContext context) {
+    final colors = context.colors;
     return Positioned(
       top: 12,
       right: 12,
@@ -171,12 +181,16 @@ class PropertyCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: colors.surface.withValues(
+              alpha: (Theme.of(context).brightness == Brightness.dark)
+                  ? 0.55
+                  : 0.3,
+            ),
             shape: BoxShape.circle,
           ),
           child: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : Colors.white,
+            color: isFavorite ? colors.error : Colors.white,
             size: 20,
           ),
         ),
@@ -193,16 +207,17 @@ class PropertyCardShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: width,
       height: height,
       margin: const EdgeInsets.only(right: 16),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
+        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(16),
           ),
         ),

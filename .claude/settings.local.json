@@ -57,5 +57,19 @@
     ],
     "deny": [],
     "ask": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "WebSearch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import json, sys, re; from datetime import datetime; input_data = json.load(sys.stdin); tool_name = input_data.get('tool_name', ''); tool_input = input_data.get('tool_input', {}); query = tool_input.get('query', ''); current_year = datetime.now().year; year_pattern = r'\\\\b(20\\\\d{2})\\\\b'; years_found = re.findall(year_pattern, query); outdated_years = [year for year in years_found if int(year) < current_year]; output = {'hookSpecificOutput': {'hookEventName': 'PreToolUse', 'additionalContext': f'Current date: {datetime.now().strftime(\\\"%Y-%m-%d\\\")}. The current year is {current_year}. If searching for recent information, consider using {current_year} instead of older years.'}} if outdated_years else None; print(json.dumps(output) if output else ''); sys.exit(0)\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }

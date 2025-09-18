@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../../../data/models/unified_filter_model.dart';
 
@@ -208,10 +209,10 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Filters',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              'filters.title'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
           IconButton(
@@ -227,9 +228,9 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Price per night',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        Text(
+          'filters.price_per_night'.tr,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
         Row(
@@ -240,7 +241,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: 'Min',
+                  labelText: 'filters.min'.tr,
                   prefixText: '₹ ',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -255,7 +256,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 decoration: InputDecoration(
-                  labelText: 'Max',
+                  labelText: 'filters.max'.tr,
                   prefixText: '₹ ',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -304,23 +305,22 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              _propertyTypeOptions.map((option) {
-                final selected = _selectedTypes.contains(option);
-                return FilterChip(
-                  label: Text(_formatPropertyType(option)),
-                  selected: selected,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        _selectedTypes.add(option);
-                      } else {
-                        _selectedTypes.remove(option);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+          children: _propertyTypeOptions.map((option) {
+            final selected = _selectedTypes.contains(option);
+            return FilterChip(
+              label: Text(_formatPropertyType(option)),
+              selected: selected,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _selectedTypes.add(option);
+                  } else {
+                    _selectedTypes.remove(option);
+                  }
+                });
+              },
+            );
+          }).toList(),
         ),
       ],
     );
@@ -330,10 +330,9 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return option
         .split('_')
         .map(
-          (word) =>
-              word.isEmpty
-                  ? word
-                  : '${word[0].toUpperCase()}${word.substring(1)}',
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1)}',
         )
         .join(' ');
   }
@@ -394,14 +393,13 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              quickFilters.map((option) {
-                return FilterChip(
-                  label: Text(option.label),
-                  selected: option.value,
-                  onSelected: option.onChanged,
-                );
-              }).toList(),
+          children: quickFilters.map((option) {
+            return FilterChip(
+              label: Text(option.label),
+              selected: option.value,
+              onSelected: option.onChanged,
+            );
+          }).toList(),
         ),
       ],
     );

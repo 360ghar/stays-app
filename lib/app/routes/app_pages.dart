@@ -8,6 +8,7 @@ import '../bindings/splash_binding.dart';
 import '../bindings/message_binding.dart';
 import '../bindings/payment_binding.dart';
 import '../bindings/profile_binding.dart';
+import '../bindings/settings_binding.dart';
 
 import '../middlewares/auth_middleware.dart';
 import '../middlewares/initial_middleware.dart';
@@ -28,6 +29,7 @@ import '../ui/views/messaging/locate_view.dart';
 import '../ui/views/messaging/chat_view.dart';
 import '../ui/views/home/profile_view.dart';
 import '../ui/views/splash/splash_view.dart';
+import '../ui/views/settings/settings_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -132,6 +134,13 @@ class AppPages {
       page: () => const ProfileView(),
       binding: ProfileBinding(),
       middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.accountSettings,
+      page: () => const SettingsView(),
+      binding: SettingsBinding(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.cupertino,
     ),
   ];
 }
