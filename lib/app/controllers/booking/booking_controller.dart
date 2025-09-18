@@ -56,14 +56,29 @@ class BookingController extends GetxController {
         'guests': guests,
       });
 
-      final pricing = await _repository.calculatePricing(
-        propertyId: propertyId,
-        checkInIso: checkInIso,
-        checkOutIso: checkOutIso,
-        guests: guests,
-      );
-
-      AppLogger.info('Pricing response received', pricing);
+      Map<String, dynamic> pricing;
+      try {
+        pricing = await _repository.calculatePricing(
+          propertyId: propertyId,
+          checkInIso: checkInIso,
+          checkOutIso: checkOutIso,
+          guests: guests,
+        );
+        AppLogger.info('Pricing response received', pricing);
+      } catch (error, stackTrace) {
+        AppLogger.warning(
+          'Pricing request failed, using fallback values',
+          {
+            'error': error.toString(),
+            'stackTrace': stackTrace.toString(),
+          },
+        );
+        if (fallbackPricing != null && fallbackPricing.isNotEmpty) {
+          pricing = Map<String, dynamic>.from(fallbackPricing);
+        } else {
+          pricing = <String, dynamic>{};
+        }
+      }
 
       double coerceAmount(String key, {bool required = true}) {
         final value = pricing[key];

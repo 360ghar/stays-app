@@ -128,6 +128,80 @@ class TripsController extends GetxController {
     _applyFilters();
   }
 
+
+  Booking simulateAddBooking({
+    required int propertyId,
+    required String propertyName,
+    required String imageUrl,
+    String? address,
+    required String city,
+    required String country,
+    required DateTime checkIn,
+    required DateTime checkOut,
+    required int guests,
+    int rooms = 1,
+    required double totalAmount,
+    int? nights,
+    int? userId,
+    bool notifyUser = false,
+  }) {
+    final now = DateTime.now();
+    final bookingId = now.millisecondsSinceEpoch;
+    final computedNights = nights ??
+        checkOut.difference(checkIn).inDays.clamp(1, 365);
+
+    final booking = Booking.fromJson({
+      'id': bookingId,
+      'property_id': propertyId,
+      'user_id': userId ?? 0,
+      'booking_reference': 'SIM$bookingId',
+      'check_in_date': checkIn.toIso8601String(),
+      'check_out_date': checkOut.toIso8601String(),
+      'guests': guests,
+      'nights': computedNights,
+      'total_amount': totalAmount,
+      'booking_status': 'confirmed',
+      'payment_status': 'paid',
+      'created_at': now.toIso8601String(),
+      'property_title': propertyName,
+      'property_city': city,
+      'property_country': country,
+      'property_image_url': imageUrl,
+    });
+
+    final mapped = _mapBooking(booking)
+      ..['rooms'] = rooms
+      ..['location'] =
+          (address != null && address.trim().isNotEmpty)
+              ? address.trim()
+              : booking.displayLocation
+      ..['canReview'] = true
+      ..['isSimulated'] = true
+      ..['status'] = 'confirmed'
+      ..['totalAmount'] = totalAmount.toDouble()
+      ..['bookingDate'] = now.toIso8601String();
+
+    final existingIndex =
+        _allBookings.indexWhere((existing) => existing['id'] == mapped['id']);
+    if (existingIndex >= 0) {
+      _allBookings[existingIndex] = mapped;
+    } else {
+      _allBookings.insert(0, mapped);
+    }
+    _applyFilters();
+
+    if (notifyUser) {
+      Get.snackbar(
+        'Booking confirmed!',
+        'Your stay at $propertyName is confirmed.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green[100],
+        colorText: Colors.green[800],
+      );
+    }
+
+    return booking;
+  }
   bool get hasActiveFilters => _activeFilters.isNotEmpty;
 
   int get totalHistoryCount => _allBookings.length;
