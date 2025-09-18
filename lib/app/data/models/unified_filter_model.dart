@@ -37,12 +37,11 @@ class UnifiedFilterModel {
     this.smokingAllowed,
     this.city,
     this.radiusKm,
-  }) : propertyTypes =
-           propertyTypes == null
-               ? const []
-               : List.unmodifiable(
-                 propertyTypes.map((type) => type.toLowerCase().trim()),
-               );
+  }) : propertyTypes = propertyTypes == null
+           ? const []
+           : List.unmodifiable(
+               propertyTypes.map((type) => type.toLowerCase().trim()),
+             );
 
   static final UnifiedFilterModel empty = UnifiedFilterModel();
 
@@ -105,8 +104,9 @@ class UnifiedFilterModel {
     return UnifiedFilterModel(
       minPrice: other.minPrice ?? minPrice,
       maxPrice: other.maxPrice ?? maxPrice,
-      propertyTypes:
-          other.propertyTypes.isNotEmpty ? other.propertyTypes : propertyTypes,
+      propertyTypes: other.propertyTypes.isNotEmpty
+          ? other.propertyTypes
+          : propertyTypes,
       minBedrooms: other.minBedrooms ?? minBedrooms,
       maxBedrooms: other.maxBedrooms ?? maxBedrooms,
       minBathrooms: other.minBathrooms ?? minBathrooms,

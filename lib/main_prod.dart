@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -7,12 +8,31 @@ import 'config/app_config.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
 import 'l10n/localization_service.dart';
+import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
+import 'app/data/services/theme_service.dart';
+import 'app/controllers/settings/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env.prod');
   AppConfig.setConfig(AppConfig.prod());
+
+  final themeService = await Get.putAsync<ThemeService>(
+    () async => ThemeService().init(),
+    permanent: true,
+  );
+
+  Get.put<ThemeController>(
+    ThemeController(themeService: themeService),
+    permanent: true,
+  );
+  // Locale service + load translations
+  final localeService = await Get.putAsync<LocaleService>(
+    () async => LocaleService().init(),
+    permanent: true,
+  );
+  await LocalizationService.init(localeService);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -25,24 +45,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: '360ghar stays',
-      theme: AppTheme.lightTheme.copyWith(
-        primaryTextTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.black),
-          bodyMedium: TextStyle(color: Colors.black),
-        ),
-      ),
-      // Force light theme for production UX consistency
-      themeMode: ThemeMode.light,
-      darkTheme: AppTheme.darkTheme,
-      translations: LocalizationService(),
-      locale: LocalizationService.locale,
-      fallbackLocale: LocalizationService.fallbackLocale,
-      initialBinding: InitialBinding(),
-      initialRoute: AppPages.initial,
-      getPages: AppPages.routes,
-      debugShowCheckedModeBanner: false,
-    );
+    final themeController = Get.find<ThemeController>();
+    return Obx(() {
+      return GetMaterialApp(
+        title: '360ghar stays',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeController.themeMode.value,
+        translations: LocalizationService(),
+        locale: LocalizationService.initialLocale,
+        fallbackLocale: LocalizationService.fallbackLocale,
+        supportedLocales: LocalizationService.locales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        initialBinding: InitialBinding(),
+        initialRoute: AppPages.initial,
+        getPages: AppPages.routes,
+        debugShowCheckedModeBanner: false,
+      );
+    });
   }
 }

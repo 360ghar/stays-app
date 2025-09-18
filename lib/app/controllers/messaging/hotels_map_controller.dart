@@ -38,8 +38,10 @@ class HotelsMapController extends GetxController {
   late MapController mapController;
   final RxList<Marker> markers = <Marker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
-  final Rx<LatLng> currentLocation =
-      const LatLng(28.6139, 77.2090).obs; // Delhi default
+  final Rx<LatLng> currentLocation = const LatLng(
+    28.6139,
+    77.2090,
+  ).obs; // Delhi default
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
   final RxList<PlacePrediction> predictions = <PlacePrediction>[].obs;
@@ -122,16 +124,15 @@ class HotelsMapController extends GetxController {
     if (_activeFilters.isEmpty) {
       hotels.assignAll(_allHotels);
     } else {
-      final filtered =
-          _allHotels
-              .where(
-                (hotel) => _activeFilters.matchesHotel(
-                  price: hotel.price,
-                  rating: hotel.rating,
-                  propertyType: hotel.propertyType,
-                ),
-              )
-              .toList();
+      final filtered = _allHotels
+          .where(
+            (hotel) => _activeFilters.matchesHotel(
+              price: hotel.price,
+              rating: hotel.rating,
+              propertyType: hotel.propertyType,
+            ),
+          )
+          .toList();
       hotels.assignAll(filtered);
     }
     _updateMapMarkers();
@@ -217,48 +218,44 @@ class HotelsMapController extends GetxController {
   }
 
   void _updateMapMarkers() {
-    final List<Marker> newMarkers =
-        hotels.map((hotel) {
-          return Marker(
-            width: 80.0,
-            height: 80.0,
-            point: hotel.position,
-            child: GestureDetector(
-              onTap: () => _showHotelDetails(hotel),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+    final List<Marker> newMarkers = hotels.map((hotel) {
+      return Marker(
+        width: 80.0,
+        height: 80.0,
+        point: hotel.position,
+        child: GestureDetector(
+          onTap: () => _showHotelDetails(hotel),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      '₹${hotel.price.toInt()}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
+                  ],
+                ),
+                child: Text(
+                  '₹${hotel.price.toInt()}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
                   ),
-                  const SizedBox(height: 2),
-                  const Icon(Icons.location_pin, color: Colors.red, size: 24),
-                ],
+                ),
               ),
-            ),
-          );
-        }).toList();
+              const SizedBox(height: 2),
+              const Icon(Icons.location_pin, color: Colors.red, size: 24),
+            ],
+          ),
+        ),
+      );
+    }).toList();
 
     // Replace markers in one go to ensure rebuilds
     markers.assignAll(newMarkers);

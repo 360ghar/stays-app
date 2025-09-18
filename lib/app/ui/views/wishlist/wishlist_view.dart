@@ -7,6 +7,7 @@ import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 import '../../../controllers/wishlist_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../routes/app_routes.dart';
+import '../../theme/theme_extensions.dart';
 
 class WishlistView extends GetView<WishlistController> {
   const WishlistView({super.key});
@@ -15,16 +16,17 @@ class WishlistView extends GetView<WishlistController> {
   Widget build(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.wishlist);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Wishlist',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
-            fontSize: 24,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -37,23 +39,21 @@ class WishlistView extends GetView<WishlistController> {
                 height: 36,
                 child: FilterButton(
                   isActive: isActive,
-                  onPressed:
-                      () => filterController.openFilterSheet(
-                        context,
-                        FilterScope.wishlist,
-                      ),
+                  onPressed: () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.wishlist,
+                  ),
                 ),
               ),
             );
           }),
           Obx(
-            () =>
-                controller.wishlistItems.isNotEmpty
-                    ? IconButton(
-                      onPressed: controller.clearWishlist,
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
-                    )
-                    : const SizedBox.shrink(),
+            () => controller.wishlistItems.isNotEmpty
+                ? IconButton(
+                    onPressed: controller.clearWishlist,
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -67,7 +67,7 @@ class WishlistView extends GetView<WishlistController> {
           if (hasFilters && controller.totalItems > 0) {
             return _buildFilteredEmptyState(context, filterController);
           }
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
         final items = controller.wishlistItems;
@@ -82,11 +82,11 @@ class WishlistView extends GetView<WishlistController> {
             itemCount: itemCount,
             itemBuilder: (context, index) {
               if (showTags && index == 0) {
-                return _buildFilterTags(tags, filterController);
+                return _buildFilterTags(context, tags, filterController);
               }
               final propertyIndex = showTags ? index - 1 : index;
               final item = items[propertyIndex];
-              return _buildWishlistCard(item);
+              return _buildWishlistCard(context, item);
             },
           ),
         );
@@ -94,30 +94,36 @@ class WishlistView extends GetView<WishlistController> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.favorite_border, size: 80, color: Colors.grey[400]),
+            Icon(
+              Icons.favorite_border,
+              size: 80,
+              color: colors.outline.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'Your wishlist is empty',
-              style: TextStyle(
+              style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             Text(
               'Save your favorite places to stay\nand access them anytime',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: colors.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
@@ -125,7 +131,8 @@ class WishlistView extends GetView<WishlistController> {
             ElevatedButton(
               onPressed: () => Get.back(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
@@ -134,9 +141,9 @@ class WishlistView extends GetView<WishlistController> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Start Exploring',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
           ],
@@ -149,20 +156,26 @@ class WishlistView extends GetView<WishlistController> {
     BuildContext context,
     FilterController filterController,
   ) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.filter_list_off, size: 80, color: Colors.grey[400]),
+            Icon(
+              Icons.filter_list_off,
+              size: 80,
+              color: colors.outline.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No stays match these filters',
-              style: TextStyle(
+              style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
+                color: colors.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -170,21 +183,21 @@ class WishlistView extends GetView<WishlistController> {
             Text(
               'Adjust your filters or clear them to see every favorite stay.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: colors.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.wishlist,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.wishlist,
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 14,
@@ -193,13 +206,14 @@ class WishlistView extends GetView<WishlistController> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Adjust Filters',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
             TextButton(
               onPressed: () => filterController.clear(FilterScope.wishlist),
+              style: TextButton.styleFrom(foregroundColor: colors.primary),
               child: const Text('Clear filters'),
             ),
           ],
@@ -209,27 +223,35 @@ class WishlistView extends GetView<WishlistController> {
   }
 
   Widget _buildFilterTags(
+    BuildContext context,
     List<String> tags,
     FilterController filterController,
   ) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              tags
-                  .map(
-                    (tag) => Chip(
-                      label: Text(tag),
-                      backgroundColor: Colors.blue[50],
+          children: tags
+              .map(
+                (tag) => Chip(
+                  label: Text(
+                    tag,
+                    style: textStyles.labelMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  backgroundColor: colors.primaryContainer,
+                ),
+              )
+              .toList(),
         ),
         TextButton(
           onPressed: () => filterController.clear(FilterScope.wishlist),
+          style: TextButton.styleFrom(foregroundColor: colors.primary),
           child: const Text('Clear filters'),
         ),
         const SizedBox(height: 12),
@@ -237,26 +259,30 @@ class WishlistView extends GetView<WishlistController> {
     );
   }
 
-  Widget _buildWishlistCard(Property item) {
+  Widget _buildWishlistCard(BuildContext context, Property item) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    final shadowColor = context.isDark
+        ? Colors.black.withValues(alpha: 0.5)
+        : Colors.black12;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: shadowColor,
+            blurRadius: 12,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: InkWell(
-        onTap:
-            () => Get.toNamed(
-              Routes.listingDetail.replaceFirst(':id', item.id.toString()),
-              arguments: item,
-            ),
+        onTap: () => Get.toNamed(
+          Routes.listingDetail.replaceFirst(':id', item.id.toString()),
+          arguments: item,
+        ),
         borderRadius: BorderRadius.circular(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,22 +299,18 @@ class WishlistView extends GetView<WishlistController> {
                     height: 200,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder:
-                        (context, url) => Container(
-                          color: Colors.grey[300],
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                    errorWidget:
-                        (context, url, error) => Container(
-                          color: Colors.grey[300],
-                          child: Icon(
-                            Icons.image,
-                            size: 50,
-                            color: Colors.grey[400],
-                          ),
-                        ),
+                    placeholder: (context, url) => Container(
+                      color: colors.surfaceContainerHighest,
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: colors.surfaceContainerHighest,
+                      child: Icon(
+                        Icons.image,
+                        size: 50,
+                        color: colors.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -296,22 +318,19 @@ class WishlistView extends GetView<WishlistController> {
                   right: 12,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: colors.surface.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 8,
+                          color: shadowColor,
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
                     child: IconButton(
                       onPressed: () => controller.removeFromWishlist(item.id),
-                      icon: const Icon(
-                        Icons.favorite,
-                        color: Colors.red,
-                        size: 24,
-                      ),
+                      icon: Icon(Icons.favorite, color: colors.error, size: 24),
                     ),
                   ),
                 ),
@@ -330,15 +349,15 @@ class WishlistView extends GetView<WishlistController> {
                       Icon(
                         Icons.location_on_outlined,
                         size: 16,
-                        color: Colors.grey[600],
+                        color: colors.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           '${item.city}, ${item.country}',
-                          style: TextStyle(
+                          style: textStyles.bodySmall?.copyWith(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: colors.onSurface.withValues(alpha: 0.7),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -351,10 +370,10 @@ class WishlistView extends GetView<WishlistController> {
                   // Name
                   Text(
                     item.name,
-                    style: const TextStyle(
+                    style: textStyles.titleMedium?.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+                      color: colors.onSurface,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -373,26 +392,26 @@ class WishlistView extends GetView<WishlistController> {
                           if (item.rating != null) ...[
                             Text(
                               item.ratingText,
-                              style: const TextStyle(
+                              style: textStyles.bodyMedium?.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1A1A1A),
+                                color: colors.onSurface,
                               ),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               '(${item.reviewsText})',
-                              style: TextStyle(
+                              style: textStyles.bodySmall?.copyWith(
                                 fontSize: 14,
-                                color: Colors.grey[600],
+                                color: colors.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ] else
                             Text(
                               'No rating',
-                              style: TextStyle(
+                              style: textStyles.bodySmall?.copyWith(
                                 fontSize: 14,
-                                color: Colors.grey[600],
+                                color: colors.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                         ],
@@ -403,17 +422,17 @@ class WishlistView extends GetView<WishlistController> {
                         children: [
                           Text(
                             item.displayPrice,
-                            style: const TextStyle(
+                            style: textStyles.titleMedium?.copyWith(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A1A),
+                              color: colors.onSurface,
                             ),
                           ),
                           Text(
                             ' /night',
-                            style: TextStyle(
+                            style: textStyles.bodySmall?.copyWith(
                               fontSize: 14,
-                              color: Colors.grey[600],
+                              color: colors.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                         ],

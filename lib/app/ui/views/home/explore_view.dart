@@ -8,13 +8,16 @@ import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 import 'package:stays_app/app/ui/widgets/common/banner_carousel.dart';
 import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 
+import '../../theme/theme_extensions.dart';
+
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: controller.refreshData,
@@ -24,7 +27,7 @@ class ExploreView extends GetView<ExploreController> {
             ),
             slivers: [
               _buildSliverAppBar(context),
-              _buildActiveFilters(),
+              _buildActiveFilters(context),
               _buildBannerSection(),
               _buildPopularHomes(),
               _buildNearbyHotels(),
@@ -40,10 +43,12 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildSliverAppBar(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.explore);
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return SliverAppBar(
       floating: true,
       snap: true,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       elevation: 0,
       toolbarHeight: 70,
       titleSpacing: 16,
@@ -56,15 +61,15 @@ class ExploreView extends GetView<ExploreController> {
               onTap: controller.navigateToSearch,
               trailing: TextButton.icon(
                 onPressed: controller.useMyLocation,
-                icon: const Icon(Icons.my_location, size: 18),
+                icon: Icon(Icons.my_location, size: 18, color: colors.primary),
                 label: const Text('Use my location'),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 8,
                   ),
-                  foregroundColor: Colors.blue[700],
-                  textStyle: const TextStyle(
+                  foregroundColor: colors.primary,
+                  textStyle: textStyles.labelMedium?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -73,19 +78,18 @@ class ExploreView extends GetView<ExploreController> {
               margin: EdgeInsets.zero,
               height: 52,
               borderRadius: BorderRadius.circular(18),
-              shadowColor: Colors.black.withValues(alpha: 0.06),
-              backgroundColor: Colors.white,
+              shadowColor: colors.shadow.withValues(alpha: 0.08),
+              backgroundColor: colors.surface,
             ),
           ),
           const SizedBox(width: 12),
           Obx(
             () => FilterButton(
               isActive: filtersRx.value.isNotEmpty,
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.explore,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.explore,
+              ),
             ),
           ),
         ],
@@ -93,11 +97,12 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildActiveFilters() {
+  Widget _buildActiveFilters(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.explore);
     return SliverToBoxAdapter(
       child: Obx(() {
+        final colors = Theme.of(context).colorScheme;
         final tags = filtersRx.value.activeTags();
         if (tags.isEmpty) return const SizedBox.shrink();
         return Padding(
@@ -109,19 +114,23 @@ class ExploreView extends GetView<ExploreController> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children:
-                      tags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(tag),
-                              backgroundColor: Colors.blue[50],
-                            ),
-                          )
-                          .toList(),
+                  children: tags
+                      .map(
+                        (tag) => Chip(
+                          label: Text(
+                            tag,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: colors.onPrimaryContainer),
+                          ),
+                          backgroundColor: colors.primaryContainer,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               TextButton(
                 onPressed: () => filterController.clear(FilterScope.explore),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
                 child: const Text('Clear'),
               ),
             ],
@@ -166,10 +175,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(controller.popularHomes, 'popular'),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(controller.popularHomes, 'popular'),
               ),
             ],
           ),
@@ -196,10 +204,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(controller.nearbyHotels, 'nearby'),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(controller.nearbyHotels, 'nearby'),
               ),
             ],
           ),
@@ -223,13 +230,12 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(
-                          controller.recommendedHotels,
-                          'recommended',
-                        ),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(
+                        controller.recommendedHotels,
+                        'recommended',
+                      ),
               ),
             ],
           ),

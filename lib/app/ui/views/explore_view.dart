@@ -6,14 +6,16 @@ import 'package:stays_app/app/ui/widgets/cards/property_card.dart';
 import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
+import '../theme/theme_extensions.dart';
 
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: controller.refreshLocation,
@@ -23,10 +25,10 @@ class ExploreView extends GetView<ExploreController> {
             ),
             slivers: [
               _buildSliverAppBar(context),
-              _buildActiveFilters(),
-              _buildPopularHomes(),
-              _buildNearbyHotels(),
-              _buildRecommendedSection(),
+              _buildActiveFilters(context),
+              _buildPopularHomes(context),
+              _buildNearbyHotels(context),
+              _buildRecommendedSection(context),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
@@ -38,10 +40,11 @@ class ExploreView extends GetView<ExploreController> {
   Widget _buildSliverAppBar(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.explore);
+    final colors = context.colors;
     return SliverAppBar(
       floating: true,
       snap: true,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       elevation: 0,
       toolbarHeight: 70,
       titleSpacing: 16,
@@ -56,19 +59,18 @@ class ExploreView extends GetView<ExploreController> {
               margin: EdgeInsets.zero,
               height: 52,
               borderRadius: BorderRadius.circular(18),
-              shadowColor: Colors.black.withValues(alpha: 0.06),
-              backgroundColor: Colors.white,
+              shadowColor: colors.shadow.withValues(alpha: 0.08),
+              backgroundColor: colors.surface,
             ),
           ),
           const SizedBox(width: 12),
           Obx(
             () => FilterButton(
               isActive: filtersRx.value.isNotEmpty,
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.explore,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.explore,
+              ),
             ),
           ),
         ],
@@ -76,11 +78,12 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildActiveFilters() {
+  Widget _buildActiveFilters(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.explore);
     return SliverToBoxAdapter(
       child: Obx(() {
+        final colors = Theme.of(context).colorScheme;
         final tags = filtersRx.value.activeTags();
         if (tags.isEmpty) return const SizedBox.shrink();
         return Padding(
@@ -92,19 +95,23 @@ class ExploreView extends GetView<ExploreController> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children:
-                      tags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(tag),
-                              backgroundColor: Colors.blue[50],
-                            ),
-                          )
-                          .toList(),
+                  children: tags
+                      .map(
+                        (tag) => Chip(
+                          label: Text(
+                            tag,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: colors.onPrimaryContainer),
+                          ),
+                          backgroundColor: colors.primaryContainer,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               TextButton(
                 onPressed: () => filterController.clear(FilterScope.explore),
+                style: TextButton.styleFrom(foregroundColor: colors.primary),
                 child: const Text('Clear'),
               ),
             ],
@@ -114,7 +121,7 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildPopularHomes() {
+  Widget _buildPopularHomes(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
         final city = controller.locationName;
@@ -132,10 +139,13 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(controller.popularHomes, 'popular'),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(
+                        context,
+                        controller.popularHomes,
+                        'popular',
+                      ),
               ),
             ],
           ),
@@ -144,7 +154,7 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildNearbyHotels() {
+  Widget _buildNearbyHotels(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
         final nearbyCity = controller.locationName;
@@ -162,10 +172,13 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(controller.nearbyHotels, 'nearby'),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(
+                        context,
+                        controller.nearbyHotels,
+                        'nearby',
+                      ),
               ),
             ],
           ),
@@ -174,7 +187,7 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildRecommendedSection() {
+  Widget _buildRecommendedSection(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
         if (controller.recommendedHotels.isEmpty) return const SizedBox();
@@ -189,13 +202,13 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    controller.isLoading.value
-                        ? _buildShimmerList()
-                        : _buildHotelsList(
-                          controller.recommendedHotels,
-                          'recommended',
-                        ),
+                child: controller.isLoading.value
+                    ? _buildShimmerList()
+                    : _buildHotelsList(
+                        context,
+                        controller.recommendedHotels,
+                        'recommended',
+                      ),
               ),
             ],
           ),
@@ -204,19 +217,32 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildHotelsList(List hotels, String heroPrefix) {
+  Widget _buildHotelsList(
+    BuildContext context,
+    List hotels,
+    String heroPrefix,
+  ) {
     if (hotels.isEmpty) {
+      final colors = Theme.of(Get.context ?? context).colorScheme;
+      final textStyles = Theme.of(Get.context ?? context).textTheme;
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.hotel_outlined, size: 48, color: Colors.grey[400]),
+              Icon(
+                Icons.hotel_outlined,
+                size: 48,
+                color: colors.outline.withValues(alpha: 0.4),
+              ),
               const SizedBox(height: 16),
               Text(
                 'No hotels available',
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                style: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
+                  fontSize: 16,
+                ),
               ),
             ],
           ),

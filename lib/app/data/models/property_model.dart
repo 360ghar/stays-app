@@ -194,10 +194,7 @@ class Property {
       if (value is List) {
         return value
             .whereType<Map>()
-            .map(
-              (e) =>
-                  PropertyImage.fromJson(Map<String, dynamic>.from(e)),
-            )
+            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       }
     } catch (_) {}

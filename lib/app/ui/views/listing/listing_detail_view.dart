@@ -22,8 +22,15 @@ class ListingDetailView extends GetView<ListingDetailController> {
       // fire and forget
       controller.load(id);
     }
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Stay details')),
+      appBar: AppBar(
+        title: Text(
+          'Stay details',
+          style: textStyles.titleLarge?.copyWith(color: colors.onSurface),
+        ),
+      ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -38,39 +45,40 @@ class ListingDetailView extends GetView<ListingDetailController> {
             children: [
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child:
-                    (listing.images != null && listing.images!.isNotEmpty)
-                        ? PageView(
-                          children:
-                              listing.images!
-                                  .map(
-                                    (img) => Image.network(
-                                      img.imageUrl,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                  .toList(),
-                        )
-                        : (listing.displayImage.isNotEmpty)
-                        ? Image.network(listing.displayImage, fit: BoxFit.cover)
-                        : Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Icon(Icons.image, size: 48),
-                          ),
+                child: (listing.images != null && listing.images!.isNotEmpty)
+                    ? PageView(
+                        children: listing.images!
+                            .map(
+                              (img) => Image.network(
+                                img.imageUrl,
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                            .toList(),
+                      )
+                    : (listing.displayImage.isNotEmpty)
+                    ? Image.network(listing.displayImage, fit: BoxFit.cover)
+                    : Container(
+                        color: colors.surfaceContainerHighest,
+                        child: Icon(
+                          Icons.image,
+                          size: 48,
+                          color: colors.onSurface.withValues(alpha: 0.6),
                         ),
+                      ),
               ),
               if ((listing.virtualTourUrl ?? '').isNotEmpty) ...[
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Text(
                         '360° Virtual Tour',
-                        style: TextStyle(
+                        style: textStyles.titleMedium?.copyWith(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
+                          color: colors.onSurface,
                         ),
                       ),
                     ],
@@ -130,15 +138,18 @@ class ListingDetailView extends GetView<ListingDetailController> {
                   children: [
                     Text(
                       listing.name,
-                      style: const TextStyle(
+                      style: textStyles.titleLarge?.copyWith(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '${listing.city}, ${listing.country}',
-                      style: TextStyle(color: Colors.grey.shade700),
+                      style: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -146,25 +157,50 @@ class ListingDetailView extends GetView<ListingDetailController> {
                         const Icon(Icons.star_rate_rounded, size: 18),
                         Text(
                           '${(listing.rating ?? 0).toStringAsFixed(1)} (${listing.reviewsCount ?? 0})',
+                          style: textStyles.bodyMedium?.copyWith(
+                            color: colors.onSurface,
+                          ),
                         ),
                         const Spacer(),
                         Text(
                           CurrencyHelper.format(listing.pricePerNight),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: textStyles.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colors.onSurface,
+                          ),
                         ),
-                        const Text(' · per night'),
+                        Text(
+                          ' · ${'listing.per_night'.tr}',
+                          style: textStyles.bodySmall?.copyWith(
+                            color: colors.onSurface.withValues(alpha: 0.7),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Text(listing.description ?? ''),
+                    Text(
+                      listing.description ?? '',
+                      style: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          (listing.amenities ?? [])
-                              .map((a) => Chip(label: Text(a)))
-                              .toList(),
+                      children: (listing.amenities ?? [])
+                          .map(
+                            (a) => Chip(
+                              label: Text(
+                                a,
+                                style: textStyles.labelMedium?.copyWith(
+                                  color: colors.onPrimaryContainer,
+                                ),
+                              ),
+                              backgroundColor: colors.primaryContainer,
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(

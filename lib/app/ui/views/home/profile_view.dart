@@ -1,20 +1,22 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/auth/profile_controller.dart';
+import '../../theme/theme_extensions.dart';
 
 class ProfileView extends GetView<ProfileController> {
   const ProfileView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       body: Obx(() {
         if (controller.isLoading.value && controller.profile.value == null) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
           );
         }
@@ -25,27 +27,34 @@ class ProfileView extends GetView<ProfileController> {
             physics: const BouncingScrollPhysics(
               parent: AlwaysScrollableScrollPhysics(),
             ),
-            slivers: [_buildSliverAppBar(), _buildProfileContent()],
+            slivers: [
+              _buildSliverAppBar(context),
+              _buildProfileContent(context),
+            ],
           ),
         );
       }),
     );
   }
 
-  Widget _buildSliverAppBar() {
+  Widget _buildSliverAppBar(BuildContext context) {
+    final colors = context.colors;
     return SliverAppBar(
       expandedHeight: 260,
       floating: false,
       pinned: true,
       elevation: 0,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFF8F9FA), Color(0xFFE3F2FD)],
+              colors: [
+                colors.surface,
+                colors.surfaceContainerHighest.withValues(alpha: 0.6),
+              ],
             ),
           ),
           child: SafeArea(
@@ -142,11 +151,12 @@ class ProfileView extends GetView<ProfileController> {
                             children: [
                               Text(
                                 controller.userName.value,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F2937),
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.onSurface,
+                                    ),
                               ),
                               const SizedBox(height: 8),
                               Container(
@@ -203,11 +213,14 @@ class ProfileView extends GetView<ProfileController> {
                                   }
                                   return Text(
                                     contact,
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF6B7280),
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontSize: 13,
+                                          color: colors.onSurface.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                   );
                                 },
                               ),
@@ -226,14 +239,14 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildProfileContent() {
+  Widget _buildProfileContent(BuildContext context) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             // Stats Section
-            _buildStatsSection(),
+            _buildStatsSection(context),
 
             const SizedBox(height: 24),
 
@@ -242,10 +255,12 @@ class ProfileView extends GetView<ProfileController> {
               delay: 100,
               child: _buildGlassTile(
                 icon: Icons.flight_takeoff_rounded,
-                title: 'Past Bookings',
+                title: 'profile.past_bookings'.tr,
                 subtitle: controller.pastTrips.isNotEmpty
-                    ? '${controller.pastTrips.length} bookings completed'
-                    : 'No bookings yet',
+                    ? 'profile.bookings_completed'.trParams({
+                        'count': controller.pastTrips.length.toString(),
+                      })
+                    : 'profile.no_bookings'.tr,
                 onTap: controller.navigateToPastTrips,
                 gradient: const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
               ),
@@ -256,25 +271,25 @@ class ProfileView extends GetView<ProfileController> {
             // Account Section
             _buildAnimatedSection(
               delay: 200,
-              child: _buildMenuSection([
+              child: _buildMenuSection(context, [
                 _buildGlassTile(
                   icon: Icons.settings_rounded,
-                  title: 'Account Settings',
-                  subtitle: 'Manage your preferences',
+                  title: 'profile.account_settings'.tr,
+                  subtitle: 'profile.manage_prefs'.tr,
                   onTap: controller.navigateToAccountSettings,
                   gradient: const [Color(0xFF10B981), Color(0xFF059669)],
                 ),
                 _buildGlassTile(
                   icon: Icons.help_center_rounded,
-                  title: 'Get Help',
-                  subtitle: 'Support and FAQs',
+                  title: 'profile.get_help'.tr,
+                  subtitle: 'profile.support_faqs'.tr,
                   onTap: controller.navigateToHelp,
                   gradient: const [Color(0xFFF59E0B), Color(0xFFD97706)],
                 ),
                 _buildGlassTile(
                   icon: Icons.person_rounded,
-                  title: 'View Profile',
-                  subtitle: 'See your public profile',
+                  title: 'profile.view_profile'.tr,
+                  subtitle: 'profile.see_public_profile'.tr,
                   onTap: controller.navigateToViewProfile,
                   gradient: const [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
                 ),
@@ -286,18 +301,18 @@ class ProfileView extends GetView<ProfileController> {
             // Legal Section
             _buildAnimatedSection(
               delay: 300,
-              child: _buildMenuSection([
+              child: _buildMenuSection(context, [
                 _buildGlassTile(
                   icon: Icons.shield_rounded,
-                  title: 'Privacy',
-                  subtitle: 'Data and privacy settings',
+                  title: 'profile.privacy'.tr,
+                  subtitle: 'profile.data_privacy_settings'.tr,
                   onTap: controller.navigateToPrivacy,
                   gradient: const [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
                 ),
                 _buildGlassTile(
                   icon: Icons.description_rounded,
-                  title: 'Legal',
-                  subtitle: 'Terms and policies',
+                  title: 'profile.legal'.tr,
+                  subtitle: 'profile.terms_policies'.tr,
                   onTap: controller.navigateToLegal,
                   gradient: const [Color(0xFF6B7280), Color(0xFF4B5563)],
                 ),
@@ -311,8 +326,8 @@ class ProfileView extends GetView<ProfileController> {
               delay: 400,
               child: _buildGlassTile(
                 icon: Icons.logout_rounded,
-                title: 'Log Out',
-                subtitle: 'Sign out of your account',
+                title: 'profile.logout'.tr,
+                subtitle: 'profile.sign_out'.tr,
                 onTap: controller.logout,
                 gradient: const [Color(0xFFEF4444), Color(0xFFDC2626)],
                 showArrow: false,
@@ -342,9 +357,9 @@ class ProfileView extends GetView<ProfileController> {
                         width: 1,
                       ),
                     ),
-                    child: const Text(
-                      'Version 1.0.0 • Made with ❤️',
-                      style: TextStyle(
+                    child: Text(
+                      'profile.version_info'.tr,
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF6B7280),
                         fontWeight: FontWeight.w500,
@@ -362,28 +377,34 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(BuildContext context) {
+    final colors = context.colors;
     return _buildAnimatedSection(
       delay: 0,
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.white, Color(0xFFF8FAFC)],
+            colors: [
+              colors.surface,
+              colors.surfaceContainerHighest.withValues(alpha: 0.6),
+            ],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: context.isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.black.withValues(alpha: 0.05),
               blurRadius: 20,
               spreadRadius: 0,
               offset: const Offset(0, 8),
             ),
           ],
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.8),
+            color: colors.outlineVariant.withValues(alpha: 0.6),
             width: 1.5,
           ),
         ),
@@ -397,7 +418,11 @@ class ProfileView extends GetView<ProfileController> {
                 const Color(0xFF3B82F6),
               ),
             ),
-            Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
+            Container(
+              width: 1,
+              height: 40,
+              color: colors.outlineVariant.withValues(alpha: 0.6),
+            ),
             Expanded(
               child: _buildStatItem(
                 'Wishlist',
@@ -406,7 +431,11 @@ class ProfileView extends GetView<ProfileController> {
                 const Color(0xFFEF4444),
               ),
             ),
-            Container(width: 1, height: 40, color: const Color(0xFFE5E7EB)),
+            Container(
+              width: 1,
+              height: 40,
+              color: colors.outlineVariant.withValues(alpha: 0.6),
+            ),
             Expanded(
               child: _buildStatItem(
                 'Reviews',
@@ -427,6 +456,9 @@ class ProfileView extends GetView<ProfileController> {
     IconData icon,
     Color color,
   ) {
+    final colors = Get.context?.colors ?? Theme.of(Get.context!).colorScheme;
+    final textStyles =
+        Get.context?.textStyles ?? Theme.of(Get.context!).textTheme;
     return Column(
       children: [
         Container(
@@ -440,18 +472,18 @@ class ProfileView extends GetView<ProfileController> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: textStyles.titleMedium?.copyWith(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
+            color: colors.onSurface,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: textStyles.bodySmall?.copyWith(
             fontSize: 12,
-            color: Color(0xFF6B7280),
+            color: colors.onSurface.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -473,21 +505,24 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildMenuSection(List<Widget> children) {
+  Widget _buildMenuSection(BuildContext context, List<Widget> children) {
+    final colors = context.colors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.8),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: context.isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
             spreadRadius: 0,
             offset: const Offset(0, 8),
           ),
         ],
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: colors.outlineVariant.withValues(alpha: 0.6),
           width: 1.5,
         ),
       ),
@@ -506,7 +541,7 @@ class ProfileView extends GetView<ProfileController> {
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 20),
                 height: 1,
-                color: const Color(0xFFF3F4F6),
+                color: colors.outlineVariant.withValues(alpha: 0.5),
               ),
             ],
           );
@@ -523,6 +558,12 @@ class ProfileView extends GetView<ProfileController> {
     required List<Color> gradient,
     bool showArrow = true,
   }) {
+    final colors =
+        Get.context?.colors ??
+        Theme.of(Get.context ?? Get.overlayContext!).colorScheme;
+    final textStyles =
+        Get.context?.textStyles ??
+        Theme.of(Get.context ?? Get.overlayContext!).textTheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -560,18 +601,18 @@ class ProfileView extends GetView<ProfileController> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: textStyles.titleSmall?.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1F2937),
+                        color: colors.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: textStyles.bodySmall?.copyWith(
                         fontSize: 13,
-                        color: Color(0xFF6B7280),
+                        color: colors.onSurface.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w400,
                       ),
                     ),
@@ -582,12 +623,14 @@ class ProfileView extends GetView<ProfileController> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
+                    color: colors.surfaceContainerHighest.withValues(
+                      alpha: 0.6,
+                    ),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.arrow_forward_ios_rounded,
-                    color: Color(0xFF9CA3AF),
+                    color: colors.onSurface.withValues(alpha: 0.6),
                     size: 14,
                   ),
                 ),

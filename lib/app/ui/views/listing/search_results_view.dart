@@ -9,6 +9,7 @@ import '../../../controllers/listing/listing_controller.dart';
 import '../../../ui/widgets/cards/property_grid_card.dart';
 import '../../../ui/widgets/common/filter_button.dart';
 import '../../../utils/helpers/responsive_helper.dart';
+// import removed: unused theme extension import
 
 class SearchResultsView extends GetView<ListingController> {
   const SearchResultsView({super.key});
@@ -17,31 +18,35 @@ class SearchResultsView extends GetView<ListingController> {
   Widget build(BuildContext context) {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.locate);
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        title: const Text('Explore Properties'),
+        backgroundColor: colors.surface,
+        title: Text(
+          'Explore Properties',
+          style: textStyles.titleLarge?.copyWith(color: colors.onSurface),
+        ),
         actions: [
           Obx(() {
             final isActive = filtersRx.value.isNotEmpty;
             return FilterButton(
               isActive: isActive,
-              onPressed: () => filterController.openFilterSheet(
-                context,
-                FilterScope.locate,
-              ),
+              onPressed: () =>
+                  filterController.openFilterSheet(context, FilterScope.locate),
             );
           }),
           IconButton(
             tooltip: 'Sort',
-            icon: const Icon(Icons.sort_rounded),
+            icon: Icon(Icons.sort_rounded, color: colors.onSurface),
             onPressed: () {
               Get.snackbar('Sort', 'Sorting options coming soon');
             },
           ),
           IconButton(
             tooltip: 'Map',
-            icon: const Icon(Icons.map_outlined),
+            icon: Icon(Icons.map_outlined, color: colors.onSurface),
             onPressed: () {
               Get.snackbar('Map', 'Map view coming soon');
             },
@@ -79,6 +84,8 @@ class SearchResultsView extends GetView<ListingController> {
     UnifiedFilterModel filters,
     bool isInitialLoading,
   ) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     if (isInitialLoading) {
       return [
         SliverFillRemaining(
@@ -103,9 +110,7 @@ class SearchResultsView extends GetView<ListingController> {
     final currentPage = controller.currentPage.value;
     final totalPages = controller.totalPages.value;
     final pageSize = controller.pageSize.value;
-    final startIndex = total == 0
-        ? 0
-        : ((currentPage - 1) * pageSize) + 1;
+    final startIndex = total == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
     final endIndex = total == 0
         ? 0
         : math.min(startIndex + items.length - 1, total);
@@ -122,7 +127,7 @@ class SearchResultsView extends GetView<ListingController> {
                 total > 0
                     ? 'Found $total stays • Page $currentPage of $totalPages • $pageSize per page'
                     : 'No stays found',
-                style: const TextStyle(
+                style: textStyles.bodyMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -130,14 +135,17 @@ class SearchResultsView extends GetView<ListingController> {
               if (total > 0)
                 Text(
                   'Showing $startIndex–$endIndex of $total properties',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: textStyles.bodySmall?.copyWith(
+                    fontSize: 12,
+                    color: colors.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
               if (controller.errorMessage.value.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     controller.errorMessage.value,
-                    style: const TextStyle(color: Colors.redAccent),
+                    style: TextStyle(color: colors.error),
                   ),
                 ),
             ],
@@ -158,17 +166,24 @@ class SearchResultsView extends GetView<ListingController> {
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children:
-                        tags
-                            .map((tag) => Chip(
-                                  label: Text(tag),
-                                  backgroundColor: Colors.blue[50],
-                                ))
-                            .toList(),
+                    children: tags
+                        .map(
+                          (tag) => Chip(
+                            label: Text(
+                              tag,
+                              style: textStyles.labelMedium?.copyWith(
+                                color: colors.onPrimaryContainer,
+                              ),
+                            ),
+                            backgroundColor: colors.primaryContainer,
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
                 TextButton(
                   onPressed: () => filterController.clear(FilterScope.locate),
+                  style: TextButton.styleFrom(foregroundColor: colors.primary),
                   child: const Text('Clear'),
                 ),
               ],
@@ -186,15 +201,26 @@ class SearchResultsView extends GetView<ListingController> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.home_outlined, size: 56, color: Colors.grey),
+                Icon(
+                  Icons.home_outlined,
+                  size: 56,
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
                 const SizedBox(height: 12),
-                const Text('No matching properties'),
+                Text(
+                  'No matching properties',
+                  style: textStyles.bodyMedium?.copyWith(
+                    color: colors.onSurface,
+                  ),
+                ),
                 if (tags.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       'Try removing some filters and search again.',
-                      style: TextStyle(color: Colors.grey),
+                      style: textStyles.bodySmall?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.7),
+                      ),
                     ),
                   ),
               ],
@@ -214,17 +240,16 @@ class SearchResultsView extends GetView<ListingController> {
 
     if (controller.isLoading.value) {
       slivers.add(
-        const SliverToBoxAdapter(
-          child: LinearProgressIndicator(minHeight: 2),
-        ),
+        const SliverToBoxAdapter(child: LinearProgressIndicator(minHeight: 2)),
       );
     }
 
     slivers.add(
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        sliver:
-            crossAxisCount == 1 ? _buildListSliver(controller) : _buildGridSliver(controller, crossAxisCount),
+        sliver: crossAxisCount == 1
+            ? _buildListSliver(controller)
+            : _buildGridSliver(controller, crossAxisCount),
       ),
     );
 
@@ -243,20 +268,17 @@ class SearchResultsView extends GetView<ListingController> {
   Widget _buildListSliver(ListingController controller) {
     final items = controller.listings;
     return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final property = items[index];
-          return Padding(
-            padding: EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12),
-            child: PropertyGridCard(
-              property: property,
-              heroPrefix: 'search_$index',
-              onTap: () => Get.toNamed('/listing/${property.id}'),
-            ),
-          );
-        },
-        childCount: items.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final property = items[index];
+        return Padding(
+          padding: EdgeInsets.only(bottom: index == items.length - 1 ? 0 : 12),
+          child: PropertyGridCard(
+            property: property,
+            heroPrefix: 'search_$index',
+            onTap: () => Get.toNamed('/listing/${property.id}'),
+          ),
+        );
+      }, childCount: items.length),
     );
   }
 
@@ -270,17 +292,14 @@ class SearchResultsView extends GetView<ListingController> {
         mainAxisSpacing: 12,
         childAspectRatio: ratio,
       ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final property = items[index];
-          return PropertyGridCard(
-            property: property,
-            heroPrefix: 'search_$index',
-            onTap: () => Get.toNamed('/listing/${property.id}'),
-          );
-        },
-        childCount: items.length,
-      ),
+      delegate: SliverChildBuilderDelegate((context, index) {
+        final property = items[index];
+        return PropertyGridCard(
+          property: property,
+          heroPrefix: 'search_$index',
+          onTap: () => Get.toNamed('/listing/${property.id}'),
+        );
+      }, childCount: items.length),
     );
   }
 }
@@ -319,10 +338,12 @@ class _PaginationBar extends StatelessWidget {
                   }
                 },
           items: const [10, 20, 30, 50]
-              .map((value) => DropdownMenuItem<int>(
-                    value: value,
-                    child: Text('Limit $value'),
-                  ))
+              .map(
+                (value) => DropdownMenuItem<int>(
+                  value: value,
+                  child: Text('Limit $value'),
+                ),
+              )
               .toList(),
         ),
         OutlinedButton.icon(
@@ -344,11 +365,7 @@ class _PaginationBar extends StatelessWidget {
         if (isCompact) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              summary,
-              const SizedBox(height: 8),
-              controls,
-            ],
+            children: [summary, const SizedBox(height: 8), controls],
           );
         }
         return Row(
@@ -363,5 +380,3 @@ class _PaginationBar extends StatelessWidget {
     );
   }
 }
-
-

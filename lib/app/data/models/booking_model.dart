@@ -40,14 +40,12 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    final checkIn =
-        json['check_in_date'] != null
-            ? DateTime.parse(json['check_in_date'] as String)
-            : DateTime.now();
-    final checkOut =
-        json['check_out_date'] != null
-            ? DateTime.parse(json['check_out_date'] as String)
-            : checkIn.add(const Duration(days: 1));
+    final checkIn = json['check_in_date'] != null
+        ? DateTime.parse(json['check_in_date'] as String)
+        : DateTime.now();
+    final checkOut = json['check_out_date'] != null
+        ? DateTime.parse(json['check_out_date'] as String)
+        : checkIn.add(const Duration(days: 1));
     final propertyData = json['property'];
     Property? property;
     if (propertyData is Map) {
@@ -92,10 +90,9 @@ class Booking {
       totalAmount: _parseDouble(json['total_amount']),
       bookingStatus: json['booking_status']?.toString() ?? 'pending',
       paymentStatus: json['payment_status']?.toString() ?? 'pending',
-      createdAt:
-          json['created_at'] != null
-              ? DateTime.parse(json['created_at'] as String)
-              : DateTime.now(),
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
       property: property,
       propertyTitle: _stringOrNull(propertyTitleSource),
       propertyCity: _stringOrNull(propertyCitySource),

@@ -7,25 +7,25 @@ class NavigationController extends GetxController {
   final PageController pageController = PageController(initialPage: 0);
 
   final List<NavigationTab> tabs = [
-    NavigationTab(icon: Icons.explore, label: 'Explore', route: '/explore'),
+    NavigationTab(icon: Icons.explore, labelKey: 'nav.explore', route: '/explore'),
     NavigationTab(
       icon: Icons.favorite_outline,
-      label: 'Wishlist',
+      labelKey: 'nav.wishlist',
       route: '/wishlist',
     ),
     NavigationTab(
       icon: Icons.luggage_outlined,
-      label: 'Bookings',
+      labelKey: 'nav.bookings',
       route: '/trips',
     ),
     NavigationTab(
       icon: Icons.location_on_outlined,
-      label: 'Locate',
+      labelKey: 'nav.locate',
       route: '/inbox',
     ),
     NavigationTab(
       icon: Icons.person_outline,
-      label: 'Profile',
+      labelKey: 'nav.profile',
       route: '/profile',
     ),
   ];
@@ -52,8 +52,8 @@ class NavigationController extends GetxController {
 
 class NavigationTab {
   final IconData icon;
-  final String label;
+  final String labelKey;
   final String route;
 
-  NavigationTab({required this.icon, required this.label, required this.route});
+  NavigationTab({required this.icon, required this.labelKey, required this.route});
 }

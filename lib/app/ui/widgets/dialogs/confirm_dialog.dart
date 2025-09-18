@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 Future<bool?> showConfirmDialog(
   BuildContext context, {
@@ -13,11 +14,11 @@ Future<bool?> showConfirmDialog(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text('common.cancel'.tr),
         ),
         ElevatedButton(
           onPressed: () => Navigator.pop(context, true),
-          child: const Text('Confirm'),
+          child: Text('common.confirm'.tr),
         ),
       ],
     ),

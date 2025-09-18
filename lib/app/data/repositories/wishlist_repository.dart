@@ -22,39 +22,39 @@ class WishlistRepository {
       limit: limit,
       filters: filters,
     );
-    final rawList = (json['properties'] as List?) ??
+    final rawList =
+        (json['properties'] as List?) ??
         (json['data'] is Map<String, dynamic>
             ? (json['data'] as Map<String, dynamic>)['properties'] as List?
             : null);
-    final properties = rawList
-            ?.map((e) {
-              final map = Map<String, dynamic>.from(e);
-              if (map['daily_rate'] == null && map['base_price'] != null) {
-                final base = map['base_price'];
-                if (base is num) map['daily_rate'] = base;
-                if (base is String) {
-                  final parsed = double.tryParse(base);
-                  if (parsed != null) map['daily_rate'] = parsed;
-                }
-              }
-              map['purpose'] = map['purpose'] ?? 'short_stay';
-              map['currency'] = map['currency'] ?? 'INR';
-              map['title'] = map['title'] ?? map['name'] ?? 'Stay';
-              map['country'] = map['country'] ?? '';
-              map['city'] = map['city'] ?? '';
-              return Property.fromJson(map);
-            })
-            .toList() ??
+    final properties =
+        rawList?.map((e) {
+          final map = Map<String, dynamic>.from(e);
+          if (map['daily_rate'] == null && map['base_price'] != null) {
+            final base = map['base_price'];
+            if (base is num) map['daily_rate'] = base;
+            if (base is String) {
+              final parsed = double.tryParse(base);
+              if (parsed != null) map['daily_rate'] = parsed;
+            }
+          }
+          map['purpose'] = map['purpose'] ?? 'short_stay';
+          map['currency'] = map['currency'] ?? 'INR';
+          map['title'] = map['title'] ?? map['name'] ?? 'Stay';
+          map['country'] = map['country'] ?? '';
+          map['city'] = map['city'] ?? '';
+          return Property.fromJson(map);
+        }).toList() ??
         <Property>[];
-    final total = ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
+    final total =
+        ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
         properties.length;
     final current =
         ((json['page'] ?? json['currentPage']) as num?)?.toInt() ?? page;
     final totalPages =
         ((json['total_pages'] ?? json['totalPages']) as num?)?.toInt() ?? 1;
-    final resolvedLimit = ((json['limit'] ?? json['pageSize'] ?? limit)
-            as num?)
-        ?.toInt() ??
+    final resolvedLimit =
+        ((json['limit'] ?? json['pageSize'] ?? limit) as num?)?.toInt() ??
         limit;
     final filtersApplied = json['filters_applied'] ?? json['filters'];
     return UnifiedPropertyResponse(

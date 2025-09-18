@@ -108,10 +108,9 @@ class TripsController extends GetxController {
       pastBookings.assignAll(_allBookings);
       return;
     }
-    final filtered =
-        _allBookings
-            .where((booking) => _activeFilters.matchesBooking(booking))
-            .toList();
+    final filtered = _allBookings
+        .where((booking) => _activeFilters.matchesBooking(booking))
+        .toList();
     pastBookings.assignAll(filtered);
   }
 

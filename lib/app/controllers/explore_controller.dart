@@ -27,16 +27,16 @@ class ExploreController extends GetxController {
   final RxBool isLoading = true.obs; // Start with loading true
   final RxString errorMessage = ''.obs;
 
-  String get locationName =>
-      _locationService.locationName.isEmpty
-          ? 'this area'
-          : _locationService.locationName;
+  String get locationName => _locationService.locationName.isEmpty
+      ? 'this area'
+      : _locationService.locationName;
   List<Property> get recommendedHotels => nearbyHotels.toList();
 
   Future<void> Function() get refreshLocation =>
       () async =>
           await _locationService.getCurrentLocation(ensurePrecise: true);
-  VoidCallback get navigateToSearch => () => Get.toNamed('/search');
+  VoidCallback get navigateToSearch =>
+      () => Get.toNamed('/search');
 
   Future<void> useMyLocation() async {
     try {
@@ -247,4 +247,3 @@ class ExploreController extends GetxController {
     );
   }
 }
-

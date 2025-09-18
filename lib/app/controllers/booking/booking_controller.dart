@@ -105,7 +105,7 @@ class BookingController extends GetxController {
         if (resolved == null) {
           if (required) {
             AppLogger.warning(
-              'Missing ' + key + ' in pricing response. Defaulting to 0.0.',
+              'Missing $key in pricing response. Defaulting to 0.0.',
             );
           }
           return 0.0;

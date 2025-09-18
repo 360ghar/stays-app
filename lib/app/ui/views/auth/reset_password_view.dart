@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../../../controllers/auth/auth_controller.dart';
+import '../../theme/theme_extensions.dart';
 
 class ResetPasswordView extends StatefulWidget {
   const ResetPasswordView({super.key});
@@ -29,227 +31,77 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87),
+          icon: Icon(Icons.arrow_back_ios_new, color: colors.onSurface),
           onPressed: () => Get.back(),
         ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-
-              // Icon
               Center(
                 child: Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Colors.green.shade50,
+                    color: colors.primaryContainer.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.lock_reset_outlined,
                     size: 40,
-                    color: Colors.green.shade600,
+                    color: colors.primary,
                   ),
                 ),
               ),
-
               const SizedBox(height: 32),
-
-              // Title
-              const Text(
+              Text(
                 'Set New Password',
-                style: TextStyle(
-                  fontSize: 28,
+                style: textStyles.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: colors.onSurface,
                 ),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 12),
-
-              // Subtitle
               Text(
                 'Create a strong password for your account',
-                style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                style: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
+                ),
                 textAlign: TextAlign.center,
               ),
-
               const SizedBox(height: 48),
-
-              // New Password Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'New Password',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Obx(
-                    () => Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: controller.passwordError.value.isEmpty
-                              ? Colors.grey.shade300
-                              : Colors.red,
-                          width: controller.passwordError.value.isEmpty ? 1 : 2,
-                        ),
-                      ),
-                      child: TextFormField(
-                        controller: _passwordController,
-                        obscureText: !controller.isPasswordVisible.value,
-                        onChanged: (_) => controller.passwordError.value = '',
-                        decoration: InputDecoration(
-                          hintText: 'Enter new password',
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 18,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              controller.isPasswordVisible.value
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: Colors.grey,
-                            ),
-                            onPressed: controller.togglePasswordVisibility,
-                          ),
-                          hintStyle: const TextStyle(color: Colors.grey),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Obx(
-                    () => controller.passwordError.value.isEmpty
-                        ? const SizedBox(height: 4)
-                        : Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              controller.passwordError.value,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
+              _buildPasswordField(
+                label: 'New Password',
+                controller: _passwordController,
+                errorStream: controller.passwordError,
+                onChanged: (_) => controller.passwordError.value = '',
               ),
-
               const SizedBox(height: 24),
-
-              // Confirm Password Field
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Confirm Password',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Obx(
-                    () => Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: controller.confirmPasswordError.value.isEmpty
-                              ? Colors.grey.shade300
-                              : Colors.red,
-                          width: controller.confirmPasswordError.value.isEmpty
-                              ? 1
-                              : 2,
-                        ),
-                      ),
-                      child: TextFormField(
-                        controller: _confirmPasswordController,
-                        obscureText: !controller.isPasswordVisible.value,
-                        onChanged: (_) =>
-                            controller.confirmPasswordError.value = '',
-                        decoration: InputDecoration(
-                          hintText: 'Confirm new password',
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 18,
-                          ),
-                          prefixIcon: const Icon(
-                            Icons.lock_outline,
-                            color: Colors.grey,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              controller.isPasswordVisible.value
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: Colors.grey,
-                            ),
-                            onPressed: controller.togglePasswordVisibility,
-                          ),
-                          hintStyle: const TextStyle(color: Colors.grey),
-                        ),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Obx(
-                    () => controller.confirmPasswordError.value.isEmpty
-                        ? const SizedBox(height: 4)
-                        : Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              controller.confirmPasswordError.value,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
+              _buildPasswordField(
+                label: 'Confirm Password',
+                controller: _confirmPasswordController,
+                errorStream: controller.confirmPasswordError,
+                onChanged: (_) => controller.confirmPasswordError.value = '',
               ),
-
               const SizedBox(height: 16),
-
-              // Password Requirements
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: colors.secondaryContainer.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -257,28 +109,23 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   children: [
                     Text(
                       'Password requirements:',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: textStyles.bodySmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.blue.shade700,
+                        color: colors.onSecondaryContainer,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '• At least 6 characters long\n• Both passwords must match',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.blue.shade600,
+                      style: textStyles.bodySmall?.copyWith(
+                        color: colors.onSecondaryContainer.withValues(alpha: 0.9),
                         height: 1.3,
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 48),
-
-              // Reset Password Button
               Obx(
                 () => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
@@ -288,68 +135,65 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                         ? null
                         : _handleResetPassword,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4CAF50),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.onPrimary,
                       elevation: 2,
-                      shadowColor: const Color(
-                        0xFF4CAF50,
-                      ).withValues(alpha: 0.3),
+                      shadowColor: colors.primary.withValues(alpha: 0.25),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: controller.isLoading.value
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                colors.onPrimary,
                               ),
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Reset Password',
-                            style: TextStyle(
-                              fontSize: 18,
+                            style: textStyles.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
+                              color: colors.onPrimary,
                             ),
                           ),
                   ),
                 ),
               ),
-
               const SizedBox(height: 48),
-
-              // Security Note
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: context.elevatedSurface(0.06),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.security_outlined,
-                      color: Colors.grey.shade600,
+                      color: colors.onSurface.withValues(alpha: 0.6),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         'Your password will be encrypted and stored securely.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
+                        style: textStyles.bodySmall?.copyWith(
+                              color: colors.onSurface.withValues(alpha: 0.7),
+                            ) ??
+                            TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurface.withValues(alpha: 0.7),
+                            ),
                       ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -358,12 +202,97 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     );
   }
 
+  Widget _buildPasswordField({
+    required String label,
+    required TextEditingController controller,
+    required RxString errorStream,
+    required ValueChanged<String> onChanged,
+  }) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+
+    return Obx(
+      () {
+        final hasError = errorStream.value.isNotEmpty;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: textStyles.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: context.elevatedSurface(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: hasError ? colors.error : colors.outlineVariant,
+                  width: hasError ? 1.5 : 1,
+                ),
+              ),
+              child: TextFormField(
+                controller: controller,
+                obscureText: !this.controller.isPasswordVisible.value,
+                onChanged: onChanged,
+                decoration: InputDecoration(
+                  hintText: label == 'New Password'
+                      ? 'Enter new password'
+                      : 'Confirm new password',
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 18,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      this.controller.isPasswordVisible.value
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: colors.onSurface.withValues(alpha: 0.6),
+                    ),
+                    onPressed: this.controller.togglePasswordVisibility,
+                  ),
+                  hintStyle: textStyles.bodyMedium?.copyWith(
+                    color: colors.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+                style: textStyles.bodyMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: colors.onSurface,
+                ),
+              ),
+            ),
+            if (hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  errorStream.value,
+                  style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                      TextStyle(color: colors.error, fontSize: 12),
+                ),
+              )
+            else
+              const SizedBox(height: 4),
+          ],
+        );
+      },
+    );
+  }
+
   void _handleResetPassword() {
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
 
-    // Validate locally first
-    bool hasError = false;
+    var hasError = false;
 
     if (password.isEmpty) {
       controller.passwordError.value = 'Password is required';

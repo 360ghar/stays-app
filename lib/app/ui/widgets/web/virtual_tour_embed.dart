@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -167,7 +167,10 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.screen_rotation, color: Colors.white),
@@ -182,7 +185,10 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
                         onPressed: _requestIosMotionPermission,
                         child: const Text(
                           'Enable',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -265,10 +271,12 @@ class _VirtualTourFullScreenPage extends StatefulWidget {
   const _VirtualTourFullScreenPage({required this.url});
 
   @override
-  State<_VirtualTourFullScreenPage> createState() => _VirtualTourFullScreenPageState();
+  State<_VirtualTourFullScreenPage> createState() =>
+      _VirtualTourFullScreenPageState();
 }
 
-class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> {
+class _VirtualTourFullScreenPageState
+    extends State<_VirtualTourFullScreenPage> {
   late final WebViewController _controller;
   int _progress = 0;
   bool _hasError = false;
@@ -292,9 +300,11 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
     _controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
-      ..setUserAgent(Platform.isAndroid
-          ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
-          : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1')
+      ..setUserAgent(
+        Platform.isAndroid
+            ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
+            : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1',
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) => setState(() => _progress = progress),
@@ -369,10 +379,7 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
           else
             WebViewWidget(controller: _controller),
           if (_progress < 100)
-            LinearProgressIndicator(
-              value: _progress / 100,
-              minHeight: 2,
-            ),
+            LinearProgressIndicator(value: _progress / 100, minHeight: 2),
           if (_showMotionPromptFs)
             Positioned(
               left: 12,
@@ -382,7 +389,10 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
                 color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.screen_rotation, color: Colors.white),
@@ -397,7 +407,10 @@ class _VirtualTourFullScreenPageState extends State<_VirtualTourFullScreenPage> 
                         onPressed: _requestIosMotionPermissionFs,
                         child: const Text(
                           'Enable',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],

@@ -5,6 +5,7 @@ import '../../../controllers/filter_controller.dart';
 import '../../../controllers/trips_controller.dart';
 import '../../widgets/common/filter_button.dart';
 import '../../../utils/helpers/currency_helper.dart';
+import '../../theme/theme_extensions.dart';
 
 class TripsView extends GetView<TripsController> {
   const TripsView({super.key});
@@ -14,15 +15,17 @@ class TripsView extends GetView<TripsController> {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.booking);
 
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colors.surface,
         elevation: 0,
-        title: const Text(
-          'Past Bookings',
-          style: TextStyle(
-            color: Color(0xFF1A1A1A),
+        title: Text(
+          'trips.title'.tr,
+          style: textStyles.titleLarge?.copyWith(
+            color: colors.onSurface,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -36,11 +39,10 @@ class TripsView extends GetView<TripsController> {
                 height: 36,
                 child: FilterButton(
                   isActive: isActive,
-                  onPressed:
-                      () => filterController.openFilterSheet(
-                        context,
-                        FilterScope.booking,
-                      ),
+                  onPressed: () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.booking,
+                  ),
                 ),
               ),
             );
@@ -57,7 +59,7 @@ class TripsView extends GetView<TripsController> {
           if (hasFilters && controller.totalHistoryCount > 0) {
             return _buildFilteredEmptyState(context, filterController);
           }
-          return _buildEmptyState();
+          return _buildEmptyState(context);
         }
 
         final tags = filtersRx.value.activeTags();
@@ -66,17 +68,17 @@ class TripsView extends GetView<TripsController> {
           headerWidgets.add(
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: _buildFilterTags(tags, filterController),
+              child: _buildFilterTags(context, tags, filterController),
             ),
           );
         }
-        headerWidgets.add(_buildStatsSection());
+        headerWidgets.add(_buildStatsSection(context));
 
         final bookings = controller.pastBookings;
 
         return RefreshIndicator(
-          onRefresh:
-              () async => controller.loadPastBookings(forceRefresh: true),
+          onRefresh: () async =>
+              controller.loadPastBookings(forceRefresh: true),
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -86,7 +88,7 @@ class TripsView extends GetView<TripsController> {
                 return headerWidgets[index];
               }
               final booking = bookings[index - headerWidgets.length];
-              return _buildBookingCard(booking);
+              return _buildBookingCard(context, booking);
             },
           ),
         );
@@ -94,30 +96,36 @@ class TripsView extends GetView<TripsController> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.luggage_outlined, size: 80, color: Colors.grey[400]),
+            Icon(
+              Icons.luggage_outlined,
+              size: 80,
+              color: colors.outline.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 24),
-            const Text(
-              'No past bookings yet',
-              style: TextStyle(
+            Text(
+              'trips.empty_title'.tr,
+              style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
+                color: colors.onSurface,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'When you book a hotel through our app,\nyour trips will appear here',
+              'trips.empty_body'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: colors.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
@@ -125,7 +133,8 @@ class TripsView extends GetView<TripsController> {
             ElevatedButton(
               onPressed: () => Get.back(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
@@ -134,9 +143,9 @@ class TripsView extends GetView<TripsController> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Browse stays',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              child: Text(
+                'trips.browse_stays'.tr,
+                style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
           ],
@@ -149,42 +158,48 @@ class TripsView extends GetView<TripsController> {
     BuildContext context,
     FilterController filterController,
   ) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.filter_alt_off, size: 80, color: Colors.grey[400]),
+            Icon(
+              Icons.filter_alt_off,
+              size: 80,
+              color: colors.outline.withValues(alpha: 0.4),
+            ),
             const SizedBox(height: 24),
-            const Text(
-              'No trips match the filters',
-              style: TextStyle(
+            Text(
+              'trips.no_match_title'.tr,
+              style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1A1A1A),
+                color: colors.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'Try adjusting your filter options or clear them to revisit all your stays.',
+              'trips.no_match_body'.tr,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: colors.onSurface.withValues(alpha: 0.7),
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.booking,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.booking,
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 14,
@@ -193,14 +208,15 @@ class TripsView extends GetView<TripsController> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
-                'Adjust filters',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              child: Text(
+                'trips.adjust_filters'.tr,
+                style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
             TextButton(
               onPressed: () => filterController.clear(FilterScope.booking),
-              child: const Text('Clear filters'),
+              style: TextButton.styleFrom(foregroundColor: colors.primary),
+              child: Text('trips.clear_filters'.tr),
             ),
           ],
         ),
@@ -209,29 +225,37 @@ class TripsView extends GetView<TripsController> {
   }
 
   Widget _buildFilterTags(
+    BuildContext context,
     List<String> tags,
     FilterController filterController,
   ) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              tags
-                  .map(
-                    (tag) => Chip(
-                      label: Text(tag),
-                      backgroundColor: Colors.blue[50],
+          children: tags
+              .map(
+                (tag) => Chip(
+                  label: Text(
+                    tag,
+                    style: textStyles.labelMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  backgroundColor: colors.primaryContainer,
+                ),
+              )
+              .toList(),
         ),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton(
             onPressed: () => filterController.clear(FilterScope.booking),
+            style: TextButton.styleFrom(foregroundColor: colors.primary),
             child: const Text('Clear filters'),
           ),
         ),
@@ -239,17 +263,21 @@ class TripsView extends GetView<TripsController> {
     );
   }
 
-  Widget _buildStatsSection() {
+  Widget _buildStatsSection(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: (Theme.of(context).brightness == Brightness.dark)
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
             offset: const Offset(0, 2),
           ),
         ],
@@ -257,12 +285,12 @@ class TripsView extends GetView<TripsController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Your Travel Stats',
-            style: TextStyle(
+            style: textStyles.titleMedium?.copyWith(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 16),
@@ -270,6 +298,7 @@ class TripsView extends GetView<TripsController> {
             children: [
               Expanded(
                 child: _buildStatItem(
+                  context,
                   icon: Icons.hotel,
                   value: controller.totalBookings.toString(),
                   label: 'Total stays',
@@ -278,6 +307,7 @@ class TripsView extends GetView<TripsController> {
               ),
               Expanded(
                 child: _buildStatItem(
+                  context,
                   icon: Icons.attach_money,
                   value: CurrencyHelper.format(controller.totalSpent),
                   label: 'Total spent',
@@ -286,6 +316,7 @@ class TripsView extends GetView<TripsController> {
               ),
               Expanded(
                 child: _buildStatItem(
+                  context,
                   icon: Icons.location_on,
                   value: controller.favoriteDestination,
                   label: 'Top destination',
@@ -299,18 +330,21 @@ class TripsView extends GetView<TripsController> {
     );
   }
 
-  Widget _buildStatItem({
+  Widget _buildStatItem(
+    BuildContext context, {
     required IconData icon,
     required String value,
     required String label,
     required Color color,
   }) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: color, size: 24),
@@ -318,10 +352,10 @@ class TripsView extends GetView<TripsController> {
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: textStyles.titleSmall?.copyWith(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A1A),
+            color: colors.onSurface,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -330,7 +364,10 @@ class TripsView extends GetView<TripsController> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          style: textStyles.bodySmall?.copyWith(
+            fontSize: 12,
+            color: colors.onSurface.withValues(alpha: 0.7),
+          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
@@ -339,7 +376,7 @@ class TripsView extends GetView<TripsController> {
     );
   }
 
-  Widget _buildBookingCard(Map<String, dynamic> booking) {
+  Widget _buildBookingCard(BuildContext context, Map<String, dynamic> booking) {
     final status = (booking['status'] ?? 'pending').toString();
     final statusColor = status == 'completed' ? Colors.green : Colors.orange;
     final guests = booking['guests'];
@@ -354,15 +391,19 @@ class TripsView extends GetView<TripsController> {
     final imageUrl = (booking['image'] ?? '').toString();
     final canReview = booking['canReview'] == true;
 
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            color: (Theme.of(context).brightness == Brightness.dark)
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
             offset: const Offset(0, 2),
           ),
         ],
@@ -379,24 +420,23 @@ class TripsView extends GetView<TripsController> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child:
-                      imageUrl.isNotEmpty
-                          ? Image.network(
-                            imageUrl,
-                            height: 160,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                          : Container(
-                            height: 160,
-                            width: double.infinity,
-                            color: Colors.grey[300],
-                            child: const Icon(
-                              Icons.image,
-                              size: 50,
-                              color: Colors.white70,
-                            ),
+                  child: imageUrl.isNotEmpty
+                      ? Image.network(
+                          imageUrl,
+                          height: 160,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 160,
+                          width: double.infinity,
+                          color: colors.surfaceContainerHighest,
+                          child: Icon(
+                            Icons.image,
+                            size: 50,
+                            color: colors.onSurface.withValues(alpha: 0.5),
                           ),
+                        ),
                 ),
                 Positioned(
                   top: 12,
@@ -429,10 +469,10 @@ class TripsView extends GetView<TripsController> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: textStyles.titleMedium?.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A1A1A),
+                      color: colors.onSurface,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -443,15 +483,15 @@ class TripsView extends GetView<TripsController> {
                       Icon(
                         Icons.location_on_outlined,
                         size: 16,
-                        color: Colors.grey[600],
+                        color: colors.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           location,
-                          style: TextStyle(
+                          style: textStyles.bodySmall?.copyWith(
                             fontSize: 14,
-                            color: Colors.grey[600],
+                            color: colors.onSurface.withValues(alpha: 0.7),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -463,7 +503,9 @@ class TripsView extends GetView<TripsController> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: colors.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Column(
@@ -473,14 +515,15 @@ class TripsView extends GetView<TripsController> {
                             Icon(
                               Icons.calendar_today,
                               size: 16,
-                              color: Colors.grey[600],
+                              color: colors.onSurface.withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               dateRange,
-                              style: const TextStyle(
+                              style: textStyles.bodyMedium?.copyWith(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                                color: colors.onSurface,
                               ),
                             ),
                           ],
@@ -491,14 +534,14 @@ class TripsView extends GetView<TripsController> {
                             Icon(
                               Icons.group,
                               size: 16,
-                              color: Colors.grey[600],
+                              color: colors.onSurface.withValues(alpha: 0.7),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               guestsLabel,
-                              style: TextStyle(
+                              style: textStyles.bodySmall?.copyWith(
                                 fontSize: 14,
-                                color: Colors.grey[600],
+                                color: colors.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                           ],
@@ -512,10 +555,10 @@ class TripsView extends GetView<TripsController> {
                     children: [
                       Text(
                         totalDisplay,
-                        style: const TextStyle(
+                        style: textStyles.titleMedium?.copyWith(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                          color: colors.onSurface,
                         ),
                       ),
                       Row(
@@ -532,7 +575,8 @@ class TripsView extends GetView<TripsController> {
                           ElevatedButton(
                             onPressed: () => controller.rebookHotel(booking),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[600],
+                              backgroundColor: colors.primary,
+                              foregroundColor: colors.onPrimary,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 8,
@@ -561,8 +605,9 @@ class TripsView extends GetView<TripsController> {
 
   String _formatDate(String dateStr) {
     try {
-      final clean =
-          dateStr.isEmpty ? DateTime.now().toIso8601String() : dateStr;
+      final clean = dateStr.isEmpty
+          ? DateTime.now().toIso8601String()
+          : dateStr;
       final date = DateTime.parse(clean);
       const months = [
         'Jan',
