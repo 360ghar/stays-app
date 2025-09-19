@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:get/get.dart';
 
 import '../app/data/services/locale_service.dart';
+import '../app/utils/logger/app_logger.dart';
 
 class LocalizationService extends Translations {
   // Supported locales
@@ -29,12 +30,25 @@ class LocalizationService extends Translations {
     // Resolve saved locale
     initialLocale = localeService.loadLocale() ?? fallbackLocale;
 
-    // Load JSON files and flatten nested maps to dot.notation
-    final enJson = await rootBundle.loadString('l10n/en.json');
-    final hiJson = await rootBundle.loadString('l10n/hi.json');
+    try {
+      // Load JSON files asynchronously and flatten nested maps to dot.notation
+      final futures = await Future.wait([
+        rootBundle.loadString('l10n/en.json'),
+        rootBundle.loadString('l10n/hi.json'),
+      ]);
 
-    _keys['en_US'] = _flatten(json.decode(enJson) as Map<String, dynamic>);
-    _keys['hi_IN'] = _flatten(json.decode(hiJson) as Map<String, dynamic>);
+      final enJson = futures[0];
+      final hiJson = futures[1];
+
+      _keys['en_US'] = _flatten(json.decode(enJson) as Map<String, dynamic>);
+      _keys['hi_IN'] = _flatten(json.decode(hiJson) as Map<String, dynamic>);
+    } catch (e) {
+      // Fallback to empty maps if asset loading fails
+      _keys['en_US'] = {};
+      _keys['hi_IN'] = {};
+      // Log the error but don't crash the app
+      AppLogger.error('Error loading localization assets', e);
+    }
   }
 
   // Change locale by language display name (e.g. 'English')

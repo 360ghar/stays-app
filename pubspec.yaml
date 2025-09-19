@@ -91,7 +91,8 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - l10n/
+    - l10n/en.json
+    - l10n/hi.json
     - .env.dev
     - .env.staging
     - .env.prod

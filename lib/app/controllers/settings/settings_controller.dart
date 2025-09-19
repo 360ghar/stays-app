@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../data/services/locale_service.dart';
 import '../../../l10n/localization_service.dart';
+import '../../utils/logger/app_logger.dart';
 
 import 'theme_controller.dart';
 
@@ -85,7 +86,9 @@ class SettingsController extends GetxController {
       final localeService = Get.find<LocaleService>();
       await LocalizationService.updateLocale(locale, localeService);
       selectedLocale.value = locale;
-    } catch (_) {
+      AppLogger.info('Language changed to: ${locale.languageCode}_${locale.countryCode}');
+    } catch (e) {
+      AppLogger.error('Failed to change language', e);
       // Fallback without service registered (shouldn't happen in production)
       Get.updateLocale(locale);
       selectedLocale.value = locale;
