@@ -114,6 +114,30 @@ class AuthRepository {
     }
   }
 
+  Future<void> updatePassword({
+    required String newPassword,
+    String? currentPassword,
+  }) async {
+    try {
+      await _supabase.auth.updateUser(
+        supabase.UserAttributes(password: newPassword),
+      );
+      if (currentPassword != null && currentPassword.isNotEmpty) {
+        final userEmail = _supabase.auth.currentUser?.email;
+        if (userEmail != null) {
+          await _supabase.auth.signInWithPassword(
+            email: userEmail,
+            password: newPassword,
+          );
+        }
+      }
+    } on supabase.AuthException catch (e) {
+      final code =
+          e.statusCode == null ? null : int.tryParse('${e.statusCode}');
+      throw ApiException(message: e.message, statusCode: code ?? 400);
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _supabase.auth.signOut();

@@ -1,36 +1,52 @@
 import 'package:get/get.dart';
 
 import '../bindings/auth_binding.dart';
+import '../bindings/booking_binding.dart';
 import '../bindings/home_binding.dart';
 import '../bindings/listing_binding.dart';
-import '../bindings/booking_binding.dart';
-import '../bindings/splash_binding.dart';
 import '../bindings/message_binding.dart';
 import '../bindings/payment_binding.dart';
-import '../bindings/profile_binding.dart';
 import '../bindings/settings_binding.dart';
-
+import '../bindings/trips_binding.dart';
+import '../bindings/splash_binding.dart';
 import '../middlewares/auth_middleware.dart';
 import '../middlewares/initial_middleware.dart';
-
-import '../ui/views/auth/phone_login_view.dart';
-import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/forgot_password_view.dart';
-import '../ui/views/auth/verification_view.dart';
+import '../ui/views/auth/phone_login_view.dart';
 import '../ui/views/auth/reset_password_view.dart';
-import '../ui/views/home/home_shell_view.dart';
-import '../ui/views/listing/location_search_view.dart';
-import '../ui/views/listing/listing_detail_view.dart';
-import '../ui/views/listing/search_results_view.dart';
+import '../ui/views/auth/signup_view.dart';
+import '../ui/views/auth/verification_view.dart';
 import '../ui/views/booking/booking_view.dart';
-import '../ui/views/payment/payment_view.dart';
-import '../ui/views/payment/payment_methods_view.dart';
-import '../ui/views/messaging/locate_view.dart';
+import '../ui/views/home/home_shell_view.dart';
+import '../ui/views/listing/listing_detail_view.dart';
+import '../ui/views/listing/location_search_view.dart';
+import '../ui/views/listing/search_results_view.dart';
 import '../ui/views/messaging/chat_view.dart';
-import '../ui/views/home/profile_view.dart';
-import '../ui/views/splash/splash_view.dart';
+import '../ui/views/messaging/locate_view.dart';
+import '../ui/views/payment/payment_methods_view.dart';
+import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
+import '../ui/views/splash/splash_view.dart';
+import '../ui/views/trips/trips_view.dart';
 import 'app_routes.dart';
+import 'package:stays_app/features/profile/bindings/profile_binding.dart'
+    as feature_profile_binding;
+import 'package:stays_app/features/profile/views/profile_view.dart'
+    as feature_profile_view;
+import 'package:stays_app/features/profile/views/edit_profile_view.dart'
+    as feature_edit_profile_view;
+import 'package:stays_app/features/profile/views/preferences_view.dart'
+    as feature_preferences_view;
+import 'package:stays_app/features/profile/views/notifications_view.dart'
+    as feature_notifications_view;
+import 'package:stays_app/features/profile/views/privacy_view.dart'
+    as feature_privacy_view;
+import 'package:stays_app/features/profile/views/help_view.dart'
+    as feature_help_view;
+import 'package:stays_app/features/profile/views/about_view.dart'
+    as feature_about_view;
+import 'package:stays_app/features/profile/views/legal_view.dart'
+    as feature_legal_view;
 
 class AppPages {
   static const initial = Routes.initial;
@@ -131,8 +147,50 @@ class AppPages {
     ),
     GetPage(
       name: Routes.profile,
-      page: () => const ProfileView(),
-      binding: ProfileBinding(),
+      page: () => const feature_profile_view.ProfileView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.editProfile,
+      page: () => const feature_edit_profile_view.EditProfileView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profilePreferences,
+      page: () => const feature_preferences_view.PreferencesView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileNotifications,
+      page: () => const feature_notifications_view.NotificationsView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profilePrivacy,
+      page: () => const feature_privacy_view.PrivacyView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileHelp,
+      page: () => const feature_help_view.HelpView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileAbout,
+      page: () => const feature_about_view.AboutView(),
+      binding: feature_profile_binding.ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileLegal,
+      page: () => const feature_legal_view.LegalView(),
+      binding: feature_profile_binding.ProfileBinding(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
@@ -141,6 +199,12 @@ class AppPages {
       binding: SettingsBinding(),
       middlewares: [AuthMiddleware()],
       transition: Transition.cupertino,
+    ),
+    GetPage(
+      name: Routes.trips,
+      page: () => const TripsView(),
+      binding: TripsBinding(),
+      middlewares: [AuthMiddleware()],
     ),
   ];
 }

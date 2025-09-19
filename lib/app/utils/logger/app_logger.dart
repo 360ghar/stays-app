@@ -28,7 +28,7 @@ class AppLogger {
   static void warning(String message, [dynamic data]) =>
       _logger.w(_fmt(message, data));
   static void error(String message, [dynamic error, StackTrace? stackTrace]) =>
-      _logger.e(_fmt(message, error), stackTrace: stackTrace);
+      _logger.e(_fmt(message, error), error: error, stackTrace: stackTrace);
 
   static void logRequest(dynamic request) =>
       _logger.d(_fmt('API Request', request));

@@ -6,6 +6,8 @@ import '../../data/models/user_model.dart';
 import '../../routes/app_routes.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../data/repositories/profile_repository.dart';
+import '../../data/providers/users_provider.dart';
 
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
@@ -189,7 +191,7 @@ class AuthController extends GetxController {
       isAuthenticated.value = true;
 
       AppLogger.info(
-        '✅ Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
+        'âœ… Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
       );
 
       _showSuccessSnackbar(
@@ -405,6 +407,82 @@ class AuthController extends GetxController {
     }
   }
 
+  ProfileRepository _ensureProfileRepository() {
+    if (Get.isRegistered<ProfileRepository>()) {
+      return Get.find<ProfileRepository>();
+    }
+    if (!Get.isRegistered<UsersProvider>()) {
+      Get.put<UsersProvider>(UsersProvider());
+    }
+    final repo = ProfileRepository(provider: Get.find<UsersProvider>());
+    Get.put<ProfileRepository>(repo);
+    return repo;
+  }
+
+  Future<UserModel?> updateUserProfileData({
+    String? firstName,
+    String? lastName,
+    String? fullName,
+    String? bio,
+    String? phone,
+    DateTime? dateOfBirth,
+    String? avatarUrl,
+    String? agentId,
+  }) async {
+    try {
+      final repo = _ensureProfileRepository();
+      final updated = await repo.updateProfile(
+        firstName: firstName,
+        lastName: lastName,
+        fullName: fullName,
+        bio: bio,
+        phone: phone,
+        dateOfBirth: dateOfBirth,
+        avatarUrl: avatarUrl,
+        agentId: agentId,
+      );
+      currentUser.value = updated;
+      return updated;
+    } catch (e, stack) {
+      AppLogger.error('Failed to update user profile', e, stack);
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> updateUserPreferences(
+    Map<String, dynamic> preferences,
+  ) async {
+    try {
+      final repo = _ensureProfileRepository();
+      final updated = await repo.updatePreferences(preferences);
+      currentUser.value = updated;
+      return updated;
+    } catch (e, stack) {
+      AppLogger.error('Failed to update user preferences', e, stack);
+      rethrow;
+    }
+  }
+
+  Future<UserModel?> updateUserLocation({
+    required double latitude,
+    required double longitude,
+    bool shareLocation = true,
+  }) async {
+    try {
+      final repo = _ensureProfileRepository();
+      final updated = await repo.updateLocation(
+        latitude: latitude,
+        longitude: longitude,
+        shareLocation: shareLocation,
+      );
+      currentUser.value = updated;
+      return updated;
+    } catch (e, stack) {
+      AppLogger.error('Failed to update user location', e, stack);
+      rethrow;
+    }
+  }
+
   void _showSuccessSnackbar({required String title, required String message}) {
     Get.snackbar(
       '',
@@ -459,9 +537,10 @@ class AuthController extends GetxController {
         message = 'Server error. Please try again later.';
         break;
       default:
-        message = e.message.isNotEmpty
-            ? e.message
-            : 'An error occurred. Please try again.';
+        message =
+            e.message.isNotEmpty
+                ? e.message
+                : 'An error occurred. Please try again.';
     }
     _showErrorSnackbar(title: title, message: message);
   }

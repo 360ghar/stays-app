@@ -38,17 +38,26 @@ class LocalizationService extends Translations {
   }
 
   // Change locale by language display name (e.g. 'English')
-  static Future<void> changeLocale(String lang, LocaleService localeService) async {
+  static Future<void> changeLocale(
+    String lang,
+    LocaleService localeService,
+  ) async {
     final locale = _getLocaleFromLanguage(lang);
     await _updateLocale(locale, localeService);
   }
 
   // Change locale directly
-  static Future<void> updateLocale(Locale locale, LocaleService localeService) async {
+  static Future<void> updateLocale(
+    Locale locale,
+    LocaleService localeService,
+  ) async {
     await _updateLocale(locale, localeService);
   }
 
-  static Future<void> _updateLocale(Locale locale, LocaleService localeService) async {
+  static Future<void> _updateLocale(
+    Locale locale,
+    LocaleService localeService,
+  ) async {
     await localeService.saveLocale(locale);
     Get.updateLocale(locale);
   }

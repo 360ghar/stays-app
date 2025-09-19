@@ -36,6 +36,11 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     'room',
   ];
 
+  late ThemeData _theme;
+  late ColorScheme _colorScheme;
+  late bool _isDarkTheme;
+  late Color _dividerColor;
+
   late RangeValues _priceRange;
   late Set<String> _selectedTypes;
   late double _minRating;
@@ -150,6 +155,13 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    _theme = Theme.of(context);
+    _colorScheme = _theme.colorScheme;
+    _isDarkTheme = _theme.brightness == Brightness.dark;
+    _dividerColor = _colorScheme.outlineVariant.withValues(
+      alpha: _isDarkTheme ? 0.35 : 0.55,
+    );
+
     final mediaQuery = MediaQuery.of(context);
     final height = mediaQuery.size.height * 0.85;
     return GestureDetector(
@@ -157,45 +169,63 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
       child: Container(
         height: height,
         padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: _colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: _colorScheme.shadow.withValues(
+                alpha: _isDarkTheme ? 0.6 : 0.12,
+              ),
+              blurRadius: 24,
+              offset: const Offset(0, -4),
+            ),
+          ],
         ),
-        child: Column(
-          children: [
-            _buildHeader(context),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildPriceSection(),
-                    const SizedBox(height: 24),
-                    _buildPropertyTypeSection(),
-                    const SizedBox(height: 24),
-                    _buildRatingSection(),
-                    const SizedBox(height: 24),
-                    _buildExperienceSection(),
-                    const SizedBox(height: 24),
-                    _buildLocationSection(),
-                  ],
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Divider(height: 1, thickness: 1, color: _dividerColor),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPriceSection(context),
+                      const SizedBox(height: 24),
+                      _buildPropertyTypeSection(context),
+                      const SizedBox(height: 24),
+                      _buildRatingSection(context),
+                      const SizedBox(height: 24),
+                      _buildExperienceSection(context),
+                      const SizedBox(height: 24),
+                      _buildLocationSection(context),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const Divider(height: 1),
-            _buildFooter(context),
-          ],
+              Divider(height: 1, thickness: 1, color: _dividerColor),
+              _buildFooter(context),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
+    final textTheme = _theme.textTheme;
+    final handleColor = _colorScheme.outlineVariant.withValues(
+      alpha: _isDarkTheme ? 0.6 : 0.3,
+    );
+    final iconColor = _colorScheme.onSurface.withValues(alpha: 0.7);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
       child: Row(
@@ -205,33 +235,42 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
             height: 4,
             margin: const EdgeInsets.only(right: 12),
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: handleColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           Expanded(
             child: Text(
               'filters.title'.tr,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.close),
+            icon: Icon(Icons.close, color: iconColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPriceSection() {
+  Widget _buildPriceSection(BuildContext context) {
+    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
+    InputDecoration priceDecoration(String label) => InputDecoration(
+      labelText: label,
+      prefixText: '₹ ',
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'filters.price_per_night'.tr,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        Text('filters.price_per_night'.tr, style: labelStyle),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -240,13 +279,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 controller: _minPriceController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: 'filters.min'.tr,
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                decoration: priceDecoration('filters.min'.tr),
               ),
             ),
             const SizedBox(width: 12),
@@ -255,13 +288,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 controller: _maxPriceController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: InputDecoration(
-                  labelText: 'filters.max'.tr,
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+                decoration: priceDecoration('filters.max'.tr),
               ),
             ),
           ],
@@ -276,7 +303,8 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
             _formatAmount(_priceRange.start),
             _formatAmount(_priceRange.end),
           ),
-          activeColor: Colors.blue[600],
+          activeColor: _colorScheme.primary,
+          inactiveColor: _colorScheme.primary.withValues(alpha: 0.15),
           onChanged: (values) {
             setState(() => _priceRange = values);
             _syncPriceControllers(values);
@@ -293,34 +321,38 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return value.toStringAsFixed(0);
   }
 
-  Widget _buildPropertyTypeSection() {
+  Widget _buildPropertyTypeSection(BuildContext context) {
+    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Property type',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        Text('Property type', style: labelStyle),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _propertyTypeOptions.map((option) {
-            final selected = _selectedTypes.contains(option);
-            return FilterChip(
-              label: Text(_formatPropertyType(option)),
-              selected: selected,
-              onSelected: (value) {
-                setState(() {
-                  if (value) {
-                    _selectedTypes.add(option);
-                  } else {
-                    _selectedTypes.remove(option);
-                  }
-                });
-              },
-            );
-          }).toList(),
+          children:
+              _propertyTypeOptions.map((option) {
+                final selected = _selectedTypes.contains(option);
+                return FilterChip(
+                  label: Text(_formatPropertyType(option)),
+                  selected: selected,
+                  selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
+                  checkmarkColor: _colorScheme.onPrimaryContainer,
+                  onSelected: (value) {
+                    setState(() {
+                      if (value) {
+                        _selectedTypes.add(option);
+                      } else {
+                        _selectedTypes.remove(option);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
         ),
       ],
     );
@@ -330,28 +362,31 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return option
         .split('_')
         .map(
-          (word) => word.isEmpty
-              ? word
-              : '${word[0].toUpperCase()}${word.substring(1)}',
+          (word) =>
+              word.isEmpty
+                  ? word
+                  : '${word[0].toUpperCase()}${word.substring(1)}',
         )
         .join(' ');
   }
 
-  Widget _buildRatingSection() {
+  Widget _buildRatingSection(BuildContext context) {
+    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+    final bodyStyle = _theme.textTheme.bodyMedium;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Guest rating',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        Text('Guest rating', style: labelStyle),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Any'),
-            Text('${_minRating.toStringAsFixed(1)} ★'),
-            const Text('5 ★'),
+            Text('Any', style: bodyStyle),
+            Text('${_minRating.toStringAsFixed(1)} ★', style: bodyStyle),
+            Text('5 ★', style: bodyStyle),
           ],
         ),
         Slider(
@@ -359,14 +394,19 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
           min: 0,
           max: 5,
           divisions: 10,
-          activeColor: Colors.blue[600],
+          activeColor: _colorScheme.primary,
+          inactiveColor: _colorScheme.primary.withValues(alpha: 0.15),
           onChanged: (value) => setState(() => _minRating = value),
         ),
       ],
     );
   }
 
-  Widget _buildExperienceSection() {
+  Widget _buildExperienceSection(BuildContext context) {
+    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
     final quickFilters = <_QuickFilterOption>[
       _QuickFilterOption('Instant book', _instantBook, (value) {
         setState(() => _instantBook = value);
@@ -385,34 +425,35 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Experience',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        Text('Experience', style: labelStyle),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: quickFilters.map((option) {
-            return FilterChip(
-              label: Text(option.label),
-              selected: option.value,
-              onSelected: option.onChanged,
-            );
-          }).toList(),
+          children:
+              quickFilters.map((option) {
+                return FilterChip(
+                  label: Text(option.label),
+                  selected: option.value,
+                  selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
+                  checkmarkColor: _colorScheme.onPrimaryContainer,
+                  onSelected: option.onChanged,
+                );
+              }).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildLocationSection() {
+  Widget _buildLocationSection(BuildContext context) {
+    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Location',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        Text('Location', style: labelStyle),
         const SizedBox(height: 12),
         TextField(
           controller: _cityController,
@@ -427,8 +468,11 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Search radius (km)'),
-            Text(_radius.toStringAsFixed(0)),
+            Text('Search radius (km)', style: _theme.textTheme.bodyMedium),
+            Text(
+              _radius.toStringAsFixed(0),
+              style: _theme.textTheme.bodyMedium,
+            ),
           ],
         ),
         Slider(
@@ -436,7 +480,8 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
           min: 1,
           max: 100,
           divisions: 99,
-          activeColor: Colors.blue[600],
+          activeColor: _colorScheme.primary,
+          inactiveColor: _colorScheme.primary.withValues(alpha: 0.15),
           onChanged: (value) => setState(() => _radius = value),
         ),
       ],
@@ -451,6 +496,15 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
           Expanded(
             child: OutlinedButton(
               onPressed: _reset,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _colorScheme.primary,
+                side: BorderSide(
+                  color: _colorScheme.primary.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               child: const Text('Reset'),
             ),
           ),
@@ -459,8 +513,12 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
             child: ElevatedButton(
               onPressed: () => _apply(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
+                backgroundColor: _colorScheme.primary,
+                foregroundColor: _colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: const Text('Apply'),
             ),

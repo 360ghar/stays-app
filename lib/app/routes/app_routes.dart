@@ -20,8 +20,19 @@ abstract class Routes {
   // Profile related routes
   static const trips = '/trips';
   static const accountSettings = '/account-settings';
-  static const help = '/help';
-  static const profileView = '/profile-view';
-  static const privacy = '/privacy';
-  static const legal = '/legal';
+  static const editProfile = '/profile/edit';
+  static const profilePreferences = '/profile/preferences';
+  static const profileNotifications = '/profile/notifications';
+  static const profilePrivacy = '/profile/privacy';
+  static const profileHelp = '/profile/help';
+  static const profileAbout = '/profile/about';
+  static const profileLegal = '/profile/legal';
+
+  // Backwards compatibility aliases (will be removed once consumers migrate)
+  static const help = profileHelp;
+  static const profileView = editProfile;
+  static const privacySecurity = profilePrivacy;
+  static const appInfo = profileAbout;
+  static const legal = profileLegal;
+  static const privacy = profilePrivacy;
 }
