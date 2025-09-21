@@ -91,6 +91,8 @@ class Property {
   final String? virtualTourUrl;
   final bool? has360View;
 
+  bool get hasVirtualTour => virtualTourUrl?.isNotEmpty == true;
+
   // Features and amenities
   @JsonKey(fromJson: _stringListFromJson)
   final List<String>? features;
@@ -214,16 +216,17 @@ class Property {
   }
 
   // Helper methods
-  String get displayImage {
+  String? get displayImage {
     if (coverImage != null && coverImage!.isNotEmpty) return coverImage!;
     if (images != null && images!.isNotEmpty) {
       final mainImage = images!.firstWhere(
         (img) => img.isMainImage,
         orElse: () => images!.first,
       );
-      return mainImage.imageUrl;
+      if (mainImage.imageUrl.isNotEmpty) return mainImage.imageUrl;
     }
-    return '';
+    // Return null instead of empty string to prevent NetworkImage crashes
+    return null;
   }
 
   String get displayPrice => '₹${pricePerNight.toStringAsFixed(0)}';

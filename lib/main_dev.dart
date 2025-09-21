@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -34,7 +33,10 @@ Future<void> main() async {
     permanent: true,
   );
   await LocalizationService.init(localeService);
-  AppLogger.info('Localization initialized with locale: ${LocalizationService.initialLocale}');
+  Get.updateLocale(LocalizationService.initialLocale);
+  AppLogger.info(
+    'Localization initialized with locale: ${LocalizationService.initialLocale}',
+  );
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -48,28 +50,19 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    return Obx(() {
-      final currentLocale = Get.locale ?? LocalizationService.initialLocale;
-      AppLogger.debug('Building MyApp with locale: ${currentLocale.languageCode}_${currentLocale.countryCode}');
-      return GetMaterialApp(
-        title: '360ghar stays (Dev)',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeController.themeMode.value,
-        translations: LocalizationService(),
-        locale: currentLocale,
-        fallbackLocale: LocalizationService.fallbackLocale,
-        supportedLocales: LocalizationService.locales,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        initialBinding: InitialBinding(),
-        initialRoute: AppPages.initial,
-        getPages: AppPages.routes,
-        debugShowCheckedModeBanner: false,
-      );
-    });
+    return GetMaterialApp(
+      title: '360ghar stays (Dev)',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeController.themeMode.value,
+      translations: LocalizationService(),
+      locale: LocalizationService.initialLocale,
+      fallbackLocale: LocalizationService.fallbackLocale,
+      supportedLocales: LocalizationService.locales,
+      initialBinding: InitialBinding(),
+      initialRoute: AppPages.initial,
+      getPages: AppPages.routes,
+      debugShowCheckedModeBanner: false,
+    );
   }
 }

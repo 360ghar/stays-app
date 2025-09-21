@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../controllers/navigation_controller.dart';
-import '../../../bindings/wishlist_binding.dart';
-import '../../../bindings/trips_binding.dart';
-import '../../../bindings/message_binding.dart';
+
 import '../../../controllers/messaging/hotels_map_controller.dart';
-import '../../../bindings/profile_binding.dart';
-import '../wishlist/wishlist_view.dart';
-import '../trips/trips_view.dart';
+import '../../../controllers/navigation_controller.dart';
 import '../messaging/locate_view.dart';
-import 'profile_view.dart';
+import '../trips/trips_view.dart';
+import '../wishlist/wishlist_view.dart';
 import 'explore_view.dart';
+import 'profile_view.dart';
 
 class SimpleHomeView extends StatefulWidget {
   const SimpleHomeView({super.key});
@@ -20,53 +17,40 @@ class SimpleHomeView extends StatefulWidget {
 }
 
 class _SimpleHomeViewState extends State<SimpleHomeView> {
-  late NavigationController controller;
+  late final NavigationController controller;
 
   @override
   void initState() {
     super.initState();
-    // Get the navigation controller
     controller = Get.find<NavigationController>();
-
-    // Initialize bindings for all tabs
-    WishlistBinding().dependencies();
-    TripsBinding().dependencies();
-    MessageBinding().dependencies();
-    ProfileBinding().dependencies();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final shadowColor = theme.brightness == Brightness.dark
-        ? Colors.black.withValues(alpha: 0.3)
-        : Colors.black.withValues(alpha: 0.05);
+    final shadowColor =
+        theme.brightness == Brightness.dark
+            ? Colors.black.withValues(alpha: 0.3)
+            : Colors.black.withValues(alpha: 0.05);
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: PageView(
         controller: controller.pageController,
         onPageChanged: (index) {
           controller.currentIndex.value = index;
-          // When navigating to Locate tab (index 3), refresh precise location
-          if (index == 3) {
-            try {
-              Get.find<HotelsMapController>().getCurrentLocation();
-            } catch (_) {
-              // Controller will be lazily created on first access by LocateView
-            }
+          if (index == 3 && Get.isRegistered<HotelsMapController>()) {
+            Get.find<HotelsMapController>().getCurrentLocation();
           }
         },
-        children: [
-          const ExploreView(),
-          const WishlistView(),
-          const TripsView(),
-          const LocateView(),
-          const ProfileView(),
+        children: const [
+          ExploreView(),
+          WishlistView(),
+          TripsView(),
+          LocateView(),
+          ProfileView(),
         ],
       ),
-
-      // Bottom navigation
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -85,19 +69,20 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
             child: Obx(
               () => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: controller.tabs.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final tab = entry.value;
-                  return Expanded(
-                    child: _buildNavItem(
-                      context,
-                      tab.icon,
-                      tab.labelKey,
-                      controller.currentIndex.value == index,
-                      () => controller.changeTab(index),
-                    ),
-                  );
-                }).toList(),
+                children:
+                    controller.tabs.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final tab = entry.value;
+                      final isActive = controller.currentIndex.value == index;
+                      return Expanded(
+                        child: _NavItem(
+                          icon: tab.icon,
+                          labelKey: tab.labelKey,
+                          isActive: isActive,
+                          onTap: () => controller.changeTab(index),
+                        ),
+                      );
+                    }).toList(),
               ),
             ),
           ),
@@ -105,21 +90,30 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
       ),
     );
   }
+}
 
-  Widget _buildNavItem(
-    BuildContext context,
-    IconData icon,
-    String labelKey,
-    bool isActive,
-    VoidCallback onTap,
-  ) {
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.icon,
+    required this.labelKey,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String labelKey;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final activeColor = colorScheme.primary;
     final inactiveColor = colorScheme.onSurface.withValues(alpha: 0.6);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,

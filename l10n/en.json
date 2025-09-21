@@ -46,7 +46,7 @@
     },
     "language": {
       "english": "English",
-      "hindi": "हिन्दी"
+      "hindi": "Hindi"
     }
   },
   "profile": {
@@ -65,7 +65,7 @@
     "terms_policies": "Terms and policies",
     "logout": "Log Out",
     "sign_out": "Sign out of your account",
-    "version_info": "Version 1.0.0 • Made with ❤️"
+    "version_info": "Version 1.0.0 — Made with love"
   },
   "trips": {
     "title": "Past Bookings",
@@ -83,11 +83,26 @@
     "min": "Min",
     "max": "Max"
   },
+  "explore": {
+    "search_placeholder": "Search stays",
+    "use_my_location": "Use my location",
+    "popular_stays": "Popular stays near @city",
+    "popular_hotels": "Popular hotels near @city",
+    "recommended": "Recommended for you",
+    "no_results": "No stays available right now."
+  },
+  "locate": {
+    "search_hint": "Search location...",
+    "loading_hotels": "Loading stays nearby...",
+    "hotels_count": "@count hotels"
+  },
   "common": {
     "ok": "OK",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "error": "Error",
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "clear": "Clear",
+    "view_details": "View details"
   }
 }

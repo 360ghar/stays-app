@@ -16,7 +16,7 @@ class LocalizationService extends Translations {
     const Locale('hi', 'IN'),
   ];
 
-  // Loaded keys map (e.g. {'en_US': {...}, 'hi_IN': {...}})
+  // Loaded keys map with fallback support
   static final Map<String, Map<String, String>> _keys = {};
 
   // Initial locale is resolved and assigned during init()
@@ -40,14 +40,44 @@ class LocalizationService extends Translations {
       final enJson = futures[0];
       final hiJson = futures[1];
 
-      _keys['en_US'] = _flatten(json.decode(enJson) as Map<String, dynamic>);
-      _keys['hi_IN'] = _flatten(json.decode(hiJson) as Map<String, dynamic>);
+      // Load English translations
+      final englishKeys = _flatten(json.decode(enJson) as Map<String, dynamic>);
+      _keys['en_US'] = englishKeys;
+
+      // Load Hindi translations with English fallback
+      final hindiKeys = _flatten(json.decode(hiJson) as Map<String, dynamic>);
+      _keys['hi_IN'] = _createFallbackMap(hindiKeys, englishKeys);
+
+      // Log missing keys for debugging
+      _logMissingKeys(hindiKeys, englishKeys);
+
     } catch (e) {
       // Fallback to empty maps if asset loading fails
       _keys['en_US'] = {};
       _keys['hi_IN'] = {};
       // Log the error but don't crash the app
       AppLogger.error('Error loading localization assets', e);
+    }
+  }
+
+  // Create a map with Hindi keys, falling back to English for missing keys
+  static Map<String, String> _createFallbackMap(
+    Map<String, String> hindiKeys,
+    Map<String, String> englishKeys,
+  ) {
+    final result = Map<String, String>.from(englishKeys); // Start with English
+    result.addAll(hindiKeys); // Override with Hindi translations
+    return result;
+  }
+
+  // Log missing keys for debugging
+  static void _logMissingKeys(
+    Map<String, String> hindiKeys,
+    Map<String, String> englishKeys,
+  ) {
+    final missingKeys = englishKeys.keys.where((key) => !hindiKeys.containsKey(key)).toList();
+    if (missingKeys.isNotEmpty) {
+      AppLogger.warning('Missing Hindi translations for keys: ${missingKeys.join(', ')}');
     }
   }
 
@@ -72,6 +102,7 @@ class LocalizationService extends Translations {
     Locale locale,
     LocaleService localeService,
   ) async {
+    if (Get.locale == locale) return;
     await localeService.saveLocale(locale);
     Get.updateLocale(locale);
   }
@@ -92,7 +123,11 @@ Map<String, String> _flatten(Map<String, dynamic> json, [String prefix = '']) {
     if (value is Map<String, dynamic>) {
       result.addAll(_flatten(value, newKey));
     } else {
-      result[newKey] = value?.toString() ?? '';
+      final stringValue = value?.toString() ?? '';
+      // Skip empty values to prevent issues
+      if (stringValue.isNotEmpty) {
+        result[newKey] = stringValue;
+      }
     }
   });
   return result;

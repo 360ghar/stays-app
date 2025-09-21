@@ -33,6 +33,7 @@ Future<void> main() async {
     permanent: true,
   );
   await LocalizationService.init(localeService);
+  Get.updateLocale(LocalizationService.initialLocale);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -47,13 +48,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     return Obx(() {
+      final currentLocale = Get.locale ?? LocalizationService.initialLocale;
       return GetMaterialApp(
         title: '360ghar stays',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: themeController.themeMode.value,
         translations: LocalizationService(),
-        locale: LocalizationService.initialLocale,
+        locale: currentLocale,
         fallbackLocale: LocalizationService.fallbackLocale,
         supportedLocales: LocalizationService.locales,
         localizationsDelegates: const [

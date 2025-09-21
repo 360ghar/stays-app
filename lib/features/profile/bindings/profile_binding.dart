@@ -26,57 +26,78 @@ class ProfileBinding extends Bindings {
       );
     }
 
-    Get.lazyPut<UsersProvider>(() => UsersProvider());
-    Get.lazyPut<ProfileRepository>(
-      () => ProfileRepository(provider: Get.find<UsersProvider>()),
-    );
+    if (!Get.isRegistered<UsersProvider>()) {
+      Get.lazyPut<UsersProvider>(() => UsersProvider(), fenix: true);
+    }
 
-    Get.lazyPut<ProfileController>(
-      () => ProfileController(
-        profileRepository: Get.find<ProfileRepository>(),
-        authController: Get.find<AuthController>(),
-      ),
-      fenix: true,
-    );
+    if (!Get.isRegistered<ProfileRepository>()) {
+      Get.lazyPut<ProfileRepository>(
+        () => ProfileRepository(provider: Get.find<UsersProvider>()),
+        fenix: true,
+      );
+    }
 
-    Get.lazyPut<EditProfileController>(
-      () => EditProfileController(
-        profileRepository: Get.find<ProfileRepository>(),
-        profileController: Get.find<ProfileController>(),
-        authController: Get.find<AuthController>(),
-      ),
-      fenix: true,
-    );
+    if (!Get.isRegistered<ProfileController>()) {
+      Get.lazyPut<ProfileController>(
+        () => ProfileController(
+          profileRepository: Get.find<ProfileRepository>(),
+          authController: Get.find<AuthController>(),
+        ),
+        fenix: true,
+      );
+    }
 
-    Get.lazyPut<PreferencesController>(
-      () => PreferencesController(
-        profileRepository: Get.find<ProfileRepository>(),
-        profileController: Get.find<ProfileController>(),
-        themeController: Get.find<ThemeController>(),
-        localeService: Get.find<LocaleService>(),
-      ),
-      fenix: true,
-    );
+    if (!Get.isRegistered<EditProfileController>()) {
+      Get.lazyPut<EditProfileController>(
+        () => EditProfileController(
+          profileRepository: Get.find<ProfileRepository>(),
+          profileController: Get.find<ProfileController>(),
+          authController: Get.find<AuthController>(),
+        ),
+        fenix: true,
+      );
+    }
 
-    Get.lazyPut<NotificationsController>(
-      () => NotificationsController(
-        profileRepository: Get.find<ProfileRepository>(),
-        profileController: Get.find<ProfileController>(),
-      ),
-      fenix: true,
-    );
+    if (!Get.isRegistered<PreferencesController>()) {
+      Get.lazyPut<PreferencesController>(
+        () => PreferencesController(
+          profileRepository: Get.find<ProfileRepository>(),
+          profileController: Get.find<ProfileController>(),
+          themeController: Get.find<ThemeController>(),
+          localeService: Get.find<LocaleService>(),
+        ),
+        fenix: true,
+      );
+    }
 
-    Get.lazyPut<PrivacyController>(
-      () => PrivacyController(
-        profileRepository: Get.find<ProfileRepository>(),
-        profileController: Get.find<ProfileController>(),
-        authRepository: Get.find<AuthRepository>(),
-        authController: Get.find<AuthController>(),
-      ),
-      fenix: true,
-    );
+    if (!Get.isRegistered<NotificationsController>()) {
+      Get.lazyPut<NotificationsController>(
+        () => NotificationsController(
+          profileRepository: Get.find<ProfileRepository>(),
+          profileController: Get.find<ProfileController>(),
+        ),
+        fenix: true,
+      );
+    }
 
-    Get.lazyPut<HelpController>(() => HelpController(), fenix: true);
-    Get.lazyPut<AboutController>(() => AboutController(), fenix: true);
+    if (!Get.isRegistered<PrivacyController>()) {
+      Get.lazyPut<PrivacyController>(
+        () => PrivacyController(
+          profileRepository: Get.find<ProfileRepository>(),
+          profileController: Get.find<ProfileController>(),
+          authRepository: Get.find<AuthRepository>(),
+          authController: Get.find<AuthController>(),
+        ),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<HelpController>()) {
+      Get.lazyPut<HelpController>(() => HelpController(), fenix: true);
+    }
+
+    if (!Get.isRegistered<AboutController>()) {
+      Get.lazyPut<AboutController>(() => AboutController(), fenix: true);
+    }
   }
 }

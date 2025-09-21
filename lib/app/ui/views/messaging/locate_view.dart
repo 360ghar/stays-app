@@ -58,9 +58,10 @@ class LocateView extends GetView<HotelsMapController> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: context.isDark
-                                  ? Colors.black.withValues(alpha: 0.4)
-                                  : Colors.black.withValues(alpha: 0.08),
+                              color:
+                                  context.isDark
+                                      ? Colors.black.withValues(alpha: 0.4)
+                                      : Colors.black.withValues(alpha: 0.08),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -75,7 +76,7 @@ class LocateView extends GetView<HotelsMapController> {
                           onChanged: controller.onSearchChanged,
                           onSubmitted: controller.onSearchSubmitted,
                           decoration: InputDecoration(
-                            hintText: 'Search location...',
+                            hintText: 'locate.search_hint'.tr,
                             prefixIcon: Icon(
                               Icons.search,
                               color: colors.onSurface.withValues(alpha: 0.7),
@@ -83,29 +84,29 @@ class LocateView extends GetView<HotelsMapController> {
                             suffixIcon: Obx(
                               () =>
                                   (controller.isLoadingLocation.value ||
-                                      controller.isSearching.value)
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12.0),
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                                          controller.isSearching.value)
+                                      ? const Padding(
+                                        padding: EdgeInsets.all(12.0),
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         ),
-                                      ),
-                                    )
-                                  : IconButton(
-                                      icon: Icon(
-                                        Icons.clear,
-                                        color: colors.onSurface.withValues(
-                                          alpha: 0.6,
+                                      )
+                                      : IconButton(
+                                        icon: Icon(
+                                          Icons.clear,
+                                          color: colors.onSurface.withValues(
+                                            alpha: 0.6,
+                                          ),
                                         ),
+                                        onPressed: () {
+                                          controller.searchController.clear();
+                                          controller.onSearchChanged('');
+                                        },
                                       ),
-                                      onPressed: () {
-                                        controller.searchController.clear();
-                                        controller.onSearchChanged('');
-                                      },
-                                    ),
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -123,10 +124,11 @@ class LocateView extends GetView<HotelsMapController> {
                         height: 44,
                         child: FilterButton(
                           isActive: active,
-                          onPressed: () => filterController.openFilterSheet(
-                            context,
-                            FilterScope.locate,
-                          ),
+                          onPressed:
+                              () => filterController.openFilterSheet(
+                                context,
+                                FilterScope.locate,
+                              ),
                         ),
                       );
                     }),
@@ -177,9 +179,10 @@ class LocateView extends GetView<HotelsMapController> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () =>
-                                filterController.clear(FilterScope.locate),
-                            child: const Text('Clear'),
+                            onPressed:
+                                () =>
+                                    filterController.clear(FilterScope.locate),
+                            child: Text('common.clear'.tr),
                           ),
                         ],
                       ),
@@ -234,62 +237,64 @@ class LocateView extends GetView<HotelsMapController> {
               backgroundColor: colors.surface,
               onPressed: controller.getCurrentLocation,
               child: Obx(
-                () => controller.isLoadingLocation.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(Icons.my_location, color: colors.primary),
+                () =>
+                    controller.isLoadingLocation.value
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                        : Icon(Icons.my_location, color: colors.primary),
               ),
             ),
           ),
 
           // Hotels Loading Indicator
           Obx(
-            () => controller.isLoadingHotels.value
-                ? Positioned(
-                    bottom: 80,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.surface.withValues(
-                            alpha: context.isDark ? 0.9 : 0.85,
+            () =>
+                controller.isLoadingHotels.value
+                    ? Positioned(
+                      bottom: 80,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  colors.primary,
+                          decoration: BoxDecoration(
+                            color: colors.surface.withValues(
+                              alpha: context.isDark ? 0.9 : 0.85,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    colors.primary,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Loading hotels...',
-                              style: textStyles.bodyMedium?.copyWith(
-                                color: colors.onSurface,
+                              SizedBox(width: 8),
+                              Text(
+                                'locate.loading_hotels'.tr,
+                                style: textStyles.bodyMedium?.copyWith(
+                                  color: colors.onSurface,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+                    )
+                    : const SizedBox.shrink(),
           ),
 
           // Hotels Count
@@ -299,26 +304,28 @@ class LocateView extends GetView<HotelsMapController> {
             child: Obx(
               () =>
                   controller.hotels.isNotEmpty &&
-                      !controller.isLoadingHotels.value
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '${controller.hotels.length} hotels',
-                        style: textStyles.labelSmall?.copyWith(
-                          color: colors.onPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          !controller.isLoadingHotels.value
+                      ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'locate.hotels_count'.trParams({
+                            'count': controller.hotels.length.toString(),
+                          }),
+                          style: textStyles.labelSmall?.copyWith(
+                            color: colors.onPrimary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      )
+                      : const SizedBox.shrink(),
             ),
           ),
         ],

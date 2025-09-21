@@ -45,6 +45,7 @@ class PropertyCard extends StatelessWidget {
               children: [
                 _buildImage(context),
                 _buildGradientOverlay(),
+                if (property.hasVirtualTour) _buildTourBadge(context),
                 _buildContent(context),
                 if (onFavoriteToggle != null) _buildFavoriteButton(context),
               ],
@@ -57,21 +58,15 @@ class PropertyCard extends StatelessWidget {
 
   Widget _buildImage(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: CachedNetworkImage(
-        imageUrl: property.displayImage,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-          highlightColor: colors.surfaceContainerHighest.withValues(
-            alpha: 0.15,
-          ),
-          child: Container(color: colors.surface),
-        ),
-        errorWidget: (context, url, error) => Container(
+    final imageUrl = property.displayImage;
+
+    // If no image URL is available, show placeholder directly
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: width,
+          height: height,
           color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
           child: Icon(
             Icons.hotel,
@@ -79,6 +74,33 @@ class PropertyCard extends StatelessWidget {
             color: colors.onSurface.withValues(alpha: 0.5),
           ),
         ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
+        width: width,
+        height: height,
+        fit: BoxFit.cover,
+        placeholder:
+            (context, url) => Shimmer.fromColors(
+              baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+              highlightColor: colors.surfaceContainerHighest.withValues(
+                alpha: 0.15,
+              ),
+              child: Container(color: colors.surface),
+            ),
+        errorWidget:
+            (context, url, error) => Container(
+              color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+              child: Icon(
+                Icons.hotel,
+                size: 48,
+                color: colors.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
       ),
     );
   }
@@ -171,6 +193,35 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
+  Widget _buildTourBadge(BuildContext context) {
+    return Positioned(
+      top: 12,
+      left: 12,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.threesixty, color: Colors.white, size: 14),
+            SizedBox(width: 4),
+            Text(
+              '360 Tour',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFavoriteButton(BuildContext context) {
     final colors = context.colors;
     return Positioned(
@@ -182,9 +233,10 @@ class PropertyCard extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: colors.surface.withValues(
-              alpha: (Theme.of(context).brightness == Brightness.dark)
-                  ? 0.55
-                  : 0.3,
+              alpha:
+                  (Theme.of(context).brightness == Brightness.dark)
+                      ? 0.55
+                      : 0.3,
             ),
             shape: BoxShape.circle,
           ),

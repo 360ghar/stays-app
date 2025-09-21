@@ -237,7 +237,7 @@ class _BookingViewState extends State<BookingView> {
         'property_title': property!.name,
         'property_city': property!.city,
         'property_country': property!.country,
-        'property_image_url': property!.displayImage,
+        'property_image_url': property!.displayImage ?? '',
       },
     );
 
@@ -253,7 +253,7 @@ class _BookingViewState extends State<BookingView> {
       final simulatedBooking = tripsController!.simulateAddBooking(
         propertyId: property!.id,
         propertyName: property!.name,
-        imageUrl: property!.displayImage,
+        imageUrl: property!.displayImage ?? '',
         address: property!.fullAddress,
         city: property!.city,
         country: property!.country,
@@ -382,10 +382,10 @@ class _BookingViewState extends State<BookingView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (prop.displayImage.isNotEmpty)
+          if (prop.displayImage?.isNotEmpty == true)
             AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image.network(prop.displayImage, fit: BoxFit.cover),
+              child: Image.network(prop.displayImage!, fit: BoxFit.cover),
             )
           else
             Container(

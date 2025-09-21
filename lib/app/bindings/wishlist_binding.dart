@@ -1,19 +1,27 @@
 import 'package:get/get.dart';
+
+import '../controllers/filter_controller.dart';
 import '../controllers/wishlist_controller.dart';
 import '../data/providers/swipes_provider.dart';
 import '../data/repositories/wishlist_repository.dart';
-import '../controllers/filter_controller.dart';
 
 class WishlistBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<SwipesProvider>(() => SwipesProvider());
-    Get.lazyPut<WishlistRepository>(
-      () => WishlistRepository(provider: Get.find<SwipesProvider>()),
-    );
+    if (!Get.isRegistered<SwipesProvider>()) {
+      Get.lazyPut<SwipesProvider>(() => SwipesProvider(), fenix: true);
+    }
+    if (!Get.isRegistered<WishlistRepository>()) {
+      Get.lazyPut<WishlistRepository>(
+        () => WishlistRepository(provider: Get.find<SwipesProvider>()),
+        fenix: true,
+      );
+    }
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
-    Get.lazyPut<WishlistController>(() => WishlistController());
+    if (!Get.isRegistered<WishlistController>()) {
+      Get.lazyPut<WishlistController>(() => WishlistController(), fenix: true);
+    }
   }
 }

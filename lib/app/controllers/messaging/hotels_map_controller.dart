@@ -11,6 +11,7 @@ import '../../data/services/places_service.dart';
 import '../../data/services/location_service.dart';
 import '../../data/models/unified_filter_model.dart';
 import '../filter_controller.dart';
+import '../../utils/helpers/currency_helper.dart';
 
 class HotelModel {
   final String id;
@@ -38,10 +39,8 @@ class HotelsMapController extends GetxController {
   late MapController mapController;
   final RxList<Marker> markers = <Marker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
-  final Rx<LatLng> currentLocation = const LatLng(
-    28.6139,
-    77.2090,
-  ).obs; // Delhi default
+  final Rx<LatLng> currentLocation =
+      const LatLng(28.6139, 77.2090).obs; // Delhi default
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
   final RxList<PlacePrediction> predictions = <PlacePrediction>[].obs;
@@ -124,15 +123,16 @@ class HotelsMapController extends GetxController {
     if (_activeFilters.isEmpty) {
       hotels.assignAll(_allHotels);
     } else {
-      final filtered = _allHotels
-          .where(
-            (hotel) => _activeFilters.matchesHotel(
-              price: hotel.price,
-              rating: hotel.rating,
-              propertyType: hotel.propertyType,
-            ),
-          )
-          .toList();
+      final filtered =
+          _allHotels
+              .where(
+                (hotel) => _activeFilters.matchesHotel(
+                  price: hotel.price,
+                  rating: hotel.rating,
+                  propertyType: hotel.propertyType,
+                ),
+              )
+              .toList();
       hotels.assignAll(filtered);
     }
     _updateMapMarkers();
@@ -218,44 +218,48 @@ class HotelsMapController extends GetxController {
   }
 
   void _updateMapMarkers() {
-    final List<Marker> newMarkers = hotels.map((hotel) {
-      return Marker(
-        width: 80.0,
-        height: 80.0,
-        point: hotel.position,
-        child: GestureDetector(
-          onTap: () => _showHotelDetails(hotel),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
+    final List<Marker> newMarkers =
+        hotels.map((hotel) {
+          return Marker(
+            width: 80.0,
+            height: 80.0,
+            point: hotel.position,
+            child: GestureDetector(
+              onTap: () => _showHotelDetails(hotel),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                  ],
-                ),
-                child: Text(
-                  '₹${hotel.price.toInt()}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      CurrencyHelper.format(hotel.price),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 2),
+                  const Icon(Icons.location_pin, color: Colors.red, size: 24),
+                ],
               ),
-              const SizedBox(height: 2),
-              const Icon(Icons.location_pin, color: Colors.red, size: 24),
-            ],
-          ),
-        ),
-      );
-    }).toList();
+            ),
+          );
+        }).toList();
 
     // Replace markers in one go to ensure rebuilds
     markers.assignAll(newMarkers);
@@ -265,7 +269,7 @@ class HotelsMapController extends GetxController {
     return HotelModel(
       id: p.id.toString(),
       name: p.name,
-      imageUrl: p.displayImage,
+      imageUrl: p.displayImage ?? '',
       price: p.pricePerNight,
       rating: p.rating ?? 0,
       position: LatLng(
@@ -313,7 +317,16 @@ class HotelsMapController extends GetxController {
                   Row(
                     children: [
                       Icon(Icons.star, color: Colors.amber[600], size: 16),
-                      Text(' ${hotel.rating} • ₹${hotel.price}/night'),
+                      const SizedBox(width: 4),
+                      Text(
+                        hotel.rating.toStringAsFixed(1),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        "${CurrencyHelper.format(hotel.price)}/${'listing.per_night'.tr}",
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -326,7 +339,7 @@ class HotelsMapController extends GetxController {
                         Get.back();
                         Get.toNamed('/listing/${hotel.id}');
                       },
-                      child: const Text('View Details'),
+                      child: Text('common.view_details'.tr),
                     ),
                   ),
                 ],

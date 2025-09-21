@@ -30,9 +30,10 @@ class PropertyGridCard extends StatelessWidget {
       child: Card(
         color: colors.surface,
         elevation: 2,
-        shadowColor: context.isDark
-            ? Colors.black.withValues(alpha: 0.4)
-            : Colors.black.withValues(alpha: 0.08),
+        shadowColor:
+            context.isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.08),
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
@@ -61,6 +62,29 @@ class PropertyGridCard extends StatelessWidget {
     final heroTag = '${heroPrefix ?? 'grid'}-${property.id}';
     final img = property.displayImage;
     final colors = Theme.of(context).colorScheme;
+
+    // If no image URL is available, show placeholder directly
+    if (img == null || img.isEmpty) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(14),
+          topRight: Radius.circular(14),
+        ),
+        child: SizedBox(
+          height: 160,
+          width: double.infinity,
+          child: Container(
+            color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+            child: Icon(
+              Icons.hotel,
+              size: 48,
+              color: colors.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+        ),
+      );
+    }
+
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(14),
@@ -77,30 +101,32 @@ class PropertyGridCard extends StatelessWidget {
               child: CachedNetworkImage(
                 imageUrl: img,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Shimmer.fromColors(
-                  baseColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
-                  highlightColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest,
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                  ),
-                ),
-                errorWidget: (_, __, ___) => Container(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.photo,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-                    size: 32,
-                  ),
-                ),
+                placeholder:
+                    (context, url) => Shimmer.fromColors(
+                      baseColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      highlightColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      child: Container(
+                        color: Theme.of(context).colorScheme.surface,
+                      ),
+                    ),
+                errorWidget:
+                    (_, __, ___) => Container(
+                      color:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.photo,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        size: 32,
+                      ),
+                    ),
               ),
             ),
+            if (property.hasVirtualTour) _buildTourBadge(context),
             if (onFavoriteToggle != null)
               Positioned(
                 top: 8,
@@ -152,6 +178,35 @@ class PropertyGridCard extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTourBadge(BuildContext context) {
+    return Positioned(
+      top: 12,
+      left: 12,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.threesixty, size: 14, color: Colors.white),
+            SizedBox(width: 4),
+            Text(
+              '360 Tour',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ),

@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import '../../../routes/app_routes.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
   final String url;
@@ -101,6 +103,26 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   }
 
   bool _showMotionPrompt = false;
+  Widget _buildWebView(BuildContext context) {
+    PlatformWebViewWidgetCreationParams params =
+        PlatformWebViewWidgetCreationParams(
+          controller: _controller.platform,
+          layoutDirection: Directionality.of(context),
+        );
+    if (Platform.isIOS) {
+      params =
+          WebKitWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
+            params,
+          );
+    } else if (Platform.isAndroid) {
+      params =
+          AndroidWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
+            params,
+            displayWithHybridComposition: true,
+          );
+    }
+    return WebViewWidget.fromPlatformCreationParams(params: params);
+  }
 
   Future<void> _maybeCheckIosMotionPermission() async {
     if (!Platform.isIOS) return;
@@ -127,11 +149,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   }
 
   void _openFullscreen() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _VirtualTourFullScreenPage(url: widget.url),
-      ),
-    );
+    Get.toNamed(Routes.tour, arguments: widget.url);
   }
 
   @override
@@ -151,7 +169,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
       height: widget.height,
       child: Stack(
         children: [
-          if (!_hasError) WebViewWidget(controller: _controller),
+          if (!_hasError) _buildWebView(context),
           if (_progress < 100)
             LinearProgressIndicator(
               value: _progress / 100,
@@ -261,164 +279,6 @@ class _ErrorPlaceholder extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _VirtualTourFullScreenPage extends StatefulWidget {
-  final String url;
-  const _VirtualTourFullScreenPage({required this.url});
-
-  @override
-  State<_VirtualTourFullScreenPage> createState() =>
-      _VirtualTourFullScreenPageState();
-}
-
-class _VirtualTourFullScreenPageState
-    extends State<_VirtualTourFullScreenPage> {
-  late final WebViewController _controller;
-  int _progress = 0;
-  bool _hasError = false;
-  bool _showMotionPromptFs = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // No explicit platform override needed for v4+.
-    final PlatformWebViewControllerCreationParams baseParams =
-        const PlatformWebViewControllerCreationParams();
-    if (WebViewPlatform.instance is WebKitWebViewPlatform) {
-      final params = WebKitWebViewControllerCreationParams(
-        allowsInlineMediaPlayback: true,
-        mediaTypesRequiringUserAction: const <PlaybackMediaTypes>{},
-      );
-      _controller = WebViewController.fromPlatformCreationParams(params);
-    } else {
-      _controller = WebViewController.fromPlatformCreationParams(baseParams);
-    }
-    _controller
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.white)
-      ..setUserAgent(
-        Platform.isAndroid
-            ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
-            : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1',
-      )
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) => setState(() => _progress = progress),
-          onPageFinished: (url) async {
-            await _maybeCheckIosMotionPermissionFs();
-          },
-          onNavigationRequest: (request) {
-            final uri = Uri.tryParse(request.url);
-            if (uri == null) return NavigationDecision.prevent;
-            const allowed = {'http', 'https', 'about', 'data', 'blob'};
-            return allowed.contains(uri.scheme)
-                ? NavigationDecision.navigate
-                : NavigationDecision.prevent;
-          },
-          onWebResourceError: (_) => setState(() => _hasError = true),
-        ),
-      );
-    if (_controller.platform is AndroidWebViewController) {
-      AndroidWebViewController.enableDebugging(true);
-      final AndroidWebViewController androidController =
-          _controller.platform as AndroidWebViewController;
-      androidController.setMediaPlaybackRequiresUserGesture(false);
-    }
-    _controller.loadRequest(Uri.parse(widget.url));
-  }
-
-  Future<void> _maybeCheckIosMotionPermissionFs() async {
-    if (!Platform.isIOS) return;
-    try {
-      final result = await _controller.runJavaScriptReturningResult(
-        "(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function')",
-      );
-      final needsPermission = result.toString().toLowerCase().contains('true');
-      if (mounted && needsPermission && !_showMotionPromptFs) {
-        setState(() => _showMotionPromptFs = true);
-      }
-    } catch (_) {}
-  }
-
-  Future<void> _requestIosMotionPermissionFs() async {
-    try {
-      await _controller.runJavaScript(
-        "try { if (DeviceMotionEvent && DeviceMotionEvent.requestPermission) { DeviceMotionEvent.requestPermission().then(function(r){ console.log('motion permission', r); }); } } catch(e) { console.log(e); }",
-      );
-    } catch (_) {}
-    if (mounted) setState(() => _showMotionPromptFs = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Virtual Tour'),
-        actions: [
-          IconButton(
-            tooltip: 'Reload',
-            onPressed: () {
-              setState(() {
-                _hasError = false;
-                _progress = 0;
-              });
-              _controller.reload();
-            },
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          if (_hasError)
-            const Center(child: Text('Unable to load virtual tour'))
-          else
-            WebViewWidget(controller: _controller),
-          if (_progress < 100)
-            LinearProgressIndicator(value: _progress / 100, minHeight: 2),
-          if (_showMotionPromptFs)
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.screen_rotation, color: Colors.white),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Enable motion controls for 360° view',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: _requestIosMotionPermissionFs,
-                        child: const Text(
-                          'Enable',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
       ),
     );
   }

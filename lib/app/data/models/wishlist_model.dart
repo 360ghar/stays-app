@@ -31,6 +31,8 @@ class WishlistItem {
   Map<String, dynamic> toJson() => _$WishlistItemToJson(this);
 
   bool get isLiked => action == 'like';
+
+  String? get displayImage => property?.displayImage;
 }
 
 @JsonSerializable()

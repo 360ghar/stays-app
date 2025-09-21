@@ -294,24 +294,35 @@ class WishlistView extends GetView<WishlistController> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: CachedNetworkImage(
-                    imageUrl: item.displayImage,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: colors.surfaceContainerHighest,
-                      child: const Center(child: CircularProgressIndicator()),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: colors.surfaceContainerHighest,
-                      child: Icon(
-                        Icons.image,
-                        size: 50,
-                        color: colors.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
+                  child: item.displayImage != null && item.displayImage!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: item.displayImage!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: colors.surfaceContainerHighest,
+                            child: const Center(child: CircularProgressIndicator()),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: colors.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.image,
+                              size: 50,
+                              color: colors.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          height: 200,
+                          width: double.infinity,
+                          color: colors.surfaceContainerHighest,
+                          child: Icon(
+                            Icons.image,
+                            size: 50,
+                            color: colors.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
                 ),
                 Positioned(
                   top: 12,

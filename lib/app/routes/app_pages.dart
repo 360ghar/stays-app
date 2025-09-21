@@ -9,6 +9,7 @@ import '../bindings/payment_binding.dart';
 import '../bindings/settings_binding.dart';
 import '../bindings/trips_binding.dart';
 import '../bindings/splash_binding.dart';
+import '../bindings/tour_binding.dart';
 import '../middlewares/auth_middleware.dart';
 import '../middlewares/initial_middleware.dart';
 import '../ui/views/auth/forgot_password_view.dart';
@@ -28,6 +29,7 @@ import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
 import '../ui/views/splash/splash_view.dart';
 import '../ui/views/trips/trips_view.dart';
+import '../ui/views/tour/tour_view.dart';
 import 'app_routes.dart';
 import 'package:stays_app/features/profile/bindings/profile_binding.dart'
     as feature_profile_binding;
@@ -114,6 +116,13 @@ class AppPages {
       binding: ListingBinding(),
       transition: Transition.rightToLeft,
       middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.tour,
+      page: () => const TourView(),
+      binding: TourBinding(),
+      middlewares: [AuthMiddleware()],
+      transition: Transition.fadeIn,
     ),
     GetPage(
       name: Routes.booking,
