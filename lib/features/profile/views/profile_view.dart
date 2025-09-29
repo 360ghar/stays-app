@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/ui/widgets/profile/profile_header.dart';
+import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -261,10 +262,7 @@ class ProfileView extends GetView<ProfileController> {
           Expanded(
             child: _StatCard(
               label: 'Spent',
-              value:
-                  controller.totalSpent.value == 0
-                      ? '?0'
-                      : '?${controller.totalSpent.value.toStringAsFixed(0)}',
+              value: CurrencyHelper.format(controller.totalSpent.value),
               icon: Icons.payments_outlined,
               color: const Color(0xFFF59E0B),
             ),

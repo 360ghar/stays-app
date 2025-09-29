@@ -28,6 +28,10 @@ class EditProfileController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
 
+  // Listeners for profile changes
+  late final Worker _profileChangeWorker;
+  late final Worker _authChangeWorker;
+
   late final TextEditingController firstNameController;
   late final TextEditingController lastNameController;
   late final TextEditingController emailController;
@@ -56,6 +60,19 @@ class EditProfileController extends GetxController {
   void onInit() {
     super.onInit();
     _initializeFields();
+
+    // Listen for profile changes and update form fields accordingly
+    _profileChangeWorker = ever(_profileController.user, (UserModel? user) {
+      if (user != null) {
+        _updateFieldsFromUser(user);
+      }
+    });
+
+    _authChangeWorker = ever(_authController.currentUser, (UserModel? user) {
+      if (user != null) {
+        _updateFieldsFromUser(user);
+      }
+    });
   }
 
   void _initializeFields() {
@@ -72,8 +89,23 @@ class EditProfileController extends GetxController {
     avatarUrl.value = profile?.effectiveAvatarUrl ?? '';
   }
 
+  void _updateFieldsFromUser(UserModel user) {
+    // Update text controllers with new values from user
+    firstNameController.text = user.firstName ?? '';
+    lastNameController.text = user.lastName ?? '';
+    emailController.text = user.email ?? '';
+    phoneController.text = user.phone ?? '';
+    bioController.text = user.bio ?? '';
+    final dob = user.dateOfBirth;
+    dateOfBirth.value = dob;
+    dobController.text = _formatDob(dob);
+    avatarUrl.value = user.effectiveAvatarUrl ?? '';
+  }
+
   @override
   void onClose() {
+    _profileChangeWorker.dispose();
+    _authChangeWorker.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
