@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/explore_controller.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
@@ -150,10 +150,10 @@ class ExploreView extends GetView<ExploreController> {
 
   Widget _buildBannerSection() {
     const bannerUrls = <String>[
-      'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1551776235-dde6d4829808?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1541427468627-a89a96e5ca0c?q=80&w=1600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1600&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1600&q=80',
+      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=80',
     ];
 
     return const SliverToBoxAdapter(
@@ -310,3 +310,6 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 }
+
+
+
