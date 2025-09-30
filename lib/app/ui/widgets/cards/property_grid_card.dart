@@ -38,8 +38,8 @@ class PropertyGridCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
-            color: colors.outlineVariant.withValues(alpha: 0.6),
-            width: 1,
+            color: colors.outline.withValues(alpha: 0.8),
+            width: 1.5,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -49,7 +49,7 @@ class PropertyGridCard extends StatelessWidget {
           children: [
             _buildImage(context),
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: _buildInfo(context),
             ),
           ],
@@ -91,7 +91,7 @@ class PropertyGridCard extends StatelessWidget {
         topRight: Radius.circular(14),
       ),
       child: SizedBox(
-        height: 160,
+        height: 200,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -216,64 +216,49 @@ class PropertyGridCard extends StatelessWidget {
   Widget _buildInfo(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final iconColor = colors.onSurface.withValues(alpha: 0.7);
+
+    final addressStyle = theme.textTheme.bodySmall?.copyWith(color: iconColor);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Property Name / Title (bold)
         Text(
           property.name,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
+
         const SizedBox(height: 4),
+
+        // Address / Location and Price in same row
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.location_on_outlined,
-              size: 14,
-              color: colors.onSurface.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 4),
             Expanded(
               child: Text(
                 property.fullAddress,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colors.onSurface.withValues(alpha: 0.7),
-                ),
+                style: addressStyle,
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
+            const SizedBox(width: 8),
             Text(
-              '${property.displayPrice}/night',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+              property.displayPrice,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFFC107),
               ),
             ),
           ],
         ),
-        if (property.description != null && property.description!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              property.description!,
-              maxLines: 2,
-              overflow: TextOverflow.fade,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.8),
-              ),
-            ),
-          ),
       ],
     );
   }
+
 }

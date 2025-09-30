@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
 
@@ -8,6 +7,7 @@ import '../../../controllers/wishlist_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../routes/app_routes.dart';
 import '../../theme/theme_extensions.dart';
+import '../../widgets/cards/property_grid_card.dart';
 
 class WishlistView extends GetView<WishlistController> {
   const WishlistView({super.key});
@@ -260,163 +260,17 @@ class WishlistView extends GetView<WishlistController> {
   }
 
   Widget _buildWishlistCard(BuildContext context, Property item) {
-    final colors = context.colors;
-    final textStyles = context.textStyles;
-    final shadowColor = context.isDark
-        ? Colors.black.withValues(alpha: 0.5)
-        : Colors.black12;
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
+      child: PropertyGridCard(
+        property: item,
         onTap: () => Get.toNamed(
           Routes.listingDetail.replaceFirst(':id', item.id.toString()),
           arguments: item,
         ),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image with favorite button
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: item.displayImage != null && item.displayImage!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: item.displayImage!,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: colors.surfaceContainerHighest,
-                            child: const Center(child: CircularProgressIndicator()),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            color: colors.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.image,
-                              size: 50,
-                              color: colors.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          height: 200,
-                          width: double.infinity,
-                          color: colors.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image,
-                            size: 50,
-                            color: colors.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: colors.surface.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: shadowColor,
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      onPressed: () => controller.removeFromWishlist(item.id),
-                      icon: Icon(Icons.favorite, color: colors.error, size: 24),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Location
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: colors.onSurface.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '${item.city}, ${item.country}',
-                          style: textStyles.bodySmall?.copyWith(
-                            fontSize: 14,
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Name
-                  Text(
-                    item.name,
-                    style: textStyles.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colors.onSurface,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Price only
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        item.displayPrice,
-                        style: textStyles.titleMedium?.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: colors.onSurface,
-                        ),
-                      ),
-                      Text(
-                        ' /night',
-                        style: textStyles.bodySmall?.copyWith(
-                          fontSize: 14,
-                          color: colors.onSurface.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        onFavoriteToggle: () => controller.removeFromWishlist(item.id),
+        isFavorite: true,
+        heroPrefix: 'wishlist',
       ),
     );
   }
