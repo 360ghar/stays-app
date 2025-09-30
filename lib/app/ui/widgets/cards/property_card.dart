@@ -24,7 +24,7 @@ class PropertyCard extends StatelessWidget {
     this.width = 280,
     this.height = 200,
     this.showPrice = true,
-    this.showRating = true,
+    this.showRating = false,
     this.heroPrefix,
     this.isFavorite = false,
   });

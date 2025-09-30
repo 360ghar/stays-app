@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
@@ -334,23 +332,22 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                           const SizedBox(width: 12),
 
-                          _HeroCircleButton(
-                            icon: Icons.favorite_border,
-
-                            color: iconColor,
-
-                            background:
-                                collapsed
-                                    ? colors.surfaceContainerHighest.withValues(
-                                      alpha: 0.85,
-                                    )
-                                    : Colors.black.withValues(alpha: 0.45),
-
-                            onTap:
-                                () => _showComingSoon(
-                                  context,
-                                  'Save to wishlist',
-                                ),
+                          Obx(
+                            () => _HeroCircleButton(
+                              icon: controller.isPropertyFavorite(listing.id)
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: controller.isPropertyFavorite(listing.id)
+                                  ? Colors.red
+                                  : iconColor,
+                              background:
+                                  collapsed
+                                      ? colors.surfaceContainerHighest.withValues(
+                                        alpha: 0.85,
+                                      )
+                                      : Colors.black.withValues(alpha: 0.45),
+                              onTap: () => controller.toggleFavorite(listing),
+                            ),
                           ),
                         ],
                       ),
@@ -451,8 +448,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
   Widget _buildTitleSection(BuildContext context, Property listing) {
     final textStyles = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
-    final rating = listing.rating;
-    final reviews = listing.reviewsCount ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,23 +463,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
         const SizedBox(height: 12),
         Row(
           children: [
-            Icon(Icons.star, color: Colors.amber.shade600, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              rating != null ? rating.toStringAsFixed(1) : 'New',
-              style: textStyles.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.onSurface,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              reviews == 0 ? 'No reviews yet' : '$reviews reviews',
-              style: textStyles.bodyMedium?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(width: 12),
             const Icon(Icons.location_on_outlined, size: 16),
             const SizedBox(width: 4),
             Expanded(
@@ -600,7 +578,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
           borderRadius: BorderRadius.circular(16),
           child: DecoratedBox(
             decoration: BoxDecoration(color: colors.surfaceContainerHighest),
-            child: VirtualTourEmbed(url: listing.virtualTourUrl!, height: 220),
+            child: VirtualTourEmbed(url: listing.virtualTourUrl!),
           ),
         ),
         const SizedBox(height: 12),

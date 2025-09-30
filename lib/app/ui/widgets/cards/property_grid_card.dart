@@ -250,24 +250,8 @@ class PropertyGridCard extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.star, size: 16, color: Colors.amber),
-                const SizedBox(width: 4),
-                Text(property.ratingText, style: theme.textTheme.bodyMedium),
-                if (property.reviewsCount != null) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    '(${property.reviewsCount})',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
-              ],
-            ),
             Text(
               '${property.displayPrice}/night',
               style: theme.textTheme.titleMedium?.copyWith(

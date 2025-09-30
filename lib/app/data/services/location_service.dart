@@ -13,6 +13,7 @@ class LocationService extends GetxService {
   final RxString _currentCity = ''.obs; // City-level name for grouping
   final _isLocationEnabled = false.obs;
   final _isLoadingLocation = false.obs;
+  final RxBool _isInitialized = false.obs; // Track if location has been initialized
 
   Position? get currentPosition => _currentPosition.value;
   // UI-friendly name of location to display
@@ -23,6 +24,7 @@ class LocationService extends GetxService {
   RxString get currentCityRx => _currentCity;
   bool get isLocationEnabled => _isLocationEnabled.value;
   bool get isLoadingLocation => _isLoadingLocation.value;
+  bool get isInitialized => _isInitialized.value;
   double? get latitude =>
       _selectedLat.value ?? _currentPosition.value?.latitude;
   double? get longitude =>
@@ -36,6 +38,8 @@ class LocationService extends GetxService {
 
   void _initLocationService() async {
     await checkLocationPermission();
+    _isInitialized.value = true;
+    AppLogger.info('LocationService initialization completed');
   }
 
   Future<bool> checkLocationPermission() async {

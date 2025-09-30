@@ -8,6 +8,7 @@ import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 import 'filter_controller.dart';
+import 'favorites_controller.dart';
 
 class ExploreController extends GetxController {
   // Services are guaranteed to be available by the time this controller is created.
@@ -19,24 +20,25 @@ class ExploreController extends GetxController {
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
+  late final FavoritesController _favoritesController =
+      Get.find<FavoritesController>();
 
   final RxList<Property> popularHomes = <Property>[].obs;
   final RxList<Property> nearbyHotels =
       <Property>[].obs; // This can be fetched by location
-  final RxSet<int> favoritePropertyIds = <int>{}.obs;
   final RxBool isLoading = true.obs; // Start with loading true
   final RxString errorMessage = ''.obs;
 
-  String get locationName => _locationService.locationName.isEmpty
-      ? 'this area'
-      : _locationService.locationName;
+  String get locationName =>
+      _locationService.locationName.isEmpty
+          ? 'this area'
+          : _locationService.locationName;
   List<Property> get recommendedHotels => nearbyHotels.toList();
 
   Future<void> Function() get refreshLocation =>
       () async =>
           await _locationService.getCurrentLocation(ensurePrecise: true);
-  VoidCallback get navigateToSearch =>
-      () => Get.toNamed('/search');
+  VoidCallback get navigateToSearch => () => Get.toNamed('/search');
 
   Future<void> useMyLocation() async {
     try {
@@ -90,10 +92,34 @@ class ExploreController extends GetxController {
     super.onClose();
   }
 
+  Future<void> _waitForLocationInitialization() async {
+    // Wait for location service to complete initialization
+    const maxWaitTime = Duration(seconds: 10);
+    final startTime = DateTime.now();
+
+    while (!_locationService.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Prevent infinite waiting
+      if (DateTime.now().difference(startTime) > maxWaitTime) {
+        AppLogger.warning(
+          'LocationService initialization timeout - proceeding anyway',
+        );
+        break;
+      }
+    }
+
+    AppLogger.info(
+      'LocationService initialization confirmed, proceeding with property loading',
+    );
+  }
+
   Future<void> _fetchInitialData() async {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      // Wait for location service to initialize before loading properties
+      await _waitForLocationInitialization();
       // Use Future.wait to run fetches in parallel for better performance
       await loadProperties();
     } catch (e) {
@@ -114,6 +140,11 @@ class ExploreController extends GetxController {
     );
 
     final props = resp.properties;
+
+    final newFavorites = props
+        .where((p) => p.isFavorite == true || p.liked == true)
+        .map((p) => p.id);
+    _favoritesController.addAll(newFavorites);
 
     // Determine selected city for grouping
     final selectedCity = _selectedCityNormalized();
@@ -196,15 +227,15 @@ class ExploreController extends GetxController {
 
   Future<void> toggleFavorite(Property property) async {
     final propertyId = property.id;
-    final isCurrentlyFavorite = favoritePropertyIds.contains(propertyId);
+    final isCurrentlyFavorite = _favoritesController.isFavorite(propertyId);
 
     try {
       if (isCurrentlyFavorite) {
         await _wishlistRepository.remove(propertyId);
-        favoritePropertyIds.remove(propertyId);
+        _favoritesController.removeFavorite(propertyId);
       } else {
         await _wishlistRepository.add(propertyId);
-        favoritePropertyIds.add(propertyId);
+        _favoritesController.addFavorite(propertyId);
       }
       _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
       Get.snackbar(
@@ -230,7 +261,7 @@ class ExploreController extends GetxController {
   }
 
   bool isPropertyFavorite(int propertyId) {
-    return favoritePropertyIds.contains(propertyId);
+    return _favoritesController.isFavorite(propertyId);
   }
 
   void navigateToAllProperties(String categoryType) {

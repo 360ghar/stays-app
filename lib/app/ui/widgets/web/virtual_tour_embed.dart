@@ -9,9 +9,15 @@ import '../../../routes/app_routes.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
   final String url;
-  final double height;
+  final double? height;
+  final double aspectRatio;
 
-  const VirtualTourEmbed({super.key, required this.url, this.height = 260});
+  const VirtualTourEmbed({
+    super.key,
+    required this.url,
+    this.height,
+    this.aspectRatio = 4 / 5, // Default to 4:5 for taller/vertical look suitable for property tours
+  });
 
   @override
   State<VirtualTourEmbed> createState() => _VirtualTourEmbedState();
@@ -165,89 +171,100 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
         },
       );
     }
-    return SizedBox(
-      height: widget.height,
-      child: Stack(
-        children: [
-          if (!_hasError) _buildWebView(context),
-          if (_progress < 100)
-            LinearProgressIndicator(
-              value: _progress / 100,
-              minHeight: 2,
-              backgroundColor: Colors.black.withValues(alpha: 0.05),
-            ),
-          if (_showMotionPrompt)
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Material(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.screen_rotation, color: Colors.white),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Enable motion controls for 360° view',
-                          style: TextStyle(color: Colors.white),
+
+    final content = Stack(
+      children: [
+        if (!_hasError) _buildWebView(context),
+        if (_progress < 100)
+          LinearProgressIndicator(
+            value: _progress / 100,
+            minHeight: 2,
+            backgroundColor: Colors.black.withValues(alpha: 0.05),
+          ),
+        if (_showMotionPrompt)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 12,
+            child: Material(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.screen_rotation, color: Colors.white),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Enable motion controls for 360° view',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _requestIosMotionPermission,
+                      child: const Text(
+                        'Enable',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      TextButton(
-                        onPressed: _requestIosMotionPermission,
-                        child: const Text(
-                          'Enable',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: 'Full screen',
-                    icon: const Icon(Icons.fullscreen, color: Colors.white),
-                    onPressed: _openFullscreen,
-                  ),
-                  IconButton(
-                    tooltip: 'Reload',
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        _hasError = false;
-                        _progress = 0;
-                      });
-                      _controller.reload();
-                    },
-                  ),
-                ],
-              ),
+          ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Full screen',
+                  icon: const Icon(Icons.fullscreen, color: Colors.white),
+                  onPressed: _openFullscreen,
+                ),
+                IconButton(
+                  tooltip: 'Reload',
+                  icon: const Icon(Icons.refresh, color: Colors.white),
+                  onPressed: () {
+                    setState(() {
+                      _hasError = false;
+                      _progress = 0;
+                    });
+                    _controller.reload();
+                  },
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
+
+    // Use AspectRatio for broader look when height is not specified
+    if (widget.height != null) {
+      return SizedBox(
+        height: widget.height,
+        child: content,
+      );
+    } else {
+      return AspectRatio(
+        aspectRatio: widget.aspectRatio,
+        child: content,
+      );
+    }
   }
 }
 

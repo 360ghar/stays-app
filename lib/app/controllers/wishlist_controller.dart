@@ -6,6 +6,7 @@ import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 import 'filter_controller.dart';
+import 'favorites_controller.dart';
 
 class WishlistController extends GetxController {
   WishlistRepository? _wishlistRepository;
@@ -22,7 +23,7 @@ class WishlistController extends GetxController {
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
-  final Set<int> _favoriteIds = <int>{};
+  FavoritesController? _favoritesController;
 
   @override
   void onInit() {
@@ -32,11 +33,23 @@ class WishlistController extends GetxController {
     loadWishlist();
   }
 
+  @override
+  void onReady() {
+    super.onReady();
+    // Ensure wishlist is refreshed when controller becomes active
+    loadWishlist(pageOverride: 1, showLoader: false);
+  }
+
   void _initializeServices() {
     try {
       _wishlistRepository = Get.find<WishlistRepository>();
     } catch (e) {
       AppLogger.warning('WishlistRepository not found');
+    }
+    try {
+      _favoritesController = Get.find<FavoritesController>();
+    } catch (e) {
+      AppLogger.warning('FavoritesController not found');
     }
   }
 
@@ -97,7 +110,11 @@ class WishlistController extends GetxController {
       totalCount.value = response.totalCount;
       pageSize.value = response.pageSize;
       wishlistItems.assignAll(response.properties);
-      _favoriteIds.addAll(response.properties.map((e) => e.id));
+      if (targetPage == 1) {
+        _favoritesController?.replaceAll(response.properties.map((e) => e.id));
+      } else {
+        _favoritesController?.addAll(response.properties.map((e) => e.id));
+      }
     } catch (e) {
       errorMessage.value = 'Failed to load wishlist';
       AppLogger.error('Error loading wishlist', e);
@@ -140,7 +157,7 @@ class WishlistController extends GetxController {
     if (_wishlistRepository == null) {
       wishlistItems.insert(0, property);
       totalCount.value = wishlistItems.length;
-      _favoriteIds.add(property.id);
+      _favoritesController?.addFavorite(property.id);
       Get.snackbar(
         'Added to Wishlist',
         '${property.name} has been added to your wishlist',
@@ -151,7 +168,7 @@ class WishlistController extends GetxController {
     }
     try {
       await _wishlistRepository!.add(property.id);
-      _favoriteIds.add(property.id);
+      _favoritesController?.addFavorite(property.id);
       await loadWishlist(pageOverride: currentPage.value);
       Get.snackbar(
         'Added to Wishlist',
@@ -171,12 +188,12 @@ class WishlistController extends GetxController {
   }
 
   Future<void> removeFromWishlist(int propertyId) async {
-    Property? property;
-    if (_wishlistRepository == null) {
-      property = wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
-      wishlistItems.removeWhere((p) => p.id == propertyId);
-      _favoriteIds.remove(propertyId);
-      totalCount.value = wishlistItems.length;
+    final propertyIndex = wishlistItems.indexWhere(
+      (property) => property.id == propertyId,
+    );
+    final property = propertyIndex != -1 ? wishlistItems[propertyIndex] : null;
+
+    void showRemovalSnackbar() {
       Get.snackbar(
         'Removed from Wishlist',
         property != null
@@ -185,23 +202,45 @@ class WishlistController extends GetxController {
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 2),
       );
+    }
+
+    if (_wishlistRepository == null) {
+      if (propertyIndex != -1) {
+        wishlistItems.removeAt(propertyIndex);
+      }
+      totalCount.value = wishlistItems.length;
+      _favoritesController?.removeFavorite(propertyId);
+      showRemovalSnackbar();
       return;
     }
-    property = wishlistItems.firstWhereOrNull((p) => p.id == propertyId);
+
+    Property? removedProperty;
+    int? removedIndex;
+    if (propertyIndex != -1) {
+      removedProperty = property;
+      removedIndex = propertyIndex;
+      wishlistItems.removeAt(propertyIndex);
+      if (totalCount.value > 0) {
+        totalCount.value = totalCount.value - 1;
+      }
+    }
+    _favoritesController?.removeFavorite(propertyId);
+
     try {
       await _wishlistRepository!.remove(propertyId);
-      _favoriteIds.remove(propertyId);
-      await loadWishlist(pageOverride: currentPage.value);
-      Get.snackbar(
-        'Removed from Wishlist',
-        property != null
-            ? '${property.name} has been removed from your wishlist'
-            : 'Item has been removed from your wishlist',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
-      );
+      await loadWishlist(pageOverride: currentPage.value, showLoader: false);
+      showRemovalSnackbar();
     } catch (e) {
       AppLogger.error('Error removing from wishlist', e);
+      if (removedProperty != null && removedIndex != null) {
+        if (removedIndex <= wishlistItems.length) {
+          wishlistItems.insert(removedIndex, removedProperty);
+        } else {
+          wishlistItems.add(removedProperty);
+        }
+        totalCount.value = totalCount.value + 1;
+        _favoritesController?.addFavorite(propertyId);
+      }
       Get.snackbar(
         'Error',
         'Failed to remove from wishlist. Please try again.',
@@ -211,7 +250,9 @@ class WishlistController extends GetxController {
     }
   }
 
-  bool isInWishlist(int propertyId) => _favoriteIds.contains(propertyId);
+  bool isInWishlist(int propertyId) =>
+      _favoritesController?.isFavorite(propertyId) ??
+      wishlistItems.any((p) => p.id == propertyId);
 
   Future<void> toggleWishlist(Property property) async {
     if (isInWishlist(property.id)) {
@@ -238,7 +279,7 @@ class WishlistController extends GetxController {
                   for (final item in wishlistItems.toList()) {
                     await _wishlistRepository!.remove(item.id);
                   }
-                  _favoriteIds.clear();
+                  _favoritesController?.clear();
                   await loadWishlist(pageOverride: 1);
                   Get.snackbar(
                     'Wishlist Cleared',
@@ -257,7 +298,7 @@ class WishlistController extends GetxController {
                 }
               } else {
                 wishlistItems.clear();
-                _favoriteIds.clear();
+                _favoritesController?.clear();
                 totalCount.value = 0;
                 Get.snackbar(
                   'Wishlist Cleared',

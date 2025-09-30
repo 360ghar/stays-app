@@ -391,62 +391,24 @@ class WishlistView extends GetView<WishlistController> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Rating and Price
+                  // Price only
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      // Rating
-                      Row(
-                        children: [
-                          const Icon(Icons.star, size: 18, color: Colors.amber),
-                          const SizedBox(width: 4),
-                          if (item.rating != null) ...[
-                            Text(
-                              item.ratingText,
-                              style: textStyles.bodyMedium?.copyWith(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: colors.onSurface,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '(${item.reviewsText})',
-                              style: textStyles.bodySmall?.copyWith(
-                                fontSize: 14,
-                                color: colors.onSurface.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ] else
-                            Text(
-                              'No rating',
-                              style: textStyles.bodySmall?.copyWith(
-                                fontSize: 14,
-                                color: colors.onSurface.withValues(alpha: 0.7),
-                              ),
-                            ),
-                        ],
+                      Text(
+                        item.displayPrice,
+                        style: textStyles.titleMedium?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: colors.onSurface,
+                        ),
                       ),
-
-                      // Price
-                      Row(
-                        children: [
-                          Text(
-                            item.displayPrice,
-                            style: textStyles.titleMedium?.copyWith(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: colors.onSurface,
-                            ),
-                          ),
-                          Text(
-                            ' /night',
-                            style: textStyles.bodySmall?.copyWith(
-                              fontSize: 14,
-                              color: colors.onSurface.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        ' /night',
+                        style: textStyles.bodySmall?.copyWith(
+                          fontSize: 14,
+                          color: colors.onSurface.withValues(alpha: 0.7),
+                        ),
                       ),
                     ],
                   ),

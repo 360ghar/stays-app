@@ -6,6 +6,7 @@ import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
 import '../data/services/places_service.dart';
 import '../data/services/supabase_service.dart';
+import '../controllers/favorites_controller.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -13,6 +14,7 @@ class InitialBinding extends Bindings {
     // Keep non-async, app-wide services here
     Get.put<LocationService>(LocationService(), permanent: true);
     Get.put<PlacesService>(PlacesService(), permanent: true);
+    Get.put<FavoritesController>(FavoritesController(), permanent: true);
     Get.put<AnalyticsService>(
       AnalyticsService(enabled: AppConfig.I.enableAnalytics),
       permanent: true,
