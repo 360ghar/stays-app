@@ -1,7 +1,6 @@
 ﻿import 'package:get/get.dart';
 
 import '../../data/models/property_model.dart';
-import '../navigation_controller.dart';
 import '../trips_controller.dart';
 import '../../routes/app_routes.dart';
 
@@ -54,10 +53,6 @@ class BookingConfirmationController extends GetxController {
 
     tripsController.addBooking(selectedProperty);
 
-    if (Get.isRegistered<NavigationController>()) {
-      Get.find<NavigationController>().changeTab(2);
-    }
-
-    await Get.offAllNamed(Routes.home, arguments: {'tabIndex': 2});
+    await Get.offAllNamed(Routes.home, arguments: 0);
   }
 }

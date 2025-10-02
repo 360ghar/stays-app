@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../data/models/booking_model.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../utils/logger/app_logger.dart';
+import '../../routes/app_routes.dart';
 
 class BookingController extends GetxController {
   final BookingRepository _repository;
@@ -21,6 +22,7 @@ class BookingController extends GetxController {
       final booking = await _repository.createBooking(payload);
       latestBooking.value = booking;
       statusMessage.value = 'Booking created';
+      await Get.offAllNamed(Routes.home, arguments: 0);
     } catch (e, stackTrace) {
       latestBooking.value = null;
       errorMessage.value = e.toString();
@@ -66,13 +68,10 @@ class BookingController extends GetxController {
         );
         AppLogger.info('Pricing response received', pricing);
       } catch (error, stackTrace) {
-        AppLogger.warning(
-          'Pricing request failed, using fallback values',
-          {
-            'error': error.toString(),
-            'stackTrace': stackTrace.toString(),
-          },
-        );
+        AppLogger.warning('Pricing request failed, using fallback values', {
+          'error': error.toString(),
+          'stackTrace': stackTrace.toString(),
+        });
         if (fallbackPricing != null && fallbackPricing.isNotEmpty) {
           pricing = Map<String, dynamic>.from(fallbackPricing);
         } else {

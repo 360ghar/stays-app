@@ -17,8 +17,7 @@ class _HomeShellViewState extends State<HomeShellView> {
     super.initState();
 
     final args = Get.arguments;
-    final tabIndex =
-        args is Map<String, dynamic> ? args['tabIndex'] as int? : null;
+    final tabIndex = _resolveInitialTabIndex(args);
     if (tabIndex != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (Get.isRegistered<NavigationController>()) {
@@ -26,6 +25,24 @@ class _HomeShellViewState extends State<HomeShellView> {
         }
       });
     }
+  }
+
+  int? _resolveInitialTabIndex(dynamic args) {
+    if (args is int) {
+      return args;
+    }
+
+    if (args is Map<String, dynamic>) {
+      final candidate = args['tabIndex'] ?? args['initialTabIndex'];
+      if (candidate is int) {
+        return candidate;
+      }
+      if (candidate is String) {
+        return int.tryParse(candidate);
+      }
+    }
+
+    return null;
   }
 
   @override

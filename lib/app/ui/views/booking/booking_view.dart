@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 
 import '../../../controllers/auth/auth_controller.dart';
 import '../../../controllers/booking/booking_controller.dart';
-import '../../../controllers/navigation_controller.dart';
 import '../../../controllers/trips_controller.dart';
 import '../../../controllers/filter_controller.dart';
 import '../../../data/models/property_model.dart';
@@ -24,7 +23,6 @@ class BookingView extends StatefulWidget {
 class _BookingViewState extends State<BookingView> {
   late final BookingController bookingController;
   TripsController? tripsController;
-  NavigationController? navigationController;
   AuthController? authController;
 
   Property? property;
@@ -38,16 +36,18 @@ class _BookingViewState extends State<BookingView> {
 
   final DateFormat _dateFormat = DateFormat('EEE, MMM d, yyyy');
   void _ensureDependencies() {
-    final bookingsProvider = Get.isRegistered<BookingsProvider>()
-        ? Get.find<BookingsProvider>()
-        : Get.put(BookingsProvider(), permanent: true);
+    final bookingsProvider =
+        Get.isRegistered<BookingsProvider>()
+            ? Get.find<BookingsProvider>()
+            : Get.put(BookingsProvider(), permanent: true);
 
-    final bookingRepository = Get.isRegistered<BookingRepository>()
-        ? Get.find<BookingRepository>()
-        : Get.put(
-            BookingRepository(provider: bookingsProvider),
-            permanent: true,
-          );
+    final bookingRepository =
+        Get.isRegistered<BookingRepository>()
+            ? Get.find<BookingRepository>()
+            : Get.put(
+              BookingRepository(provider: bookingsProvider),
+              permanent: true,
+            );
 
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
@@ -76,9 +76,6 @@ class _BookingViewState extends State<BookingView> {
     bookingController = Get.find<BookingController>();
     if (Get.isRegistered<TripsController>()) {
       tripsController = Get.find<TripsController>();
-    }
-    if (Get.isRegistered<NavigationController>()) {
-      navigationController = Get.find<NavigationController>();
     }
     if (Get.isRegistered<AuthController>()) {
       authController = Get.find<AuthController>();
@@ -285,15 +282,14 @@ class _BookingViewState extends State<BookingView> {
         backgroundColor: Colors.green[100],
         colorText: Colors.green[800],
       );
-      navigationController?.changeTab(2);
-      Get.offAllNamed(Routes.home, arguments: {'tabIndex': 2});
+      Get.offAllNamed(Routes.home, arguments: 0);
     } else {
-      final error = bookingController.errorMessage.value.isNotEmpty
-          ? bookingController.errorMessage.value
-          : 'Failed to create booking. Please try again.';
-      final truncatedError = error.length > 100
-          ? '${error.substring(0, 97)}...'
-          : error;
+      final error =
+          bookingController.errorMessage.value.isNotEmpty
+              ? bookingController.errorMessage.value
+              : 'Failed to create booking. Please try again.';
+      final truncatedError =
+          error.length > 100 ? '${error.substring(0, 97)}...' : error;
       Get.snackbar(
         'Booking failed',
         truncatedError,
@@ -302,74 +298,77 @@ class _BookingViewState extends State<BookingView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       );
     }
-
   }
 
   @override
   Widget build(BuildContext context) {
     final prop = property;
-    final buttonLabel = nights > 0
-        ? 'Pay & Confirm ${CurrencyHelper.format(estimatedTotal)}'
-        : 'Pay & Confirm';
+    final buttonLabel =
+        nights > 0
+            ? 'Pay & Confirm ${CurrencyHelper.format(estimatedTotal)}'
+            : 'Pay & Confirm';
     return Scaffold(
       appBar: AppBar(title: Text(prop?.name ?? 'Confirm booking')),
-      body: prop == null
-          ? const Center(child: Text('Property details unavailable'))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildPropertyHeader(prop),
-                const SizedBox(height: 16),
-                _buildStayDetailsCard(prop),
-                const SizedBox(height: 16),
-                _buildContactCard(),
-                const SizedBox(height: 16),
-                _buildPriceSummaryCard(prop),
-                const SizedBox(height: 24),
-              ],
-            ),
-      bottomNavigationBar: prop == null
-          ? null
-          : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Obx(() {
-                final isLoading = bookingController.isSubmitting.value;
-                final message = bookingController.statusMessage.value;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (isLoading && message.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Text(
-                          message,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall,
+      body:
+          prop == null
+              ? const Center(child: Text('Property details unavailable'))
+              : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildPropertyHeader(prop),
+                  const SizedBox(height: 16),
+                  _buildStayDetailsCard(prop),
+                  const SizedBox(height: 16),
+                  _buildContactCard(),
+                  const SizedBox(height: 16),
+                  _buildPriceSummaryCard(prop),
+                  const SizedBox(height: 24),
+                ],
+              ),
+      bottomNavigationBar:
+          prop == null
+              ? null
+              : SafeArea(
+                minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                child: Obx(() {
+                  final isLoading = bookingController.isSubmitting.value;
+                  final message = bookingController.statusMessage.value;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (isLoading && message.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            message,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _submitBooking,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child:
+                              isLoading
+                                  ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : Text(buttonLabel),
                         ),
                       ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : _submitBooking,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(buttonLabel),
-                      ),
-                    ),
-                  ],
-                );
-              }),
-            ),
+                    ],
+                  );
+                }),
+              ),
     );
   }
 
@@ -493,9 +492,8 @@ class _BookingViewState extends State<BookingView> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline),
-                      onPressed: guests > 1
-                          ? () => setState(() => guests--)
-                          : null,
+                      onPressed:
+                          guests > 1 ? () => setState(() => guests--) : null,
                     ),
                     Text(
                       '$guests',
@@ -503,9 +501,10 @@ class _BookingViewState extends State<BookingView> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline),
-                      onPressed: guests < maxGuests
-                          ? () => setState(() => guests++)
-                          : null,
+                      onPressed:
+                          guests < maxGuests
+                              ? () => setState(() => guests++)
+                              : null,
                     ),
                   ],
                 ),
