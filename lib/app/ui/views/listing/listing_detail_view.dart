@@ -4,13 +4,11 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../bindings/booking_binding.dart';
 import '../../../controllers/listing/listing_detail_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../widgets/web/virtual_tour_embed.dart';
-import '../booking/booking_view.dart';
 
 class ListingDetailView extends GetView<ListingDetailController> {
   const ListingDetailView({super.key});
@@ -334,17 +332,18 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                           Obx(
                             () => _HeroCircleButton(
-                              icon: controller.isPropertyFavorite(listing.id)
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
-                              color: controller.isPropertyFavorite(listing.id)
-                                  ? Colors.red
-                                  : iconColor,
+                              icon:
+                                  controller.isPropertyFavorite(listing.id)
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                              color:
+                                  controller.isPropertyFavorite(listing.id)
+                                      ? Colors.red
+                                      : iconColor,
                               background:
                                   collapsed
-                                      ? colors.surfaceContainerHighest.withValues(
-                                        alpha: 0.85,
-                                      )
+                                      ? colors.surfaceContainerHighest
+                                          .withValues(alpha: 0.85)
                                       : Colors.black.withValues(alpha: 0.45),
                               onTap: () => controller.toggleFavorite(listing),
                             ),
@@ -811,7 +810,8 @@ class ListingDetailView extends GetView<ListingDetailController> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.stays_app',
                       maxZoom: 18,
                     ),
@@ -825,10 +825,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
                             decoration: BoxDecoration(
                               color: colors.primary.withValues(alpha: 0.9),
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              border: Border.all(color: Colors.white, width: 2),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withValues(alpha: 0.2),
@@ -981,13 +978,8 @@ class ListingDetailView extends GetView<ListingDetailController> {
           SizedBox(
             height: 48,
             child: FilledButton(
-              onPressed: () {
-                Get.to(
-                  () => const BookingView(),
-                  binding: BookingBinding(),
-                  arguments: listing,
-                );
-              },
+              onPressed:
+                  () => controller.navigateToBookingConfirmation(listing),
               child: const Text('Book now'),
             ),
           ),
@@ -1080,7 +1072,8 @@ class ListingDetailView extends GetView<ListingDetailController> {
         await launchUrl(Uri.parse(url));
       } else {
         // Fallback to web maps
-        final webUrl = 'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
+        final webUrl =
+            'https://www.google.com/maps/search/?api=1&query=$lat,$lng';
         if (await canLaunchUrl(Uri.parse(webUrl))) {
           await launchUrl(Uri.parse(webUrl));
         } else {

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../data/models/property_model.dart';
 import '../../data/repositories/properties_repository.dart';
 import '../../data/repositories/wishlist_repository.dart';
+import '../../routes/app_routes.dart';
 import '../../utils/logger/app_logger.dart';
 import '../favorites_controller.dart';
 import '../wishlist_controller.dart';
@@ -120,6 +121,10 @@ class ListingDetailController extends GetxController {
 
   bool isPropertyFavorite(int propertyId) {
     return _favoritesController.isFavorite(propertyId);
+  }
+
+  void navigateToBookingConfirmation(Property property) {
+    Get.toNamed(Routes.bookingConfirmation, arguments: property);
   }
 
   @override

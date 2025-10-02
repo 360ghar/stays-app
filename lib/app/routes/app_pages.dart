@@ -18,6 +18,7 @@ import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/verification_view.dart';
 import '../ui/views/booking/booking_view.dart';
+import '../ui/views/booking/booking_confirmation_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/location_search_view.dart';
@@ -127,6 +128,12 @@ class AppPages {
     GetPage(
       name: Routes.booking,
       page: () => const BookingView(),
+      binding: BookingBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.bookingConfirmation,
+      page: () => const BookingConfirmationView(),
       binding: BookingBinding(),
       middlewares: [AuthMiddleware()],
     ),

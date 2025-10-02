@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../data/models/unified_filter_model.dart';
 import '../data/models/booking_model.dart';
+import '../data/models/property_model.dart';
 import '../data/repositories/booking_repository.dart';
 import 'filter_controller.dart';
 
@@ -108,9 +109,10 @@ class TripsController extends GetxController {
       pastBookings.assignAll(_allBookings);
       return;
     }
-    final filtered = _allBookings
-        .where((booking) => _activeFilters.matchesBooking(booking))
-        .toList();
+    final filtered =
+        _allBookings
+            .where((booking) => _activeFilters.matchesBooking(booking))
+            .toList();
     pastBookings.assignAll(filtered);
   }
 
@@ -127,6 +129,83 @@ class TripsController extends GetxController {
     _applyFilters();
   }
 
+  void addBooking(Property property) {
+    final now = DateTime.now();
+    final checkInDate = now.add(const Duration(days: 7));
+    final checkOutDate = checkInDate.add(const Duration(days: 3));
+    final rawNights = checkOutDate.difference(checkInDate).inDays;
+    final totalNights = rawNights <= 0 ? 1 : rawNights;
+
+    final baseAmount = property.pricePerNight * totalNights;
+    final serviceFees = baseAmount * 0.10;
+    final taxes = baseAmount * 0.05;
+    final totalAmount = (baseAmount + serviceFees + taxes).toDouble();
+
+    simulateAddBooking(
+      propertyId: property.id,
+      propertyName: property.name,
+      imageUrl: property.displayImage ?? '',
+      address: property.address ?? property.fullAddress,
+      city: property.city,
+      country: property.country,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+      guests: property.maxGuests ?? 1,
+      rooms: 1,
+      totalAmount: totalAmount,
+      nights: totalNights,
+      status: 'upcoming',
+      canReview: false,
+      canRebook: false,
+    );
+
+    Get.snackbar(
+      'Booking confirmed',
+      '${property.name} added to your trips.',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green[50],
+      colorText: Colors.green[800],
+    );
+  }
+
+  Future<void> cancelBooking(String bookingId) async {
+    final confirmed = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Cancel booking?'),
+        content: const Text(
+          'Are you sure you want to cancel this upcoming trip?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Keep booking'),
+          ),
+          FilledButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Cancel booking'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final before = _allBookings.length;
+    _allBookings.removeWhere((booking) => booking['id'] == bookingId);
+    pastBookings.removeWhere((booking) => booking['id'] == bookingId);
+    if (before != _allBookings.length) {
+      _applyFilters();
+      Get.snackbar(
+        'Booking cancelled',
+        'Your trip has been cancelled.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } else {
+      pastBookings.refresh();
+    }
+  }
 
   Booking simulateAddBooking({
     required int propertyId,
@@ -143,11 +222,14 @@ class TripsController extends GetxController {
     int? nights,
     int? userId,
     bool notifyUser = false,
+    String status = 'confirmed',
+    bool canReview = true,
+    bool canRebook = true,
   }) {
     final now = DateTime.now();
     final bookingId = now.millisecondsSinceEpoch;
-    final computedNights = nights ??
-        checkOut.difference(checkIn).inDays.clamp(1, 365);
+    final computedNights =
+        nights ?? checkOut.difference(checkIn).inDays.clamp(1, 365);
 
     final booking = Booking.fromJson({
       'id': bookingId,
@@ -159,7 +241,7 @@ class TripsController extends GetxController {
       'guests': guests,
       'nights': computedNights,
       'total_amount': totalAmount,
-      'booking_status': 'confirmed',
+      'booking_status': status,
       'payment_status': 'paid',
       'created_at': now.toIso8601String(),
       'property_title': propertyName,
@@ -168,20 +250,23 @@ class TripsController extends GetxController {
       'property_image_url': imageUrl,
     });
 
-    final mapped = _mapBooking(booking)
-      ..['rooms'] = rooms
-      ..['location'] =
-          (address != null && address.trim().isNotEmpty)
-              ? address.trim()
-              : booking.displayLocation
-      ..['canReview'] = true
-      ..['isSimulated'] = true
-      ..['status'] = 'confirmed'
-      ..['totalAmount'] = totalAmount.toDouble()
-      ..['bookingDate'] = now.toIso8601String();
+    final mapped =
+        _mapBooking(booking)
+          ..['rooms'] = rooms
+          ..['location'] =
+              (address != null && address.trim().isNotEmpty)
+                  ? address.trim()
+                  : booking.displayLocation
+          ..['canReview'] = canReview
+          ..['canRebook'] = canRebook
+          ..['isSimulated'] = true
+          ..['status'] = status
+          ..['totalAmount'] = totalAmount.toDouble()
+          ..['bookingDate'] = now.toIso8601String();
 
-    final existingIndex =
-        _allBookings.indexWhere((existing) => existing['id'] == mapped['id']);
+    final existingIndex = _allBookings.indexWhere(
+      (existing) => existing['id'] == mapped['id'],
+    );
     if (existingIndex >= 0) {
       _allBookings[existingIndex] = mapped;
     } else {
@@ -201,6 +286,7 @@ class TripsController extends GetxController {
 
     return booking;
   }
+
   bool get hasActiveFilters => _activeFilters.isNotEmpty;
 
   int get totalHistoryCount => _allBookings.length;

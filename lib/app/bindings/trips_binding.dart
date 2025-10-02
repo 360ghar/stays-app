@@ -25,7 +25,7 @@ class TripsBinding extends Bindings {
     }
 
     if (!Get.isRegistered<TripsController>()) {
-      Get.lazyPut<TripsController>(() => TripsController(), fenix: true);
+      Get.put<TripsController>(TripsController(), permanent: true);
     }
   }
 }

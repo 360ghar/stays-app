@@ -39,10 +39,11 @@ class TripsView extends GetView<TripsController> {
                 height: 36,
                 child: FilterButton(
                   isActive: isActive,
-                  onPressed: () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.booking,
-                  ),
+                  onPressed:
+                      () => filterController.openFilterSheet(
+                        context,
+                        FilterScope.booking,
+                      ),
                 ),
               ),
             );
@@ -77,8 +78,8 @@ class TripsView extends GetView<TripsController> {
         final bookings = controller.pastBookings;
 
         return RefreshIndicator(
-          onRefresh: () async =>
-              controller.loadPastBookings(forceRefresh: true),
+          onRefresh:
+              () async => controller.loadPastBookings(forceRefresh: true),
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -193,10 +194,11 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => filterController.openFilterSheet(
-                context,
-                FilterScope.booking,
-              ),
+              onPressed:
+                  () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.booking,
+                  ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
@@ -237,19 +239,20 @@ class TripsView extends GetView<TripsController> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: tags
-              .map(
-                (tag) => Chip(
-                  label: Text(
-                    tag,
-                    style: textStyles.labelMedium?.copyWith(
-                      color: colors.onPrimaryContainer,
+          children:
+              tags
+                  .map(
+                    (tag) => Chip(
+                      label: Text(
+                        tag,
+                        style: textStyles.labelMedium?.copyWith(
+                          color: colors.onPrimaryContainer,
+                        ),
+                      ),
+                      backgroundColor: colors.primaryContainer,
                     ),
-                  ),
-                  backgroundColor: colors.primaryContainer,
-                ),
-              )
-              .toList(),
+                  )
+                  .toList(),
         ),
         Align(
           alignment: Alignment.centerLeft,
@@ -274,9 +277,10 @@ class TripsView extends GetView<TripsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (Theme.of(context).brightness == Brightness.dark)
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.05),
+            color:
+                (Theme.of(context).brightness == Brightness.dark)
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -390,6 +394,7 @@ class TripsView extends GetView<TripsController> {
     final location = (booking['location'] ?? '').toString();
     final imageUrl = (booking['image'] ?? '').toString();
     final canReview = booking['canReview'] == true;
+    final isUpcoming = status == 'upcoming';
 
     final colors = Theme.of(context).colorScheme;
     final textStyles = Theme.of(context).textTheme;
@@ -400,9 +405,10 @@ class TripsView extends GetView<TripsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: (Theme.of(context).brightness == Brightness.dark)
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.05),
+            color:
+                (Theme.of(context).brightness == Brightness.dark)
+                    ? Colors.black.withValues(alpha: 0.4)
+                    : Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -420,23 +426,24 @@ class TripsView extends GetView<TripsController> {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
-                  child: imageUrl.isNotEmpty
-                      ? Image.network(
-                          imageUrl,
-                          height: 160,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          height: 160,
-                          width: double.infinity,
-                          color: colors.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image,
-                            size: 50,
-                            color: colors.onSurface.withValues(alpha: 0.5),
+                  child:
+                      imageUrl.isNotEmpty
+                          ? Image.network(
+                            imageUrl,
+                            height: 160,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                          : Container(
+                            height: 160,
+                            width: double.infinity,
+                            color: colors.surfaceContainerHighest,
+                            child: Icon(
+                              Icons.image,
+                              size: 50,
+                              color: colors.onSurface.withValues(alpha: 0.5),
+                            ),
                           ),
-                        ),
                 ),
                 Positioned(
                   top: 12,
@@ -563,33 +570,52 @@ class TripsView extends GetView<TripsController> {
                       ),
                       Row(
                         children: [
-                          if (canReview)
+                          if (isUpcoming) ...[
                             TextButton(
-                              onPressed: () => controller.leaveReview(booking),
+                              onPressed: () {
+                                final bookingId =
+                                    (booking['id'] ?? '').toString();
+                                if (bookingId.isEmpty) return;
+                                controller.cancelBooking(bookingId);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.error,
+                              ),
                               child: const Text(
-                                'Review',
+                                'Cancel',
                                 style: TextStyle(fontSize: 14),
                               ),
                             ),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () => controller.rebookHotel(booking),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: colors.primary,
-                              foregroundColor: colors.onPrimary,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
+                          ] else ...[
+                            if (canReview)
+                              TextButton(
+                                onPressed:
+                                    () => controller.leaveReview(booking),
+                                child: const Text(
+                                  'Review',
+                                  style: TextStyle(fontSize: 14),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                            if (canReview) const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: () => controller.rebookHotel(booking),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colors.primary,
+                                foregroundColor: colors.onPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'Book Again',
+                                style: TextStyle(fontSize: 14),
                               ),
                             ),
-                            child: const Text(
-                              'Book Again',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
@@ -605,9 +631,8 @@ class TripsView extends GetView<TripsController> {
 
   String _formatDate(String dateStr) {
     try {
-      final clean = dateStr.isEmpty
-          ? DateTime.now().toIso8601String()
-          : dateStr;
+      final clean =
+          dateStr.isEmpty ? DateTime.now().toIso8601String() : dateStr;
       final date = DateTime.parse(clean);
       const months = [
         'Jan',
