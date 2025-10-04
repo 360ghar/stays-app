@@ -14,33 +14,37 @@ import '../filter_controller.dart';
 import '../../utils/helpers/currency_helper.dart';
 
 class HotelModel {
-  final String id;
-  final String name;
-  final String imageUrl;
-  final double price;
-  final double rating;
+  final Property property;
   final LatLng position;
-  final String description;
-  final String propertyType;
+  final double distanceKm;
 
   HotelModel({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-    required this.price,
-    required this.rating,
+    required this.property,
     required this.position,
-    required this.description,
-    required this.propertyType,
+    this.distanceKm = 0,
   });
+
+  String get id => property.id.toString();
+  String get name => property.name;
+  double get price => property.pricePerNight;
+  double get rating => property.rating ?? 0;
+  String? get imageUrl => property.displayImage;
+  String get description =>
+      property.description ??
+      '${property.propertyTypeDisplay} · ${property.city}';
+  String get propertyType => property.propertyType.toLowerCase();
 }
 
 class HotelsMapController extends GetxController {
   late MapController mapController;
+  late final PageController cardsController;
   final RxList<Marker> markers = <Marker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
-  final Rx<LatLng> currentLocation =
-      const LatLng(28.6139, 77.2090).obs; // Delhi default
+  final Rx<LatLng> currentLocation = const LatLng(
+    28.6139,
+    77.2090,
+  ).obs; // Delhi default
+  final RxnString selectedHotelId = RxnString();
   final RxString searchQuery = ''.obs;
   final RxBool isSearching = false.obs;
   final RxList<PlacePrediction> predictions = <PlacePrediction>[].obs;
@@ -55,11 +59,17 @@ class HotelsMapController extends GetxController {
   Worker? _filterWorker;
   final List<HotelModel> _allHotels = [];
   double _lastRadius = 10;
+  double _lastMapZoom = 12;
+  StreamSubscription<MapEvent>? _mapEventSub;
 
   @override
   void onInit() {
     super.onInit();
     mapController = MapController();
+    cardsController = PageController(viewportFraction: 0.88);
+    _mapEventSub = mapController.mapEventStream.listen((event) {
+      _lastMapZoom = event.camera.zoom;
+    });
     try {
       _propertiesService = Get.find<PropertiesRepository>();
     } catch (_) {}
@@ -80,6 +90,8 @@ class HotelsMapController extends GetxController {
 
   @override
   void onClose() {
+    _mapEventSub?.cancel();
+    cardsController.dispose();
     searchController.dispose();
     _filterWorker?.dispose();
     super.onClose();
@@ -116,26 +128,108 @@ class HotelsMapController extends GetxController {
       return;
     }
     if (_allHotels.isEmpty) {
-      hotels.clear();
-      markers.clear();
+      _setHotels(const <HotelModel>[]);
       return;
     }
     if (_activeFilters.isEmpty) {
-      hotels.assignAll(_allHotels);
+      _setHotels(List<HotelModel>.from(_allHotels));
     } else {
-      final filtered =
-          _allHotels
-              .where(
-                (hotel) => _activeFilters.matchesHotel(
-                  price: hotel.price,
-                  rating: hotel.rating,
-                  propertyType: hotel.propertyType,
-                ),
-              )
-              .toList();
-      hotels.assignAll(filtered);
+      final filtered = _allHotels
+          .where(
+            (hotel) => _activeFilters.matchesHotel(
+              price: hotel.price,
+              rating: hotel.rating,
+              propertyType: hotel.propertyType,
+            ),
+          )
+          .toList();
+      _setHotels(filtered);
     }
+  }
+
+  void _setHotels(List<HotelModel> newHotels) {
+    hotels.assignAll(newHotels);
+    if (newHotels.isEmpty) {
+      selectedHotelId.value = null;
+      markers.clear();
+      return;
+    }
+
+    final currentId = selectedHotelId.value;
+    var targetIndex = currentId != null
+        ? hotels.indexWhere((hotel) => hotel.id == currentId)
+        : -1;
+    if (targetIndex == -1 && hotels.isNotEmpty) {
+      targetIndex = 0;
+      selectedHotelId.value = hotels.first.id;
+      _centerOnHotel(hotels.first);
+    }
+
+    if (targetIndex >= 0) {
+      _jumpToCard(targetIndex);
+    }
+
     _updateMapMarkers();
+  }
+
+  void _jumpToCard(int index, {bool animate = false}) {
+    if (index < 0 || index >= hotels.length) return;
+    Future.microtask(() {
+      if (!cardsController.hasClients) return;
+      if (animate) {
+        cardsController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        );
+      } else {
+        cardsController.jumpToPage(index);
+      }
+    });
+  }
+
+  void _centerOnHotel(HotelModel hotel) {
+    final zoom = _lastMapZoom;
+    mapController.move(hotel.position, zoom);
+    _lastMapZoom = zoom;
+  }
+
+  void selectHotel(int index, {bool syncPage = true, bool syncMap = true}) {
+    if (index < 0 || index >= hotels.length) return;
+    final hotel = hotels[index];
+    final alreadySelected = selectedHotelId.value == hotel.id;
+    if (alreadySelected) {
+      if (syncMap) {
+        _centerOnHotel(hotel);
+      }
+      return;
+    }
+
+    selectedHotelId.value = hotel.id;
+
+    if (syncPage) {
+      _jumpToCard(index, animate: true);
+    }
+
+    if (syncMap) {
+      _centerOnHotel(hotel);
+    }
+
+    _updateMapMarkers();
+  }
+
+  void onMarkerTapped(HotelModel hotel) {
+    final index = hotels.indexWhere((item) => item.id == hotel.id);
+    if (index == -1) return;
+    selectHotel(index, syncPage: true, syncMap: true);
+  }
+
+  void onHotelCardChanged(int index) {
+    selectHotel(index, syncPage: false, syncMap: true);
+  }
+
+  void openPropertyDetail(HotelModel hotel) {
+    Get.toNamed('/listing/${hotel.id}');
   }
 
   Future<void> getCurrentLocation() async {
@@ -171,6 +265,7 @@ class HotelsMapController extends GetxController {
       currentLocation.value = LatLng(position.latitude, position.longitude);
 
       mapController.move(currentLocation.value, 12);
+      _lastMapZoom = 12;
 
       await _loadHotelsNearLocation(currentLocation.value);
     } catch (e) {
@@ -189,8 +284,7 @@ class HotelsMapController extends GetxController {
     try {
       if (_propertiesService == null) {
         _allHotels.clear();
-        hotels.clear();
-        markers.clear();
+        _setHotels(const <HotelModel>[]);
         return;
       }
       final double radius = radiusKm ?? _activeFilters.radiusKm ?? _lastRadius;
@@ -218,137 +312,71 @@ class HotelsMapController extends GetxController {
   }
 
   void _updateMapMarkers() {
-    final List<Marker> newMarkers =
-        hotels.map((hotel) {
-          return Marker(
-            width: 80.0,
-            height: 80.0,
-            point: hotel.position,
-            child: GestureDetector(
-              onTap: () => _showHotelDetails(hotel),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      CurrencyHelper.format(hotel.price),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  const Icon(Icons.location_pin, color: Colors.red, size: 24),
-                ],
-              ),
-            ),
-          );
-        }).toList();
+    if (hotels.isEmpty) {
+      markers.clear();
+      return;
+    }
 
-    // Replace markers in one go to ensure rebuilds
+    final selectedId = selectedHotelId.value;
+    final List<Marker> newMarkers = hotels.map((hotel) {
+      final isSelected = selectedId == hotel.id;
+      return Marker(
+        width: 100.0,
+        height: isSelected ? 100.0 : 90.0,
+        point: hotel.position,
+        child: GestureDetector(
+          onTap: () => onMarkerTapped(hotel),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(
+                        alpha: isSelected ? 0.25 : 0.18,
+                      ),
+                      blurRadius: isSelected ? 8 : 6,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  CurrencyHelper.format(hotel.price),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected ? Colors.white : Colors.blue,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Icon(
+                Icons.location_pin,
+                color: isSelected ? Colors.redAccent : Colors.red,
+                size: isSelected ? 30 : 24,
+              ),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+
     markers.assignAll(newMarkers);
   }
 
   HotelModel _toHotelModel(Property p) {
+    final lat = p.latitude ?? currentLocation.value.latitude;
+    final lng = p.longitude ?? currentLocation.value.longitude;
     return HotelModel(
-      id: p.id.toString(),
-      name: p.name,
-      imageUrl: p.displayImage ?? '',
-      price: p.pricePerNight,
-      rating: p.rating ?? 0,
-      position: LatLng(
-        p.latitude ?? currentLocation.value.latitude,
-        p.longitude ?? currentLocation.value.longitude,
-      ),
-      description: p.description ?? '${p.propertyType} in ${p.city}',
-      propertyType: p.propertyType.toLowerCase(),
-    );
-  }
-
-  void _showHotelDetails(HotelModel hotel) {
-    Get.bottomSheet(
-      Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    hotel.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber[600], size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        hotel.rating.toStringAsFixed(1),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        "${CurrencyHelper.format(hotel.price)}/${'listing.per_night'.tr}",
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(hotel.description),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        Get.toNamed('/listing/${hotel.id}');
-                      },
-                      child: Text('common.view_details'.tr),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
+      property: p,
+      position: LatLng(lat, lng),
+      distanceKm: p.distanceKm ?? 0,
     );
   }
 
@@ -391,6 +419,7 @@ class HotelsMapController extends GetxController {
       predictions.clear();
       currentLocation.value = newLoc;
       mapController.move(newLoc, 12);
+      _lastMapZoom = 12;
       await _loadHotelsNearLocation(newLoc);
     } finally {
       isLoadingLocation.value = false;

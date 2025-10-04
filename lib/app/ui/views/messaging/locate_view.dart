@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -58,10 +59,9 @@ class LocateView extends GetView<HotelsMapController> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  context.isDark
-                                      ? Colors.black.withValues(alpha: 0.4)
-                                      : Colors.black.withValues(alpha: 0.08),
+                              color: context.isDark
+                                  ? Colors.black.withValues(alpha: 0.4)
+                                  : Colors.black.withValues(alpha: 0.08),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -84,29 +84,29 @@ class LocateView extends GetView<HotelsMapController> {
                             suffixIcon: Obx(
                               () =>
                                   (controller.isLoadingLocation.value ||
-                                          controller.isSearching.value)
-                                      ? const Padding(
-                                        padding: EdgeInsets.all(12.0),
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
+                                      controller.isSearching.value)
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(12.0),
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
                                         ),
-                                      )
-                                      : IconButton(
-                                        icon: Icon(
-                                          Icons.clear,
-                                          color: colors.onSurface.withValues(
-                                            alpha: 0.6,
-                                          ),
-                                        ),
-                                        onPressed: () {
-                                          controller.searchController.clear();
-                                          controller.onSearchChanged('');
-                                        },
                                       ),
+                                    )
+                                  : IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        color: colors.onSurface.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                      ),
+                                      onPressed: () {
+                                        controller.searchController.clear();
+                                        controller.onSearchChanged('');
+                                      },
+                                    ),
                             ),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(
@@ -124,11 +124,10 @@ class LocateView extends GetView<HotelsMapController> {
                         height: 44,
                         child: FilterButton(
                           isActive: active,
-                          onPressed:
-                              () => filterController.openFilterSheet(
-                                context,
-                                FilterScope.locate,
-                              ),
+                          onPressed: () => filterController.openFilterSheet(
+                            context,
+                            FilterScope.locate,
+                          ),
                         ),
                       );
                     }),
@@ -179,9 +178,8 @@ class LocateView extends GetView<HotelsMapController> {
                             ),
                           ),
                           TextButton(
-                            onPressed:
-                                () =>
-                                    filterController.clear(FilterScope.locate),
+                            onPressed: () =>
+                                filterController.clear(FilterScope.locate),
                             child: Text('common.clear'.tr),
                           ),
                         ],
@@ -229,83 +227,103 @@ class LocateView extends GetView<HotelsMapController> {
           ),
 
           // Current Location Button
-          Positioned(
-            bottom: 120,
-            right: 16,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: colors.surface,
-              onPressed: controller.getCurrentLocation,
-              child: Obx(
-                () =>
-                    controller.isLoadingLocation.value
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : Icon(Icons.my_location, color: colors.primary),
+          Obx(() {
+            final hasHotels = controller.hotels.isNotEmpty;
+            final bottomOffset = hasHotels ? 280.0 : 120.0;
+            final isLocating = controller.isLoadingLocation.value;
+            return Positioned(
+              bottom: bottomOffset,
+              right: 16,
+              child: FloatingActionButton(
+                mini: true,
+                backgroundColor: colors.surface,
+                onPressed: controller.getCurrentLocation,
+                child: isLocating
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(Icons.my_location, color: colors.primary),
               ),
-            ),
-          ),
+            );
+          }),
 
           // Hotels Loading Indicator
-          Obx(
-            () =>
-                controller.isLoadingHotels.value
-                    ? Positioned(
-                      bottom: 80,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.surface.withValues(
-                              alpha: context.isDark ? 0.9 : 0.85,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    colors.primary,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Text(
-                                'locate.loading_hotels'.tr,
-                                style: textStyles.bodyMedium?.copyWith(
-                                  color: colors.onSurface,
-                                ),
-                              ),
-                            ],
+          Obx(() {
+            if (!controller.isLoadingHotels.value) {
+              return const SizedBox.shrink();
+            }
+            final hasHotels = controller.hotels.isNotEmpty;
+            final bottomOffset = hasHotels ? 280.0 : 80.0;
+            return Positioned(
+              bottom: bottomOffset,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surface.withValues(
+                      alpha: context.isDark ? 0.9 : 0.85,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colors.primary,
                           ),
                         ),
                       ),
-                    )
-                    : const SizedBox.shrink(),
-          ),
+                      SizedBox(width: 8),
+                      Text(
+                        'locate.loading_hotels'.tr,
+                        style: textStyles.bodyMedium?.copyWith(
+                          color: colors.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
 
           // Hotels Count
           Positioned(
-            bottom: 80,
-            left: 16,
-            child: Obx(
-              () =>
-                  controller.hotels.isNotEmpty &&
-                          !controller.isLoadingHotels.value
-                      ? Container(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Obx(() {
+              final hotels = controller.hotels.toList();
+              if (hotels.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              final selectedId = controller.selectedHotelId.value;
+              return SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.only(
+                          left: 24,
+                          right: 24,
+                          bottom: 12,
+                        ),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
@@ -316,7 +334,7 @@ class LocateView extends GetView<HotelsMapController> {
                         ),
                         child: Text(
                           'locate.hotels_count'.trParams({
-                            'count': controller.hotels.length.toString(),
+                            'count': hotels.length.toString(),
                           }),
                           style: textStyles.labelSmall?.copyWith(
                             color: colors.onPrimary,
@@ -324,11 +342,285 @@ class LocateView extends GetView<HotelsMapController> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                      )
-                      : const SizedBox.shrink(),
-            ),
+                      ),
+                    ),
+                    SizedBox(
+                      height: (MediaQuery.of(context).size.height * 0.32)
+                          .clamp(230.0, 300.0)
+                          .toDouble(),
+                      child: PageView.builder(
+                        controller: controller.cardsController,
+                        physics: const BouncingScrollPhysics(),
+                        onPageChanged: controller.onHotelCardChanged,
+                        itemCount: hotels.length,
+                        itemBuilder: (context, index) {
+                          final hotel = hotels[index];
+                          final isSelected = hotel.id == selectedId;
+                          final cardWidth =
+                              MediaQuery.of(context).size.width * 0.95;
+                          return AnimatedPadding(
+                            duration: const Duration(milliseconds: 260),
+                            curve: Curves.easeOut,
+                            padding: EdgeInsets.only(
+                              left: index == 0 ? 24 : 12,
+                              right: index == hotels.length - 1 ? 24 : 12,
+                              top: isSelected ? 0 : 12,
+                              bottom: isSelected ? 8 : 16,
+                            ),
+                            child: AnimatedScale(
+                              scale: isSelected ? 1 : 0.97,
+                              duration: const Duration(milliseconds: 260),
+                              curve: Curves.easeOut,
+                              alignment: Alignment.bottomCenter,
+                              child: LocatePropertyCard(
+                                hotel: hotel,
+                                width: cardWidth,
+                                isSelected: isSelected,
+                                onTap: () =>
+                                    controller.openPropertyDetail(hotel),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              );
+            }),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class LocatePropertyCard extends StatelessWidget {
+  final HotelModel hotel;
+  final VoidCallback onTap;
+  final bool isSelected;
+  final double width;
+
+  const LocatePropertyCard({
+    super.key,
+    required this.hotel,
+    required this.onTap,
+    required this.isSelected,
+    required this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: width,
+        constraints: const BoxConstraints(minHeight: 220, maxHeight: 300),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? colors.primary
+                : colors.outlineVariant.withValues(alpha: 0.3),
+            width: isSelected ? 1.2 : 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isSelected ? 0.18 : 0.1),
+              blurRadius: isSelected ? 18 : 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Flexible(
+              flex: 5,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 90),
+                child: _buildImage(context),
+              ),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 135),
+              child: _buildDetails(context, textStyles, colors),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(BuildContext context) {
+    final colors = context.colors;
+    final theme = Theme.of(context);
+    final imageUrl = hotel.imageUrl;
+    Widget fallback = _buildPlaceholder(colors);
+    return Hero(
+      tag: 'locate_${hotel.id}-${hotel.id}',
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+              ),
+              errorWidget: (context, url, error) => fallback,
+            )
+          else
+            fallback,
+          Positioned(
+            top: 10,
+            left: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                hotel.property.propertyTypeDisplay,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          if (hotel.property.hasVirtualTour)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(Icons.threesixty, color: Colors.white, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      '360°',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          if (hotel.distanceKm > 0)
+            Positioned(
+              bottom: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.surface.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${hotel.distanceKm.toStringAsFixed(1)} km',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colors.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetails(
+    BuildContext context,
+    TextTheme? textStyles,
+    ColorScheme colors,
+  ) {
+    final property = hotel.property;
+    final priceText = '${property.displayPrice}/${'listing.per_night'.tr}';
+    final textTheme = textStyles ?? Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            property.name,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              height: 1.05,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            property.fullAddress,
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.onSurface.withValues(alpha: 0.65),
+              height: 1.25,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  priceText,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                height: 38,
+                child: FilledButton.icon(
+                  onPressed: onTap,
+                  icon: const Icon(Icons.arrow_outward, size: 16),
+                  label: Text('common.view_details'.tr),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    textStyle: textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholder(ColorScheme colors) {
+    return Container(
+      color: colors.surfaceContainerHighest.withValues(alpha: 0.45),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.photo_outlined,
+        color: colors.onSurface.withValues(alpha: 0.4),
+        size: 42,
       ),
     );
   }
