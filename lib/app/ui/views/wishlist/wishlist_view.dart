@@ -271,6 +271,7 @@ class WishlistView extends GetView<WishlistController> {
         onFavoriteToggle: () => controller.removeFromWishlist(item.id),
         isFavorite: true,
         heroPrefix: 'wishlist',
+        isCompact: true,
       ),
     );
   }

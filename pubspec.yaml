@@ -63,6 +63,9 @@ dependencies:
   flutter_map: ^8.2.1
   latlong2: ^0.9.1
   flutter_secure_storage: ^9.2.4
+  firebase_core: ^4.1.1
+  firebase_messaging: ^16.0.2
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

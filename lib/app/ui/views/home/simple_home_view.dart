@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../controllers/messaging/hotels_map_controller.dart';
 import '../../../controllers/navigation_controller.dart';
 import '../messaging/locate_view.dart';
-import '../trips/trips_view.dart';
+import '../bookings/bookings_page.dart';
 import '../wishlist/wishlist_view.dart';
 import 'explore_view.dart';
 import 'profile_view.dart';
@@ -43,12 +43,12 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
             Get.find<HotelsMapController>().getCurrentLocation();
           }
         },
-        children: const [
-          ExploreView(),
-          WishlistView(),
-          TripsView(),
-          LocateView(),
-          ProfileView(),
+        children: [
+          const ExploreView(),
+          const WishlistView(),
+          BookingsPage(),
+          const LocateView(),
+          const ProfileView(),
         ],
       ),
       bottomNavigationBar: Container(

@@ -6,8 +6,8 @@ import '../bindings/home_binding.dart';
 import '../bindings/listing_binding.dart';
 import '../bindings/message_binding.dart';
 import '../bindings/payment_binding.dart';
-import '../bindings/settings_binding.dart';
 import '../bindings/trips_binding.dart';
+import '../bindings/settings_binding.dart';
 import '../bindings/splash_binding.dart';
 import '../bindings/tour_binding.dart';
 import '../middlewares/auth_middleware.dart';
@@ -29,7 +29,7 @@ import '../ui/views/payment/payment_methods_view.dart';
 import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
 import '../ui/views/splash/splash_view.dart';
-import '../ui/views/trips/trips_view.dart';
+import '../ui/views/bookings/bookings_page.dart';
 import '../ui/views/tour/tour_view.dart';
 import 'app_routes.dart';
 import 'package:stays_app/features/profile/bindings/profile_binding.dart'
@@ -218,7 +218,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.trips,
-      page: () => const TripsView(),
+      page: () => BookingsPage(),
       binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),

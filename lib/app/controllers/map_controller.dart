@@ -1,4 +1,4 @@
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
@@ -11,7 +11,7 @@ class MapController extends GetxController {
   PropertiesRepository? _propertiesRepository;
   LocationService? _locationService;
 
-  final MapController mapController = MapController();
+  final flutter_map.MapController mapController = flutter_map.MapController();
 
   final RxList<Property> mapProperties = <Property>[].obs;
   final RxBool isLoading = false.obs;
@@ -178,7 +178,7 @@ class MapController extends GetxController {
     }
   }
 
-  List<Property> getPropertiesInBounds(LatLngBounds bounds) {
+  List<Property> getPropertiesInBounds(flutter_map.LatLngBounds bounds) {
     return mapProperties.where((property) {
       if (!property.hasLocation) return false;
 

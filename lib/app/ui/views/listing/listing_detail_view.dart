@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -798,26 +798,23 @@ class ListingDetailView extends GetView<ListingDetailController> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: FlutterMap(
-                  options: MapOptions(
+                child: flutter_map.FlutterMap(
+                  options: flutter_map.MapOptions(
                     initialCenter: LatLng(lat, lng),
                     initialZoom: 15.0,
                     minZoom: 10.0,
                     maxZoom: 18.0,
-                    interactionOptions: const InteractionOptions(
-                      flags: InteractiveFlag.none, // Disable all interactions
-                    ),
                   ),
                   children: [
-                    TileLayer(
+                    flutter_map.TileLayer(
                       urlTemplate:
                           'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.stays_app',
                       maxZoom: 18,
                     ),
-                    MarkerLayer(
+                    flutter_map.MarkerLayer(
                       markers: [
-                        Marker(
+                        flutter_map.Marker(
                           point: LatLng(lat, lng),
                           width: 35,
                           height: 35,

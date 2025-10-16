@@ -12,6 +12,7 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../../data/providers/bookings_provider.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../widgets/cards/property_grid_card.dart';
 
 class BookingView extends StatefulWidget {
   const BookingView({super.key});
@@ -373,69 +374,47 @@ class _BookingViewState extends State<BookingView> {
   }
 
   Widget _buildPropertyHeader(Property prop) {
-    final rating = prop.rating;
-    final reviews = prop.reviewsCount;
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (prop.displayImage?.isNotEmpty == true)
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(prop.displayImage!, fit: BoxFit.cover),
-            )
-          else
-            Container(
-              height: 180,
-              color: Colors.grey.shade200,
-              alignment: Alignment.center,
-              child: const Icon(Icons.image, size: 48, color: Colors.grey),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final width = MediaQuery.of(context).size.width;
+    final widthFactor = width >= 400 ? 0.25 : 0.3;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Align(
+        alignment: Alignment.center,
+        child: FractionallySizedBox(
+          widthFactor: widthFactor,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  prop.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
+                PropertyGridCard(
+                  property: prop,
+                  onTap: () => Get.toNamed(
+                    Routes.listingDetail.replaceFirst(
+                      ':id',
+                      prop.id.toString(),
+                    ),
+                    arguments: prop,
                   ),
+                  heroPrefix: 'booking',
+                  isFavorite: prop.liked ?? false,
+                  isCompact: true,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${prop.city}, ${prop.country}',
-                  style: TextStyle(color: Colors.grey.shade600),
-                ),
-                if (rating != null || (reviews ?? 0) > 0) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.star_rate_rounded, size: 18),
-                      const SizedBox(width: 4),
-                      Text(rating != null ? rating.toStringAsFixed(1) : 'New'),
-                      if (reviews != null && reviews > 0) ...[
-                        const SizedBox(width: 6),
-                        Text('($reviews)'),
-                      ],
-                    ],
-                  ),
-                ],
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Text(
                   '${CurrencyHelper.format(prop.pricePerNight)} per night',
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

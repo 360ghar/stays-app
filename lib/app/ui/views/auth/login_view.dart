@@ -126,29 +126,67 @@ class _LoginViewState extends State<LoginView> {
                       ),
                       const SizedBox(height: 12),
                       if (_isLoginMode)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Get.snackbar(
-                                'Feature coming soon',
-                                'Password reset will be available shortly.',
-                                snackPosition: SnackPosition.TOP,
-                                backgroundColor:
-                                    colors.primaryContainer.withValues(alpha: 0.9),
-                                colorText: colors.onPrimaryContainer,
-                              );
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: colors.primary,
-                              padding: EdgeInsets.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              textStyle: textStyles.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Remember-me checkbox mirrors controller state via Obx.
+                            Obx(
+                              () {
+                                final isChecked = authController.rememberMe.value;
+                                return InkWell(
+                                  onTap: () => authController.setRememberMe(!isChecked),
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Row(
+                                    children: [
+                                      Checkbox(
+                                        value: isChecked,
+                                        onChanged: (value) => authController
+                                            .setRememberMe(value ?? false),
+                                        activeColor: colors.primary,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Remember me',
+                                        style: textStyles.bodyMedium?.copyWith(
+                                              color: colors.onSurface
+                                                  .withValues(alpha: 0.8),
+                                            ) ??
+                                            TextStyle(
+                                              color: colors.onSurface
+                                                  .withValues(alpha: 0.8),
+                                              fontSize: 14,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                            child: const Text('Forgot password?'),
-                          ),
+                            TextButton(
+                              onPressed: () {
+                                Get.snackbar(
+                                  'Feature coming soon',
+                                  'Password reset will be available shortly.',
+                                  snackPosition: SnackPosition.TOP,
+                                  backgroundColor: colors.primaryContainer
+                                      .withValues(alpha: 0.9),
+                                  colorText: colors.onPrimaryContainer,
+                                );
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: colors.primary,
+                                padding: EdgeInsets.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                textStyle: textStyles.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              child: const Text('Forgot password?'),
+                            ),
+                          ],
                         ),
                       const SizedBox(height: 24),
                       _buildPrimaryButton(

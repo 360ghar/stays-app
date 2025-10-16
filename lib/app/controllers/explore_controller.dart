@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
@@ -33,12 +32,17 @@ class ExploreController extends GetxController {
       _locationService.locationName.isEmpty
           ? 'this area'
           : _locationService.locationName;
+  String get nearbyCity => _selectedCityNormalized();
   List<Property> get recommendedHotels => nearbyHotels.toList();
 
-  Future<void> Function() get refreshLocation =>
-      () async =>
-          await _locationService.getCurrentLocation(ensurePrecise: true);
-  VoidCallback get navigateToSearch => () => Get.toNamed('/search');
+  Future<void> refreshLocation() async {
+    await _locationService.getCurrentLocation(ensurePrecise: true);
+    await _reloadWithFilters();
+  }
+
+  void navigateToSearch() {
+    Get.toNamed('/search');
+  }
 
   Future<void> useMyLocation() async {
     try {

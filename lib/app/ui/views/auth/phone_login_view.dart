@@ -74,18 +74,56 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
               const SizedBox(height: 24),
               _buildPasswordField(colors, textStyles),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Get.toNamed(Routes.forgotPassword),
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.primary,
-                    textStyle: textStyles.labelLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Remember-me checkbox mirrors controller state via Obx.
+                  Obx(
+                    () {
+                      final rememberSelection = controller.rememberMe.value;
+                      return InkWell(
+                        onTap: () => controller.setRememberMe(!rememberSelection),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: rememberSelection,
+                              onChanged: (value) =>
+                                  controller.setRememberMe(value ?? false),
+                              activeColor: colors.primary,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Remember me',
+                              style: textStyles.bodyMedium?.copyWith(
+                                    color:
+                                        colors.onSurface.withValues(alpha: 0.8),
+                                  ) ??
+                                  TextStyle(
+                                    color:
+                                        colors.onSurface.withValues(alpha: 0.8),
+                                    fontSize: 14,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                  child: const Text('Forgot Password?'),
-                ),
+                  TextButton(
+                    onPressed: () => Get.toNamed(Routes.forgotPassword),
+                    style: TextButton.styleFrom(
+                      foregroundColor: colors.primary,
+                      textStyle: textStyles.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('Forgot Password?'),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
               Obx(

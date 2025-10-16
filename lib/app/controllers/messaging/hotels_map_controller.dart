@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -36,9 +36,9 @@ class HotelModel {
 }
 
 class HotelsMapController extends GetxController {
-  late MapController mapController;
+  late flutter_map.MapController mapController;
   late final PageController cardsController;
-  final RxList<Marker> markers = <Marker>[].obs;
+  final RxList<flutter_map.Marker> markers = <flutter_map.Marker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
   final Rx<LatLng> currentLocation = const LatLng(
     28.6139,
@@ -51,22 +51,30 @@ class HotelsMapController extends GetxController {
   final RxBool isLoadingLocation = false.obs;
   final RxBool isLoadingHotels = false.obs;
   final searchController = TextEditingController();
+  final RxString locationLabel = ''.obs;
   PropertiesRepository? _propertiesService;
   PlacesService? _placesService;
   LocationService? _locationService;
   FilterController? _filterController;
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
+  Worker? _locationWorker;
   final List<HotelModel> _allHotels = [];
   double _lastRadius = 10;
   double _lastMapZoom = 12;
-  StreamSubscription<MapEvent>? _mapEventSub;
+  StreamSubscription<flutter_map.MapEvent>? _mapEventSub;
+  bool _mapReady = false;
+  LatLng? _pendingCameraCenter;
+  double? _pendingCameraZoom;
 
   @override
   void onInit() {
     super.onInit();
-    mapController = MapController();
-    cardsController = PageController(viewportFraction: 0.88);
+    mapController = flutter_map.MapController();
+    cardsController = PageController(viewportFraction: 0.82);
+    _mapReady = false;
+    _pendingCameraCenter = null;
+    _pendingCameraZoom = null;
     _mapEventSub = mapController.mapEventStream.listen((event) {
       _lastMapZoom = event.camera.zoom;
     });
@@ -76,9 +84,7 @@ class HotelsMapController extends GetxController {
     try {
       _placesService = Get.find<PlacesService>();
     } catch (_) {}
-    try {
-      _locationService = Get.find<LocationService>();
-    } catch (_) {}
+    _bindLocationService();
     debounce<String>(
       searchQuery,
       (q) => _searchAutocomplete(q),
@@ -86,6 +92,7 @@ class HotelsMapController extends GetxController {
     );
     _initializeFilterSync();
     _requestLocationPermission();
+    _refreshLocationLabel();
   }
 
   @override
@@ -94,7 +101,23 @@ class HotelsMapController extends GetxController {
     cardsController.dispose();
     searchController.dispose();
     _filterWorker?.dispose();
+    _locationWorker?.dispose();
+    _mapReady = false;
+    _pendingCameraCenter = null;
+    _pendingCameraZoom = null;
     super.onClose();
+  }
+
+  void onMapReady() {
+    if (_mapReady) return;
+    _mapReady = true;
+    final pendingCenter = _pendingCameraCenter;
+    final pendingZoom = _pendingCameraZoom;
+    _pendingCameraCenter = null;
+    _pendingCameraZoom = null;
+    if (pendingCenter != null && pendingZoom != null) {
+      _moveMapTo(pendingCenter, pendingZoom);
+    }
   }
 
   Future<void> _requestLocationPermission() async {
@@ -189,9 +212,7 @@ class HotelsMapController extends GetxController {
   }
 
   void _centerOnHotel(HotelModel hotel) {
-    final zoom = _lastMapZoom;
-    mapController.move(hotel.position, zoom);
-    _lastMapZoom = zoom;
+    _moveMapTo(hotel.position, _lastMapZoom);
   }
 
   void selectHotel(int index, {bool syncPage = true, bool syncMap = true}) {
@@ -232,6 +253,20 @@ class HotelsMapController extends GetxController {
     Get.toNamed('/listing/${hotel.id}');
   }
 
+  double get activeRadiusKm => _activeFilters.radiusKm ?? _lastRadius;
+
+  void zoomIn() {
+    final camera = mapController.camera;
+    final zoom = (camera.zoom + 0.5).clamp(5.0, 18.0);
+    _moveMapTo(camera.center, zoom);
+  }
+
+  void zoomOut() {
+    final camera = mapController.camera;
+    final zoom = (camera.zoom - 0.5).clamp(3.0, 18.0);
+    _moveMapTo(camera.center, zoom);
+  }
+
   Future<void> getCurrentLocation() async {
     try {
       isLoadingLocation.value = true;
@@ -264,8 +299,7 @@ class HotelsMapController extends GetxController {
 
       currentLocation.value = LatLng(position.latitude, position.longitude);
 
-      mapController.move(currentLocation.value, 12);
-      _lastMapZoom = 12;
+      _moveMapTo(currentLocation.value, 12);
 
       await _loadHotelsNearLocation(currentLocation.value);
     } catch (e) {
@@ -273,6 +307,7 @@ class HotelsMapController extends GetxController {
       _loadSampleHotels();
     } finally {
       isLoadingLocation.value = false;
+      _refreshLocationLabel();
     }
   }
 
@@ -301,6 +336,7 @@ class HotelsMapController extends GetxController {
         ..clear()
         ..addAll(mapped);
       _applyFilters(fromRemoteFetch: true);
+      _refreshLocationLabel();
     } finally {
       isLoadingHotels.value = false;
     }
@@ -318,48 +354,78 @@ class HotelsMapController extends GetxController {
     }
 
     final selectedId = selectedHotelId.value;
-    final List<Marker> newMarkers = hotels.map((hotel) {
+    final List<flutter_map.Marker> newMarkers = hotels.map((hotel) {
       final isSelected = selectedId == hotel.id;
-      return Marker(
-        width: 100.0,
-        height: isSelected ? 100.0 : 90.0,
+      final theme = Get.theme;
+      final colorScheme = theme.colorScheme;
+      final badgeColor =
+          isSelected ? colorScheme.primary : colorScheme.surface;
+      final textColor =
+          isSelected ? colorScheme.onPrimary : colorScheme.primary;
+      final borderColor = isSelected
+          ? colorScheme.primary
+          : colorScheme.primary.withOpacity(0.5);
+      final shadowColor = Colors.black.withValues(
+        alpha: isSelected ? 0.28 : 0.14,
+      );
+      return flutter_map.Marker(
+        width: 96.0,
+        height: isSelected ? 92.0 : 84.0,
         point: hotel.position,
         child: GestureDetector(
           onTap: () => onMarkerTapped(hotel),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
+                  horizontal: 12,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? Colors.blue : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: badgeColor,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: borderColor, width: 1.6),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isSelected ? 0.25 : 0.18,
-                      ),
-                      blurRadius: isSelected ? 8 : 6,
-                      offset: const Offset(0, 3),
+                      color: shadowColor,
+                      blurRadius: isSelected ? 14 : 10,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Text(
-                  CurrencyHelper.format(hotel.price),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected ? Colors.white : Colors.blue,
+                  CurrencyHelper.formatCompact(hotel.price),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: textColor,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
-              const SizedBox(height: 2),
-              Icon(
-                Icons.location_pin,
-                color: isSelected ? Colors.redAccent : Colors.red,
-                size: isSelected ? 30 : 24,
+              const SizedBox(height: 4),
+              Container(
+                width: isSelected ? 16 : 14,
+                height: isSelected ? 16 : 14,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withOpacity(
+                        isSelected ? 0.45 : 0.25,
+                      ),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -382,6 +448,30 @@ class HotelsMapController extends GetxController {
 
   void onSearchChanged(String value) {
     searchQuery.value = value;
+  }
+
+  void _bindLocationService() {
+    if (Get.isRegistered<LocationService>()) {
+      _locationService = Get.find<LocationService>();
+      _locationWorker = ever<String>(
+        _locationService!.locationNameRx,
+        (value) => _refreshLocationLabel(value),
+      );
+    }
+  }
+
+  void _refreshLocationLabel([String? candidate]) {
+    locationLabel.value = _buildLocationLabel(candidate);
+  }
+
+  String _buildLocationLabel([String? candidate]) {
+    final value = candidate ??
+        _locationService?.locationName ??
+        searchController.text;
+    if (value != null && value.trim().isNotEmpty) {
+      return value.trim();
+    }
+    return 'Select location';
   }
 
   Future<void> _searchAutocomplete(String q) async {
@@ -416,10 +506,10 @@ class HotelsMapController extends GetxController {
         locationName: details.name,
       );
       searchController.text = details.name;
+      _refreshLocationLabel(details.name);
       predictions.clear();
       currentLocation.value = newLoc;
-      mapController.move(newLoc, 12);
-      _lastMapZoom = 12;
+      _moveMapTo(newLoc, 12);
       await _loadHotelsNearLocation(newLoc);
     } finally {
       isLoadingLocation.value = false;
@@ -436,5 +526,15 @@ class HotelsMapController extends GetxController {
     if (predictions.isNotEmpty) {
       await selectPrediction(predictions.first);
     }
+  }
+
+  void _moveMapTo(LatLng target, double zoom) {
+    _lastMapZoom = zoom;
+    if (!_mapReady) {
+      _pendingCameraCenter = target;
+      _pendingCameraZoom = zoom;
+      return;
+    }
+    mapController.move(target, zoom);
   }
 }

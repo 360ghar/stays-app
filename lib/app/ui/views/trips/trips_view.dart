@@ -398,232 +398,188 @@ class TripsView extends GetView<TripsController> {
 
     final colors = Theme.of(context).colorScheme;
     final textStyles = Theme.of(context).textTheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color:
-                (Theme.of(context).brightness == Brightness.dark)
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.black.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: InkWell(
-        onTap: () => controller.viewBookingDetails(booking),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child:
-                      imageUrl.isNotEmpty
-                          ? Image.network(
-                            imageUrl,
-                            height: 160,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                          : Container(
-                            height: 160,
-                            width: double.infinity,
-                            color: colors.surfaceContainerHighest,
-                            child: Icon(
-                              Icons.image,
-                              size: 50,
-                              color: colors.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      status.toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+    final brightness = Theme.of(context).brightness;
+    final width = MediaQuery.of(context).size.width;
+    final widthFactor =
+        width >= 720 ? 0.45 : width >= 520 ? 0.5 : width >= 400 ? 0.55 : 0.65;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Align(
+        alignment: Alignment.center,
+        child: FractionallySizedBox(
+          widthFactor: widthFactor,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Material(
+              color: Colors.transparent,
+              elevation: brightness == Brightness.dark ? 2 : 6,
+              shadowColor: Colors.black.withValues(
+                alpha: brightness == Brightness.dark ? 0.45 : 0.12,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              clipBehavior: Clip.antiAlias,
+              child: Ink(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(18),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      colors.surface.withValues(
+                        alpha: brightness == Brightness.dark ? 0.97 : 0.995,
                       ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: textStyles.titleMedium?.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colors.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 16,
-                        color: colors.onSurface.withValues(alpha: 0.7),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          location,
-                          style: textStyles.bodySmall?.copyWith(
-                            fontSize: 14,
-                            color: colors.onSurface.withValues(alpha: 0.7),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      Color.alphaBlend(
+                        colors.primary.withValues(
+                          alpha: brightness == Brightness.dark ? 0.08 : 0.04,
+                        ),
+                        colors.surface.withValues(
+                          alpha: brightness == Brightness.dark ? 0.95 : 0.985,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 16,
-                              color: colors.onSurface.withValues(alpha: 0.7),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              dateRange,
-                              style: textStyles.bodyMedium?.copyWith(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: colors.onSurface,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.group,
-                              size: 16,
-                              color: colors.onSurface.withValues(alpha: 0.7),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              guestsLabel,
-                              style: textStyles.bodySmall?.copyWith(
-                                fontSize: 14,
-                                color: colors.onSurface.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => controller.viewBookingDetails(booking),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        totalDisplay,
-                        style: textStyles.titleMedium?.copyWith(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: colors.onSurface,
-                        ),
+                      _BookingImageHeader(
+                        imageUrl: imageUrl,
+                        status: status,
+                        statusColor: statusColor,
                       ),
-                      Row(
-                        children: [
-                          if (isUpcoming) ...[
-                            TextButton(
-                              onPressed: () {
-                                final bookingId =
-                                    (booking['id'] ?? '').toString();
-                                if (bookingId.isEmpty) return;
-                                controller.cancelBooking(bookingId);
-                              },
-                              style: TextButton.styleFrom(
-                                foregroundColor: colors.error,
-                              ),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(fontSize: 14),
-                              ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: textStyles.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                          color: colors.onSurface,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.location_on_outlined,
+                                            size: 16,
+                                            color: colors.onSurface.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Expanded(
+                                            child: Text(
+                                              location,
+                                              style:
+                                                  textStyles.bodySmall?.copyWith(
+                                                fontSize: 13,
+                                                color: colors.onSurface
+                                                    .withValues(alpha: 0.7),
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                _BookingPricePill(totalDisplay: totalDisplay),
+                              ],
                             ),
-                          ] else ...[
-                            if (canReview)
-                              TextButton(
-                                onPressed:
-                                    () => controller.leaveReview(booking),
-                                child: const Text(
-                                  'Review',
-                                  style: TextStyle(fontSize: 14),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                _BookingDetailChip(
+                                  icon: Icons.calendar_today,
+                                  label: dateRange,
                                 ),
-                              ),
-                            if (canReview) const SizedBox(width: 8),
-                            ElevatedButton(
-                              onPressed: () => controller.rebookHotel(booking),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: colors.onPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
+                                _BookingDetailChip(
+                                  icon: Icons.group,
+                                  label: guestsLabel,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Book Again',
-                                style: TextStyle(fontSize: 14),
-                              ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (isUpcoming)
+                                  TextButton(
+                                    onPressed: () {
+                                      final bookingId =
+                                          (booking['id'] ?? '').toString();
+                                      if (bookingId.isEmpty) return;
+                                      controller.cancelBooking(bookingId);
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: colors.error,
+                                    ),
+                                    child: const Text('Cancel'),
+                                  )
+                                else ...[
+                                  if (canReview)
+                                    TextButton(
+                                      onPressed: () =>
+                                          controller.leaveReview(booking),
+                                      child: const Text('Review'),
+                                    ),
+                                  if (canReview) const SizedBox(width: 6),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        controller.rebookHotel(booking),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: colors.primary,
+                                      foregroundColor: colors.onPrimary,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: const Text('Book Again'),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                        ],
+                        ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -652,5 +608,155 @@ class TripsView extends GetView<TripsController> {
     } catch (_) {
       return dateStr;
     }
+  }
+}
+
+class _BookingImageHeader extends StatelessWidget {
+  const _BookingImageHeader({
+    required this.imageUrl,
+    required this.status,
+    required this.statusColor,
+  });
+
+  final String imageUrl;
+  final String status;
+  final Color statusColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+      child: AspectRatio(
+        aspectRatio: 3 / 2,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl.isNotEmpty)
+              Image.network(imageUrl, fit: BoxFit.cover)
+            else
+              Container(
+                color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.hotel,
+                  size: 40,
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0),
+                      Colors.black.withValues(alpha: 0.3),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 14,
+              right: 14,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  child: Text(
+                    status.toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BookingPricePill extends StatelessWidget {
+  const _BookingPricePill({required this.totalDisplay});
+
+  final String totalDisplay;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          totalDisplay,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: colors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BookingDetailChip extends StatelessWidget {
+  const _BookingDetailChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+          color: colors.onSurface.withValues(alpha: 0.75),
+          fontWeight: FontWeight.w500,
+        );
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: colors.onSurfaceVariant.withValues(alpha: 0.8),
+            ),
+            const SizedBox(width: 6),
+            Text(label, style: textStyle),
+          ],
+        ),
+      ),
+    );
   }
 }

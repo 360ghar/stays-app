@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,6 +9,11 @@ import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class SplashController extends GetxController {
+  static const String _rememberMeBox = 'auth_preferences';
+  static const String _rememberMeFlagKey = 'remember_me';
+  static const String _rememberedAccessTokenKey = 'remembered_access_token';
+  static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
+
   bool _navigated = false;
   Timer? _watchdog;
   @override
@@ -29,25 +35,34 @@ class SplashController extends GetxController {
     AppLogger.info('Starting app initialization...');
     try {
       // 1) Storage (critical) with timeout guard
-      final storageService = await Get.putAsync(
-        () => StorageService().initialize(),
-        permanent: true,
-      ).timeout(const Duration(seconds: 5));
-      AppLogger.info('StorageService initialized.');
+      final StorageService storageService;
+      if (Get.isRegistered<StorageService>()) {
+        storageService = Get.find<StorageService>();
+        AppLogger.info('StorageService already initialized.');
+      } else {
+        storageService = await Get.putAsync(
+          () => StorageService().initialize(),
+          permanent: true,
+        ).timeout(const Duration(seconds: 5));
+        AppLogger.info('StorageService initialized.');
+      }
 
       // 2) Non-critical services: kick off in parallel, do not await
-
-      Get.putAsync(
-            () => PushNotificationService(storageService).init(),
-            permanent: true,
-          )
-          .timeout(const Duration(seconds: 6))
-          .then((_) => AppLogger.info('PushNotificationService initialized.'))
-          .catchError(
-            (e, _) => AppLogger.warning(
-              'PushNotificationService init failed/timeout: $e',
-            ),
-          );
+      if (!Get.isRegistered<PushNotificationService>()) {
+        Get.putAsync(
+              () => PushNotificationService(storageService).init(),
+              permanent: true,
+            )
+            .timeout(const Duration(seconds: 6))
+            .then((_) => AppLogger.info('PushNotificationService initialized.'))
+            .catchError(
+              (e, _) => AppLogger.warning(
+                'PushNotificationService init failed/timeout: $e',
+              ),
+            );
+      } else {
+        AppLogger.info('PushNotificationService already initialized.');
+      }
 
       AppLogger.info(
         'Core initialization finished. Proceeding to auth check...',
@@ -80,18 +95,57 @@ class SplashController extends GetxController {
     }
 
     try {
+      await GetStorage.init(_rememberMeBox);
+      final prefs = GetStorage(_rememberMeBox);
+      final bool rememberMeEnabled =
+          prefs.read<bool>(_rememberMeFlagKey) ?? false;
+      final String? rememberedAccessToken =
+          prefs.read<String>(_rememberedAccessTokenKey);
+      final bool hasStoredToken =
+          rememberedAccessToken != null && rememberedAccessToken.isNotEmpty;
+
       final session = Supabase.instance.client.auth.currentSession;
-      if (session != null && session.accessToken.isNotEmpty) {
-        AppLogger.info('Active session found. Navigating to home.');
-        _navigated = true;
-        _watchdog?.cancel();
-        Get.offAllNamed(Routes.home);
-      } else {
-        AppLogger.info('No token found. Navigating to login.');
+      final bool hasActiveSession =
+          session != null && session.accessToken.isNotEmpty;
+
+      if (!rememberMeEnabled) {
+        if (hasActiveSession) {
+          AppLogger.info(
+            'Remember-me disabled. Clearing existing Supabase session.',
+          );
+          await Supabase.instance.client.auth.signOut();
+        }
+        await prefs.remove(_rememberedAccessTokenKey);
+        await prefs.remove(_rememberedRefreshTokenKey);
+        AppLogger.info('Remember-me disabled. Navigating to login.');
         _navigated = true;
         _watchdog?.cancel();
         Get.offAllNamed(Routes.login);
+        return;
       }
+
+      if (rememberMeEnabled && hasStoredToken && hasActiveSession) {
+        AppLogger.info('Remember-me token found. Navigating to home.');
+        _navigated = true;
+        _watchdog?.cancel();
+        Get.offAllNamed(Routes.home);
+        return;
+      }
+
+      if (hasStoredToken && !hasActiveSession) {
+        AppLogger.warning(
+          'Remember-me token present but Supabase session missing. Clearing cached token.',
+        );
+        await prefs.remove(_rememberedAccessTokenKey);
+        await prefs.remove(_rememberedRefreshTokenKey);
+      }
+
+      AppLogger.info(
+        'Remember-me enabled but no valid session/token combination. Going to login.',
+      );
+      _navigated = true;
+      _watchdog?.cancel();
+      Get.offAllNamed(Routes.login);
     } catch (e) {
       AppLogger.error(
         'Error during navigation check: $e. Navigating to login.',
@@ -103,3 +157,4 @@ class SplashController extends GetxController {
     }
   }
 }
+

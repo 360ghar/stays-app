@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
+import 'package:stays_app/app/data/models/unified_property_response.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
@@ -100,7 +101,8 @@ class WishlistController extends GetxController {
     }
     errorMessage.value = '';
     try {
-      final response = await _wishlistRepository!.listFavorites(
+      final UnifiedPropertyResponse response =
+          await _wishlistRepository!.listFavorites(
         page: targetPage,
         limit: pageSize.value,
         filters: _buildFilterQuery(),
@@ -109,11 +111,16 @@ class WishlistController extends GetxController {
       totalPages.value = response.totalPages;
       totalCount.value = response.totalCount;
       pageSize.value = response.pageSize;
-      wishlistItems.assignAll(response.properties);
+      final List<Property> fetchedProperties = List<Property>.from(response.properties);
+      wishlistItems.assignAll(fetchedProperties);
       if (targetPage == 1) {
-        _favoritesController?.replaceAll(response.properties.map((e) => e.id));
+        _favoritesController?.replaceAll(
+          fetchedProperties.map((property) => property.id),
+        );
       } else {
-        _favoritesController?.addAll(response.properties.map((e) => e.id));
+        _favoritesController?.addAll(
+          fetchedProperties.map((property) => property.id),
+        );
       }
     } catch (e) {
       errorMessage.value = 'Failed to load wishlist';

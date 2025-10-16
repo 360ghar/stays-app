@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/repositories/auth_repository.dart';
 import '../../data/models/user_model.dart';
@@ -10,15 +12,25 @@ import '../../data/repositories/profile_repository.dart';
 import '../../data/providers/users_provider.dart';
 
 class AuthController extends GetxController {
+  // Storage keys dedicated to the remember-me preference and cached tokens.
+  static const String _rememberMeBox = 'auth_preferences';
+  static const String _rememberMeFlagKey = 'remember_me';
+  static const String _rememberedAccessTokenKey = 'remembered_access_token';
+  static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
+
   final AuthRepository _authRepository;
 
   AuthController({required AuthRepository authRepository})
     : _authRepository = authRepository;
 
+  // Local storage handle used to persist remember-me selection and tokens.
+  late final GetStorage _authPrefs;
+
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxBool isLoading = false.obs;
   final RxBool isAuthenticated = false.obs;
   final RxBool isPasswordVisible = false.obs;
+  final RxBool rememberMe = false.obs;
 
   // Form validation observables
   final RxString emailOrPhoneError = ''.obs;
@@ -31,6 +43,7 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _initializeRememberMePreference();
     _checkAuthStatus();
   }
 
@@ -98,6 +111,56 @@ class AuthController extends GetxController {
     }
   }
 
+  // Prepare the remember-me toggle with any value persisted from a previous run.
+  void _initializeRememberMePreference() {
+    _authPrefs = GetStorage(_rememberMeBox);
+    final storedPreference =
+        _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
+    rememberMe.value = storedPreference;
+  }
+
+  // Update the remember-me flag and synchronise it to disk for future launches.
+  Future<void> setRememberMe(bool value) async {
+    rememberMe.value = value;
+    await _authPrefs.write(_rememberMeFlagKey, value);
+    if (!value) {
+      await _clearRememberedSession();
+    }
+  }
+
+  // Persist the latest Supabase session details when the user opts in.
+  Future<void> _persistRememberedSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      AppLogger.warning(
+        'Unable to persist remember-me session because Supabase returned no session.',
+      );
+      return;
+    }
+    await _authPrefs.write(_rememberMeFlagKey, true);
+    await _authPrefs.write(_rememberedAccessTokenKey, session.accessToken);
+    final refreshToken = session.refreshToken;
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
+    }
+  }
+
+  // Drop any cached credentials when the user opts out or signs out.
+  Future<void> _clearRememberedSession() async {
+    await _authPrefs.remove(_rememberedAccessTokenKey);
+    await _authPrefs.remove(_rememberedRefreshTokenKey);
+  }
+
+  // Centralised helper that applies the user's remember-me choice post-login.
+  Future<void> _syncRememberMeStateAfterLogin() async {
+    if (rememberMe.value) {
+      await _persistRememberedSession();
+      return;
+    }
+    await _authPrefs.write(_rememberMeFlagKey, false);
+    await _clearRememberedSession();
+  }
+
   // Login with email or phone
   Future<void> login({required String email, required String password}) async {
     try {
@@ -140,6 +203,8 @@ class AuthController extends GetxController {
         title: 'Welcome Back!',
         message: 'Hello $displayName',
       );
+
+      await _syncRememberMeStateAfterLogin();
 
       // Navigate to home
       await Get.offAllNamed(Routes.home);
@@ -191,8 +256,10 @@ class AuthController extends GetxController {
       isAuthenticated.value = true;
 
       AppLogger.info(
-        'âœ… Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
+        'Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
       );
+
+      await _syncRememberMeStateAfterLogin();
 
       _showSuccessSnackbar(
         title: 'Welcome Back!',
@@ -303,6 +370,7 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
       await _authRepository.logout();
+      await setRememberMe(false);
       currentUser.value = null;
       isAuthenticated.value = false;
 
@@ -578,3 +646,5 @@ class AuthController extends GetxController {
     );
   }
 }
+
+

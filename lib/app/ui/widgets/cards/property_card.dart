@@ -5,6 +5,10 @@ import 'package:stays_app/app/data/models/property_model.dart';
 
 import '../../theme/theme_extensions.dart';
 
+const double _propertyCardCornerRadius = 18.0;
+const double _propertyCardShadowBlur = 20.0;
+const EdgeInsets _propertyCardMargin = EdgeInsets.only(right: 14);
+
 class PropertyCard extends StatelessWidget {
   final Property property;
   final VoidCallback onTap;
@@ -21,8 +25,8 @@ class PropertyCard extends StatelessWidget {
     required this.property,
     required this.onTap,
     this.onFavoriteToggle,
-    this.width = 280,
-    this.height = 200,
+    this.width = 248,
+    this.height = 184,
     this.showPrice = true,
     this.showRating = false,
     this.heroPrefix,
@@ -31,24 +35,46 @@ class PropertyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(_propertyCardCornerRadius);
+    final shadowColor = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.12);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: width,
         height: height,
-        margin: const EdgeInsets.only(right: 16),
+        margin: _propertyCardMargin,
         child: Hero(
           tag: '${heroPrefix ?? 'property'}-${property.id}',
           child: Material(
             color: Colors.transparent,
-            child: Stack(
-              children: [
-                _buildImage(context),
-                _buildGradientOverlay(),
-                if (property.hasVirtualTour) _buildTourBadge(context),
-                _buildContent(context),
-                if (onFavoriteToggle != null) _buildFavoriteButton(context),
-              ],
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+                boxShadow: [
+                  BoxShadow(
+                    color: shadowColor,
+                    blurRadius: _propertyCardShadowBlur,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: borderRadius,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _buildImage(context),
+                    _buildGradientOverlay(),
+                    if (property.hasVirtualTour) _buildTourBadge(context),
+                    _buildContent(context),
+                    if (onFavoriteToggle != null) _buildFavoriteButton(context),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -60,48 +86,32 @@ class PropertyCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final imageUrl = property.displayImage;
 
-    // If no image URL is available, show placeholder directly
+    final placeholder = Container(
+      color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.hotel,
+        size: 44,
+        color: colors.onSurface.withValues(alpha: 0.5),
+      ),
+    );
+
     if (imageUrl == null || imageUrl.isEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: width,
-          height: height,
-          color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-          child: Icon(
-            Icons.hotel,
-            size: 48,
-            color: colors.onSurface.withValues(alpha: 0.5),
-          ),
-        ),
-      );
+      return placeholder;
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: CachedNetworkImage(
-        imageUrl: imageUrl,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        placeholder:
-            (context, url) => Shimmer.fromColors(
-              baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-              highlightColor: colors.surfaceContainerHighest.withValues(
-                alpha: 0.15,
-              ),
-              child: Container(color: colors.surface),
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder:
+          (context, url) => Shimmer.fromColors(
+            baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+            highlightColor: colors.surfaceContainerHighest.withValues(
+              alpha: 0.15,
             ),
-        errorWidget:
-            (context, url, error) => Container(
-              color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-              child: Icon(
-                Icons.hotel,
-                size: 48,
-                color: colors.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-      ),
+            child: Container(color: colors.surface),
+          ),
+      errorWidget: (context, url, error) => placeholder,
     );
   }
 
@@ -109,12 +119,15 @@ class PropertyCard extends StatelessWidget {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(_propertyCardCornerRadius),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
-            stops: const [0.5, 1.0],
+            colors: [
+              Colors.black.withValues(alpha: 0.1),
+              Colors.black.withValues(alpha: 0.75),
+            ],
+            stops: const [0.35, 1.0],
           ),
         ),
       ),
@@ -123,9 +136,9 @@ class PropertyCard extends StatelessWidget {
 
   Widget _buildContent(BuildContext context) {
     return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 16,
+      left: 14,
+      right: 14,
+      bottom: 14,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -255,22 +268,38 @@ class PropertyCardShimmer extends StatelessWidget {
   final double width;
   final double height;
 
-  const PropertyCardShimmer({super.key, this.width = 280, this.height = 200});
+  const PropertyCardShimmer({super.key, this.width = 248, this.height = 184});
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final borderRadius = BorderRadius.circular(_propertyCardCornerRadius);
+    final shadowColor = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.28)
+        : Colors.black.withValues(alpha: 0.1);
+
     return Container(
       width: width,
       height: height,
-      margin: const EdgeInsets.only(right: 16),
-      child: Shimmer.fromColors(
-        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(16),
+      margin: _propertyCardMargin,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: _propertyCardShadowBlur,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Shimmer.fromColors(
+            baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.38),
+            highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.16),
+            child: Container(color: colors.surface),
           ),
         ),
       ),
