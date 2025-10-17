@@ -16,6 +16,7 @@ import 'app/data/services/theme_service.dart';
 import 'app/controllers/settings/theme_controller.dart';
 import 'app/data/services/storage_service.dart';
 import 'app/data/services/push_notification_service.dart';
+import 'app/data/services/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,16 @@ Future<void> main() async {
   // Default to dev if launched via lib/main.dart
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
+
+  // Ensure Supabase is ready before any repository or controller resolves it.
+  final supabaseService = SupabaseService(
+    url: AppConfig.I.supabaseUrl,
+    anonKey: AppConfig.I.supabaseAnonKey,
+  );
+  await supabaseService.initialize();
+  if (!Get.isRegistered<SupabaseService>()) {
+    Get.put<SupabaseService>(supabaseService, permanent: true);
+  }
 
   final storageService = Get.isRegistered<StorageService>()
       ? Get.find<StorageService>()

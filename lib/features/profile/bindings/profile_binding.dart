@@ -19,12 +19,14 @@ class ProfileBinding extends Bindings {
     if (!Get.isRegistered<AuthRepository>()) {
       Get.put<AuthRepository>(AuthRepository(), permanent: true);
     }
+    final authRepository = Get.find<AuthRepository>();
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(authRepository: Get.find<AuthRepository>()),
         permanent: true,
       );
     }
+    final authController = Get.find<AuthController>();
 
     if (!Get.isRegistered<UsersProvider>()) {
       Get.lazyPut<UsersProvider>(() => UsersProvider(), fenix: true);
@@ -36,12 +38,13 @@ class ProfileBinding extends Bindings {
         fenix: true,
       );
     }
+    final profileRepository = Get.find<ProfileRepository>();
 
     if (!Get.isRegistered<ProfileController>()) {
       Get.lazyPut<ProfileController>(
         () => ProfileController(
-          profileRepository: Get.find<ProfileRepository>(),
-          authController: Get.find<AuthController>(),
+          profileRepository: profileRepository,
+          authController: authController,
         ),
         fenix: true,
       );
@@ -50,21 +53,23 @@ class ProfileBinding extends Bindings {
     if (!Get.isRegistered<EditProfileController>()) {
       Get.lazyPut<EditProfileController>(
         () => EditProfileController(
-          profileRepository: Get.find<ProfileRepository>(),
+          profileRepository: profileRepository,
           profileController: Get.find<ProfileController>(),
-          authController: Get.find<AuthController>(),
+          authController: authController,
         ),
         fenix: true,
       );
     }
 
     if (!Get.isRegistered<PreferencesController>()) {
+      final themeController = Get.find<ThemeController>();
+      final localeService = Get.find<LocaleService>();
       Get.lazyPut<PreferencesController>(
         () => PreferencesController(
-          profileRepository: Get.find<ProfileRepository>(),
+          profileRepository: profileRepository,
           profileController: Get.find<ProfileController>(),
-          themeController: Get.find<ThemeController>(),
-          localeService: Get.find<LocaleService>(),
+          themeController: themeController,
+          localeService: localeService,
         ),
         fenix: true,
       );
@@ -73,7 +78,7 @@ class ProfileBinding extends Bindings {
     if (!Get.isRegistered<NotificationsController>()) {
       Get.lazyPut<NotificationsController>(
         () => NotificationsController(
-          profileRepository: Get.find<ProfileRepository>(),
+          profileRepository: profileRepository,
           profileController: Get.find<ProfileController>(),
         ),
         fenix: true,
@@ -83,10 +88,10 @@ class ProfileBinding extends Bindings {
     if (!Get.isRegistered<PrivacyController>()) {
       Get.lazyPut<PrivacyController>(
         () => PrivacyController(
-          profileRepository: Get.find<ProfileRepository>(),
+          profileRepository: profileRepository,
           profileController: Get.find<ProfileController>(),
-          authRepository: Get.find<AuthRepository>(),
-          authController: Get.find<AuthController>(),
+          authRepository: authRepository,
+          authController: authController,
         ),
         fenix: true,
       );

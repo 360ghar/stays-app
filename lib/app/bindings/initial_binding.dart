@@ -23,14 +23,16 @@ class InitialBinding extends Bindings {
     Get.put<NotificationController>(NotificationController(), permanent: true);
 
     // Initialize Supabase service if needed
-    Get.putAsync<SupabaseService>(() async {
-      final s = SupabaseService(
-        url: AppConfig.I.supabaseUrl,
-        anonKey: AppConfig.I.supabaseAnonKey,
-      );
-      await s.initialize();
-      return s;
-    }, permanent: true);
+    if (!Get.isRegistered<SupabaseService>()) {
+      Get.putAsync<SupabaseService>(() async {
+        final s = SupabaseService(
+          url: AppConfig.I.supabaseUrl,
+          anonKey: AppConfig.I.supabaseAnonKey,
+        );
+        await s.initialize();
+        return s;
+      }, permanent: true);
+    }
 
     // All critical async services are now handled by SplashController
     // to prevent race conditions
