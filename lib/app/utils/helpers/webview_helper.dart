@@ -30,8 +30,25 @@ class WebViewHelper {
     return url.toLowerCase().contains('kuula.co');
   }
 
+  static String _normalizeKuulaUrl(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme) {
+      return url;
+    }
+    final host = uri.host.toLowerCase();
+    final isKuulaHost = host == 'kuula.co' || host.endsWith('.kuula.co');
+    if (!isKuulaHost) {
+      return url;
+    }
+    final updatedQuery = Map<String, String>.from(uri.queryParameters)
+      ..['vr'] = '0'
+      ..['gyro'] = '0'
+      ..['sd'] = '1';
+    return uri.replace(queryParameters: updatedQuery).toString();
+  }
+
   static String buildKuulaHtml(String url) {
-    final sanitized = url.trim();
+    final sanitized = _normalizeKuulaUrl(url.trim());
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -58,7 +75,8 @@ class WebViewHelper {
     <iframe
       class="ku-embed"
       frameborder="0"
-      allow="xr-spatial-tracking; gyroscope; accelerometer"
+      allow="xr-spatial-tracking"
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       allowfullscreen
       scrolling="no"
       src="$sanitized"
@@ -88,6 +106,7 @@ class WebViewHelper {
     void Function(String url)? onPageFinished,
     void Function(WebResourceError error)? onWebResourceError,
     void Function(int progress)? onProgress,
+    NavigationDecision Function(NavigationRequest request)? onNavigationRequest,
   }) {
     final controller = WebViewController.fromPlatformCreationParams(
       _createParams(),
@@ -101,6 +120,7 @@ class WebViewHelper {
           onPageFinished: onPageFinished,
           onWebResourceError: onWebResourceError,
           onProgress: onProgress,
+          onNavigationRequest: onNavigationRequest,
         ),
       );
 
