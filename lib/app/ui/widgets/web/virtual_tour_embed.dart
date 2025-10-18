@@ -1,25 +1,23 @@
-import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+
 import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/webview_helper.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
-  final String url;
-  final double? height;
-  final double aspectRatio;
-
   const VirtualTourEmbed({
     super.key,
-    required this.url,
-    this.height,
-    this.aspectRatio = 4 / 5, // Default to 4:5 for taller/vertical look suitable for property tours
+    required this.tourUrl,
   });
+
+  final String tourUrl;
 
   @override
   State<VirtualTourEmbed> createState() => _VirtualTourEmbedState();
@@ -27,16 +25,27 @@ class VirtualTourEmbed extends StatefulWidget {
 
 class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   late final WebViewController _controller;
-  int _progress = 0;
+  bool _isLoading = true;
   bool _hasError = false;
+  int _progress = 0;
+
+  static final Set<Factory<OneSequenceGestureRecognizer>>
+      _gestureRecognizers =
+      <Factory<OneSequenceGestureRecognizer>>{
+    Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+  };
+
   @override
   void initState() {
     super.initState();
+
     WebViewHelper.ensureInitialized();
+
     _controller = WebViewHelper.createController(
       onPageStarted: (_) {
         if (!mounted) return;
         setState(() {
+          _isLoading = true;
           _hasError = false;
           _progress = 0;
         });
@@ -46,97 +55,90 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
         setState(() => _progress = value);
       },
       onPageFinished: (_) async {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
         await WebViewHelper.injectResponsiveStyles(_controller);
       },
       onWebResourceError: (_) {
         if (!mounted) return;
-        setState(() => _hasError = true);
+        setState(() {
+          _hasError = true;
+          _isLoading = false;
+        });
       },
-      onNavigationRequest: (request) {
-        final uri = Uri.tryParse(request.url);
-        if (uri == null) {
-          return NavigationDecision.prevent;
-        }
-        const allowedSchemes = {'http', 'https', 'about', 'data', 'blob'};
-        return allowedSchemes.contains(uri.scheme)
-            ? NavigationDecision.navigate
-            : NavigationDecision.prevent;
-      },
-    )
-      ..setBackgroundColor(Colors.black)
-      ..setUserAgent(
-        Platform.isAndroid
-            ? 'Mozilla/5.0 (Linux; Android 13; Pixel 6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36'
-            : 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.4 Mobile/15E148 Safari/604.1',
-      );
+    );
 
-    unawaited(_loadTour());
+    _controller
+      ..setBackgroundColor(Colors.transparent)
+      ..enableZoom(false);
+
+    WebViewHelper.load(widget.tourUrl, _controller);
   }
 
-  Future<void> _loadTour() async {
-    await WebViewHelper.load(widget.url, _controller);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
+  Future<void> _reload() async {
+    setState(() {
+      _hasError = false;
+      _isLoading = true;
+      _progress = 0;
+    });
+    await WebViewHelper.load(widget.tourUrl, _controller);
   }
 
   Widget _buildWebView(BuildContext context) {
     PlatformWebViewWidgetCreationParams params =
         PlatformWebViewWidgetCreationParams(
-          controller: _controller.platform,
-          layoutDirection: Directionality.of(context),
-        );
-    if (Platform.isIOS) {
+      controller: _controller.platform,
+      layoutDirection: Directionality.of(context),
+      gestureRecognizers: _gestureRecognizers,
+    );
+
+    if (!kIsWeb && Platform.isIOS) {
       params =
           WebKitWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
-            params,
-          );
-    } else if (Platform.isAndroid) {
-      // Use virtual display mode for smoother rendering of high-load tours.
-      params = AndroidWebViewWidgetCreationParams
-          .fromPlatformWebViewWidgetCreationParams(
         params,
-        displayWithHybridComposition: false,
+      );
+    } else if (!kIsWeb && Platform.isAndroid) {
+      params =
+          AndroidWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
+        params,
+        displayWithHybridComposition: true,
       );
     }
-    return WebViewWidget.fromPlatformCreationParams(params: params);
+
+    return WebViewWidget.fromPlatformCreationParams(
+      params: params,
+    );
   }
 
   void _openFullscreen() {
-    Get.toNamed(Routes.tour, arguments: widget.url);
+    Get.toNamed(Routes.tour, arguments: widget.tourUrl);
   }
 
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
-      return _ErrorPlaceholder(
-        onRetry: () {
-          setState(() {
-            _hasError = false;
-            _progress = 0;
-          });
-          unawaited(_loadTour());
-        },
-      );
+      return _ErrorPlaceholder(onRetry: _reload);
     }
 
-    final content = Stack(
+    return Stack(
       children: [
-        if (!_hasError) _buildWebView(context),
-        if (_progress < 100)
-          LinearProgressIndicator(
-            value: _progress / 100,
-            minHeight: 2,
-            backgroundColor: Colors.black.withValues(alpha: 0.05),
+        _buildWebView(context),
+        if (_progress > 0 && _progress < 100)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: LinearProgressIndicator(
+              value: _progress / 100,
+              minHeight: 2,
+            ),
           ),
         Positioned(
           top: 8,
           right: 8,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -150,39 +152,28 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
                 IconButton(
                   tooltip: 'Reload',
                   icon: const Icon(Icons.refresh, color: Colors.white),
-                  onPressed: () {
-                    setState(() {
-                      _hasError = false;
-                      _progress = 0;
-                    });
-                    unawaited(_loadTour());
-                  },
+                  onPressed: _reload,
                 ),
               ],
             ),
           ),
         ),
+        if (_isLoading)
+          Container(
+            color: Colors.black.withValues(alpha: 0.05),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
       ],
     );
-
-    // Use AspectRatio for broader look when height is not specified
-    if (widget.height != null) {
-      return SizedBox(
-        height: widget.height,
-        child: content,
-      );
-    } else {
-      return AspectRatio(
-        aspectRatio: widget.aspectRatio,
-        child: content,
-      );
-    }
   }
 }
 
 class _ErrorPlaceholder extends StatelessWidget {
-  final VoidCallback onRetry;
   const _ErrorPlaceholder({required this.onRetry});
+
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {

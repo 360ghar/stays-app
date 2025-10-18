@@ -8,7 +8,7 @@ import '../../../controllers/listing/listing_detail_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
-import '../../widgets/web/virtual_tour_embed.dart';
+import '../../widgets/listing/interactive_virtual_tour.dart';
 
 class ListingDetailView extends GetView<ListingDetailController> {
   const ListingDetailView({super.key});
@@ -573,11 +573,16 @@ class ListingDetailView extends GetView<ListingDetailController> {
           ),
         ),
         const SizedBox(height: 12),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: DecoratedBox(
-            decoration: BoxDecoration(color: colors.surfaceContainerHighest),
-            child: VirtualTourEmbed(url: listing.virtualTourUrl!),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: InteractiveVirtualTour(
+            tourUrl: listing.virtualTourUrl!,
+            placeholderImageUrl: listing.displayImage,
+            borderRadius: 16,
+            aspectRatio: 0.8,
           ),
         ),
         const SizedBox(height: 12),
