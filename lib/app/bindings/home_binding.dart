@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 import '../bindings/message_binding.dart';
-import '../bindings/trips_binding.dart';
+import '../bindings/activity_binding.dart';
 import '../bindings/wishlist_binding.dart';
 import '../bindings/profile_binding.dart' as profile_binding;
 import '../controllers/auth/auth_controller.dart';
@@ -91,7 +91,7 @@ class HomeBinding extends Bindings {
     }
 
     WishlistBinding().dependencies();
-    TripsBinding().dependencies();
+    ActivityBinding().dependencies();
     MessageBinding().dependencies();
     profile_binding.ProfileBinding().dependencies();
   }

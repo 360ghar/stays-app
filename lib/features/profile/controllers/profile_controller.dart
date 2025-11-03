@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/auth/auth_controller.dart';
-import 'package:stays_app/app/controllers/trips_controller.dart';
+import 'package:stays_app/app/controllers/activity_controller.dart';
 import 'package:stays_app/app/data/models/trip_model.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
@@ -123,12 +123,12 @@ class ProfileController extends GetxController {
 
   Future<void> _loadPastTrips() async {
     try {
-      if (Get.isRegistered<TripsController>()) {
-        final tripsController = Get.find<TripsController>();
-        await tripsController.loadPastBookings();
-        if (tripsController.pastBookings.isNotEmpty) {
+      if (Get.isRegistered<ActivityController>()) {
+        final activityController = Get.find<ActivityController>();
+        await activityController.loadPastBookings();
+        if (activityController.pastBookings.isNotEmpty) {
           pastTrips.assignAll(
-            tripsController.pastBookings.map(_mapBookingToTrip),
+            activityController.pastBookings.map(_mapBookingToTrip),
           );
         } else {
           pastTrips.clear();
@@ -137,7 +137,10 @@ class ProfileController extends GetxController {
         pastTrips.clear();
       }
     } catch (e) {
-      AppLogger.warning('Unable to load past trips from TripsController', e);
+      AppLogger.warning(
+        'Unable to load past trips from ActivityController',
+        e,
+      );
     } finally {
       _recalculateTripStats();
     }
@@ -250,7 +253,7 @@ class ProfileController extends GetxController {
 
   void navigateToAbout() => Get.toNamed(Routes.profileAbout);
 
-  void navigateToPastTrips() => Get.toNamed(Routes.trips);
+  void navigateToPastTrips() => Get.toNamed(Routes.activity);
 
   Future<void> confirmLogout() async {
     final shouldLogout =

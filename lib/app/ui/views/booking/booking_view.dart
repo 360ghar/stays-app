@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../controllers/auth/auth_controller.dart';
 import '../../../controllers/booking/booking_controller.dart';
-import '../../../controllers/trips_controller.dart';
+import '../../../controllers/activity_controller.dart';
 import '../../../controllers/filter_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../data/models/user_model.dart';
@@ -12,6 +12,8 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../../data/providers/bookings_provider.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../../data/providers/visit_provider.dart';
+import '../../../data/repositories/visit_repository.dart';
 import '../../widgets/cards/property_grid_card.dart';
 
 class BookingView extends StatefulWidget {
@@ -23,7 +25,7 @@ class BookingView extends StatefulWidget {
 
 class _BookingViewState extends State<BookingView> {
   late final BookingController bookingController;
-  TripsController? tripsController;
+  ActivityController? activityController;
   AuthController? authController;
 
   Property? property;
@@ -54,11 +56,22 @@ class _BookingViewState extends State<BookingView> {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
 
-    if (!Get.isRegistered<TripsController>()) {
-      Get.lazyPut<TripsController>(() => TripsController(), fenix: true);
+    if (!Get.isRegistered<VisitProvider>()) {
+      Get.put<VisitProvider>(VisitProvider(), permanent: true);
     }
-    if (Get.isRegistered<TripsController>()) {
-      Get.find<TripsController>();
+
+    if (!Get.isRegistered<VisitRepository>()) {
+      Get.put<VisitRepository>(
+        VisitRepository(provider: Get.find<VisitProvider>()),
+        permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<ActivityController>()) {
+      Get.lazyPut<ActivityController>(() => ActivityController(), fenix: true);
+    }
+    if (Get.isRegistered<ActivityController>()) {
+      Get.find<ActivityController>();
     }
 
     if (!Get.isRegistered<BookingController>()) {
@@ -75,8 +88,8 @@ class _BookingViewState extends State<BookingView> {
     super.initState();
     _ensureDependencies();
     bookingController = Get.find<BookingController>();
-    if (Get.isRegistered<TripsController>()) {
-      tripsController = Get.find<TripsController>();
+    if (Get.isRegistered<ActivityController>()) {
+      activityController = Get.find<ActivityController>();
     }
     if (Get.isRegistered<AuthController>()) {
       authController = Get.find<AuthController>();
@@ -246,9 +259,9 @@ class _BookingViewState extends State<BookingView> {
         resolvedBooking != null && !status.toLowerCase().contains('failed');
     var isSimulated = false;
 
-    if (!isSuccessful && tripsController != null) {
+    if (!isSuccessful && activityController != null) {
       final user = authController?.currentUser.value;
-      final simulatedBooking = tripsController!.simulateAddBooking(
+      final simulatedBooking = activityController!.simulateAddBooking(
         propertyId: property!.id,
         propertyName: property!.name,
         imageUrl: property!.displayImage ?? '',
@@ -273,8 +286,8 @@ class _BookingViewState extends State<BookingView> {
     }
 
     if (isSuccessful && resolvedBooking != null) {
-      if (tripsController != null && !isSimulated) {
-        tripsController!.addOrUpdateBooking(resolvedBooking);
+      if (activityController != null && !isSimulated) {
+        activityController!.addOrUpdateBooking(resolvedBooking);
       }
       Get.snackbar(
         'Booking confirmed!',

@@ -1,30 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../data/models/unified_filter_model.dart';
 import '../data/models/booking_model.dart';
 import '../data/models/property_model.dart';
+import '../data/models/unified_filter_model.dart';
+import '../data/models/visit_model.dart';
 import '../data/repositories/booking_repository.dart';
+import '../data/repositories/visit_repository.dart';
+import '../utils/logger/app_logger.dart';
 import 'filter_controller.dart';
 
-class TripsController extends GetxController {
+class ActivityController extends GetxController {
+  ActivityController({
+    BookingRepository? bookingRepository,
+    VisitRepository? visitRepository,
+  })  : _bookingRepository =
+            bookingRepository ?? Get.find<BookingRepository>(),
+        _visitRepository = visitRepository ?? Get.find<VisitRepository>();
+
+  final BookingRepository _bookingRepository;
+  final VisitRepository _visitRepository;
+
   final RxList<Map<String, dynamic>> pastBookings =
       <Map<String, dynamic>>[].obs;
-  final RxBool isLoading = false.obs;
+  final RxList<Visit> scheduledVisits = <Visit>[].obs;
 
-  late final BookingRepository _bookingRepository;
+  final RxBool isBookingsLoading = false.obs;
+  final RxBool isVisitsLoading = false.obs;
+
   FilterController? _filterController;
-
   final List<Map<String, dynamic>> _allBookings = [];
+  final List<Visit> _allVisits = [];
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
+
+  bool get isLoading => isBookingsLoading.value || isVisitsLoading.value;
+  bool get hasBookings => pastBookings.isNotEmpty;
+  bool get hasVisits => scheduledVisits.isNotEmpty;
 
   @override
   void onInit() {
     super.onInit();
-    _bookingRepository = Get.find<BookingRepository>();
     _initializeFilterSync();
     loadPastBookings();
+    loadScheduledVisits();
   }
 
   void _initializeFilterSync() {
@@ -54,18 +73,19 @@ class TripsController extends GetxController {
       return;
     }
     final hadBookings = _allBookings.isNotEmpty;
-    if (isLoading.value && !forceRefresh) {
+    if (isBookingsLoading.value && !forceRefresh) {
       return;
     }
     try {
-      isLoading.value = true;
+      isBookingsLoading.value = true;
       final bookings = await _bookingRepository.fetchBookings();
       final mapped = bookings.map(_mapBooking).toList();
       _allBookings
         ..clear()
         ..addAll(mapped);
       _applyFilters();
-    } catch (e) {
+    } catch (error) {
+      AppLogger.error('Failed to load bookings', error);
       _allBookings.clear();
       pastBookings.clear();
       if (forceRefresh || !hadBookings) {
@@ -76,7 +96,36 @@ class TripsController extends GetxController {
         );
       }
     } finally {
-      isLoading.value = false;
+      isBookingsLoading.value = false;
+    }
+  }
+
+  Future<void> loadScheduledVisits({bool forceRefresh = false}) async {
+    if (!forceRefresh && _allVisits.isNotEmpty) {
+      scheduledVisits.assignAll(_allVisits);
+      return;
+    }
+    if (isVisitsLoading.value && !forceRefresh) {
+      return;
+    }
+    try {
+      isVisitsLoading.value = true;
+      final visits = await _visitRepository.getUserVisits();
+      _allVisits
+        ..clear()
+        ..addAll(visits);
+      scheduledVisits.assignAll(_allVisits);
+    } catch (error) {
+      AppLogger.error('Failed to load scheduled visits', error);
+      _allVisits.clear();
+      scheduledVisits.clear();
+      Get.snackbar(
+        'Visits unavailable',
+        'We could not load your scheduled visits. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isVisitsLoading.value = false;
     }
   }
 
@@ -161,7 +210,7 @@ class TripsController extends GetxController {
 
     Get.snackbar(
       'Booking confirmed',
-      '${property.name} added to your trips.',
+      '${property.name} added to your activity.',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green[50],
       colorText: Colors.green[800],
@@ -356,7 +405,6 @@ class TripsController extends GetxController {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
@@ -368,15 +416,11 @@ class TripsController extends GetxController {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Title
             const Text(
               'Booking Details',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-
-            // Details
             _buildDetailRow('Booking ID', booking['id']),
             _buildDetailRow('Hotel', booking['hotelName']),
             _buildDetailRow('Location', booking['location']),
@@ -392,26 +436,20 @@ class TripsController extends GetxController {
               'Status',
               booking['status'].toString().toUpperCase(),
             ),
-
             const SizedBox(height: 24),
-
-            // Actions
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      Get.back();
-                      rebookHotel(booking);
-                    },
-                    child: const Text('Book Again'),
+                    onPressed: () => leaveReview(booking),
+                    child: const Text('Leave review'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('Close'),
+                  child: FilledButton(
+                    onPressed: () => rebookHotel(booking),
+                    child: const Text('Book again'),
                   ),
                 ),
               ],
@@ -419,27 +457,31 @@ class TripsController extends GetxController {
           ],
         ),
       ),
-      isScrollControlled: true,
     );
   }
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black54,
             ),
           ),
-          Expanded(
+          const SizedBox(width: 16),
+          Flexible(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
@@ -447,41 +489,9 @@ class TripsController extends GetxController {
     );
   }
 
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${date.day} ${months[date.month - 1]}, ${date.year}';
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
-  int get totalBookings => pastBookings.length;
-
-  double get totalSpent =>
-      pastBookings.fold(0, (sum, booking) => sum + booking['totalAmount']);
-
-  String get favoriteDestination {
-    if (pastBookings.isEmpty) return 'None';
-    final locations = <String, int>{};
-    for (final booking in pastBookings) {
-      final location = booking['location'].toString().split(',').last.trim();
-      locations[location] = (locations[location] ?? 0) + 1;
-    }
-    return locations.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  String _formatDate(String dateIso) {
+    final date = DateTime.tryParse(dateIso);
+    if (date == null) return dateIso;
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
