@@ -2,12 +2,11 @@ import 'package:get/get.dart';
 
 import '../bindings/auth_binding.dart';
 import '../bindings/booking_binding.dart';
-import '../bindings/schedule_visit_binding.dart';
 import '../bindings/home_binding.dart';
 import '../bindings/listing_binding.dart';
 import '../bindings/message_binding.dart';
 import '../bindings/payment_binding.dart';
-import '../bindings/activity_binding.dart';
+import '../bindings/trips_binding.dart';
 import '../bindings/settings_binding.dart';
 import '../bindings/splash_binding.dart';
 import '../bindings/tour_binding.dart';
@@ -20,7 +19,6 @@ import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/verification_view.dart';
 import '../ui/views/booking/booking_view.dart';
 import '../ui/views/booking/booking_confirmation_view.dart';
-import '../ui/views/enquiry/schedule_visit_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/location_search_view.dart';
@@ -31,7 +29,7 @@ import '../ui/views/payment/payment_methods_view.dart';
 import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
 import '../ui/views/splash/splash_view.dart';
-import '../ui/views/activity/activity_view.dart';
+import '../ui/views/bookings/bookings_page.dart';
 import '../ui/views/tour/tour_view.dart';
 import 'app_routes.dart';
 import 'package:stays_app/features/profile/bindings/profile_binding.dart'
@@ -118,13 +116,6 @@ class AppPages {
       page: () => const ListingDetailView(),
       binding: ListingBinding(),
       transition: Transition.rightToLeft,
-      middlewares: [AuthMiddleware()],
-    ),
-    GetPage(
-      name: Routes.scheduleVisit,
-      page: () => const ScheduleVisitView(),
-      binding: ScheduleVisitBinding(),
-      transition: Transition.downToUp,
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
@@ -226,9 +217,9 @@ class AppPages {
       transition: Transition.cupertino,
     ),
     GetPage(
-      name: Routes.activity,
-      page: () => ActivityView(),
-      binding: ActivityBinding(),
+      name: Routes.trips,
+      page: () => BookingsPage(),
+      binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),
   ];

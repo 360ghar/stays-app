@@ -85,8 +85,7 @@ class SplashController extends GetxController {
 
   Future<void> _navigateToNextScreen({bool forceLogin = false}) async {
     // Keep splash visible briefly for UX consistency
-    AppLogger.info('Holding splash screen for 5 seconds before navigation.');
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (forceLogin) {
       _navigated = true;

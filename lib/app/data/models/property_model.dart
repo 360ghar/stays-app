@@ -187,21 +187,8 @@ class Property {
   });
 
   factory Property.fromJson(Map<String, dynamic> json) {
-    double? _toDouble(dynamic value) {
-      if (value == null) return null;
-      if (value is num) return value.toDouble();
-      if (value is String) return double.tryParse(value);
-      return null;
-    }
-
-    final Map<String, dynamic> map = Map<String, dynamic>.from(json);
-    final double resolvedRate =
-        _toDouble(map['daily_rate']) ?? _toDouble(map['base_price']) ?? 0.0;
-    map['daily_rate'] = resolvedRate;
-    map['base_price'] = _toDouble(map['base_price']);
-
-    final model = _$PropertyFromJson(map);
-    final dynamic likedValue = map['liked'] ?? map['is_liked'];
+    final model = _$PropertyFromJson(json);
+    final dynamic likedValue = json['liked'] ?? json['is_liked'];
     final bool shouldMarkFavorite =
         likedValue is bool ? likedValue : model.liked == true;
     return shouldMarkFavorite ? model.copyWith(isFavorite: true) : model;

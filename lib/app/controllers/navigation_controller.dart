@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../routes/app_routes.dart';
-
 class NavigationController extends GetxController {
   // Default to the Home/Explore tab (index 0)
   final RxInt currentIndex = 0.obs;
@@ -23,8 +21,8 @@ class NavigationController extends GetxController {
     ),
     NavigationTab(
       icon: Icons.luggage_outlined,
-      labelKey: 'nav.enquiry',
-      route: Routes.activity,
+      labelKey: 'nav.bookings',
+      route: '/trips',
     ),
     NavigationTab(
       icon: Icons.location_on_outlined,

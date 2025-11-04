@@ -1,13 +1,11 @@
 import 'package:get/get.dart';
 
-import '../controllers/activity_controller.dart';
 import '../controllers/filter_controller.dart';
+import '../controllers/trips_controller.dart';
 import '../data/providers/bookings_provider.dart';
-import '../data/providers/visit_provider.dart';
 import '../data/repositories/booking_repository.dart';
-import '../data/repositories/visit_repository.dart';
 
-class ActivityBinding extends Bindings {
+class TripsBinding extends Bindings {
   @override
   void dependencies() {
     final bookingsProvider =
@@ -22,23 +20,12 @@ class ActivityBinding extends Bindings {
       );
     }
 
-    if (!Get.isRegistered<VisitProvider>()) {
-      Get.put<VisitProvider>(VisitProvider(), permanent: true);
-    }
-
-    if (!Get.isRegistered<VisitRepository>()) {
-      Get.put<VisitRepository>(
-        VisitRepository(provider: Get.find<VisitProvider>()),
-        permanent: true,
-      );
-    }
-
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
 
-    if (!Get.isRegistered<ActivityController>()) {
-      Get.put<ActivityController>(ActivityController(), permanent: true);
+    if (!Get.isRegistered<TripsController>()) {
+      Get.put<TripsController>(TripsController(), permanent: true);
     }
   }
 }

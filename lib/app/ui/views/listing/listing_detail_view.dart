@@ -980,8 +980,9 @@ class ListingDetailView extends GetView<ListingDetailController> {
           SizedBox(
             height: 48,
             child: FilledButton(
-              onPressed: () => controller.navigateToScheduleVisit(listing),
-              child: const Text('Schedule visit'),
+              onPressed:
+                  () => controller.navigateToBookingConfirmation(listing),
+              child: const Text('Book now'),
             ),
           ),
         ],

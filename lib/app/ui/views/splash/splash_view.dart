@@ -12,22 +12,15 @@ class SplashView extends GetView<SplashController> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/logo.png',
-              width: 140,
-              height: 140,
-              fit: BoxFit.contain,
-            ),
-            const SizedBox(height: 5),
-            const Text(
+          children: const [
+            Text(
               AppConstants.appName,
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(AppConstants.tagLine),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
+            SizedBox(height: 8),
+            Text(AppConstants.tagLine),
+            SizedBox(height: 24),
+            CircularProgressIndicator(),
           ],
         ),
       ),

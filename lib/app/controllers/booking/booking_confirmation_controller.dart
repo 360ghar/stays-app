@@ -1,7 +1,7 @@
 ﻿import 'package:get/get.dart';
 
 import '../../data/models/property_model.dart';
-import '../activity_controller.dart';
+import '../trips_controller.dart';
 import '../../routes/app_routes.dart';
 
 class BookingConfirmationController extends GetxController {
@@ -39,19 +39,19 @@ class BookingConfirmationController extends GetxController {
       return;
     }
 
-    ActivityController activityController;
+    TripsController tripsController;
     try {
-      activityController = Get.find<ActivityController>();
+      tripsController = Get.find<TripsController>();
     } catch (_) {
       Get.snackbar(
-        'Activity unavailable',
-        'We could not update your activity right now. Please try again.',
+        'Trips unavailable',
+        'We could not update your trips right now. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
     }
 
-    activityController.addBooking(selectedProperty);
+    tripsController.addBooking(selectedProperty);
 
     await Get.offAllNamed(Routes.home, arguments: 0);
   }

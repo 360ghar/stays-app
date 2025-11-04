@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import '../controllers/booking/booking_controller.dart';
 import '../controllers/booking/booking_confirmation_controller.dart';
 import '../data/repositories/booking_repository.dart';
-import '../controllers/activity_controller.dart';
-import 'activity_binding.dart';
+import '../controllers/trips_controller.dart';
+import 'trips_binding.dart';
 import '../data/providers/bookings_provider.dart';
 
 class BookingBinding extends Bindings {
@@ -28,8 +28,8 @@ class BookingBinding extends Bindings {
         BookingController(repository: bookingRepository),
       );
     }
-    if (!Get.isRegistered<ActivityController>()) {
-      ActivityBinding().dependencies();
+    if (!Get.isRegistered<TripsController>()) {
+      TripsBinding().dependencies();
     }
 
     if (!Get.isRegistered<BookingConfirmationController>()) {

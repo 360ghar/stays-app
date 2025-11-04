@@ -9,7 +9,6 @@ abstract class Routes {
   static const search = '/search';
   static const searchResults = '/search-results';
   static const listingDetail = '/listing/:id';
-  static const scheduleVisit = '/schedule-visit';
   static const booking = '/booking';
   static const bookingConfirmation = '/booking-confirmation';
   static const payment = '/payment';
@@ -21,8 +20,7 @@ abstract class Routes {
   static const wishlist = '/wishlist';
 
   // Profile related routes
-  static const activity = '/activity';
-  static const trips = activity;
+  static const trips = '/trips';
   static const accountSettings = '/account-settings';
   static const editProfile = '/profile/edit';
   static const profilePreferences = '/profile/preferences';
