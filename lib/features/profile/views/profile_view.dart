@@ -53,9 +53,9 @@ class ProfileView extends GetView<ProfileController> {
                             ),
                             _MenuTile(
                               icon: Icons.event_available_outlined,
-                              title: 'Past bookings',
-                              subtitle: 'View invoices and stay history',
-                              onTap: controller.navigateToPastTrips,
+                              title: 'Enquiries',
+                              subtitle: 'Review your submitted stay requests',
+                              onTap: controller.navigateToEnquiries,
                             ),
                             _MenuTile(
                               icon: Icons.credit_card,
@@ -225,8 +225,8 @@ class ProfileView extends GetView<ProfileController> {
             const SizedBox(height: 12),
             Text(
               controller.completion.value >= 0.9
-                  ? 'Great! Your profile is ready for next stay.'
-                  : 'Complete your profile for faster bookings and better recommendations.',
+                  ? 'Great! Your profile is ready for the next stay.'
+                  : 'Complete your profile for faster enquiries and better recommendations.',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -243,7 +243,7 @@ class ProfileView extends GetView<ProfileController> {
         children: [
           Expanded(
             child: _StatCard(
-              label: 'Trips',
+              label: 'Enquiries',
               value: controller.totalTrips.value.toString(),
               icon: Icons.flight_takeoff_outlined,
               color: const Color(0xFF2563EB),

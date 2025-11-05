@@ -23,7 +23,7 @@ class TripsView extends GetView<TripsController> {
         backgroundColor: colors.surface,
         elevation: 0,
         title: Text(
-          'trips.title'.tr,
+          'enquiries.title'.tr,
           style: textStyles.titleLarge?.copyWith(
             color: colors.onSurface,
             fontSize: 24,
@@ -113,7 +113,7 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 24),
             Text(
-              'trips.empty_title'.tr,
+              'enquiries.empty_title'.tr,
               style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -122,7 +122,7 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 12),
             Text(
-              'trips.empty_body'.tr,
+              'enquiries.empty_body'.tr,
               textAlign: TextAlign.center,
               style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
@@ -145,7 +145,7 @@ class TripsView extends GetView<TripsController> {
                 ),
               ),
               child: Text(
-                'trips.browse_stays'.tr,
+                'enquiries.browse_stays'.tr,
                 style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
@@ -174,7 +174,7 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 24),
             Text(
-              'trips.no_match_title'.tr,
+              'enquiries.no_match_title'.tr,
               style: textStyles.titleMedium?.copyWith(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -184,7 +184,7 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 12),
             Text(
-              'trips.no_match_body'.tr,
+              'enquiries.no_match_body'.tr,
               textAlign: TextAlign.center,
               style: textStyles.bodyMedium?.copyWith(
                 fontSize: 16,
@@ -211,14 +211,14 @@ class TripsView extends GetView<TripsController> {
                 ),
               ),
               child: Text(
-                'trips.adjust_filters'.tr,
+                'enquiries.adjust_filters'.tr,
                 style: textStyles.labelLarge?.copyWith(fontSize: 16),
               ),
             ),
             TextButton(
               onPressed: () => filterController.clear(FilterScope.booking),
               style: TextButton.styleFrom(foregroundColor: colors.primary),
-              child: Text('trips.clear_filters'.tr),
+              child: Text('enquiries.clear_filters'.tr),
             ),
           ],
         ),

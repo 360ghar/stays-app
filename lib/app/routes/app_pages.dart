@@ -17,8 +17,8 @@ import '../ui/views/auth/phone_login_view.dart';
 import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/verification_view.dart';
-import '../ui/views/booking/booking_view.dart';
-import '../ui/views/booking/booking_confirmation_view.dart';
+import '../ui/views/enquiry/enquiry_view.dart';
+import '../ui/views/enquiry/enquiry_confirmation_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/location_search_view.dart';
@@ -29,7 +29,7 @@ import '../ui/views/payment/payment_methods_view.dart';
 import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
 import '../ui/views/splash/splash_view.dart';
-import '../ui/views/bookings/bookings_page.dart';
+import '../ui/views/enquiry/enquiry_page.dart';
 import '../ui/views/tour/tour_view.dart';
 import 'app_routes.dart';
 import 'package:stays_app/features/profile/bindings/profile_binding.dart'
@@ -126,14 +126,14 @@ class AppPages {
       transition: Transition.fadeIn,
     ),
     GetPage(
-      name: Routes.booking,
-      page: () => const BookingView(),
+      name: Routes.enquiry,
+      page: () => const EnquiryView(),
       binding: BookingBinding(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: Routes.bookingConfirmation,
-      page: () => const BookingConfirmationView(),
+      name: Routes.enquiryConfirmation,
+      page: () => const EnquiryConfirmationView(),
       binding: BookingBinding(),
       middlewares: [AuthMiddleware()],
     ),
@@ -217,8 +217,8 @@ class AppPages {
       transition: Transition.cupertino,
     ),
     GetPage(
-      name: Routes.trips,
-      page: () => BookingsPage(),
+      name: Routes.enquiries,
+      page: () => EnquiriesPage(),
       binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),

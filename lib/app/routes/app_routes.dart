@@ -9,8 +9,8 @@ abstract class Routes {
   static const search = '/search';
   static const searchResults = '/search-results';
   static const listingDetail = '/listing/:id';
-  static const booking = '/booking';
-  static const bookingConfirmation = '/booking-confirmation';
+  static const enquiry = '/enquiry';
+  static const enquiryConfirmation = '/enquiry-confirmation';
   static const payment = '/payment';
   static const paymentMethods = '/payment-methods';
   static const profile = '/profile';
@@ -20,7 +20,7 @@ abstract class Routes {
   static const wishlist = '/wishlist';
 
   // Profile related routes
-  static const trips = '/trips';
+  static const enquiries = '/enquiries';
   static const accountSettings = '/account-settings';
   static const editProfile = '/profile/edit';
   static const profilePreferences = '/profile/preferences';
@@ -31,6 +31,9 @@ abstract class Routes {
   static const profileLegal = '/profile/legal';
 
   // Backwards compatibility aliases (will be removed once consumers migrate)
+  static const booking = enquiry;
+  static const bookingConfirmation = enquiryConfirmation;
+  static const trips = enquiries;
   static const help = profileHelp;
   static const profileView = editProfile;
   static const privacySecurity = profilePrivacy;

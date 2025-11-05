@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../controllers/messaging/hotels_map_controller.dart';
 import '../../../controllers/navigation_controller.dart';
 import '../messaging/locate_view.dart';
-import '../bookings/bookings_page.dart';
+import '../enquiry/enquiry_page.dart';
 import '../wishlist/wishlist_view.dart';
 import 'explore_view.dart';
 import 'profile_view.dart';
@@ -46,7 +46,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
         children: [
           const ExploreView(),
           const WishlistView(),
-          BookingsPage(),
+          EnquiriesPage(),
           const LocateView(),
           const ProfileView(),
         ],

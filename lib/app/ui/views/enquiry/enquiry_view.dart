@@ -14,14 +14,14 @@ import '../../../data/providers/bookings_provider.dart';
 import '../../../data/repositories/booking_repository.dart';
 import '../../widgets/cards/property_grid_card.dart';
 
-class BookingView extends StatefulWidget {
-  const BookingView({super.key});
+class EnquiryView extends StatefulWidget {
+  const EnquiryView({super.key});
 
   @override
-  State<BookingView> createState() => _BookingViewState();
+  State<EnquiryView> createState() => _EnquiryViewState();
 }
 
-class _BookingViewState extends State<BookingView> {
+class _EnquiryViewState extends State<EnquiryView> {
   late final BookingController bookingController;
   TripsController? tripsController;
   AuthController? authController;
@@ -181,7 +181,7 @@ class _BookingViewState extends State<BookingView> {
     return baseAmount + serviceCharges + taxesAmount - discountAmount;
   }
 
-  Future<void> _submitBooking() async {
+  Future<void> _submitEnquiry() async {
     if (bookingController.isSubmitting.value) return;
     if (property == null) {
       Get.snackbar('Missing property', 'Unable to identify this listing.');
@@ -265,7 +265,7 @@ class _BookingViewState extends State<BookingView> {
         notifyUser: false,
       );
       bookingController.latestBooking.value = simulatedBooking;
-      bookingController.statusMessage.value = 'Booking created (simulated)';
+      bookingController.statusMessage.value = 'Enquiry created (simulated)';
       bookingController.errorMessage.value = '';
       resolvedBooking = simulatedBooking;
       isSuccessful = true;
@@ -277,8 +277,8 @@ class _BookingViewState extends State<BookingView> {
         tripsController!.addOrUpdateBooking(resolvedBooking);
       }
       Get.snackbar(
-        'Booking confirmed!',
-        'Your stay at ${property!.name} is confirmed${isSimulated ? ' (simulated).' : '.'}',
+        'Enquiry Sent Successfully',
+        'We have recorded your enquiry for ${property!.name}${isSimulated ? ' (simulated).' : '.'}',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green[100],
         colorText: Colors.green[800],
@@ -288,11 +288,11 @@ class _BookingViewState extends State<BookingView> {
       final error =
           bookingController.errorMessage.value.isNotEmpty
               ? bookingController.errorMessage.value
-              : 'Failed to create booking. Please try again.';
+          : 'Failed to send enquiry. Please try again.';
       final truncatedError =
           error.length > 100 ? '${error.substring(0, 97)}...' : error;
       Get.snackbar(
-        'Booking failed',
+        'Enquiry failed',
         truncatedError,
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(8),
@@ -304,12 +304,9 @@ class _BookingViewState extends State<BookingView> {
   @override
   Widget build(BuildContext context) {
     final prop = property;
-    final buttonLabel =
-        nights > 0
-            ? 'Pay & Confirm ${CurrencyHelper.format(estimatedTotal)}'
-            : 'Pay & Confirm';
+    const buttonLabel = 'Send Enquiry';
     return Scaffold(
-      appBar: AppBar(title: Text(prop?.name ?? 'Confirm booking')),
+      appBar: AppBar(title: Text(prop?.name ?? 'Send enquiry')),
       body:
           prop == null
               ? const Center(child: Text('Property details unavailable'))
@@ -350,7 +347,7 @@ class _BookingViewState extends State<BookingView> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : _submitBooking,
+                          onPressed: isLoading ? null : _submitEnquiry,
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),

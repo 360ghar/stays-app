@@ -113,7 +113,7 @@ class PreferencesView extends GetView<PreferencesController> {
               const SizedBox(height: 24),
               _SectionHeader(
                 title: 'Currency',
-                subtitle: 'Select your preferred currency for bookings.',
+                subtitle: 'Select your preferred currency for enquiries.',
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(

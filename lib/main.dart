@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/app_config.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
-import 'app/routes/app_routes.dart';
 import 'l10n/localization_service.dart';
 import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
@@ -20,22 +18,6 @@ import 'app/data/services/supabase_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Prepare the local storage backing the remember-me feature before bindings run.
-  const rememberMeBox = 'auth_preferences';
-  const rememberMeFlagKey = 'remember_me';
-  const rememberedAccessTokenKey = 'remembered_access_token';
-
-  await GetStorage.init(rememberMeBox);
-  final authPrefs = GetStorage(rememberMeBox);
-  final bool rememberMeEnabled =
-      authPrefs.read<bool>(rememberMeFlagKey) ?? false;
-  final String? rememberedAccessToken =
-      authPrefs.read<String>(rememberedAccessTokenKey);
-  final String initialRoute =
-      rememberMeEnabled && (rememberedAccessToken?.isNotEmpty ?? false)
-          ? Routes.home
-          : AppPages.initial;
 
   // Default to dev if launched via lib/main.dart
   await dotenv.load(fileName: '.env.dev');
@@ -88,13 +70,11 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  runApp(MyApp(initialRoute: initialRoute));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.initialRoute});
-
-  final String initialRoute;
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +96,7 @@ class MyApp extends StatelessWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         initialBinding: InitialBinding(),
-        initialRoute: initialRoute,
+        initialRoute: AppPages.initial,
         getPages: AppPages.routes,
         debugShowCheckedModeBanner: false,
         defaultTransition: Transition.cupertino,

@@ -250,7 +250,7 @@ class ProfileController extends GetxController {
 
   void navigateToAbout() => Get.toNamed(Routes.profileAbout);
 
-  void navigateToPastTrips() => Get.toNamed(Routes.trips);
+  void navigateToEnquiries() => Get.toNamed(Routes.enquiries);
 
   Future<void> confirmLogout() async {
     final shouldLogout =

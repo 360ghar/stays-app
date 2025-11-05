@@ -20,7 +20,7 @@ class BookingConfirmationController extends GetxController {
     if (property.value == null) {
       Future.microtask(() {
         Get.snackbar(
-          'Booking unavailable',
+          'Enquiry unavailable',
           'We could not load the property details. Please try again.',
           snackPosition: SnackPosition.BOTTOM,
         );
@@ -28,12 +28,12 @@ class BookingConfirmationController extends GetxController {
     }
   }
 
-  Future<void> confirmBookingAndPay() async {
+  Future<void> submitEnquiry() async {
     final selectedProperty = property.value;
     if (selectedProperty == null) {
       Get.snackbar(
-        'Booking unavailable',
-        'No property was provided for confirmation.',
+        'Enquiry unavailable',
+        'No property was provided for this enquiry.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -44,8 +44,8 @@ class BookingConfirmationController extends GetxController {
       tripsController = Get.find<TripsController>();
     } catch (_) {
       Get.snackbar(
-        'Trips unavailable',
-        'We could not update your trips right now. Please try again.',
+        'Enquiry unavailable',
+        'We could not update your enquiries right now. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;

@@ -16,6 +16,7 @@ class TripsController extends GetxController {
   FilterController? _filterController;
 
   final List<Map<String, dynamic>> _allBookings = [];
+  final List<Map<String, dynamic>> _pendingBookings = [];
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
 
@@ -61,17 +62,36 @@ class TripsController extends GetxController {
       isLoading.value = true;
       final bookings = await _bookingRepository.fetchBookings();
       final mapped = bookings.map(_mapBooking).toList();
+
+      if (_pendingBookings.isNotEmpty) {
+        _pendingBookings.removeWhere(
+          (pending) => mapped.any(
+            (booking) => _isSameReservation(booking, pending),
+          ),
+        );
+      }
+
+      final merged = <Map<String, dynamic>>[
+        ...mapped,
+        ..._pendingBookings.map((booking) => Map<String, dynamic>.from(booking)),
+      ];
+      merged.sort(_bookingComparator);
+
       _allBookings
         ..clear()
-        ..addAll(mapped);
+        ..addAll(merged);
       _applyFilters();
     } catch (e) {
-      _allBookings.clear();
-      pastBookings.clear();
+      if (!hadBookings && _pendingBookings.isNotEmpty) {
+        _allBookings
+          ..clear()
+          ..addAll(_pendingBookings.map((booking) => Map<String, dynamic>.from(booking)));
+        _applyFilters();
+      }
       if (forceRefresh || !hadBookings) {
         Get.snackbar(
-          'Bookings unavailable',
-          'We could not load your bookings right now. Please try again.',
+          'Enquiries unavailable',
+          'We could not load your enquiries right now. Please try again.',
           snackPosition: SnackPosition.BOTTOM,
         );
       }
@@ -83,6 +103,7 @@ class TripsController extends GetxController {
   Map<String, dynamic> _mapBooking(Booking booking) {
     return {
       'id': booking.id.toString(),
+      'propertyId': booking.propertyId,
       'hotelName': booking.displayTitle,
       'image': booking.displayImage,
       'location': booking.displayLocation,
@@ -120,6 +141,9 @@ class TripsController extends GetxController {
     final mapped = _mapBooking(booking);
     final index = _allBookings.indexWhere(
       (existing) => existing['id'] == mapped['id'],
+    );
+    _pendingBookings.removeWhere(
+      (pending) => _isSameReservation(mapped, pending),
     );
     if (index >= 0) {
       _allBookings[index] = mapped;
@@ -160,8 +184,8 @@ class TripsController extends GetxController {
     );
 
     Get.snackbar(
-      'Booking confirmed',
-      '${property.name} added to your trips.',
+      'Enquiry sent successfully',
+      '${property.name} added to your enquiry list.',
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.green[50],
       colorText: Colors.green[800],
@@ -171,18 +195,18 @@ class TripsController extends GetxController {
   Future<void> cancelBooking(String bookingId) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Cancel booking?'),
+        title: const Text('Cancel enquiry?'),
         content: const Text(
-          'Are you sure you want to cancel this upcoming trip?',
+          'Are you sure you want to cancel this enquiry?',
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Keep booking'),
+            child: const Text('Keep enquiry'),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
-            child: const Text('Cancel booking'),
+            child: const Text('Cancel enquiry'),
           ),
         ],
       ),
@@ -198,8 +222,8 @@ class TripsController extends GetxController {
     if (before != _allBookings.length) {
       _applyFilters();
       Get.snackbar(
-        'Booking cancelled',
-        'Your trip has been cancelled.',
+        'Enquiry cancelled',
+        'Your enquiry has been cancelled.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } else {
@@ -256,14 +280,26 @@ class TripsController extends GetxController {
           ..['location'] =
               (address != null && address.trim().isNotEmpty)
                   ? address.trim()
-                  : booking.displayLocation
-          ..['canReview'] = canReview
-          ..['canRebook'] = canRebook
-          ..['isSimulated'] = true
-          ..['status'] = status
-          ..['totalAmount'] = totalAmount.toDouble()
-          ..['bookingDate'] = now.toIso8601String();
+          : booking.displayLocation
+      ..['canReview'] = canReview
+      ..['canRebook'] = canRebook
+      ..['isSimulated'] = true
+      ..['propertyId'] = propertyId
+      ..['status'] = status
+      ..['totalAmount'] = totalAmount.toDouble()
+      ..['bookingDate'] = now.toIso8601String();
 
+    final existingPendingIndex = _pendingBookings.indexWhere(
+      (pending) => _isSameReservation(mapped, pending),
+    );
+    if (existingPendingIndex >= 0) {
+      _pendingBookings[existingPendingIndex] = Map<String, dynamic>.from(mapped);
+    } else {
+      _pendingBookings.insert(
+        0,
+        Map<String, dynamic>.from(mapped),
+      );
+    }
     final existingIndex = _allBookings.indexWhere(
       (existing) => existing['id'] == mapped['id'],
     );
@@ -276,8 +312,8 @@ class TripsController extends GetxController {
 
     if (notifyUser) {
       Get.snackbar(
-        'Booking confirmed!',
-        'Your stay at $propertyName is confirmed.',
+        'Enquiry sent successfully',
+        'We have recorded your enquiry for $propertyName.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green[100],
         colorText: Colors.green[800],
@@ -301,6 +337,38 @@ class TripsController extends GetxController {
       duration: const Duration(seconds: 2),
     );
     // In real app: Get.toNamed('/booking', arguments: booking);
+  }
+
+  bool _isSameReservation(
+    Map<String, dynamic> a,
+    Map<String, dynamic> b,
+  ) {
+    if (a['id'] != null && b['id'] != null && a['id'] == b['id']) {
+      return true;
+    }
+    final propertyMatch = a['propertyId'] != null &&
+        b['propertyId'] != null &&
+        a['propertyId'].toString() == b['propertyId'].toString();
+    final checkInMatch = a['checkIn'] != null &&
+        b['checkIn'] != null &&
+        a['checkIn'].toString() == b['checkIn'].toString();
+    final checkOutMatch = a['checkOut'] != null &&
+        b['checkOut'] != null &&
+        a['checkOut'].toString() == b['checkOut'].toString();
+    return propertyMatch && checkInMatch && checkOutMatch;
+  }
+
+  int _bookingComparator(
+    Map<String, dynamic> a,
+    Map<String, dynamic> b,
+  ) {
+    final aDate =
+        DateTime.tryParse(a['checkIn']?.toString() ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+    final bDate =
+        DateTime.tryParse(b['checkIn']?.toString() ?? '') ??
+        DateTime.fromMillisecondsSinceEpoch(0);
+    return bDate.compareTo(aDate);
   }
 
   void leaveReview(Map<String, dynamic> booking) {
@@ -371,13 +439,13 @@ class TripsController extends GetxController {
 
             // Title
             const Text(
-              'Booking Details',
+              'Enquiry Details',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
             // Details
-            _buildDetailRow('Booking ID', booking['id']),
+            _buildDetailRow('Enquiry ID', booking['id']),
             _buildDetailRow('Hotel', booking['hotelName']),
             _buildDetailRow('Location', booking['location']),
             _buildDetailRow('Check-in', _formatDate(booking['checkIn'])),

@@ -12,9 +12,9 @@ class HelpController extends GetxController {
 
   final List<FaqItem> faqs = const [
     FaqItem(
-      question: 'How do I update my booking?',
+      question: 'How do I update my enquiry?',
       answer:
-          'Navigate to your trips, select the booking, and choose "Modify" to adjust dates or guests. Contact support if you need additional help.',
+          'Navigate to your enquiries, select the request, and choose "Modify" to adjust dates or guests. Contact support if you need extra help.',
     ),
     FaqItem(
       question: 'How can I reach customer support?',
@@ -22,9 +22,9 @@ class HelpController extends GetxController {
           'You can email support@stays360.com or call +91 8005 360 360. Live chat is also available from the Help Center.',
     ),
     FaqItem(
-      question: 'Where can I find invoices for past stays?',
+      question: 'Where can I review my past enquiries?',
       answer:
-          'Open Past Bookings via the profile dashboard and select a stay to download invoices and receipts.',
+          'Open Enquiries via the profile dashboard and select a stay to review your submitted details.',
     ),
     FaqItem(
       question: 'How do I delete my account?',

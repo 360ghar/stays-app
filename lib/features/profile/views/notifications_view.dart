@@ -33,13 +33,13 @@ class NotificationsView extends GetView<NotificationsController> {
             children: [
               SwitchListTile.adaptive(
                 title: const Text('Push notifications'),
-                subtitle: const Text('Booking updates, reminders, and offers'),
+                subtitle: const Text('Enquiry updates, reminders, and offers'),
                 value: controller.pushEnabled.value,
                 onChanged: (value) => controller.pushEnabled.value = value,
               ),
               SwitchListTile.adaptive(
                 title: const Text('Email notifications'),
-                subtitle: const Text('Trips, receipts, and personalised tips'),
+                subtitle: const Text('Enquiries, receipts, and personalised tips'),
                 value: controller.emailEnabled.value,
                 onChanged: (value) => controller.emailEnabled.value = value,
               ),

@@ -21,7 +21,7 @@
   "nav": {
     "explore": "Explore",
     "wishlist": "Wishlist",
-    "bookings": "Bookings",
+    "enquiries": "Enquiry",
     "locate": "Locate",
     "profile": "Profile"
   },
@@ -67,13 +67,13 @@
     "sign_out": "Sign out of your account",
     "version_info": "Version 1.0.0 — Made with love"
   },
-  "trips": {
-    "title": "Past Bookings",
-    "empty_title": "No past bookings yet",
-    "empty_body": "When you book a hotel through our app,\nyour trips will appear here",
+  "enquiries": {
+    "title": "Enquiries",
+    "empty_title": "No enquiries yet",
+    "empty_body": "When you send an enquiry through our app,\nyour requests will appear here.",
     "browse_stays": "Browse stays",
-    "no_match_title": "No trips match the filters",
-    "no_match_body": "Try adjusting your filter options or clear them to revisit all your stays.",
+    "no_match_title": "No enquiries match the filters",
+    "no_match_body": "Try adjusting your filter options or clear them to revisit all your enquiries.",
     "adjust_filters": "Adjust filters",
     "clear_filters": "Clear filters"
   },

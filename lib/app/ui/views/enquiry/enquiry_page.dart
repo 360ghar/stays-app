@@ -46,8 +46,8 @@ String _statusBadgeLabel(String category) {
   }
 }
 
-class BookingsPage extends StatelessWidget {
-  BookingsPage({super.key})
+class EnquiriesPage extends StatelessWidget {
+  EnquiriesPage({super.key})
       : _controller = Get.find<TripsController>(),
         _statusFilter = RxnString();
 
@@ -72,7 +72,7 @@ class BookingsPage extends StatelessWidget {
           backgroundColor: const Color(0xFFFAFAFA),
           elevation: 0,
           title: Text(
-            'Bookings',
+            'Enquiry',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
               fontSize: 20,
@@ -83,7 +83,7 @@ class BookingsPage extends StatelessWidget {
             Obx(() {
               final hasFilter = _statusFilter.value != null;
               return IconButton(
-                tooltip: 'Filter bookings',
+                tooltip: 'Filter enquiries',
                 icon: Icon(
                   Icons.filter_alt_rounded,
                   color: hasFilter
@@ -284,10 +284,10 @@ class BookingsPage extends StatelessWidget {
   void _showFilterSheet(BuildContext context) {
     final theme = Theme.of(context);
     final options = const [
-      _StatusOption(null, 'All bookings'),
-      _StatusOption('completed', 'Completed'),
-      _StatusOption('upcoming', 'Upcoming'),
-      _StatusOption('today', 'Today'),
+      _StatusOption(null, 'All enquiries'),
+      _StatusOption('completed', 'Completed enquiries'),
+      _StatusOption('upcoming', 'Upcoming enquiries'),
+      _StatusOption('today', 'Today\'s enquiries'),
     ];
     Get.bottomSheet(
       SafeArea(
@@ -774,7 +774,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No bookings to show',
+            'No enquiries to show',
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
           ),
           const SizedBox(height: 8),

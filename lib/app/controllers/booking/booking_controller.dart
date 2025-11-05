@@ -21,12 +21,12 @@ class BookingController extends GetxController {
       isSubmitting.value = true;
       final booking = await _repository.createBooking(payload);
       latestBooking.value = booking;
-      statusMessage.value = 'Booking created';
+      statusMessage.value = 'Enquiry created';
       await Get.offAllNamed(Routes.home, arguments: 0);
     } catch (e, stackTrace) {
       latestBooking.value = null;
       errorMessage.value = e.toString();
-      statusMessage.value = 'Failed to create booking';
+      statusMessage.value = 'Failed to create enquiry';
       AppLogger.error('createBooking failed', e, stackTrace);
     } finally {
       isSubmitting.value = false;
@@ -48,7 +48,7 @@ class BookingController extends GetxController {
   }) async {
     try {
       errorMessage.value = '';
-      statusMessage.value = 'Calculating price...';
+      statusMessage.value = 'Preparing enquiry...';
       isSubmitting.value = true;
 
       AppLogger.info('Requesting booking pricing', {
@@ -139,11 +139,11 @@ class BookingController extends GetxController {
 
       if (totalAmount <= 0) {
         AppLogger.warning(
-          'Total amount is non-positive. Proceeding with booking creation.',
+          'Total amount is non-positive. Proceeding with enquiry submission.',
         );
       }
 
-      statusMessage.value = 'Creating booking...';
+      statusMessage.value = 'Submitting enquiry...';
 
       int? resolvedNights = nights;
       final pricingNights = pricing['nights'];
@@ -187,7 +187,7 @@ class BookingController extends GetxController {
         payload.addAll(additionalPayload);
       }
 
-      AppLogger.info('Submitting booking payload', {
+      AppLogger.info('Submitting enquiry payload', {
         'property_id': propertyId,
         'check_in_date': checkInIso,
         'check_out_date': checkOutIso,
@@ -204,15 +204,15 @@ class BookingController extends GetxController {
 
       final booking = await _repository.createBooking(payload);
       latestBooking.value = booking;
-      statusMessage.value = 'Booking created';
-      AppLogger.info('Booking created successfully', {
+      statusMessage.value = 'Enquiry created';
+      AppLogger.info('Enquiry submitted successfully', {
         'booking_id': booking.id,
         'booking_status': booking.bookingStatus,
       });
     } catch (e, stackTrace) {
       latestBooking.value = null;
       errorMessage.value = e.toString();
-      statusMessage.value = 'Failed to create booking';
+      statusMessage.value = 'Failed to create enquiry';
       AppLogger.error('createBookingWithoutPayment failed', e, stackTrace);
     } finally {
       isSubmitting.value = false;

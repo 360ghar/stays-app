@@ -6,8 +6,8 @@ import '../../../controllers/booking/booking_confirmation_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../utils/helpers/currency_helper.dart';
 
-class BookingConfirmationView extends GetView<BookingConfirmationController> {
-  const BookingConfirmationView({super.key});
+class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
+  const EnquiryConfirmationView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +15,7 @@ class BookingConfirmationView extends GetView<BookingConfirmationController> {
     final textStyles = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Confirm Your Booking')),
+      appBar: AppBar(title: const Text('Send Your Enquiry')),
       body: Obx(() {
         final property = controller.property.value;
         if (property == null) {
@@ -52,12 +52,8 @@ class BookingConfirmationView extends GetView<BookingConfirmationController> {
               onPressed:
                   property == null
                       ? null
-                      : () => controller.confirmBookingAndPay(),
-              child: Text(
-                quote == null
-                    ? 'Confirm & Pay'
-                    : 'Confirm & Pay ${CurrencyHelper.format(quote.total)}',
-              ),
+                      : () => controller.submitEnquiry(),
+              child: const Text('Send Enquiry'),
             ),
           ),
         );
