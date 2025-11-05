@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -40,17 +42,26 @@ class AuthController extends GetxController {
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
 
+  StreamSubscription<AuthState>? _authSubscription;
+
   @override
   void onInit() {
     super.onInit();
     _initializeRememberMePreference();
     _checkAuthStatus();
+    _bindAuthStateListener();
   }
 
   @override
   void onReady() {
     super.onReady();
     _loadSavedUser();
+  }
+
+  @override
+  void onClose() {
+    _authSubscription?.cancel();
+    super.onClose();
   }
 
   void togglePasswordVisibility() {
@@ -119,6 +130,31 @@ class AuthController extends GetxController {
     rememberMe.value = storedPreference;
   }
 
+  void _bindAuthStateListener() {
+    _authSubscription?.cancel();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen(
+      (data) async {
+        final event = data.event;
+        final session = data.session;
+        if (event == AuthChangeEvent.signedOut) {
+          await _clearRememberedSession();
+          return;
+        }
+        if (!rememberMe.value || session == null) {
+          return;
+        }
+        if (event == AuthChangeEvent.signedIn ||
+            event == AuthChangeEvent.tokenRefreshed) {
+          await _persistRememberedSession(session: session);
+        }
+      },
+      onError: (Object error) {
+        AppLogger.warning('Auth state listener error: $error');
+      },
+    );
+  }
+
   // Update the remember-me flag and synchronise it to disk for future launches.
   Future<void> setRememberMe(bool value) async {
     rememberMe.value = value;
@@ -129,17 +165,18 @@ class AuthController extends GetxController {
   }
 
   // Persist the latest Supabase session details when the user opts in.
-  Future<void> _persistRememberedSession() async {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) {
+  Future<void> _persistRememberedSession({Session? session}) async {
+    final activeSession =
+        session ?? Supabase.instance.client.auth.currentSession;
+    if (activeSession == null) {
       AppLogger.warning(
         'Unable to persist remember-me session because Supabase returned no session.',
       );
       return;
     }
     await _authPrefs.write(_rememberMeFlagKey, true);
-    await _authPrefs.write(_rememberedAccessTokenKey, session.accessToken);
-    final refreshToken = session.refreshToken;
+    await _authPrefs.write(_rememberedAccessTokenKey, activeSession.accessToken);
+    final refreshToken = activeSession.refreshToken;
     if (refreshToken != null && refreshToken.isNotEmpty) {
       await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
     }

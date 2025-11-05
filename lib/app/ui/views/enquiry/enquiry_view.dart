@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -12,7 +14,6 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../../data/providers/bookings_provider.dart';
 import '../../../data/repositories/booking_repository.dart';
-import '../../widgets/cards/property_grid_card.dart';
 
 class EnquiryView extends StatefulWidget {
   const EnquiryView({super.key});
@@ -374,44 +375,164 @@ class _EnquiryViewState extends State<EnquiryView> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final width = MediaQuery.of(context).size.width;
-    final widthFactor = width >= 400 ? 0.25 : 0.3;
+    final double horizontalPadding = width >= 480 ? 18 : 12;
+    final double maxCardWidth = width >= 960 ? 320 : width >= 720 ? 300 : 260;
+    final double cardWidth = math.max(
+      200,
+      math.min(maxCardWidth, width - (horizontalPadding * 2)),
+    );
+    final imageUrl = prop.displayImage;
+    final locationLabel = [
+      if (prop.city.trim().isNotEmpty) prop.city.trim(),
+      if (prop.country.trim().isNotEmpty) prop.country.trim(),
+    ].join(', ');
+    final rating = prop.rating;
+    final reviews = prop.reviewsCount;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Align(
-        alignment: Alignment.center,
-        child: FractionallySizedBox(
-          widthFactor: widthFactor,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PropertyGridCard(
-                  property: prop,
-                  onTap: () => Get.toNamed(
-                    Routes.listingDetail.replaceFirst(
-                      ':id',
-                      prop.id.toString(),
+      padding: EdgeInsets.fromLTRB(
+        horizontalPadding,
+        0,
+        horizontalPadding,
+        20,
+      ),
+      child: Center(
+        child: Material(
+          color: colors.surface,
+          elevation: theme.brightness == Brightness.dark ? 1 : 2,
+          shadowColor: Colors.black.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => Get.toNamed(
+              Routes.listingDetail.replaceFirst(
+                ':id',
+                prop.id.toString(),
+              ),
+              arguments: prop,
+            ),
+            child: SizedBox(
+              width: cardWidth,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: imageUrl != null && imageUrl.isNotEmpty
+                            ? Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    _buildPropertyImageFallback(colors),
+                              )
+                            : _buildPropertyImageFallback(colors),
+                      ),
                     ),
-                    arguments: prop,
-                  ),
-                  heroPrefix: 'booking',
-                  isFavorite: prop.liked ?? false,
-                  isCompact: true,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            prop.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colors.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  locationLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${CurrencyHelper.format(prop.pricePerNight)} / night',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (rating != null) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star_rate_rounded,
+                                  size: 14,
+                                  color: Colors.amber,
+                                ),
+                                Text(
+                                  rating.toStringAsFixed(1),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colors.onSurface,
+                                  ),
+                                ),
+                                if (reviews != null && reviews > 0) ...[
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '($reviews reviews)',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  '${CurrencyHelper.format(prop.pricePerNight)} per night',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPropertyImageFallback(ColorScheme colors) {
+    return Container(
+      color: colors.surfaceContainerHighest,
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.hotel,
+        size: 24,
+        color: colors.onSurfaceVariant.withValues(alpha: 0.65),
       ),
     );
   }

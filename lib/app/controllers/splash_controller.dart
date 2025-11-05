@@ -101,12 +101,29 @@ class SplashController extends GetxController {
           prefs.read<bool>(_rememberMeFlagKey) ?? false;
       final String? rememberedAccessToken =
           prefs.read<String>(_rememberedAccessTokenKey);
+      final String? rememberedRefreshToken =
+          prefs.read<String>(_rememberedRefreshTokenKey);
       final bool hasStoredToken =
-          rememberedAccessToken != null && rememberedAccessToken.isNotEmpty;
+          rememberedAccessToken != null &&
+          rememberedAccessToken.isNotEmpty &&
+          rememberedRefreshToken != null &&
+          rememberedRefreshToken.isNotEmpty;
 
-      final session = Supabase.instance.client.auth.currentSession;
-      final bool hasActiveSession =
+      var session = Supabase.instance.client.auth.currentSession;
+      bool hasActiveSession =
           session != null && session.accessToken.isNotEmpty;
+
+      if (rememberMeEnabled &&
+          hasStoredToken &&
+          !hasActiveSession &&
+          rememberedRefreshToken != null) {
+        session = await _restoreRememberedSession(
+          prefs: prefs,
+          refreshToken: rememberedRefreshToken,
+        );
+        hasActiveSession =
+            session != null && session.accessToken.isNotEmpty;
+      }
 
       if (!rememberMeEnabled) {
         if (hasActiveSession) {
@@ -155,6 +172,49 @@ class SplashController extends GetxController {
       _watchdog?.cancel();
       Get.offAllNamed(Routes.login);
     }
-  }
 }
 
+  Future<Session?> _restoreRememberedSession({
+    required GetStorage prefs,
+    required String refreshToken,
+  }) async {
+    try {
+      AppLogger.info(
+        'Attempting to restore Supabase session from stored refresh token.',
+      );
+      final response =
+          await Supabase.instance.client.auth.setSession(refreshToken);
+      final restoredSession = response.session;
+      if (restoredSession == null) {
+        AppLogger.warning(
+          'Supabase returned no session when restoring remember-me tokens.',
+        );
+        return null;
+      }
+      if (Get.isRegistered<StorageService>()) {
+        final storage = Get.find<StorageService>();
+        await storage.saveTokens(
+          accessToken: restoredSession.accessToken,
+          refreshToken: restoredSession.refreshToken,
+        );
+      }
+      await prefs.write(
+        _rememberedAccessTokenKey,
+        restoredSession.accessToken,
+      );
+      final newRefreshToken = restoredSession.refreshToken;
+      if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
+        await prefs.write(
+          _rememberedRefreshTokenKey,
+          newRefreshToken,
+        );
+      }
+      return restoredSession;
+    } catch (e) {
+      AppLogger.warning(
+        'Failed to restore Supabase session from remember-me tokens: $e',
+      );
+      return null;
+    }
+  }
+}
