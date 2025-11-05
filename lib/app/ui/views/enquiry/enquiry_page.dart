@@ -25,7 +25,7 @@ Color _statusBadgeColor(String category) {
     case 'completed':
       return const Color(0xFF1B9A5E);
     case 'today':
-      return const Color(0xFF2563EB);
+      return const Color(0xFF60A5FA);
     case 'cancelled':
       return const Color(0xFFDC2626);
     default:
@@ -397,8 +397,8 @@ class _TravelStatsCard extends StatelessWidget {
     final items = [
       _StatItemData(
         icon: Icons.hotel_rounded,
-        background: const Color(0xFFE4F0FF),
-        iconColor: const Color(0xFF1D4ED8),
+        background: const Color(0xFFEAF4FF),
+        iconColor: const Color(0xFF60A5FA),
         value: '$totalStays',
         label: 'Total stays',
       ),

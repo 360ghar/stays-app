@@ -10,9 +10,10 @@ class AppTheme {
         seedColor: AppColors.primary,
         brightness: Brightness.light,
       ).copyWith(
-        surface: Colors.white,
-        surfaceContainerHighest: const Color(0xFFE8ECF4),
-        outlineVariant: const Color(0xFFE0E3EB),
+        surface: AppColors.surface,
+        background: AppColors.background,
+        surfaceContainerHighest: const Color(0xFFE6F0FF),
+        outlineVariant: const Color(0xFFD7E4FF),
         onSurface: AppColors.textPrimary,
       );
 
@@ -22,6 +23,7 @@ class AppTheme {
         brightness: Brightness.dark,
       ).copyWith(
         surface: const Color(0xFF1E293B),
+        background: const Color(0xFF111827),
         surfaceContainerHighest: const Color(0xFF273449),
         outlineVariant: const Color(0xFF334155),
         onSurface: Colors.white,
@@ -126,7 +128,7 @@ class AppTheme {
         filled: true,
         fillColor: isDark
             ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
-            : const Color(0xFFF2F2F2),
+            : AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

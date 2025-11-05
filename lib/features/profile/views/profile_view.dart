@@ -246,7 +246,7 @@ class ProfileView extends GetView<ProfileController> {
               label: 'Enquiries',
               value: controller.totalTrips.value.toString(),
               icon: Icons.flight_takeoff_outlined,
-              color: const Color(0xFF2563EB),
+              color: const Color(0xFF60A5FA),
             ),
           ),
           const SizedBox(width: 12),

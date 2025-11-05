@@ -73,6 +73,15 @@ dev_dependencies:
   build_runner: ^2.4.11
   json_serializable: ^6.7.1
   mockito: ^5.4.4
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/360Stays_logo_icon.png"
+
+
+
   integration_test:
     sdk: flutter
 
@@ -99,6 +108,8 @@ flutter:
     - .env.dev
     - .env.staging
     - .env.prod
+    - assets/images/360Stays_logo.png
+    - assets/images/360Stays_logo_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

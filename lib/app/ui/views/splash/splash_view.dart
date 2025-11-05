@@ -12,15 +12,12 @@ class SplashView extends GetView<SplashController> {
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              AppConstants.appName,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+          children: [
+            Image.asset(
+              'assets/images/360Stays_logo.png',
+              width: 200,
+              fit: BoxFit.contain,
             ),
-            SizedBox(height: 8),
-            Text(AppConstants.tagLine),
-            SizedBox(height: 24),
-            CircularProgressIndicator(),
           ],
         ),
       ),
