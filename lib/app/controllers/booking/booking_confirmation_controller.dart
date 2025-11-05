@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:get/get.dart';
 
 import '../../data/models/property_model.dart';
-import '../trips_controller.dart';
 import '../../routes/app_routes.dart';
 
 class BookingConfirmationController extends GetxController {
@@ -74,18 +73,6 @@ class BookingConfirmationController extends GetxController {
       return;
     }
 
-    TripsController tripsController;
-    try {
-      tripsController = Get.find<TripsController>();
-    } catch (_) {
-      Get.snackbar(
-        'Enquiry unavailable',
-        'We could not update your enquiries right now. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return;
-    }
-
     final checkIn = checkInDate.value;
     final checkOut = checkOutDate.value;
     final stayLength = checkOut.difference(checkIn).inDays;
@@ -93,26 +80,15 @@ class BookingConfirmationController extends GetxController {
       setNights(minimumStay);
     }
 
-    tripsController.simulateAddBooking(
-      propertyId: selectedProperty.id,
-      propertyName: selectedProperty.name,
-      imageUrl: selectedProperty.displayImage ?? '',
-      address: selectedProperty.address ?? selectedProperty.fullAddress,
-      city: selectedProperty.city,
-      country: selectedProperty.country,
-      checkIn: checkInDate.value,
-      checkOut: checkOutDate.value,
-      guests: guests.value,
-      rooms: selectedProperty.bedrooms ?? 1,
-      totalAmount: totalAmount,
-      nights: nights.value,
-      status: 'upcoming',
-      canReview: false,
-      canRebook: false,
-      notifyUser: true,
+    await Get.offNamed(
+      Routes.enquiry,
+      arguments: {
+        'property': selectedProperty,
+        'checkIn': checkInDate.value,
+        'checkOut': checkOutDate.value,
+        'guests': guests.value,
+      },
     );
-
-    await Get.offAllNamed(Routes.home, arguments: 0);
   }
 
   // --- Public getters ---

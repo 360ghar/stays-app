@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../../data/models/booking_model.dart';
+import '../../data/models/booking_pricing_model.dart';
 import '../../data/repositories/booking_repository.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../routes/app_routes.dart';
@@ -58,76 +59,94 @@ class BookingController extends GetxController {
         'guests': guests,
       });
 
-      Map<String, dynamic> pricing;
+      BookingPricingModel? pricingModel;
       try {
-        pricing = await _repository.calculatePricing(
+        pricingModel = await _repository.calculatePricing(
           propertyId: propertyId,
           checkInIso: checkInIso,
           checkOutIso: checkOutIso,
           guests: guests,
         );
-        AppLogger.info('Pricing response received', pricing);
+        if (pricingModel != null) {
+          AppLogger.info('Pricing response received', {
+            'base_amount': pricingModel.baseAmount,
+            'taxes_amount': pricingModel.taxesAmount,
+            'service_charges': pricingModel.serviceCharges,
+            'discount_amount': pricingModel.discountAmount,
+            'total_amount': pricingModel.totalAmount,
+            'nights': pricingModel.nights,
+          });
+        } else {
+          AppLogger.warning(
+            'Pricing response was empty. Falling back to locally computed values.',
+          );
+        }
       } catch (error, stackTrace) {
         AppLogger.warning('Pricing request failed, using fallback values', {
           'error': error.toString(),
           'stackTrace': stackTrace.toString(),
         });
-        if (fallbackPricing != null && fallbackPricing.isNotEmpty) {
-          pricing = Map<String, dynamic>.from(fallbackPricing);
-        } else {
-          pricing = <String, dynamic>{};
-        }
       }
 
-      double coerceAmount(String key, {bool required = true}) {
-        final value = pricing[key];
-        double? resolved;
-        if (value is num) {
-          resolved = value.toDouble();
-        } else if (value is String) {
-          resolved = double.tryParse(value);
-        }
-
-        final needsFallback =
-            resolved == null || resolved.isNaN || resolved.isInfinite;
-        if (needsFallback && fallbackPricing != null) {
-          final fallbackValue = fallbackPricing[key];
-          if (fallbackValue != null) {
-            resolved = fallbackValue.toDouble();
-            AppLogger.warning('Using fallback pricing value', {
-              'key': key,
-              'fallback': resolved,
-            });
-          }
-        }
-
-        if (resolved == null) {
-          if (required) {
-            AppLogger.warning(
-              'Missing $key in pricing response. Defaulting to 0.0.',
-            );
-          }
-          return 0.0;
-        }
-
-        return resolved;
+      double? _sanitizeAmount(double? value) {
+        if (value == null) return null;
+        if (value.isNaN || value.isInfinite) return null;
+        return value;
       }
 
-      double? coerceOptionalAmount(String key) {
-        final amount = coerceAmount(key, required: false);
-        if (amount == 0.0 &&
-            !(pricing.containsKey(key) ||
-                (fallbackPricing?.containsKey(key) ?? false))) {
-          return null;
+      double _resolveRequiredAmount(String key, double? primary) {
+        final sanitized = _sanitizeAmount(primary);
+        if (sanitized != null) return sanitized;
+        final fallbackValue = fallbackPricing?[key];
+        if (fallbackValue != null) {
+          final resolved = fallbackValue.toDouble();
+          AppLogger.warning('Using fallback pricing value', {
+            'key': key,
+            'fallback': resolved,
+          });
+          return resolved;
         }
-        return amount;
+        AppLogger.warning(
+          'Missing $key in pricing response. Defaulting to 0.0.',
+        );
+        return 0.0;
       }
 
-      final baseAmount = coerceAmount('base_amount');
-      final taxesAmount = coerceAmount('taxes_amount');
-      final serviceCharges = coerceAmount('service_charges');
-      final totalAmount = coerceAmount('total_amount');
-      final discountAmount = coerceOptionalAmount('discount_amount');
+      double? _resolveOptionalAmount(String key, double? primary) {
+        final sanitized = _sanitizeAmount(primary);
+        if (sanitized != null) return sanitized;
+        final hasFallback = fallbackPricing?.containsKey(key) ?? false;
+        if (hasFallback) {
+          final resolved = fallbackPricing![key]!.toDouble();
+          AppLogger.warning('Using fallback pricing value', {
+            'key': key,
+            'fallback': resolved,
+          });
+          return resolved;
+        }
+        return null;
+      }
+
+      final baseAmount = _resolveRequiredAmount(
+        'base_amount',
+        pricingModel?.baseAmount,
+      );
+      final taxesAmount = _resolveRequiredAmount(
+        'taxes_amount',
+        pricingModel?.taxesAmount,
+      );
+      final serviceCharges = _resolveRequiredAmount(
+        'service_charges',
+        pricingModel?.serviceCharges,
+      );
+      final totalAmount = _resolveRequiredAmount(
+        'total_amount',
+        pricingModel?.totalAmount,
+      );
+      final discountAmount = _resolveOptionalAmount(
+        'discount_amount',
+        pricingModel?.discountAmount,
+      );
 
       AppLogger.info('Sanitized pricing values', {
         'base_amount': baseAmount,
@@ -146,15 +165,9 @@ class BookingController extends GetxController {
       statusMessage.value = 'Submitting enquiry...';
 
       int? resolvedNights = nights;
-      final pricingNights = pricing['nights'];
-      if (resolvedNights == null) {
-        if (pricingNights is int) {
-          resolvedNights = pricingNights;
-        } else if (pricingNights is num) {
-          resolvedNights = pricingNights.toInt();
-        } else if (pricingNights is String) {
-          resolvedNights = int.tryParse(pricingNights);
-        }
+      final pricingNights = pricingModel?.nights;
+      if (resolvedNights == null && pricingNights != null) {
+        resolvedNights = pricingNights;
       }
 
       final payload = <String, dynamic>{

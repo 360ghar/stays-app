@@ -84,17 +84,55 @@ class _EnquiryViewState extends State<EnquiryView> {
     }
 
     final args = Get.arguments;
+    Property? incomingProperty;
+    DateTime? incomingCheckIn;
+    DateTime? incomingCheckOut;
+    int? incomingGuests;
+
     if (args is Property) {
-      property = args;
-      final maxGuests = args.maxGuests;
-      if (maxGuests != null && maxGuests > 0) {
-        guests = maxGuests.clamp(1, 6).toInt();
+      incomingProperty = args;
+    } else if (args is Map) {
+      final dynamic propertyArg = args['property'];
+      if (propertyArg is Property) {
+        incomingProperty = propertyArg;
+      }
+      final dynamic checkInArg = args['checkIn'];
+      if (checkInArg is DateTime) {
+        incomingCheckIn = checkInArg;
+      } else if (checkInArg is String) {
+        incomingCheckIn = DateTime.tryParse(checkInArg);
+      }
+      final dynamic checkOutArg = args['checkOut'];
+      if (checkOutArg is DateTime) {
+        incomingCheckOut = checkOutArg;
+      } else if (checkOutArg is String) {
+        incomingCheckOut = DateTime.tryParse(checkOutArg);
+      }
+      final dynamic guestsArg = args['guests'];
+      if (guestsArg is int) {
+        incomingGuests = guestsArg;
+      }
+    }
+
+    if (incomingProperty != null) {
+      property = incomingProperty;
+      final maxGuests = incomingProperty.maxGuests;
+      if (incomingGuests == null && maxGuests != null && maxGuests > 0) {
+        incomingGuests = maxGuests.clamp(1, 6).toInt();
       }
     }
 
     final now = DateTime.now();
-    checkInDate = now.add(const Duration(days: 1));
-    checkOutDate = now.add(const Duration(days: 3));
+    checkInDate = incomingCheckIn ?? now.add(const Duration(days: 1));
+    checkOutDate = incomingCheckOut ?? now.add(const Duration(days: 3));
+    if (incomingGuests != null && incomingGuests > 0) {
+      final maxAllowed = property?.maxGuests;
+      if (maxAllowed != null && maxAllowed > 0) {
+        guests = incomingGuests.clamp(1, maxAllowed).toInt();
+      } else {
+        guests = incomingGuests;
+      }
+    }
 
     final user = authController?.currentUser.value;
     final resolvedName = _resolveUserName(user);
@@ -242,56 +280,27 @@ class _EnquiryViewState extends State<EnquiryView> {
 
     final latestBooking = bookingController.latestBooking.value;
     final status = bookingController.statusMessage.value;
-    var resolvedBooking = latestBooking;
-    var isSuccessful =
-        resolvedBooking != null && !status.toLowerCase().contains('failed');
-    var isSimulated = false;
+    final isSuccessful =
+        latestBooking != null && !status.toLowerCase().contains('failed');
 
-    if (!isSuccessful && tripsController != null) {
-      final user = authController?.currentUser.value;
-      final simulatedBooking = tripsController!.simulateAddBooking(
-        propertyId: property!.id,
-        propertyName: property!.name,
-        imageUrl: property!.displayImage ?? '',
-        address: property!.fullAddress,
-        city: property!.city,
-        country: property!.country,
-        checkIn: checkInDate!,
-        checkOut: checkOutDate!,
-        guests: guests,
-        rooms: property!.bedrooms ?? 1,
-        totalAmount: localTotalAmount,
-        nights: nights,
-        userId: user != null ? int.tryParse(user.id) : null,
-        notifyUser: false,
-      );
-      bookingController.latestBooking.value = simulatedBooking;
-      bookingController.statusMessage.value = 'Enquiry created (simulated)';
-      bookingController.errorMessage.value = '';
-      resolvedBooking = simulatedBooking;
-      isSuccessful = true;
-      isSimulated = true;
-    }
-
-    if (isSuccessful && resolvedBooking != null) {
-      if (tripsController != null && !isSimulated) {
-        tripsController!.addOrUpdateBooking(resolvedBooking);
+    if (isSuccessful && latestBooking != null) {
+      if (tripsController != null) {
+        await tripsController!.loadPastBookings(forceRefresh: true);
       }
       Get.snackbar(
         'Enquiry Sent Successfully',
-        'We have recorded your enquiry for ${property!.name}${isSimulated ? ' (simulated).' : '.'}',
+        'We have recorded your enquiry for ${property!.name}.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green[100],
         colorText: Colors.green[800],
       );
       Get.offAllNamed(Routes.home, arguments: 0);
     } else {
-      final error =
-          bookingController.errorMessage.value.isNotEmpty
-              ? bookingController.errorMessage.value
-          : 'Failed to send enquiry. Please try again.';
+      final rawError = bookingController.errorMessage.value;
+      final errorMessage =
+          rawError.isNotEmpty ? rawError : 'Failed to send enquiry. Please try again.';
       final truncatedError =
-          error.length > 100 ? '${error.substring(0, 97)}...' : error;
+          errorMessage.length > 100 ? '${errorMessage.substring(0, 97)}...' : errorMessage;
       Get.snackbar(
         'Enquiry failed',
         truncatedError,

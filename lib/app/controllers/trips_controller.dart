@@ -3,9 +3,10 @@ import 'package:get/get.dart';
 
 import '../data/models/unified_filter_model.dart';
 import '../data/models/booking_model.dart';
-import '../data/models/property_model.dart';
 import '../data/repositories/booking_repository.dart';
 import 'filter_controller.dart';
+import '../utils/exceptions/app_exceptions.dart';
+import '../utils/logger/app_logger.dart';
 
 class TripsController extends GetxController {
   final RxList<Map<String, dynamic>> pastBookings =
@@ -16,7 +17,6 @@ class TripsController extends GetxController {
   FilterController? _filterController;
 
   final List<Map<String, dynamic>> _allBookings = [];
-  final List<Map<String, dynamic>> _pendingBookings = [];
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
 
@@ -54,41 +54,32 @@ class TripsController extends GetxController {
       _applyFilters();
       return;
     }
-    final hadBookings = _allBookings.isNotEmpty;
     if (isLoading.value && !forceRefresh) {
       return;
     }
     try {
       isLoading.value = true;
       final bookings = await _bookingRepository.fetchBookings();
-      final mapped = bookings.map(_mapBooking).toList();
-
-      if (_pendingBookings.isNotEmpty) {
-        _pendingBookings.removeWhere(
-          (pending) => mapped.any(
-            (booking) => _isSameReservation(booking, pending),
-          ),
-        );
-      }
-
-      final merged = <Map<String, dynamic>>[
-        ...mapped,
-        ..._pendingBookings.map((booking) => Map<String, dynamic>.from(booking)),
-      ];
-      merged.sort(_bookingComparator);
-
+      final mapped = bookings.map(_mapBooking).toList()
+        ..sort(_bookingComparator);
       _allBookings
         ..clear()
-        ..addAll(merged);
+        ..addAll(mapped);
       _applyFilters();
-    } catch (e) {
-      if (!hadBookings && _pendingBookings.isNotEmpty) {
-        _allBookings
-          ..clear()
-          ..addAll(_pendingBookings.map((booking) => Map<String, dynamic>.from(booking)));
-        _applyFilters();
+    } on ApiException catch (error, stackTrace) {
+      AppLogger.error('Failed to load bookings', error, stackTrace);
+      if (forceRefresh || _allBookings.isEmpty) {
+        pastBookings.clear();
+        Get.snackbar(
+          'Enquiries unavailable',
+          error.message,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
-      if (forceRefresh || !hadBookings) {
+    } catch (error, stackTrace) {
+      AppLogger.error('Unexpected error while loading bookings', error, stackTrace);
+      if (forceRefresh || _allBookings.isEmpty) {
+        pastBookings.clear();
         Get.snackbar(
           'Enquiries unavailable',
           'We could not load your enquiries right now. Please try again.',
@@ -142,54 +133,12 @@ class TripsController extends GetxController {
     final index = _allBookings.indexWhere(
       (existing) => existing['id'] == mapped['id'],
     );
-    _pendingBookings.removeWhere(
-      (pending) => _isSameReservation(mapped, pending),
-    );
     if (index >= 0) {
       _allBookings[index] = mapped;
     } else {
       _allBookings.insert(0, mapped);
     }
     _applyFilters();
-  }
-
-  void addBooking(Property property) {
-    final now = DateTime.now();
-    final checkInDate = now.add(const Duration(days: 7));
-    final checkOutDate = checkInDate.add(const Duration(days: 3));
-    final rawNights = checkOutDate.difference(checkInDate).inDays;
-    final totalNights = rawNights <= 0 ? 1 : rawNights;
-
-    final baseAmount = property.pricePerNight * totalNights;
-    final serviceFees = baseAmount * 0.10;
-    final taxes = baseAmount * 0.05;
-    final totalAmount = (baseAmount + serviceFees + taxes).toDouble();
-
-    simulateAddBooking(
-      propertyId: property.id,
-      propertyName: property.name,
-      imageUrl: property.displayImage ?? '',
-      address: property.address ?? property.fullAddress,
-      city: property.city,
-      country: property.country,
-      checkIn: checkInDate,
-      checkOut: checkOutDate,
-      guests: property.maxGuests ?? 1,
-      rooms: 1,
-      totalAmount: totalAmount,
-      nights: totalNights,
-      status: 'upcoming',
-      canReview: false,
-      canRebook: false,
-    );
-
-    Get.snackbar(
-      'Enquiry sent successfully',
-      '${property.name} added to your enquiry list.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.green[50],
-      colorText: Colors.green[800],
-    );
   }
 
   Future<void> cancelBooking(String bookingId) async {
@@ -231,98 +180,6 @@ class TripsController extends GetxController {
     }
   }
 
-  Booking simulateAddBooking({
-    required int propertyId,
-    required String propertyName,
-    required String imageUrl,
-    String? address,
-    required String city,
-    required String country,
-    required DateTime checkIn,
-    required DateTime checkOut,
-    required int guests,
-    int rooms = 1,
-    required double totalAmount,
-    int? nights,
-    int? userId,
-    bool notifyUser = false,
-    String status = 'confirmed',
-    bool canReview = true,
-    bool canRebook = true,
-  }) {
-    final now = DateTime.now();
-    final bookingId = now.millisecondsSinceEpoch;
-    final computedNights =
-        nights ?? checkOut.difference(checkIn).inDays.clamp(1, 365);
-
-    final booking = Booking.fromJson({
-      'id': bookingId,
-      'property_id': propertyId,
-      'user_id': userId ?? 0,
-      'booking_reference': 'SIM$bookingId',
-      'check_in_date': checkIn.toIso8601String(),
-      'check_out_date': checkOut.toIso8601String(),
-      'guests': guests,
-      'nights': computedNights,
-      'total_amount': totalAmount,
-      'booking_status': status,
-      'payment_status': 'paid',
-      'created_at': now.toIso8601String(),
-      'property_title': propertyName,
-      'property_city': city,
-      'property_country': country,
-      'property_image_url': imageUrl,
-    });
-
-    final mapped =
-        _mapBooking(booking)
-          ..['rooms'] = rooms
-          ..['location'] =
-              (address != null && address.trim().isNotEmpty)
-                  ? address.trim()
-          : booking.displayLocation
-      ..['canReview'] = canReview
-      ..['canRebook'] = canRebook
-      ..['isSimulated'] = true
-      ..['propertyId'] = propertyId
-      ..['status'] = status
-      ..['totalAmount'] = totalAmount.toDouble()
-      ..['bookingDate'] = now.toIso8601String();
-
-    final existingPendingIndex = _pendingBookings.indexWhere(
-      (pending) => _isSameReservation(mapped, pending),
-    );
-    if (existingPendingIndex >= 0) {
-      _pendingBookings[existingPendingIndex] = Map<String, dynamic>.from(mapped);
-    } else {
-      _pendingBookings.insert(
-        0,
-        Map<String, dynamic>.from(mapped),
-      );
-    }
-    final existingIndex = _allBookings.indexWhere(
-      (existing) => existing['id'] == mapped['id'],
-    );
-    if (existingIndex >= 0) {
-      _allBookings[existingIndex] = mapped;
-    } else {
-      _allBookings.insert(0, mapped);
-    }
-    _applyFilters();
-
-    if (notifyUser) {
-      Get.snackbar(
-        'Enquiry sent successfully',
-        'We have recorded your enquiry for $propertyName.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green[100],
-        colorText: Colors.green[800],
-      );
-    }
-
-    return booking;
-  }
-
   bool get hasActiveFilters => _activeFilters.isNotEmpty;
 
   int get totalHistoryCount => _allBookings.length;
@@ -337,25 +194,6 @@ class TripsController extends GetxController {
       duration: const Duration(seconds: 2),
     );
     // In real app: Get.toNamed('/booking', arguments: booking);
-  }
-
-  bool _isSameReservation(
-    Map<String, dynamic> a,
-    Map<String, dynamic> b,
-  ) {
-    if (a['id'] != null && b['id'] != null && a['id'] == b['id']) {
-      return true;
-    }
-    final propertyMatch = a['propertyId'] != null &&
-        b['propertyId'] != null &&
-        a['propertyId'].toString() == b['propertyId'].toString();
-    final checkInMatch = a['checkIn'] != null &&
-        b['checkIn'] != null &&
-        a['checkIn'].toString() == b['checkIn'].toString();
-    final checkOutMatch = a['checkOut'] != null &&
-        b['checkOut'] != null &&
-        a['checkOut'].toString() == b['checkOut'].toString();
-    return propertyMatch && checkInMatch && checkOutMatch;
   }
 
   int _bookingComparator(
