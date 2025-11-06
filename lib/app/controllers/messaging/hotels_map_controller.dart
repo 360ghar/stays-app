@@ -71,7 +71,7 @@ class HotelsMapController extends GetxController {
   void onInit() {
     super.onInit();
     mapController = flutter_map.MapController();
-    cardsController = PageController(viewportFraction: 0.82);
+    cardsController = PageController(viewportFraction: 0.72);
     _mapReady = false;
     _pendingCameraCenter = null;
     _pendingCameraZoom = null;

@@ -10,6 +10,9 @@ import '../../../utils/helpers/currency_helper.dart';
 
 import '../../../controllers/messaging/hotels_map_controller.dart';
 
+double? _shrinkFont(double? size, [double delta = 1]) =>
+    size != null ? math.max(0, size - delta) : null;
+
 class LocateView extends GetView<HotelsMapController> {
   const LocateView({super.key});
 
@@ -69,21 +72,20 @@ class LocateView extends GetView<HotelsMapController> {
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Obx(
-                          () => _LocationChip(
-                            label: controller.locationLabel.value,
-                            isLoading: controller.isLoadingLocation.value,
-                            onTap: () => _openSearchSheet(context),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Obx(
+                            () => _LocationChip(
+                              label: controller.locationLabel.value,
+                              isLoading:
+                                  controller.isLoadingLocation.value,
+                              onTap: () => _openSearchSheet(context),
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      _MapActionButton(
-                        icon: Icons.search_rounded,
-                        onTap: () => _openSearchSheet(context),
-                      ),
-                      const SizedBox(width: 10),
                       Obx(() {
                         final active = filtersRx.value.isNotEmpty;
                         return _MapActionButton(
@@ -97,17 +99,6 @@ class LocateView extends GetView<HotelsMapController> {
                       }),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Obx(() {
-                    final count = controller.hotels.length;
-                    final radius = controller.activeRadiusKm;
-                    final locationName = controller.locationLabel.value;
-                    return _PropertySummaryCard(
-                      count: count,
-                      radiusKm: radius,
-                      locationName: locationName,
-                    );
-                  }),
                   Obx(() {
                     final tags = filtersRx.value.activeTags();
                     if (tags.isEmpty) return const SizedBox.shrink();
@@ -232,83 +223,59 @@ class LocateView extends GetView<HotelsMapController> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.only(
-                          left: 24,
-                          right: 24,
-                          bottom: 12,
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          'locate.hotels_count'.trParams({
-                            'count': hotels.length.toString(),
-                          }),
-                          style: textStyles.labelSmall?.copyWith(
-                            color: colors.onPrimary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
                     Builder(
                       builder: (context) {
                         final media = MediaQuery.of(context);
                         final screenHeight = media.size.height;
                         final cardHeight = math.max(
-                          math.min(screenHeight * 0.24, 190.0),
-                          160.0,
+                          math.min(screenHeight * 0.24, 188.0),
+                          165.0,
                         );
-                        return SizedBox(
-                          height: cardHeight,
-                          child: PageView.builder(
-                            controller: controller.cardsController,
-                            padEnds: true,
-                            clipBehavior: Clip.none,
-                            physics: const BouncingScrollPhysics(),
-                            onPageChanged: controller.onHotelCardChanged,
-                            itemCount: hotels.length,
-                            itemBuilder: (context, index) {
-                              final hotel = hotels[index];
-                              final isSelected = hotel.id == selectedId;
-                              final opacity = isSelected ? 1.0 : 0.85;
-                              return AnimatedPadding(
-                                duration: const Duration(milliseconds: 260),
-                                curve: Curves.easeOut,
-                                padding: EdgeInsets.only(
-                                  left: index == 0 ? 24 : 12,
-                                  right: index == hotels.length - 1 ? 24 : 12,
-                                  top: isSelected ? 0 : 8,
-                                  bottom: isSelected ? 6 : 16,
-                                ),
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 220),
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: SizedBox(
+                            height: cardHeight,
+                            child: PageView.builder(
+                              controller: controller.cardsController,
+                              padEnds: false,
+                              clipBehavior: Clip.none,
+                              physics: const BouncingScrollPhysics(),
+                              onPageChanged: controller.onHotelCardChanged,
+                              itemCount: hotels.length,
+                              itemBuilder: (context, index) {
+                                final hotel = hotels[index];
+                                final isSelected = hotel.id == selectedId;
+                                final opacity = isSelected ? 1.0 : 0.85;
+                                return AnimatedPadding(
+                                  duration: const Duration(milliseconds: 260),
                                   curve: Curves.easeOut,
-                                  opacity: opacity,
-                                  child: AnimatedScale(
-                                    scale: isSelected ? 1.04 : 0.9,
-                                    duration: const Duration(milliseconds: 260),
-                                    curve: Curves.easeOutBack,
-                                    alignment: Alignment.bottomCenter,
-                                    child: LocatePropertyCard(
-                                      hotel: hotel,
-                                      isSelected: isSelected,
-                                      onTap: () =>
-                                          controller.openPropertyDetail(hotel),
+                                  padding: EdgeInsets.only(
+                                    left: index == 0 ? 8 : 6,
+                                    right: index == hotels.length - 1 ? 24 : 6,
+                                    top: isSelected ? 0 : 6,
+                                    bottom: isSelected ? 6 : 12,
+                                  ),
+                                  child: AnimatedOpacity(
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOut,
+                                    opacity: opacity,
+                                    child: AnimatedScale(
+                                      scale: isSelected ? 1.0 : 0.95,
+                                      duration:
+                                          const Duration(milliseconds: 260),
+                                      curve: Curves.easeOutBack,
+                                      alignment: Alignment.bottomCenter,
+                                      child: LocatePropertyCard(
+                                        hotel: hotel,
+                                        isSelected: isSelected,
+                                        onTap: () => controller
+                                            .openPropertyDetail(hotel),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
+                            ),
                           ),
                         );
                       },
@@ -342,7 +309,7 @@ class LocatePropertyCard extends StatelessWidget {
     final colors = context.colors;
     final textStyles = context.textStyles;
     final isDark = context.isDark;
-    final borderRadius = BorderRadius.circular(18);
+    final borderRadius = BorderRadius.circular(16);
     final shadowColor = Colors.black.withValues(
       alpha: isSelected ? (isDark ? 0.33 : 0.18) : (isDark ? 0.22 : 0.1),
     );
@@ -359,13 +326,13 @@ class LocatePropertyCard extends StatelessWidget {
             color: isSelected
                 ? colors.primary
                 : colors.outlineVariant.withValues(alpha: 0.26),
-            width: isSelected ? 1.4 : 1.0,
+            width: isSelected ? 1.2 : 0.9,
           ),
           boxShadow: [
             BoxShadow(
               color: shadowColor,
-              blurRadius: isSelected ? 22 : 14,
-              offset: Offset(0, isSelected ? 8 : 10),
+              blurRadius: isSelected ? 18 : 12,
+              offset: Offset(0, isSelected ? 6 : 8),
             ),
           ],
         ),
@@ -374,16 +341,16 @@ class LocatePropertyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              flex: 5,
+              flex: 1,
               child: _buildImage(context, isSelected: isSelected),
             ),
             Expanded(
-              flex: 6,
+              flex: 1,
               child: _buildDetails(
                 context,
                 textStyles,
                 colors,
-                contentPadding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
               ),
             ),
           ],
@@ -397,7 +364,38 @@ class LocatePropertyCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final imageUrl = hotel.imageUrl;
+    final property = hotel.property;
+    final bedrooms = property.bedrooms;
+    final hasBedrooms = bedrooms != null && bedrooms > 0;
+    final distanceKm = hotel.distanceKm;
     Widget fallback = _buildPlaceholder(colors);
+    Widget infoChip(String text, {IconData? icon}) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: colors.primary, size: 14),
+              const SizedBox(width: 4),
+            ],
+            Text(
+              text,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: colors.onSurface,
+                fontWeight: FontWeight.w600,
+                fontSize:
+                    _shrinkFont(theme.textTheme.labelSmall?.fontSize, 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Hero(
       tag: 'locate_${hotel.id}-${hotel.id}',
       child: Stack(
@@ -432,7 +430,7 @@ class LocatePropertyCard extends StatelessWidget {
             top: 12,
             left: 12,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer.withOpacity(0.92),
                 borderRadius: BorderRadius.circular(10),
@@ -442,7 +440,8 @@ class LocatePropertyCard extends StatelessWidget {
                 style: theme.textTheme.labelSmall?.copyWith(
                   color: colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.3,
+                  fontSize: _shrinkFont(theme.textTheme.labelSmall?.fontSize),
                 ),
               ),
             ),
@@ -456,54 +455,34 @@ class LocatePropertyCard extends StatelessWidget {
                 const _WishlistOverlayButton(),
                 if (hotel.property.hasVirtualTour)
                   Container(
-                    margin: const EdgeInsets.only(top: 8),
+                    margin: const EdgeInsets.only(top: 6),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 7,
+                      vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.threesixty, color: Colors.white, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          '360°',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
               ],
             ),
           ),
-          if (hotel.distanceKm > 0)
+          if (hasBedrooms || distanceKm > 0)
             Positioned(
               bottom: 12,
               left: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.92),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${hotel.distanceKm.toStringAsFixed(1)} km',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: colors.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (hasBedrooms)
+                    infoChip('${bedrooms!} BHK', icon: Icons.king_bed_rounded),
+                  if (hasBedrooms && distanceKm > 0)
+                    const SizedBox(height: 6),
+                  if (distanceKm > 0)
+                    infoChip('${distanceKm.toStringAsFixed(1)} km'),
+                ],
               ),
             ),
         ],
@@ -525,24 +504,25 @@ class LocatePropertyCard extends StatelessWidget {
     final address = property.fullAddress.isNotEmpty
         ? property.fullAddress
         : property.city;
-    final List<Widget> factWidgets = [
-      if (property.bedrooms != null && property.bedrooms! > 0)
-        _PropertyFact(
-          icon: Icons.king_bed_outlined,
-          label: '${property.bedrooms} BHK',
-        ),
-      if (property.bathrooms != null && property.bathrooms! > 0)
-        _PropertyFact(
-          icon: Icons.bathtub_outlined,
-          label:
-              '${property.bathrooms} ${property.bathrooms! > 1 ? 'Baths' : 'Bath'}',
-        ),
-      if (property.squareFeet != null && property.squareFeet! > 0)
-        _PropertyFact(
-          icon: Icons.square_foot,
-          label: CurrencyHelper.formatArea(property.squareFeet!),
-        ),
-    ];
+    final baseTitleStyle = textTheme.titleSmall ?? textTheme.titleMedium;
+    final titleStyle = baseTitleStyle?.copyWith(
+      fontWeight: FontWeight.w700,
+      fontSize: _shrinkFont(baseTitleStyle?.fontSize, 1),
+      height: 1.05,
+    );
+    final priceStyle = textTheme.titleSmall?.copyWith(
+      color: primary,
+      fontWeight: FontWeight.w700,
+      fontSize: _shrinkFont(textTheme.titleSmall?.fontSize, 1),
+    );
+    final addressStyle = textTheme.bodySmall?.copyWith(
+      color: colors.onSurface.withValues(alpha: 0.6),
+      height: 1.25,
+    );
+    final distanceStyle = textTheme.labelSmall?.copyWith(
+      color: colors.onSurface.withValues(alpha: 0.58),
+      fontSize: _shrinkFont(textTheme.labelSmall?.fontSize, 0.5),
+    );
 
     Widget buildContent() {
       return Column(
@@ -557,17 +537,14 @@ class LocatePropertyCard extends StatelessWidget {
                   property.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.1,
-                  ),
+                  style: titleStyle,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                  horizontal: 8,
+                  vertical: 3,
                 ),
                 decoration: BoxDecoration(
                   color: primary.withOpacity(0.08),
@@ -576,35 +553,23 @@ class LocatePropertyCard extends StatelessWidget {
                 ),
                 child: Text(
                   priceText,
-                  style: textTheme.titleSmall?.copyWith(
-                    color: primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: priceStyle,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 2),
           Text(
             address,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.onSurface.withValues(alpha: 0.65),
-              height: 1.3,
-            ),
+            style: addressStyle,
           ),
-          if (factWidgets.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(spacing: 12, runSpacing: 6, children: factWidgets),
-          ],
           if (hotel.distanceKm > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               '${hotel.distanceKm.toStringAsFixed(1)} km away',
-              style: textTheme.labelSmall?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.6),
-              ),
+              style: distanceStyle,
             ),
           ],
         ],
@@ -613,18 +578,7 @@ class LocatePropertyCard extends StatelessWidget {
 
     return Padding(
       padding: contentPadding,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final content = buildContent();
-          if (constraints.maxHeight < 150) {
-            return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: content,
-            );
-          }
-          return content;
-        },
-      ),
+      child: buildContent(),
     );
   }
 
@@ -658,48 +612,57 @@ class _LocationChip extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Semantics(
       button: true,
-      label: 'Select location: $label',
+      label: 'Search location: $label',
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          constraints: const BoxConstraints(maxWidth: 250),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(22),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
-            border: Border.all(color: colorScheme.primary.withOpacity(0.12)),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withOpacity(0.55),
+              width: 1.1,
+            ),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.place_outlined, color: colorScheme.primary),
-              const SizedBox(width: 12),
+              Icon(Icons.search_rounded,
+                  color: colorScheme.primary, size: 18),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   label,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
+                    letterSpacing: 0.1,
+                    color: colorScheme.onSurface.withOpacity(0.8),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               if (isLoading)
                 const SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: 16,
+                  height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               else
                 Icon(
                   Icons.expand_more_rounded,
-                  color: colorScheme.onSurface.withOpacity(0.6),
+                  color: colorScheme.onSurface.withOpacity(0.45),
+                  size: 18,
                 ),
             ],
           ),
@@ -724,22 +687,24 @@ class _MapActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final background = isActive ? colorScheme.primary : colorScheme.surface;
+    final background = isActive
+        ? colorScheme.primary
+        : colorScheme.surfaceContainerLowest;
     final iconColor = isActive
         ? colorScheme.onPrimary
         : colorScheme.onSurfaceVariant;
     return Material(
       shape: const CircleBorder(),
-      elevation: 5,
-      shadowColor: Colors.black.withOpacity(0.15),
+      elevation: 3,
+      shadowColor: Colors.black.withOpacity(0.12),
       color: background,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: SizedBox(
-          width: 44,
-          height: 44,
-          child: Icon(icon, color: iconColor),
+          width: 40,
+          height: 40,
+          child: Icon(icon, color: iconColor, size: 22),
         ),
       ),
     );
@@ -763,15 +728,15 @@ class _MapControlButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Material(
       color: colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 5,
-      shadowColor: Colors.black.withOpacity(0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.12),
       child: InkWell(
         onTap: isLoading ? null : onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(13),
         child: SizedBox(
-          width: 48,
-          height: 48,
+          width: 38,
+          height: 38,
           child: Center(
             child: isLoading
                 ? const SizedBox(
@@ -779,69 +744,9 @@ class _MapControlButton extends StatelessWidget {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Icon(icon, color: colorScheme.onSurfaceVariant),
+                : Icon(icon, color: colorScheme.onSurfaceVariant, size: 20),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _PropertySummaryCard extends StatelessWidget {
-  const _PropertySummaryCard({
-    required this.count,
-    required this.radiusKm,
-    required this.locationName,
-  });
-
-  final int count;
-  final double radiusKm;
-  final String locationName;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final radiusLabel = radiusKm.toStringAsFixed(1);
-    final title = count > 0
-        ? '$count ${count == 1 ? 'property' : 'properties'}'
-        : 'Searching nearby stays';
-    final subtitle = count > 0
-        ? '$radiusLabel km radius • $locationName'
-        : locationName;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -954,10 +859,26 @@ class _LocateSearchSheet extends StatelessWidget {
                               ),
                       ),
                       filled: true,
-                      fillColor: colorScheme.surfaceVariant.withOpacity(0.5),
+                      fillColor: colorScheme.surface,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: colorScheme.outlineVariant.withOpacity(0.6),
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 1.4,
+                        ),
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(
+                          color: colorScheme.outlineVariant.withOpacity(0.6),
+                        ),
                       ),
                     ),
                   ),
@@ -1046,31 +967,3 @@ class _WishlistOverlayButtonState extends State<_WishlistOverlayButton> {
   }
 }
 
-class _PropertyFact extends StatelessWidget {
-  const _PropertyFact({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 18, color: colorScheme.primary),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          overflow: TextOverflow.ellipsis,
-          softWrap: false,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
