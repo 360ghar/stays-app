@@ -29,8 +29,7 @@ class _InteractiveVirtualTourState extends State<InteractiveVirtualTour> {
     if (_scrollHoldController != null) return;
     final scrollable = Scrollable.of(context);
     if (scrollable == null) return;
-    _scrollHoldController =
-        scrollable.position.hold(_onParentScrollReleased);
+    _scrollHoldController = scrollable.position.hold(_onParentScrollReleased);
   }
 
   void _onParentScrollReleased() {
@@ -126,13 +125,10 @@ class _InteractivePlaceholder extends StatelessWidget {
             )
           else
             _fallbackBackground(context),
-          Container(
-            color: Colors.black.withValues(alpha: 0.35),
-          ),
+          Container(color: Colors.black.withValues(alpha: 0.35)),
           Center(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(28),

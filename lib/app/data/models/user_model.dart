@@ -164,7 +164,11 @@ class UserModel {
       id: _asString(map['id']) ?? '',
       supabaseId: _asString(map['supabase_id']) ?? _asString(map['supabaseId']),
       email: _asString(map['email']),
-      phone: _asString(map['phone']),
+      phone:
+          _asString(map['phone']) ??
+          _asString(map['phone_number']) ??
+          _asString(map['mobile']) ??
+          _asString(map['mobile_number']),
       firstName: _asString(map['firstName']) ?? _asString(map['first_name']),
       lastName: _asString(map['lastName']) ?? _asString(map['last_name']),
       name: _asString(map['name']) ?? _asString(map['full_name']),

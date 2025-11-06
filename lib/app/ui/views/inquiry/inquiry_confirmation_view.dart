@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../controllers/booking/booking_confirmation_controller.dart';
+import '../../../controllers/inquiry/inquiry_confirmation_controller.dart';
 import '../../../data/models/property_model.dart';
 import '../../../utils/helpers/currency_helper.dart';
 
-class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
-  const EnquiryConfirmationView({super.key});
+class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
+  const InquiryConfirmationView({super.key});
 
   static final DateFormat _dateFormat = DateFormat('EEE, MMM d');
 
@@ -17,7 +17,7 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
     final textStyles = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Send Your Enquiry')),
+      appBar: AppBar(title: const Text('Send Your Inquiry')),
       body: Obx(() {
         final property = controller.property.value;
         if (property == null) {
@@ -47,11 +47,10 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed:
-                  property == null
-                      ? null
-                      : () => controller.submitEnquiry(),
-              child: const Text('Send Enquiry'),
+              onPressed: property == null
+                  ? null
+                  : () => controller.submitInquiry(),
+              child: const Text('Send Inquiry'),
             ),
           ),
         );
@@ -65,10 +64,9 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
     TextTheme textStyles,
   ) {
     final imageUrl = property.displayImage;
-    final location =
-        property.fullAddress.isNotEmpty
-            ? property.fullAddress
-            : '${property.city}, ${property.country}';
+    final location = property.fullAddress.isNotEmpty
+        ? property.fullAddress
+        : '${property.city}, ${property.country}';
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -82,15 +80,14 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder:
-                    (_, __, ___) => Container(
-                      color: colors.surfaceContainerHighest,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.image_not_supported_outlined,
-                        color: colors.onSurfaceVariant,
-                      ),
-                    ),
+                errorBuilder: (_, __, ___) => Container(
+                  color: colors.surfaceContainerHighest,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
               ),
             )
           else
@@ -159,10 +156,10 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
       final guestCount = controller.guests.value;
       final minStay = controller.minimumStay;
       final maxGuests = controller.maxGuests;
-      final nightsHelper =
-          minStay > 1 ? 'Minimum stay: $minStay night${minStay == 1 ? '' : 's'}' : null;
-      final guestsHelper =
-          'Up to $maxGuests guest${maxGuests == 1 ? '' : 's'}';
+      final nightsHelper = minStay > 1
+          ? 'Minimum stay: $minStay night${minStay == 1 ? '' : 's'}'
+          : null;
+      final guestsHelper = 'Up to $maxGuests guest${maxGuests == 1 ? '' : 's'}';
 
       return Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -360,10 +357,7 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
     );
   }
 
-  Widget _buildPriceBreakdown(
-    ColorScheme colors,
-    TextTheme textStyles,
-  ) {
+  Widget _buildPriceBreakdown(ColorScheme colors, TextTheme textStyles) {
     return Obx(() {
       final nights = controller.nights.value;
       final nightlyRate = controller.nightlyRate;
@@ -454,8 +448,7 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
     final rawLastDate = controller.maxSelectableDate.subtract(
       Duration(days: controller.minimumStay),
     );
-    final lastDate =
-        rawLastDate.isBefore(firstDate) ? firstDate : rawLastDate;
+    final lastDate = rawLastDate.isBefore(firstDate) ? firstDate : rawLastDate;
     var initialDate = controller.checkInDate.value;
     if (initialDate.isBefore(firstDate)) {
       initialDate = firstDate;
@@ -479,10 +472,9 @@ class EnquiryConfirmationView extends GetView<BookingConfirmationController> {
     final earliestCheckout = controller.checkInDate.value.add(
       Duration(days: controller.minimumStay),
     );
-    final firstDate =
-        earliestCheckout.isAfter(controller.maxSelectableDate)
-            ? controller.maxSelectableDate
-            : earliestCheckout;
+    final firstDate = earliestCheckout.isAfter(controller.maxSelectableDate)
+        ? controller.maxSelectableDate
+        : earliestCheckout;
     final lastDate = controller.maxSelectableDate;
     if (firstDate.isAfter(lastDate)) {
       Get.snackbar(

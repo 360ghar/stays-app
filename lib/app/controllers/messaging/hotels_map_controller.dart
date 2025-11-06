@@ -358,10 +358,10 @@ class HotelsMapController extends GetxController {
       final isSelected = selectedId == hotel.id;
       final theme = Get.theme;
       final colorScheme = theme.colorScheme;
-      final badgeColor =
-          isSelected ? colorScheme.primary : colorScheme.surface;
-      final textColor =
-          isSelected ? colorScheme.onPrimary : colorScheme.primary;
+      final badgeColor = isSelected ? colorScheme.primary : colorScheme.surface;
+      final textColor = isSelected
+          ? colorScheme.onPrimary
+          : colorScheme.primary;
       final borderColor = isSelected
           ? colorScheme.primary
           : colorScheme.primary.withOpacity(0.5);
@@ -412,10 +412,7 @@ class HotelsMapController extends GetxController {
                 decoration: BoxDecoration(
                   color: colorScheme.primary,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 2,
-                  ),
+                  border: Border.all(color: Colors.white, width: 2),
                   boxShadow: [
                     BoxShadow(
                       color: colorScheme.primary.withOpacity(
@@ -465,9 +462,8 @@ class HotelsMapController extends GetxController {
   }
 
   String _buildLocationLabel([String? candidate]) {
-    final value = candidate ??
-        _locationService?.locationName ??
-        searchController.text;
+    final value =
+        candidate ?? _locationService?.locationName ?? searchController.text;
     if (value != null && value.trim().isNotEmpty) {
       return value.trim();
     }

@@ -336,7 +336,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
   Widget _buildStatsRow() {
     return Row(
       children: [
-        Expanded(child: _buildStatCard('0', 'Enquiries', Icons.hotel)),
+        Expanded(child: _buildStatCard('0', 'Inquiries', Icons.hotel)),
         const SizedBox(width: 12),
         Expanded(child: _buildStatCard('0', 'Cities', Icons.location_city)),
         const SizedBox(width: 12),
@@ -542,7 +542,7 @@ class _PremiumHomeViewState extends State<PremiumHomeView>
             children: [
               _buildNavItem(Icons.explore, 'Explore', true),
               _buildNavItem(Icons.favorite_outline, 'Wishlist', false),
-              _buildNavItem(Icons.card_travel, 'Enquiries', false),
+              _buildNavItem(Icons.card_travel, 'Inquiries', false),
               _buildNavItem(Icons.inbox, 'Inbox', false),
               _buildNavItem(Icons.person_outline, 'Profile', false),
             ],

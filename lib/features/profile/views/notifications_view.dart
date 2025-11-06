@@ -13,14 +13,13 @@ class NotificationsView extends GetView<NotificationsController> {
         actions: [
           Obx(
             () => IconButton(
-              icon:
-                  controller.isSaving.value
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Icon(Icons.save_outlined),
+              icon: controller.isSaving.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
               onPressed: controller.isSaving.value ? null : controller.save,
             ),
           ),
@@ -33,13 +32,15 @@ class NotificationsView extends GetView<NotificationsController> {
             children: [
               SwitchListTile.adaptive(
                 title: const Text('Push notifications'),
-                subtitle: const Text('Enquiry updates, reminders, and offers'),
+                subtitle: const Text('Inquiry updates, reminders, and offers'),
                 value: controller.pushEnabled.value,
                 onChanged: (value) => controller.pushEnabled.value = value,
               ),
               SwitchListTile.adaptive(
                 title: const Text('Email notifications'),
-                subtitle: const Text('Enquiries, receipts, and personalised tips'),
+                subtitle: const Text(
+                  'Inquiries, receipts, and personalised tips',
+                ),
                 value: controller.emailEnabled.value,
                 onChanged: (value) => controller.emailEnabled.value = value,
               ),
@@ -71,17 +72,15 @@ class NotificationsView extends GetView<NotificationsController> {
               const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
-                children:
-                    controller.supportedFrequencies
-                        .map(
-                          (option) => ChoiceChip(
-                            label: Text(option.capitalizeFirst ?? option),
-                            selected: controller.frequency.value == option,
-                            onSelected:
-                                (_) => controller.frequency.value = option,
-                          ),
-                        )
-                        .toList(),
+                children: controller.supportedFrequencies
+                    .map(
+                      (option) => ChoiceChip(
+                        label: Text(option.capitalizeFirst ?? option),
+                        selected: controller.frequency.value == option,
+                        onSelected: (_) => controller.frequency.value = option,
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 24),
               Text(
@@ -91,25 +90,27 @@ class NotificationsView extends GetView<NotificationsController> {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
-              ...controller.categories.keys.map(
-                (key) => CheckboxListTile(
+              ...controller.categories.keys.map((key) {
+                final label = key == 'bookings'
+                    ? 'Inquiries'
+                    : (key.capitalizeFirst ?? key);
+                return CheckboxListTile(
                   value: controller.categories[key] ?? false,
-                  onChanged:
-                      (value) => controller.toggleCategory(key, value ?? false),
-                  title: Text(key.capitalizeFirst ?? key),
-                ),
-              ),
+                  onChanged: (value) =>
+                      controller.toggleCategory(key, value ?? false),
+                  title: Text(label),
+                );
+              }),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: controller.isSaving.value ? null : controller.save,
-                icon:
-                    controller.isSaving.value
-                        ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.notifications_active_outlined),
+                icon: controller.isSaving.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.notifications_active_outlined),
                 label: Text(
                   controller.isSaving.value
                       ? 'Saving settings...'

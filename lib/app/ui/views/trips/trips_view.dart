@@ -39,11 +39,10 @@ class TripsView extends GetView<TripsController> {
                 height: 36,
                 child: FilterButton(
                   isActive: isActive,
-                  onPressed:
-                      () => filterController.openFilterSheet(
-                        context,
-                        FilterScope.booking,
-                      ),
+                  onPressed: () => filterController.openFilterSheet(
+                    context,
+                    FilterScope.booking,
+                  ),
                 ),
               ),
             );
@@ -78,8 +77,8 @@ class TripsView extends GetView<TripsController> {
         final bookings = controller.pastBookings;
 
         return RefreshIndicator(
-          onRefresh:
-              () async => controller.loadPastBookings(forceRefresh: true),
+          onRefresh: () async =>
+              controller.loadPastBookings(forceRefresh: true),
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -194,11 +193,10 @@ class TripsView extends GetView<TripsController> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.booking,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.booking,
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
                 foregroundColor: colors.onPrimary,
@@ -239,20 +237,19 @@ class TripsView extends GetView<TripsController> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              tags
-                  .map(
-                    (tag) => Chip(
-                      label: Text(
-                        tag,
-                        style: textStyles.labelMedium?.copyWith(
-                          color: colors.onPrimaryContainer,
-                        ),
-                      ),
-                      backgroundColor: colors.primaryContainer,
+          children: tags
+              .map(
+                (tag) => Chip(
+                  label: Text(
+                    tag,
+                    style: textStyles.labelMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
                     ),
-                  )
-                  .toList(),
+                  ),
+                  backgroundColor: colors.primaryContainer,
+                ),
+              )
+              .toList(),
         ),
         Align(
           alignment: Alignment.centerLeft,
@@ -277,10 +274,9 @@ class TripsView extends GetView<TripsController> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color:
-                (Theme.of(context).brightness == Brightness.dark)
-                    ? Colors.black.withValues(alpha: 0.4)
-                    : Colors.black.withValues(alpha: 0.05),
+            color: (Theme.of(context).brightness == Brightness.dark)
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 2),
           ),
@@ -400,8 +396,13 @@ class TripsView extends GetView<TripsController> {
     final textStyles = Theme.of(context).textTheme;
     final brightness = Theme.of(context).brightness;
     final width = MediaQuery.of(context).size.width;
-    final widthFactor =
-        width >= 720 ? 0.45 : width >= 520 ? 0.5 : width >= 400 ? 0.55 : 0.65;
+    final widthFactor = width >= 720
+        ? 0.45
+        : width >= 520
+        ? 0.5
+        : width >= 400
+        ? 0.55
+        : 0.65;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -493,12 +494,12 @@ class TripsView extends GetView<TripsController> {
                                           Expanded(
                                             child: Text(
                                               location,
-                                              style:
-                                                  textStyles.bodySmall?.copyWith(
-                                                fontSize: 13,
-                                                color: colors.onSurface
-                                                    .withValues(alpha: 0.7),
-                                              ),
+                                              style: textStyles.bodySmall
+                                                  ?.copyWith(
+                                                    fontSize: 13,
+                                                    color: colors.onSurface
+                                                        .withValues(alpha: 0.7),
+                                                  ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -534,8 +535,8 @@ class TripsView extends GetView<TripsController> {
                                 if (isUpcoming)
                                   TextButton(
                                     onPressed: () {
-                                      final bookingId =
-                                          (booking['id'] ?? '').toString();
+                                      final bookingId = (booking['id'] ?? '')
+                                          .toString();
                                       if (bookingId.isEmpty) return;
                                       controller.cancelBooking(bookingId);
                                     },
@@ -566,7 +567,7 @@ class TripsView extends GetView<TripsController> {
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-                                    child: const Text('Book Again'),
+                                    child: const Text('Inquire Again'),
                                   ),
                                 ],
                               ],
@@ -587,8 +588,9 @@ class TripsView extends GetView<TripsController> {
 
   String _formatDate(String dateStr) {
     try {
-      final clean =
-          dateStr.isEmpty ? DateTime.now().toIso8601String() : dateStr;
+      final clean = dateStr.isEmpty
+          ? DateTime.now().toIso8601String()
+          : dateStr;
       final date = DateTime.parse(clean);
       const months = [
         'Jan',
@@ -734,9 +736,9 @@ class _BookingDetailChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: colors.onSurface.withValues(alpha: 0.75),
-          fontWeight: FontWeight.w500,
-        );
+      color: colors.onSurface.withValues(alpha: 0.75),
+      fontWeight: FontWeight.w500,
+    );
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surfaceVariant.withValues(alpha: 0.6),

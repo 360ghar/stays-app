@@ -80,10 +80,9 @@ class UsersProvider extends BaseProvider {
   }
 
   Future<String> uploadAvatar(File file) async {
-    final filename =
-        file.uri.pathSegments.isNotEmpty
-            ? file.uri.pathSegments.last
-            : 'avatar.jpg';
+    final filename = file.uri.pathSegments.isNotEmpty
+        ? file.uri.pathSegments.last
+        : 'avatar.jpg';
 
     final bytes = await file.readAsBytes();
     final payload = {'filename': filename, 'file_base64': base64Encode(bytes)};

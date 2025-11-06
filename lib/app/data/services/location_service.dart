@@ -13,7 +13,8 @@ class LocationService extends GetxService {
   final RxString _currentCity = ''.obs; // City-level name for grouping
   final _isLocationEnabled = false.obs;
   final _isLoadingLocation = false.obs;
-  final RxBool _isInitialized = false.obs; // Track if location has been initialized
+  final RxBool _isInitialized =
+      false.obs; // Track if location has been initialized
 
   Position? get currentPosition => _currentPosition.value;
   // UI-friendly name of location to display

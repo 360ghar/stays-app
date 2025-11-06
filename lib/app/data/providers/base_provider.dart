@@ -74,14 +74,60 @@ abstract class BaseProvider extends GetConnect {
       String errorMessage = 'An unknown error occurred.';
 
       // Try to parse a specific error message from the backend response
-      if (response.body != null && response.body is Map<String, dynamic>) {
-        final body = response.body as Map<String, dynamic>;
-        // Look for common error keys like "message" or "detail" (FastAPI uses "detail")
-        errorMessage =
-            body['detail'] as String? ??
-            body['message'] as String? ??
-            body['error'] as String? ??
-            'The server returned an error.';
+      final body = response.body;
+      if (body != null && body is Map) {
+        final map = body.cast<dynamic, dynamic>();
+        final dynamic detail = map['detail'];
+        if (detail is String && detail.trim().isNotEmpty) {
+          errorMessage = detail.trim();
+        } else if (detail is List) {
+          // FastAPI validation errors: detail is a list of objects with msg/loc
+          final messages = <String>[];
+          for (final item in detail) {
+            if (item is Map) {
+              final msg =
+                  item['msg']?.toString() ?? item['message']?.toString();
+              final loc = item['loc'] is List
+                  ? (item['loc'] as List).map((e) => e.toString()).toList()
+                  : null;
+              final field = loc != null && loc.isNotEmpty
+                  ? loc.last.toString()
+                  : null;
+              if (msg != null && msg.isNotEmpty) {
+                messages.add(
+                  field != null && field.isNotEmpty ? '$field: $msg' : msg,
+                );
+              }
+            } else if (item != null) {
+              messages.add(item.toString());
+            }
+          }
+          if (messages.isNotEmpty) {
+            errorMessage = messages.join('; ');
+          }
+        } else if (detail is Map) {
+          final msg =
+              detail['msg']?.toString() ?? detail['message']?.toString();
+          if (msg != null && msg.isNotEmpty) {
+            errorMessage = msg;
+          }
+        }
+
+        // Fallback to other common keys if still not resolved
+        if (errorMessage == 'An unknown error occurred.') {
+          final msg = map['message']?.toString();
+          final err = map['error']?.toString();
+          final errors = map['errors'];
+          if (msg != null && msg.isNotEmpty) {
+            errorMessage = msg;
+          } else if (err != null && err.isNotEmpty) {
+            errorMessage = err;
+          } else if (errors is List && errors.isNotEmpty) {
+            errorMessage = errors.map((e) => e.toString()).join('; ');
+          } else if (errors is Map && errors.isNotEmpty) {
+            errorMessage = errors.values.map((e) => e.toString()).join('; ');
+          }
+        }
       } else if (response.bodyString != null &&
           response.bodyString!.isNotEmpty) {
         errorMessage = response.bodyString!;

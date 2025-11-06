@@ -101,17 +101,19 @@ class WishlistController extends GetxController {
     }
     errorMessage.value = '';
     try {
-      final UnifiedPropertyResponse response =
-          await _wishlistRepository!.listFavorites(
-        page: targetPage,
-        limit: pageSize.value,
-        filters: _buildFilterQuery(),
-      );
+      final UnifiedPropertyResponse response = await _wishlistRepository!
+          .listFavorites(
+            page: targetPage,
+            limit: pageSize.value,
+            filters: _buildFilterQuery(),
+          );
       currentPage.value = response.currentPage;
       totalPages.value = response.totalPages;
       totalCount.value = response.totalCount;
       pageSize.value = response.pageSize;
-      final List<Property> fetchedProperties = List<Property>.from(response.properties);
+      final List<Property> fetchedProperties = List<Property>.from(
+        response.properties,
+      );
       wishlistItems.assignAll(fetchedProperties);
       if (targetPage == 1) {
         _favoritesController?.replaceAll(

@@ -24,7 +24,7 @@ class NavigationController extends GetxController {
     NavigationTab(
       icon: Icons.luggage_outlined,
       labelKey: 'nav.enquiries',
-      route: Routes.enquiries,
+      route: Routes.inquiries,
     ),
     NavigationTab(
       icon: Icons.location_on_outlined,

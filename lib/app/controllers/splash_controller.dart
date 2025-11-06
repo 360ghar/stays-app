@@ -99,10 +99,12 @@ class SplashController extends GetxController {
       final prefs = GetStorage(_rememberMeBox);
       final bool rememberMeEnabled =
           prefs.read<bool>(_rememberMeFlagKey) ?? false;
-      final String? rememberedAccessToken =
-          prefs.read<String>(_rememberedAccessTokenKey);
-      final String? rememberedRefreshToken =
-          prefs.read<String>(_rememberedRefreshTokenKey);
+      final String? rememberedAccessToken = prefs.read<String>(
+        _rememberedAccessTokenKey,
+      );
+      final String? rememberedRefreshToken = prefs.read<String>(
+        _rememberedRefreshTokenKey,
+      );
       final bool hasStoredToken =
           rememberedAccessToken != null &&
           rememberedAccessToken.isNotEmpty &&
@@ -110,8 +112,7 @@ class SplashController extends GetxController {
           rememberedRefreshToken.isNotEmpty;
 
       var session = Supabase.instance.client.auth.currentSession;
-      bool hasActiveSession =
-          session != null && session.accessToken.isNotEmpty;
+      bool hasActiveSession = session != null && session.accessToken.isNotEmpty;
 
       if (rememberMeEnabled &&
           hasStoredToken &&
@@ -121,8 +122,7 @@ class SplashController extends GetxController {
           prefs: prefs,
           refreshToken: rememberedRefreshToken,
         );
-        hasActiveSession =
-            session != null && session.accessToken.isNotEmpty;
+        hasActiveSession = session != null && session.accessToken.isNotEmpty;
       }
 
       if (!rememberMeEnabled) {
@@ -172,7 +172,7 @@ class SplashController extends GetxController {
       _watchdog?.cancel();
       Get.offAllNamed(Routes.login);
     }
-}
+  }
 
   Future<Session?> _restoreRememberedSession({
     required GetStorage prefs,
@@ -182,8 +182,9 @@ class SplashController extends GetxController {
       AppLogger.info(
         'Attempting to restore Supabase session from stored refresh token.',
       );
-      final response =
-          await Supabase.instance.client.auth.setSession(refreshToken);
+      final response = await Supabase.instance.client.auth.setSession(
+        refreshToken,
+      );
       final restoredSession = response.session;
       if (restoredSession == null) {
         AppLogger.warning(
@@ -198,16 +199,10 @@ class SplashController extends GetxController {
           refreshToken: restoredSession.refreshToken,
         );
       }
-      await prefs.write(
-        _rememberedAccessTokenKey,
-        restoredSession.accessToken,
-      );
+      await prefs.write(_rememberedAccessTokenKey, restoredSession.accessToken);
       final newRefreshToken = restoredSession.refreshToken;
       if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
-        await prefs.write(
-          _rememberedRefreshTokenKey,
-          newRefreshToken,
-        );
+        await prefs.write(_rememberedRefreshTokenKey, newRefreshToken);
       }
       return restoredSession;
     } catch (e) {

@@ -123,8 +123,8 @@ class ListingDetailController extends GetxController {
     return _favoritesController.isFavorite(propertyId);
   }
 
-  void navigateToEnquiryConfirmation(Property property) {
-    Get.toNamed(Routes.enquiryConfirmation, arguments: property);
+  void navigateToInquiryConfirmation(Property property) {
+    Get.toNamed(Routes.inquiryConfirmation, arguments: property);
   }
 
   @override

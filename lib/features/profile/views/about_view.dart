@@ -17,18 +17,16 @@ class AboutView extends GetView<AboutController> {
               _InfoTile(
                 icon: Icons.verified_outlined,
                 title: 'App version',
-                value:
-                    controller.version.value.isEmpty
-                        ? 'Fetching...'
-                        : controller.version.value,
+                value: controller.version.value.isEmpty
+                    ? 'Fetching...'
+                    : controller.version.value,
               ),
               _InfoTile(
                 icon: Icons.build_outlined,
                 title: 'Build number',
-                value:
-                    controller.buildNumber.value.isEmpty
-                        ? '—'
-                        : controller.buildNumber.value,
+                value: controller.buildNumber.value.isEmpty
+                    ? '—'
+                    : controller.buildNumber.value,
               ),
               _InfoTile(
                 icon: Icons.cloud_outlined,

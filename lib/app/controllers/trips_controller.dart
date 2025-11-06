@@ -71,18 +71,22 @@ class TripsController extends GetxController {
       if (forceRefresh || _allBookings.isEmpty) {
         pastBookings.clear();
         Get.snackbar(
-          'Enquiries unavailable',
+          'Inquiries unavailable',
           error.message,
           snackPosition: SnackPosition.BOTTOM,
         );
       }
     } catch (error, stackTrace) {
-      AppLogger.error('Unexpected error while loading bookings', error, stackTrace);
+      AppLogger.error(
+        'Unexpected error while loading bookings',
+        error,
+        stackTrace,
+      );
       if (forceRefresh || _allBookings.isEmpty) {
         pastBookings.clear();
         Get.snackbar(
-          'Enquiries unavailable',
-          'We could not load your enquiries right now. Please try again.',
+          'Inquiries unavailable',
+          'We could not load your inquiries right now. Please try again.',
           snackPosition: SnackPosition.BOTTOM,
         );
       }
@@ -121,10 +125,9 @@ class TripsController extends GetxController {
       pastBookings.assignAll(_allBookings);
       return;
     }
-    final filtered =
-        _allBookings
-            .where((booking) => _activeFilters.matchesBooking(booking))
-            .toList();
+    final filtered = _allBookings
+        .where((booking) => _activeFilters.matchesBooking(booking))
+        .toList();
     pastBookings.assignAll(filtered);
   }
 
@@ -144,18 +147,16 @@ class TripsController extends GetxController {
   Future<void> cancelBooking(String bookingId) async {
     final confirmed = await Get.dialog<bool>(
       AlertDialog(
-        title: const Text('Cancel enquiry?'),
-        content: const Text(
-          'Are you sure you want to cancel this enquiry?',
-        ),
+        title: const Text('Cancel inquiry?'),
+        content: const Text('Are you sure you want to cancel this inquiry?'),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: const Text('Keep enquiry'),
+            child: const Text('Keep inquiry'),
           ),
           FilledButton(
             onPressed: () => Get.back(result: true),
-            child: const Text('Cancel enquiry'),
+            child: const Text('Cancel inquiry'),
           ),
         ],
       ),
@@ -171,8 +172,8 @@ class TripsController extends GetxController {
     if (before != _allBookings.length) {
       _applyFilters();
       Get.snackbar(
-        'Enquiry cancelled',
-        'Your enquiry has been cancelled.',
+        'Inquiry cancelled',
+        'Your inquiry has been cancelled.',
         snackPosition: SnackPosition.BOTTOM,
       );
     } else {
@@ -187,19 +188,16 @@ class TripsController extends GetxController {
   void rebookHotel(Map<String, dynamic> booking) {
     Get.snackbar(
       'Rebooking',
-      'Redirecting to ${booking['hotelName']} booking page',
+      'Redirecting to ${booking['hotelName']} inquiry page',
       snackPosition: SnackPosition.TOP,
       backgroundColor: Colors.blue[50],
       colorText: Colors.blue[800],
       duration: const Duration(seconds: 2),
     );
-    // In real app: Get.toNamed('/booking', arguments: booking);
+    // In real app: Get.toNamed('/inquiry', arguments: booking);
   }
 
-  int _bookingComparator(
-    Map<String, dynamic> a,
-    Map<String, dynamic> b,
-  ) {
+  int _bookingComparator(Map<String, dynamic> a, Map<String, dynamic> b) {
     final aDate =
         DateTime.tryParse(a['checkIn']?.toString() ?? '') ??
         DateTime.fromMillisecondsSinceEpoch(0);
@@ -277,13 +275,13 @@ class TripsController extends GetxController {
 
             // Title
             const Text(
-              'Enquiry Details',
+              'Inquiry Details',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
             // Details
-            _buildDetailRow('Enquiry ID', booking['id']),
+            _buildDetailRow('Inquiry ID', booking['id']),
             _buildDetailRow('Hotel', booking['hotelName']),
             _buildDetailRow('Location', booking['location']),
             _buildDetailRow('Check-in', _formatDate(booking['checkIn'])),
@@ -310,7 +308,7 @@ class TripsController extends GetxController {
                       Get.back();
                       rebookHotel(booking);
                     },
-                    child: const Text('Book Again'),
+                    child: const Text('Inquire Again'),
                   ),
                 ),
                 const SizedBox(width: 12),

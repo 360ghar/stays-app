@@ -77,8 +77,10 @@ class VerificationView extends GetView<OTPController> {
               const SizedBox(height: 48),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children:
-                    List.generate(6, (index) => _buildOTPField(context, index)),
+                children: List.generate(
+                  6,
+                  (index) => _buildOTPField(context, index),
+                ),
               ),
               const SizedBox(height: 16),
               Obx(() {
@@ -94,11 +96,7 @@ class VerificationView extends GetView<OTPController> {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: colors.error,
-                        size: 16,
-                      ),
+                      Icon(Icons.error_outline, color: colors.error, size: 16),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -118,8 +116,9 @@ class VerificationView extends GetView<OTPController> {
                 height: 56,
                 child: Obx(
                   () => ElevatedButton(
-                    onPressed:
-                        controller.isLoading.value ? null : controller.verifyOTP,
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : controller.verifyOTP,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: colors.primary,
                       foregroundColor: colors.onPrimary,

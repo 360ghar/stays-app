@@ -48,7 +48,11 @@ class LocateView extends GetView<HotelsMapController> {
                   maxZoom: 18,
                 ),
                 // Rebuild only markers when the list changes
-                Obx(() => flutter_map.MarkerLayer(markers: controller.markers.toList())),
+                Obx(
+                  () => flutter_map.MarkerLayer(
+                    markers: controller.markers.toList(),
+                  ),
+                ),
               ],
             ),
           ),
@@ -113,9 +117,7 @@ class LocateView extends GetView<HotelsMapController> {
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          ...tags.map(
-                            (tag) => _FilterTagChip(label: tag),
-                          ),
+                          ...tags.map((tag) => _FilterTagChip(label: tag)),
                           GestureDetector(
                             onTap: () =>
                                 filterController.clear(FilterScope.locate),
@@ -146,10 +148,7 @@ class LocateView extends GetView<HotelsMapController> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _MapControlButton(
-                    icon: Icons.add,
-                    onTap: controller.zoomIn,
-                  ),
+                  _MapControlButton(icon: Icons.add, onTap: controller.zoomIn),
                   const SizedBox(height: 12),
                   _MapControlButton(
                     icon: Icons.remove,
@@ -261,57 +260,59 @@ class LocateView extends GetView<HotelsMapController> {
                         ),
                       ),
                     ),
-                    Builder(builder: (context) {
-                      final media = MediaQuery.of(context);
-                      final screenHeight = media.size.height;
-                      final cardHeight = math.max(
-                        math.min(screenHeight * 0.24, 190.0),
-                        160.0,
-                      );
-                      return SizedBox(
-                        height: cardHeight,
-                        child: PageView.builder(
-                          controller: controller.cardsController,
-                          padEnds: true,
-                          clipBehavior: Clip.none,
-                          physics: const BouncingScrollPhysics(),
-                          onPageChanged: controller.onHotelCardChanged,
-                          itemCount: hotels.length,
-                          itemBuilder: (context, index) {
-                            final hotel = hotels[index];
-                            final isSelected = hotel.id == selectedId;
-                            final opacity = isSelected ? 1.0 : 0.85;
-                            return AnimatedPadding(
-                              duration: const Duration(milliseconds: 260),
-                              curve: Curves.easeOut,
-                              padding: EdgeInsets.only(
-                                left: index == 0 ? 24 : 12,
-                                right: index == hotels.length - 1 ? 24 : 12,
-                                top: isSelected ? 0 : 8,
-                                bottom: isSelected ? 6 : 16,
-                              ),
-                              child: AnimatedOpacity(
-                                duration: const Duration(milliseconds: 220),
+                    Builder(
+                      builder: (context) {
+                        final media = MediaQuery.of(context);
+                        final screenHeight = media.size.height;
+                        final cardHeight = math.max(
+                          math.min(screenHeight * 0.24, 190.0),
+                          160.0,
+                        );
+                        return SizedBox(
+                          height: cardHeight,
+                          child: PageView.builder(
+                            controller: controller.cardsController,
+                            padEnds: true,
+                            clipBehavior: Clip.none,
+                            physics: const BouncingScrollPhysics(),
+                            onPageChanged: controller.onHotelCardChanged,
+                            itemCount: hotels.length,
+                            itemBuilder: (context, index) {
+                              final hotel = hotels[index];
+                              final isSelected = hotel.id == selectedId;
+                              final opacity = isSelected ? 1.0 : 0.85;
+                              return AnimatedPadding(
+                                duration: const Duration(milliseconds: 260),
                                 curve: Curves.easeOut,
-                                opacity: opacity,
-                                child: AnimatedScale(
-                                  scale: isSelected ? 1.04 : 0.9,
-                                  duration: const Duration(milliseconds: 260),
-                                  curve: Curves.easeOutBack,
-                                  alignment: Alignment.bottomCenter,
-                                  child: LocatePropertyCard(
-                                    hotel: hotel,
-                                    isSelected: isSelected,
-                                    onTap: () =>
-                                        controller.openPropertyDetail(hotel),
+                                padding: EdgeInsets.only(
+                                  left: index == 0 ? 24 : 12,
+                                  right: index == hotels.length - 1 ? 24 : 12,
+                                  top: isSelected ? 0 : 8,
+                                  bottom: isSelected ? 6 : 16,
+                                ),
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeOut,
+                                  opacity: opacity,
+                                  child: AnimatedScale(
+                                    scale: isSelected ? 1.04 : 0.9,
+                                    duration: const Duration(milliseconds: 260),
+                                    curve: Curves.easeOutBack,
+                                    alignment: Alignment.bottomCenter,
+                                    child: LocatePropertyCard(
+                                      hotel: hotel,
+                                      isSelected: isSelected,
+                                      onTap: () =>
+                                          controller.openPropertyDetail(hotel),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    }),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -343,9 +344,7 @@ class LocatePropertyCard extends StatelessWidget {
     final isDark = context.isDark;
     final borderRadius = BorderRadius.circular(18);
     final shadowColor = Colors.black.withValues(
-      alpha: isSelected
-          ? (isDark ? 0.33 : 0.18)
-          : (isDark ? 0.22 : 0.1),
+      alpha: isSelected ? (isDark ? 0.33 : 0.18) : (isDark ? 0.22 : 0.1),
     );
 
     return GestureDetector(
@@ -376,10 +375,7 @@ class LocatePropertyCard extends StatelessWidget {
           children: [
             Expanded(
               flex: 5,
-              child: _buildImage(
-                context,
-                isSelected: isSelected,
-              ),
+              child: _buildImage(context, isSelected: isSelected),
             ),
             Expanded(
               flex: 6,
@@ -396,10 +392,7 @@ class LocatePropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage(
-    BuildContext context, {
-    required bool isSelected,
-  }) {
+  Widget _buildImage(BuildContext context, {required bool isSelected}) {
     final colors = context.colors;
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -428,9 +421,7 @@ class LocatePropertyCard extends StatelessWidget {
                   begin: Alignment.bottomCenter,
                   end: Alignment.center,
                   colors: [
-                    Colors.black.withValues(
-                      alpha: isSelected ? 0.28 : 0.16,
-                    ),
+                    Colors.black.withValues(alpha: isSelected ? 0.28 : 0.16),
                     Colors.transparent,
                   ],
                 ),
@@ -466,8 +457,10 @@ class LocatePropertyCard extends StatelessWidget {
                 if (hotel.property.hasVirtualTour)
                   Container(
                     margin: const EdgeInsets.only(top: 8),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(10),
@@ -529,8 +522,9 @@ class LocatePropertyCard extends StatelessWidget {
     final textTheme = textStyles ?? Theme.of(context).textTheme;
     final theme = Theme.of(context);
     final primary = theme.colorScheme.primary;
-    final address =
-        property.fullAddress.isNotEmpty ? property.fullAddress : property.city;
+    final address = property.fullAddress.isNotEmpty
+        ? property.fullAddress
+        : property.city;
     final List<Widget> factWidgets = [
       if (property.bedrooms != null && property.bedrooms! > 0)
         _PropertyFact(
@@ -571,7 +565,10 @@ class LocatePropertyCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(8),
@@ -599,11 +596,7 @@ class LocatePropertyCard extends StatelessWidget {
           ),
           if (factWidgets.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 6,
-              children: factWidgets,
-            ),
+            Wrap(spacing: 12, runSpacing: 6, children: factWidgets),
           ],
           if (hotel.distanceKm > 0) ...[
             const SizedBox(height: 8),
@@ -680,16 +673,11 @@ class _LocationChip extends StatelessWidget {
                 offset: const Offset(0, 4),
               ),
             ],
-            border: Border.all(
-              color: colorScheme.primary.withOpacity(0.12),
-            ),
+            border: Border.all(color: colorScheme.primary.withOpacity(0.12)),
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.place_outlined,
-                color: colorScheme.primary,
-              ),
+              Icon(Icons.place_outlined, color: colorScheme.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -736,10 +724,10 @@ class _MapActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final background =
-        isActive ? colorScheme.primary : colorScheme.surface;
-    final iconColor =
-        isActive ? colorScheme.onPrimary : colorScheme.onSurfaceVariant;
+    final background = isActive ? colorScheme.primary : colorScheme.surface;
+    final iconColor = isActive
+        ? colorScheme.onPrimary
+        : colorScheme.onSurfaceVariant;
     return Material(
       shape: const CircleBorder(),
       elevation: 5,
@@ -775,9 +763,7 @@ class _MapControlButton extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     return Material(
       color: colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 5,
       shadowColor: Colors.black.withOpacity(0.15),
       child: InkWell(
@@ -793,10 +779,7 @@ class _MapControlButton extends StatelessWidget {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : Icon(
-                    icon,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                : Icon(icon, color: colorScheme.onSurfaceVariant),
           ),
         ),
       ),
@@ -932,8 +915,10 @@ class _LocateSearchSheet extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: TextField(
                     controller: controller.searchController,
                     autofocus: true,
@@ -1062,10 +1047,7 @@ class _WishlistOverlayButtonState extends State<_WishlistOverlayButton> {
 }
 
 class _PropertyFact extends StatelessWidget {
-  const _PropertyFact({
-    required this.icon,
-    required this.label,
-  });
+  const _PropertyFact({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
@@ -1077,11 +1059,7 @@ class _PropertyFact extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: colorScheme.primary,
-        ),
+        Icon(icon, size: 18, color: colorScheme.primary),
         const SizedBox(width: 6),
         Text(
           label,

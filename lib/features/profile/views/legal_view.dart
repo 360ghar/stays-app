@@ -12,7 +12,7 @@ class LegalView extends StatelessWidget {
     {
       'title': 'Privacy Policy',
       'body':
-          'We collect only the information needed to provide booking services, kept secure via encrypted storage. Review your privacy preferences under Privacy & Security to control data sharing.',
+          'We collect only the information needed to provide inquiry services, kept secure via encrypted storage. Review your privacy preferences under Privacy & Security to control data sharing.',
     },
     {
       'title': 'Refund & Cancellation Policy',

@@ -319,8 +319,8 @@ class _LanguageOptionTile extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.6,
-                      ),
+                    alpha: 0.6,
+                  ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(

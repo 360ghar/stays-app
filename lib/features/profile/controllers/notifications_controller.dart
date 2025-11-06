@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
@@ -24,13 +24,12 @@ class NotificationsController extends GetxController {
     const TimeOfDay(hour: 7, minute: 0),
   );
   final RxString frequency = 'daily'.obs;
-  final RxMap<String, bool> categories =
-      <String, bool>{
-        'bookings': true,
-        'promotions': false,
-        'reminders': true,
-        'community': false,
-      }.obs;
+  final RxMap<String, bool> categories = <String, bool>{
+    'bookings': true,
+    'promotions': false,
+    'reminders': true,
+    'community': false,
+  }.obs;
 
   final RxBool isSaving = false.obs;
   Worker? _userWorker;
@@ -165,4 +164,3 @@ class NotificationsController extends GetxController {
     categories[key] = enabled;
   }
 }
-

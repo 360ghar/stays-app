@@ -39,13 +39,13 @@ class ListingDetailView extends GetView<ListingDetailController> {
           return const Center(child: Text('Listing not found'));
         }
 
-        final amenities =
-            (listing.amenities ?? [])
-                .where((a) => a.trim().isNotEmpty)
-                .toList();
+        final amenities = (listing.amenities ?? [])
+            .where((a) => a.trim().isNotEmpty)
+            .toList();
 
-        final features =
-            (listing.features ?? []).where((f) => f.trim().isNotEmpty).toList();
+        final features = (listing.features ?? [])
+            .where((f) => f.trim().isNotEmpty)
+            .toList();
 
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -128,11 +128,8 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
       flexibleSpace: LayoutBuilder(
         builder: (context, constraints) {
-          final settings =
-              context
-                  .dependOnInheritedWidgetOfExactType<
-                    FlexibleSpaceBarSettings
-                  >();
+          final settings = context
+              .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
 
           final maxExtent = settings?.maxExtent ?? constraints.biggest.height;
 
@@ -143,21 +140,19 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
           final delta = maxExtent - minExtent;
 
-          final progress =
-              delta == 0
-                  ? 0.0
-                  : ((currentExtent - minExtent) / delta).clamp(0.0, 1.0);
+          final progress = delta == 0
+              ? 0.0
+              : ((currentExtent - minExtent) / delta).clamp(0.0, 1.0);
 
           final collapsed = progress < 0.4;
 
           final iconColor = collapsed ? colors.onSurface : Colors.white;
 
-          final overlayColor =
-              Color.lerp(
-                Colors.black.withValues(alpha: 0.35),
-                colors.surface,
-                collapsed ? 1 : 0,
-              )!;
+          final overlayColor = Color.lerp(
+            Colors.black.withValues(alpha: 0.35),
+            colors.surface,
+            collapsed ? 1 : 0,
+          )!;
 
           return Stack(
             fit: StackFit.expand,
@@ -273,12 +268,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                         color: iconColor,
 
-                        background:
-                            collapsed
-                                ? colors.surfaceContainerHighest.withValues(
-                                  alpha: 0.85,
-                                )
-                                : Colors.black.withValues(alpha: 0.45),
+                        background: collapsed
+                            ? colors.surfaceContainerHighest.withValues(
+                                alpha: 0.85,
+                              )
+                            : Colors.black.withValues(alpha: 0.45),
 
                         onTap: Get.back,
                       ),
@@ -294,13 +288,12 @@ class ListingDetailView extends GetView<ListingDetailController> {
                           child: Text(
                             listing.name,
 
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleMedium?.copyWith(
-                              color: colors.onSurface,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  color: colors.onSurface,
 
-                              fontWeight: FontWeight.w600,
-                            ),
+                                  fontWeight: FontWeight.w600,
+                                ),
 
                             maxLines: 1,
 
@@ -318,12 +311,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                             color: iconColor,
 
-                            background:
-                                collapsed
-                                    ? colors.surfaceContainerHighest.withValues(
-                                      alpha: 0.85,
-                                    )
-                                    : Colors.black.withValues(alpha: 0.45),
+                            background: collapsed
+                                ? colors.surfaceContainerHighest.withValues(
+                                    alpha: 0.85,
+                                  )
+                                : Colors.black.withValues(alpha: 0.45),
 
                             onTap: () => _showComingSoon(context, 'Share stay'),
                           ),
@@ -332,19 +324,17 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                           Obx(
                             () => _HeroCircleButton(
-                              icon:
-                                  controller.isPropertyFavorite(listing.id)
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                              color:
-                                  controller.isPropertyFavorite(listing.id)
-                                      ? Colors.red
-                                      : iconColor,
-                              background:
-                                  collapsed
-                                      ? colors.surfaceContainerHighest
-                                          .withValues(alpha: 0.85)
-                                      : Colors.black.withValues(alpha: 0.45),
+                              icon: controller.isPropertyFavorite(listing.id)
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: controller.isPropertyFavorite(listing.id)
+                                  ? Colors.red
+                                  : iconColor,
+                              background: collapsed
+                                  ? colors.surfaceContainerHighest.withValues(
+                                      alpha: 0.85,
+                                    )
+                                  : Colors.black.withValues(alpha: 0.45),
                               onTap: () => controller.toggleFavorite(listing),
                             ),
                           ),
@@ -526,10 +516,9 @@ class ListingDetailView extends GetView<ListingDetailController> {
       Wrap(
         spacing: 12,
         runSpacing: 12,
-        children:
-            items
-                .map((entry) => _InfoPill(icon: entry.key, label: entry.value))
-                .toList(),
+        children: items
+            .map((entry) => _InfoPill(icon: entry.key, label: entry.value))
+            .toList(),
       ),
     ];
   }
@@ -619,26 +608,24 @@ class ListingDetailView extends GetView<ListingDetailController> {
         Wrap(
           spacing: 16,
           runSpacing: 16,
-          children:
-              display
-                  .map(
-                    (amenity) => _AmenityTile(
-                      icon: _amenityIconFor(amenity),
-                      label: amenity,
-                    ),
-                  )
-                  .toList(),
+          children: display
+              .map(
+                (amenity) => _AmenityTile(
+                  icon: _amenityIconFor(amenity),
+                  label: amenity,
+                ),
+              )
+              .toList(),
         ),
         if (amenities.length > display.length)
           Padding(
             padding: const EdgeInsets.only(top: 16),
             child: TextButton(
-              onPressed:
-                  () => _showListSheet(
-                    context,
-                    title: 'All amenities',
-                    items: amenities,
-                  ),
+              onPressed: () => _showListSheet(
+                context,
+                title: 'All amenities',
+                items: amenities,
+              ),
               child: const Text('Show all amenities'),
             ),
           ),
@@ -980,8 +967,9 @@ class ListingDetailView extends GetView<ListingDetailController> {
           SizedBox(
             height: 48,
             child: FilledButton(
-              onPressed: () => controller.navigateToEnquiryConfirmation(listing),
-              child: const Text('Enquiry now'),
+              onPressed: () =>
+                  controller.navigateToInquiryConfirmation(listing),
+              child: const Text('Inquire now'),
             ),
           ),
         ],

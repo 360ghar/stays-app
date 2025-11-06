@@ -76,7 +76,10 @@ class _SignupViewState extends State<SignupView> {
               _buildPasswordField(colors, textStyles),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: colors.primaryContainer.withValues(alpha: 0.4),
                   borderRadius: BorderRadius.circular(8),
@@ -133,7 +136,8 @@ class _SignupViewState extends State<SignupView> {
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: textStyles.bodySmall?.copyWith(
+                  style:
+                      textStyles.bodySmall?.copyWith(
                         fontSize: 11,
                         color: colors.onSurface.withValues(alpha: 0.7),
                         height: 1.3,
@@ -219,184 +223,184 @@ class _SignupViewState extends State<SignupView> {
   }
 
   Widget _buildPhoneField(ColorScheme colors, TextTheme textStyles) {
-    return Obx(
-      () {
-        final hasError = controller.phoneError.value.isNotEmpty;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Phone Number',
-              style: textStyles.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.onSurface,
+    return Obx(() {
+      final hasError = controller.phoneError.value.isNotEmpty;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Phone Number',
+            style: textStyles.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: context.elevatedSurface(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: hasError ? colors.error : colors.outlineVariant,
+                width: hasError ? 1.5 : 1,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: context.elevatedSurface(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: hasError ? colors.error : colors.outlineVariant,
-                  width: hasError ? 1.5 : 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                    decoration: BoxDecoration(
-                      color: context.elevatedSurface(0.04),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
-                      border: Border(
-                        right: BorderSide(color: colors.outlineVariant),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.phone_outlined,
-                          color: colors.onSurface.withValues(alpha: 0.6),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '+91',
-                          style: textStyles.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(10),
-                      ],
-                      onChanged: (_) => controller.phoneError.value = '',
-                      decoration: InputDecoration(
-                        hintText: '9876543210',
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 18,
-                        ),
-                        hintStyle: textStyles.bodyMedium?.copyWith(
-                          color: colors.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      style: textStyles.bodyMedium?.copyWith(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: colors.onSurface,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (hasError)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  controller.phoneError.value,
-                  style: textStyles.bodySmall?.copyWith(color: colors.error) ??
-                      TextStyle(color: colors.error, fontSize: 12),
-                ),
-              )
-            else
-              const SizedBox(height: 4),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildPasswordField(ColorScheme colors, TextTheme textStyles) {
-    return Obx(
-      () {
-        final hasError = controller.passwordError.value.isNotEmpty;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Password',
-              style: textStyles.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.onSurface,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: context.elevatedSurface(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: hasError ? colors.error : colors.outlineVariant,
-                  width: hasError ? 1.5 : 1,
-                ),
-              ),
-              child: TextFormField(
-                controller: _passwordController,
-                obscureText: !controller.isPasswordVisible.value,
-                onChanged: (_) => controller.passwordError.value = '',
-                decoration: InputDecoration(
-                  hintText: 'Create a password (min. 6 characters)',
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 18,
                   ),
-                  prefixIcon: Icon(
-                    Icons.lock_outline,
-                    color: colors.onSurface.withValues(alpha: 0.6),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      controller.isPasswordVisible.value
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: colors.onSurface.withValues(alpha: 0.6),
+                  decoration: BoxDecoration(
+                    color: context.elevatedSurface(0.04),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      bottomLeft: Radius.circular(12),
                     ),
-                    onPressed: controller.togglePasswordVisibility,
+                    border: Border(
+                      right: BorderSide(color: colors.outlineVariant),
+                    ),
                   ),
-                  hintStyle: textStyles.bodyMedium?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.5),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.phone_outlined,
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '+91',
+                        style: textStyles.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colors.onSurface,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                style: textStyles.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: colors.onSurface,
+                Expanded(
+                  child: TextFormField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    onChanged: (_) => controller.phoneError.value = '',
+                    decoration: InputDecoration(
+                      hintText: '9876543210',
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 18,
+                      ),
+                      hintStyle: textStyles.bodyMedium?.copyWith(
+                        color: colors.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    style: textStyles.bodyMedium?.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: colors.onSurface,
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                controller.phoneError.value,
+                style:
+                    textStyles.bodySmall?.copyWith(color: colors.error) ??
+                    TextStyle(color: colors.error, fontSize: 12),
+              ),
+            )
+          else
+            const SizedBox(height: 4),
+        ],
+      );
+    });
+  }
+
+  Widget _buildPasswordField(ColorScheme colors, TextTheme textStyles) {
+    return Obx(() {
+      final hasError = controller.passwordError.value.isNotEmpty;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Password',
+            style: textStyles.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: context.elevatedSurface(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: hasError ? colors.error : colors.outlineVariant,
+                width: hasError ? 1.5 : 1,
               ),
             ),
-            if (hasError)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  controller.passwordError.value,
-                  style: textStyles.bodySmall?.copyWith(color: colors.error) ??
-                      TextStyle(color: colors.error, fontSize: 12),
+            child: TextFormField(
+              controller: _passwordController,
+              obscureText: !controller.isPasswordVisible.value,
+              onChanged: (_) => controller.passwordError.value = '',
+              decoration: InputDecoration(
+                hintText: 'Create a password (min. 6 characters)',
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
                 ),
-              )
-            else
-              const SizedBox(height: 4),
-          ],
-        );
-      },
-    );
+                prefixIcon: Icon(
+                  Icons.lock_outline,
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    controller.isPasswordVisible.value
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                  onPressed: controller.togglePasswordVisibility,
+                ),
+                hintStyle: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              style: textStyles.bodyMedium?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: colors.onSurface,
+              ),
+            ),
+          ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                controller.passwordError.value,
+                style:
+                    textStyles.bodySmall?.copyWith(color: colors.error) ??
+                    TextStyle(color: colors.error, fontSize: 12),
+              ),
+            )
+          else
+            const SizedBox(height: 4),
+        ],
+      );
+    });
   }
 
   Future<void> _handleSignup() async {

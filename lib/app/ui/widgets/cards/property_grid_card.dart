@@ -36,8 +36,7 @@ class PropertyGridCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       elevation: elevation,
-      shadowColor:
-          Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+      shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
       borderRadius: borderRadius,
       clipBehavior: Clip.antiAlias,
       child: Ink(
@@ -47,16 +46,10 @@ class PropertyGridCard extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              colors.surface.withValues(
-                alpha: context.isDark ? 0.97 : 0.995,
-              ),
+              colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
               Color.alphaBlend(
-                colors.primary.withValues(
-                  alpha: context.isDark ? 0.08 : 0.04,
-                ),
-                colors.surface.withValues(
-                  alpha: context.isDark ? 0.95 : 0.985,
-                ),
+                colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
+                colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
               ),
             ],
           ),
@@ -108,22 +101,20 @@ class PropertyGridCard extends StatelessWidget {
         ? CachedNetworkImage(
             imageUrl: imageUrl,
             fit: BoxFit.cover,
-            placeholder:
-                (context, url) => Shimmer.fromColors(
-                  baseColor: colors.surfaceContainerHighest,
-                  highlightColor: colors.surface,
-                  child: Container(color: colors.surface),
-                ),
-            errorWidget:
-                (_, __, ___) => Container(
-                  color: colors.surfaceContainerHighest,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    Icons.photo,
-                    color: colors.onSurface.withValues(alpha: 0.5),
-                    size: 32,
-                  ),
-                ),
+            placeholder: (context, url) => Shimmer.fromColors(
+              baseColor: colors.surfaceContainerHighest,
+              highlightColor: colors.surface,
+              child: Container(color: colors.surface),
+            ),
+            errorWidget: (_, __, ___) => Container(
+              color: colors.surfaceContainerHighest,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.photo,
+                color: colors.onSurface.withValues(alpha: 0.5),
+                size: 32,
+              ),
+            ),
           )
         : placeholder();
 
@@ -205,8 +196,9 @@ class PropertyGridCard extends StatelessWidget {
     final titleStyle = theme.textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w700,
       height: 1.2,
-      fontSize:
-          isCompact ? (theme.textTheme.titleMedium?.fontSize ?? 18) - 1 : null,
+      fontSize: isCompact
+          ? (theme.textTheme.titleMedium?.fontSize ?? 18) - 1
+          : null,
     );
 
     return Column(
@@ -280,14 +272,16 @@ class PropertyGridCard extends StatelessWidget {
     final vertical = isCompact ? 5.0 : 6.0;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color:
-            isDark
-                ? colors.primaryContainer.withValues(alpha: 0.25)
-                : colors.primary.withValues(alpha: 0.08),
+        color: isDark
+            ? colors.primaryContainer.withValues(alpha: 0.25)
+            : colors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontal,
+          vertical: vertical,
+        ),
         child: Text(
           property.displayPrice,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -322,8 +316,9 @@ class PropertyGridCard extends StatelessWidget {
 
     if (property.squareFeet != null && property.squareFeet! > 0) {
       final sqft = property.squareFeet!;
-      final sqftText =
-          sqft.remainder(1) == 0 ? sqft.toStringAsFixed(0) : sqft.toStringAsFixed(1);
+      final sqftText = sqft.remainder(1) == 0
+          ? sqft.toStringAsFixed(0)
+          : sqft.toStringAsFixed(1);
       addChip(Icons.square_foot, '$sqftText sqft');
     }
 
@@ -358,7 +353,10 @@ class PropertyGridCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: horizontal, vertical: vertical),
+        padding: EdgeInsets.symmetric(
+          horizontal: horizontal,
+          vertical: vertical,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -368,10 +366,7 @@ class PropertyGridCard extends StatelessWidget {
               color: colors.onSurfaceVariant.withValues(alpha: 0.8),
             ),
             SizedBox(width: isCompact ? 3 : 4),
-            Text(
-              label,
-              style: textStyle,
-            ),
+            Text(label, style: textStyle),
           ],
         ),
       ),

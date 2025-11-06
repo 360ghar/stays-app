@@ -12,6 +12,7 @@ import '../../utils/logger/app_logger.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/providers/users_provider.dart';
+import '../../data/services/storage_service.dart';
 
 class AuthController extends GetxController {
   // Storage keys dedicated to the remember-me preference and cached tokens.
@@ -56,6 +57,11 @@ class AuthController extends GetxController {
   void onReady() {
     super.onReady();
     _loadSavedUser();
+    // Attempt to refresh profile details once ready
+    if (isAuthenticated.value) {
+      // fire-and-forget; UI will react when currentUser updates
+      fetchAndCacheProfile();
+    }
   }
 
   @override
@@ -104,6 +110,11 @@ class AuthController extends GetxController {
             ? 'User is authenticated'
             : 'No token found. Navigating to login.',
       );
+      if (isAuth) {
+        // Proactively refresh profile so dependent screens can prefill
+        // Fire-and-forget; listeners will react when currentUser updates
+        fetchAndCacheProfile();
+      }
     } catch (e) {
       AppLogger.error('Auth check failed', e);
       isAuthenticated.value = false;
@@ -125,15 +136,13 @@ class AuthController extends GetxController {
   // Prepare the remember-me toggle with any value persisted from a previous run.
   void _initializeRememberMePreference() {
     _authPrefs = GetStorage(_rememberMeBox);
-    final storedPreference =
-        _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
+    final storedPreference = _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
     rememberMe.value = storedPreference;
   }
 
   void _bindAuthStateListener() {
     _authSubscription?.cancel();
-    _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen(
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
       (data) async {
         final event = data.event;
         final session = data.session;
@@ -175,7 +184,10 @@ class AuthController extends GetxController {
       return;
     }
     await _authPrefs.write(_rememberMeFlagKey, true);
-    await _authPrefs.write(_rememberedAccessTokenKey, activeSession.accessToken);
+    await _authPrefs.write(
+      _rememberedAccessTokenKey,
+      activeSession.accessToken,
+    );
     final refreshToken = activeSession.refreshToken;
     if (refreshToken != null && refreshToken.isNotEmpty) {
       await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
@@ -243,6 +255,9 @@ class AuthController extends GetxController {
 
       await _syncRememberMeStateAfterLogin();
 
+      // Refresh full profile and cache for later prefilling
+      fetchAndCacheProfile();
+
       // Navigate to home
       await Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
@@ -298,6 +313,9 @@ class AuthController extends GetxController {
 
       await _syncRememberMeStateAfterLogin();
 
+      // Refresh full profile and cache for later prefilling
+      fetchAndCacheProfile();
+
       _showSuccessSnackbar(
         title: 'Welcome Back!',
         message: 'Hello ${user.name ?? user.firstName ?? user.phone}',
@@ -318,6 +336,24 @@ class AuthController extends GetxController {
     } finally {
       AppLogger.info('Login process finished. Setting isLoading to false.');
       isLoading.value = false;
+    }
+  }
+
+  // Fetch latest profile from API, update observable and cache for fast prefill
+  Future<UserModel?> fetchAndCacheProfile() async {
+    try {
+      final repo = _ensureProfileRepository();
+      final profile = await repo.getProfile();
+      currentUser.value = profile;
+      if (Get.isRegistered<StorageService>()) {
+        final storage = Get.find<StorageService>();
+        await storage.saveUserData(profile.toMap());
+      }
+      AppLogger.info('Profile refreshed for ${profile.email ?? profile.phone}');
+      return profile;
+    } catch (e) {
+      AppLogger.warning('Failed to refresh user profile: $e');
+      return null;
     }
   }
 
@@ -642,10 +678,9 @@ class AuthController extends GetxController {
         message = 'Server error. Please try again later.';
         break;
       default:
-        message =
-            e.message.isNotEmpty
-                ? e.message
-                : 'An error occurred. Please try again.';
+        message = e.message.isNotEmpty
+            ? e.message
+            : 'An error occurred. Please try again.';
     }
     _showErrorSnackbar(title: title, message: message);
   }
@@ -683,5 +718,3 @@ class AuthController extends GetxController {
     );
   }
 }
-
-

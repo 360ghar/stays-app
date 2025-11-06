@@ -68,17 +68,17 @@ class SettingsController extends GetxController {
       (Get.locale ?? LocalizationService.initialLocale).obs;
 
   List<LanguageOption> get languageOptions => const [
-        LanguageOption(
-          locale: Locale('en', 'US'),
-          labelKey: 'settings.language.english',
-          icon: Icons.language,
-        ),
-        LanguageOption(
-          locale: Locale('hi', 'IN'),
-          labelKey: 'settings.language.hindi',
-          icon: Icons.translate,
-        ),
-      ];
+    LanguageOption(
+      locale: Locale('en', 'US'),
+      labelKey: 'settings.language.english',
+      icon: Icons.language,
+    ),
+    LanguageOption(
+      locale: Locale('hi', 'IN'),
+      labelKey: 'settings.language.hindi',
+      icon: Icons.translate,
+    ),
+  ];
 
   Future<void> selectLanguage(Locale locale) async {
     // Defer persistence/update to LocalizationService
@@ -86,7 +86,9 @@ class SettingsController extends GetxController {
       final localeService = Get.find<LocaleService>();
       await LocalizationService.updateLocale(locale, localeService);
       selectedLocale.value = locale;
-      AppLogger.info('Language changed to: ${locale.languageCode}_${locale.countryCode}');
+      AppLogger.info(
+        'Language changed to: ${locale.languageCode}_${locale.countryCode}',
+      );
     } catch (e) {
       AppLogger.error('Failed to change language', e);
       // Fallback without service registered (shouldn't happen in production)

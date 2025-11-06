@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import '../../../controllers/messaging/hotels_map_controller.dart';
 import '../../../controllers/navigation_controller.dart';
 import '../messaging/locate_view.dart';
-import '../enquiry/enquiry_page.dart';
+import '../inquiry/inquiry_page.dart';
 import '../wishlist/wishlist_view.dart';
 import 'explore_view.dart';
 import 'profile_view.dart';
@@ -29,10 +29,9 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final shadowColor =
-        theme.brightness == Brightness.dark
-            ? Colors.black.withValues(alpha: 0.3)
-            : Colors.black.withValues(alpha: 0.05);
+    final shadowColor = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.05);
     return Scaffold(
       backgroundColor: colorScheme.surface,
       body: PageView(
@@ -46,7 +45,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
         children: [
           const ExploreView(),
           const WishlistView(),
-          EnquiriesPage(),
+          InquiriesPage(),
           const LocateView(),
           const ProfileView(),
         ],
@@ -69,20 +68,19 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
             child: Obx(
               () => Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children:
-                    controller.tabs.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final tab = entry.value;
-                      final isActive = controller.currentIndex.value == index;
-                      return Expanded(
-                        child: _NavItem(
-                          icon: tab.icon,
-                          labelKey: tab.labelKey,
-                          isActive: isActive,
-                          onTap: () => controller.changeTab(index),
-                        ),
-                      );
-                    }).toList(),
+                children: controller.tabs.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final tab = entry.value;
+                  final isActive = controller.currentIndex.value == index;
+                  return Expanded(
+                    child: _NavItem(
+                      icon: tab.icon,
+                      labelKey: tab.labelKey,
+                      isActive: isActive,
+                      onTap: () => controller.changeTab(index),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
           ),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/explore_controller.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
@@ -87,11 +87,10 @@ class ExploreView extends GetView<ExploreController> {
           Obx(
             () => FilterButton(
               isActive: filtersRx.value.isNotEmpty,
-              onPressed:
-                  () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.explore,
-                  ),
+              onPressed: () => filterController.openFilterSheet(
+                context,
+                FilterScope.explore,
+              ),
             ),
           ),
         ],
@@ -118,22 +117,18 @@ class ExploreView extends GetView<ExploreController> {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children:
-                      tags
-                          .map(
-                            (tag) => Chip(
-                              label: Text(
-                                tag,
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.labelMedium?.copyWith(
-                                  color: colors.onPrimaryContainer,
-                                ),
-                              ),
-                              backgroundColor: colors.primaryContainer,
-                            ),
-                          )
-                          .toList(),
+                  children: tags
+                      .map(
+                        (tag) => Chip(
+                          label: Text(
+                            tag,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: colors.onPrimaryContainer),
+                          ),
+                          backgroundColor: colors.primaryContainer,
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
               TextButton(
@@ -184,10 +179,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    isLoading
-                        ? _buildShimmerList()
-                        : _buildHotelsList(properties, 'popular'),
+                child: isLoading
+                    ? _buildShimmerList()
+                    : _buildHotelsList(properties, 'popular'),
               ),
             ],
           ),
@@ -216,10 +210,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    isLoading
-                        ? _buildShimmerList()
-                        : _buildHotelsList(properties, 'nearby'),
+                child: isLoading
+                    ? _buildShimmerList()
+                    : _buildHotelsList(properties, 'nearby'),
               ),
             ],
           ),
@@ -246,10 +239,9 @@ class ExploreView extends GetView<ExploreController> {
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
-                child:
-                    isLoading
-                        ? _buildShimmerList()
-                        : _buildHotelsList(recommendations, 'recommended'),
+                child: isLoading
+                    ? _buildShimmerList()
+                    : _buildHotelsList(recommendations, 'recommended'),
               ),
             ],
           ),
@@ -310,6 +302,3 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 }
-
-
-

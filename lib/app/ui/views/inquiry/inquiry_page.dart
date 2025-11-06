@@ -8,7 +8,9 @@ import '../../../controllers/trips_controller.dart';
 String _deriveStatusCategory(String? status) {
   final value = status?.toString().toLowerCase() ?? '';
   if (value.contains('cancel')) return 'cancelled';
-  if (value.contains('complete') || value.contains('past') || value.contains('finish')) {
+  if (value.contains('complete') ||
+      value.contains('past') ||
+      value.contains('finish')) {
     return 'completed';
   }
   if (value.contains('today') ||
@@ -46,10 +48,10 @@ String _statusBadgeLabel(String category) {
   }
 }
 
-class EnquiriesPage extends StatelessWidget {
-  EnquiriesPage({super.key})
-      : _controller = Get.find<TripsController>(),
-        _statusFilter = RxnString();
+class InquiriesPage extends StatelessWidget {
+  InquiriesPage({super.key})
+    : _controller = Get.find<TripsController>(),
+      _statusFilter = RxnString();
 
   final TripsController _controller;
   final RxnString _statusFilter;
@@ -72,7 +74,7 @@ class EnquiriesPage extends StatelessWidget {
           backgroundColor: const Color(0xFFFAFAFA),
           elevation: 0,
           title: Text(
-            'Enquiry',
+            'Inquiry',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w600,
               fontSize: 20,
@@ -83,7 +85,7 @@ class EnquiriesPage extends StatelessWidget {
             Obx(() {
               final hasFilter = _statusFilter.value != null;
               return IconButton(
-                tooltip: 'Filter enquiries',
+                tooltip: 'Filter inquiries',
                 icon: Icon(
                   Icons.filter_alt_rounded,
                   color: hasFilter
@@ -98,7 +100,8 @@ class EnquiriesPage extends StatelessWidget {
         ),
         body: SafeArea(
           child: Obx(() {
-            if (_controller.isLoading.value && _controller.pastBookings.isEmpty) {
+            if (_controller.isLoading.value &&
+                _controller.pastBookings.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -107,9 +110,13 @@ class EnquiriesPage extends StatelessWidget {
 
             if (filtered.isEmpty) {
               return RefreshIndicator(
-                onRefresh: () => _controller.loadPastBookings(forceRefresh: true),
+                onRefresh: () =>
+                    _controller.loadPastBookings(forceRefresh: true),
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 24,
+                  ),
                   children: [
                     _TravelStatsCard(
                       totalSpent: stats.totalSpent,
@@ -128,7 +135,10 @@ class EnquiriesPage extends StatelessWidget {
             return RefreshIndicator(
               onRefresh: () => _controller.loadPastBookings(forceRefresh: true),
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
@@ -149,7 +159,9 @@ class EnquiriesPage extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.7,
+                            ),
                           ),
                         ),
                       );
@@ -180,8 +192,8 @@ class EnquiriesPage extends StatelessWidget {
                           priceLabel: priceLabel,
                           onCancel: (category == 'upcoming')
                               ? () => _controller.cancelBooking(
-                                    booking['id'].toString(),
-                                  )
+                                  booking['id'].toString(),
+                                )
                               : null,
                         ),
                       );
@@ -202,15 +214,13 @@ class EnquiriesPage extends StatelessWidget {
     if (filter == null) {
       return List<Map<String, dynamic>>.from(bookings);
     }
-    return bookings
-        .where((booking) {
-          final category = _deriveStatusCategory(booking['status']);
-          if (filter == 'upcoming') {
-            return category == 'upcoming' || category == 'cancelled';
-          }
-          return category == filter;
-        })
-        .toList();
+    return bookings.where((booking) {
+      final category = _deriveStatusCategory(booking['status']);
+      if (filter == 'upcoming') {
+        return category == 'upcoming' || category == 'cancelled';
+      }
+      return category == filter;
+    }).toList();
   }
 
   _TravelStats _computeStats(List<Map<String, dynamic>> bookings) {
@@ -223,7 +233,11 @@ class EnquiriesPage extends StatelessWidget {
     for (final booking in bookings) {
       final location = (booking['location'] ?? '').toString();
       if (location.isEmpty) continue;
-      destinationCounts.update(location, (value) => value + 1, ifAbsent: () => 1);
+      destinationCounts.update(
+        location,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
     }
     String topDestination = '–';
     if (destinationCounts.isNotEmpty) {
@@ -242,21 +256,20 @@ class EnquiriesPage extends StatelessWidget {
     List<Map<String, dynamic>> bookings,
     _TravelStats stats,
   ) {
-    final items = <_ListItem>[
-      _ListItem.stats(stats),
-    ];
+    final items = <_ListItem>[_ListItem.stats(stats)];
     final grouped = <int, List<Map<String, dynamic>>>{};
     final sorted = List<Map<String, dynamic>>.from(bookings)
-      ..sort(
-        (a, b) {
-          final aDate = DateTime.tryParse(a['checkIn']?.toString() ?? '') ?? DateTime.now();
-          final bDate = DateTime.tryParse(b['checkIn']?.toString() ?? '') ?? DateTime.now();
-          return bDate.compareTo(aDate);
-        },
-      );
+      ..sort((a, b) {
+        final aDate =
+            DateTime.tryParse(a['checkIn']?.toString() ?? '') ?? DateTime.now();
+        final bDate =
+            DateTime.tryParse(b['checkIn']?.toString() ?? '') ?? DateTime.now();
+        return bDate.compareTo(aDate);
+      });
     for (final booking in sorted) {
       final checkIn =
-          DateTime.tryParse(booking['checkIn']?.toString() ?? '') ?? DateTime.now();
+          DateTime.tryParse(booking['checkIn']?.toString() ?? '') ??
+          DateTime.now();
       grouped.putIfAbsent(checkIn.year, () => []).add(booking);
     }
     final years = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -266,12 +279,7 @@ class EnquiriesPage extends StatelessWidget {
       items.add(_ListItem.year(year));
       items.add(_ListItem.spacing(12));
       for (final booking in grouped[year]!) {
-        items.add(
-          _ListItem.booking(
-            booking,
-            animationIndex: animationIndex++,
-          ),
-        );
+        items.add(_ListItem.booking(booking, animationIndex: animationIndex++));
         items.add(_ListItem.spacing(16));
       }
       if (items.isNotEmpty && items.last.type == _ListItemType.spacing) {
@@ -284,10 +292,10 @@ class EnquiriesPage extends StatelessWidget {
   void _showFilterSheet(BuildContext context) {
     final theme = Theme.of(context);
     final options = const [
-      _StatusOption(null, 'All enquiries'),
-      _StatusOption('completed', 'Completed enquiries'),
-      _StatusOption('upcoming', 'Upcoming enquiries'),
-      _StatusOption('today', 'Today\'s enquiries'),
+      _StatusOption(null, 'All inquiries'),
+      _StatusOption('completed', 'Completed inquiries'),
+      _StatusOption('upcoming', 'Upcoming inquiries'),
+      _StatusOption('today', 'Today\'s inquiries'),
     ];
     Get.bottomSheet(
       SafeArea(
@@ -303,31 +311,36 @@ class EnquiriesPage extends StatelessWidget {
             children: [
               Text(
                 'Filter by status',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 12),
-              ...options.map(
-                (option) {
-                  final isActive = _statusFilter.value == option.value ||
-                      (option.value == null && _statusFilter.value == null);
-                  return ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      option.label,
-                      style: GoogleFonts.poppins(
-                        fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      ),
+              ...options.map((option) {
+                final isActive =
+                    _statusFilter.value == option.value ||
+                    (option.value == null && _statusFilter.value == null);
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    option.label,
+                    style: GoogleFonts.poppins(
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                     ),
-                    trailing: isActive
-                        ? Icon(Icons.check_circle_rounded, color: theme.colorScheme.primary)
-                        : null,
-                    onTap: () {
-                      _statusFilter.value = option.value;
-                      Get.back();
-                    },
-                  );
-                },
-              ),
+                  ),
+                  trailing: isActive
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: theme.colorScheme.primary,
+                        )
+                      : null,
+                  onTap: () {
+                    _statusFilter.value = option.value;
+                    Get.back();
+                  },
+                );
+              }),
             ],
           ),
         ),
@@ -367,10 +380,18 @@ class _ListItem {
 
   factory _ListItem.stats(_TravelStats stats) =>
       _ListItem._(_ListItemType.stats, stats: stats);
-  factory _ListItem.year(int year) => _ListItem._(_ListItemType.yearHeader, year: year);
-  factory _ListItem.booking(Map<String, dynamic> booking, {int animationIndex = 0}) =>
-      _ListItem._(_ListItemType.booking, booking: booking, animationIndex: animationIndex);
-  factory _ListItem.spacing(double value) => _ListItem._(_ListItemType.spacing, spacing: value);
+  factory _ListItem.year(int year) =>
+      _ListItem._(_ListItemType.yearHeader, year: year);
+  factory _ListItem.booking(
+    Map<String, dynamic> booking, {
+    int animationIndex = 0,
+  }) => _ListItem._(
+    _ListItemType.booking,
+    booking: booking,
+    animationIndex: animationIndex,
+  );
+  factory _ListItem.spacing(double value) =>
+      _ListItem._(_ListItemType.spacing, spacing: value);
 }
 
 enum _ListItemType { stats, yearHeader, booking, spacing }
@@ -770,8 +791,11 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No enquiries to show',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+            'No inquiries to show',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -783,10 +807,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          TextButton(
-            onPressed: onReset,
-            child: const Text('Clear filters'),
-          ),
+          TextButton(onPressed: onReset, child: const Text('Clear filters')),
         ],
       ),
     );

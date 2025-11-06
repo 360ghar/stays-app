@@ -78,41 +78,42 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Remember-me checkbox mirrors controller state via Obx.
-                  Obx(
-                    () {
-                      final rememberSelection = controller.rememberMe.value;
-                      return InkWell(
-                        onTap: () => controller.setRememberMe(!rememberSelection),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Row(
-                          children: [
-                            Checkbox(
-                              value: rememberSelection,
-                              onChanged: (value) =>
-                                  controller.setRememberMe(value ?? false),
-                              activeColor: colors.primary,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Remember me',
-                              style: textStyles.bodyMedium?.copyWith(
-                                    color:
-                                        colors.onSurface.withValues(alpha: 0.8),
-                                  ) ??
-                                  TextStyle(
-                                    color:
-                                        colors.onSurface.withValues(alpha: 0.8),
-                                    fontSize: 14,
+                  Obx(() {
+                    final rememberSelection = controller.rememberMe.value;
+                    return InkWell(
+                      onTap: () => controller.setRememberMe(!rememberSelection),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: rememberSelection,
+                            onChanged: (value) =>
+                                controller.setRememberMe(value ?? false),
+                            activeColor: colors.primary,
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Remember me',
+                            style:
+                                textStyles.bodyMedium?.copyWith(
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.8,
                                   ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                                ) ??
+                                TextStyle(
+                                  color: colors.onSurface.withValues(
+                                    alpha: 0.8,
+                                  ),
+                                  fontSize: 14,
+                                ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
                   TextButton(
                     onPressed: () => Get.toNamed(Routes.forgotPassword),
                     style: TextButton.styleFrom(
@@ -237,7 +238,10 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
                 decoration: BoxDecoration(
                   color: context.elevatedSurface(0.04),
                   borderRadius: const BorderRadius.only(
@@ -303,7 +307,8 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(
                     controller.phoneError.value,
-                    style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+                    style:
+                        textStyles.bodySmall?.copyWith(color: colors.error) ??
                         TextStyle(color: colors.error, fontSize: 12),
                   ),
                 ),
@@ -324,70 +329,69 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           ),
         ),
         const SizedBox(height: 8),
-        Obx(
-          () {
-            final hasError = controller.passwordError.value.isNotEmpty;
-            return Column(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: context.elevatedSurface(0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: hasError ? colors.error : colors.outlineVariant,
-                      width: hasError ? 1.5 : 1,
-                    ),
-                  ),
-                  child: TextFormField(
-                    controller: _passwordController,
-                    obscureText: !controller.isPasswordVisible.value,
-                    decoration: InputDecoration(
-                      hintText: 'Enter your password',
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 18,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: colors.onSurface.withValues(alpha: 0.6),
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          controller.isPasswordVisible.value
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: colors.onSurface.withValues(alpha: 0.6),
-                        ),
-                        onPressed: controller.togglePasswordVisibility,
-                      ),
-                      hintStyle: textStyles.bodyMedium?.copyWith(
-                        color: colors.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    style: textStyles.bodyMedium?.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: colors.onSurface,
-                    ),
-                    onChanged: (_) => controller.passwordError.value = '',
+        Obx(() {
+          final hasError = controller.passwordError.value.isNotEmpty;
+          return Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: context.elevatedSurface(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: hasError ? colors.error : colors.outlineVariant,
+                    width: hasError ? 1.5 : 1,
                   ),
                 ),
-                if (hasError)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      controller.passwordError.value,
-                      style: textStyles.bodySmall?.copyWith(color: colors.error) ??
-                          TextStyle(color: colors.error, fontSize: 12),
+                child: TextFormField(
+                  controller: _passwordController,
+                  obscureText: !controller.isPasswordVisible.value,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your password',
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
                     ),
-                  )
-                else
-                  const SizedBox(height: 4),
-              ],
-            );
-          },
-        ),
+                    prefixIcon: Icon(
+                      Icons.lock_outline,
+                      color: colors.onSurface.withValues(alpha: 0.6),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordVisible.value
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                      ),
+                      onPressed: controller.togglePasswordVisibility,
+                    ),
+                    hintStyle: textStyles.bodyMedium?.copyWith(
+                      color: colors.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  style: textStyles.bodyMedium?.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: colors.onSurface,
+                  ),
+                  onChanged: (_) => controller.passwordError.value = '',
+                ),
+              ),
+              if (hasError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    controller.passwordError.value,
+                    style:
+                        textStyles.bodySmall?.copyWith(color: colors.error) ??
+                        TextStyle(color: colors.error, fontSize: 12),
+                  ),
+                )
+              else
+                const SizedBox(height: 4),
+            ],
+          );
+        }),
       ],
     );
   }

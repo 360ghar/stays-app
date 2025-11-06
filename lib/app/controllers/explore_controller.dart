@@ -28,10 +28,9 @@ class ExploreController extends GetxController {
   final RxBool isLoading = true.obs; // Start with loading true
   final RxString errorMessage = ''.obs;
 
-  String get locationName =>
-      _locationService.locationName.isEmpty
-          ? 'this area'
-          : _locationService.locationName;
+  String get locationName => _locationService.locationName.isEmpty
+      ? 'this area'
+      : _locationService.locationName;
   String get nearbyCity => _selectedCityNormalized();
   List<Property> get recommendedHotels => nearbyHotels.toList();
 

@@ -162,10 +162,10 @@ class HomeView extends StatelessWidget {
                 Expanded(
                   child: _buildQuickActionCard(
                     icon: Icons.card_travel,
-                    title: 'Enquiries',
-                    subtitle: 'Your enquiries',
+                    title: 'Inquiries',
+                    subtitle: 'Your inquiries',
                     color: Colors.orange,
-                    onTap: () => _showComingSoon('Enquiries feature'),
+                    onTap: () => _showComingSoon('Inquiries feature'),
                   ),
                 ),
                 const SizedBox(width: 12),

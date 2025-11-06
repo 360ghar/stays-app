@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -45,14 +45,12 @@ class EditProfileController extends GetxController {
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxString avatarUrl = ''.obs;
 
-  String? get _firstName =>
-      firstNameController.text.trim().isEmpty
-          ? null
-          : firstNameController.text.trim();
-  String? get _lastName =>
-      lastNameController.text.trim().isEmpty
-          ? null
-          : lastNameController.text.trim();
+  String? get _firstName => firstNameController.text.trim().isEmpty
+      ? null
+      : firstNameController.text.trim();
+  String? get _lastName => lastNameController.text.trim().isEmpty
+      ? null
+      : lastNameController.text.trim();
   String? get _bio =>
       bioController.text.trim().isEmpty ? null : bioController.text.trim();
 
@@ -220,10 +218,9 @@ class EditProfileController extends GetxController {
         lastName: _lastName,
         fullName: _composeFullName(),
         bio: _bio,
-        phone:
-            phoneController.text.trim().isEmpty
-                ? null
-                : phoneController.text.trim(),
+        phone: phoneController.text.trim().isEmpty
+            ? null
+            : phoneController.text.trim(),
         dateOfBirth: dateOfBirth.value,
         avatarUrl: uploadedUrl ?? avatarUrl.value,
       );
@@ -263,4 +260,3 @@ class EditProfileController extends GetxController {
   UserModel? get activeUser =>
       _profileController.user.value ?? _authController.currentUser.value;
 }
-

@@ -13,18 +13,16 @@ class PrivacyView extends GetView<PrivacyController> {
         actions: [
           Obx(
             () => IconButton(
-              icon:
-                  controller.isSaving.value
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Icon(Icons.save_outlined),
-              onPressed:
-                  controller.isSaving.value
-                      ? null
-                      : controller.savePrivacySettings,
+              icon: controller.isSaving.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
+              onPressed: controller.isSaving.value
+                  ? null
+                  : controller.savePrivacySettings,
             ),
           ),
         ],
@@ -97,10 +95,9 @@ class PrivacyView extends GetView<PrivacyController> {
               const SizedBox(height: 12),
               Obx(
                 () => ElevatedButton.icon(
-                  onPressed:
-                      controller.isSaving.value
-                          ? null
-                          : controller.changePassword,
+                  onPressed: controller.isSaving.value
+                      ? null
+                      : controller.changePassword,
                   icon: const Icon(Icons.key_outlined),
                   label: Text(
                     controller.isSaving.value
@@ -119,18 +116,16 @@ class PrivacyView extends GetView<PrivacyController> {
               const SizedBox(height: 12),
               Obx(
                 () => OutlinedButton.icon(
-                  onPressed:
-                      controller.dataExportInFlight.value
-                          ? null
-                          : controller.requestDataExport,
-                  icon:
-                      controller.dataExportInFlight.value
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.file_download_outlined),
+                  onPressed: controller.dataExportInFlight.value
+                      ? null
+                      : controller.requestDataExport,
+                  icon: controller.dataExportInFlight.value
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.file_download_outlined),
                   label: Text(
                     controller.dataExportInFlight.value
                         ? 'Requesting export...'
@@ -142,23 +137,23 @@ class PrivacyView extends GetView<PrivacyController> {
               Obx(
                 () => ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Theme.of(context).colorScheme.errorContainer,
-                    foregroundColor:
-                        Theme.of(context).colorScheme.onErrorContainer,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.errorContainer,
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onErrorContainer,
                   ),
-                  onPressed:
-                      controller.accountDeletionInFlight.value
-                          ? null
-                          : controller.deleteAccount,
-                  icon:
-                      controller.accountDeletionInFlight.value
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.delete_forever_outlined),
+                  onPressed: controller.accountDeletionInFlight.value
+                      ? null
+                      : controller.deleteAccount,
+                  icon: controller.accountDeletionInFlight.value
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.delete_forever_outlined),
                   label: Text(
                     controller.accountDeletionInFlight.value
                         ? 'Processing...'

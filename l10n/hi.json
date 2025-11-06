@@ -16,7 +16,7 @@
     "per_night": "प्रति रात"
   },
   "booking": {
-    "confirm_booking": "बुकिंग की पुष्टि करें"
+    "confirm_booking": "पूछताछ की पुष्टि करें"
   },
   "nav": {
     "explore": "एक्सप्लोर",
@@ -50,9 +50,9 @@
     }
   },
   "profile": {
-    "past_bookings": "पिछली बुकिंग्स",
-    "bookings_completed": "@count बुकिंग पूरी",
-    "no_bookings": "अभी कोई बुकिंग नहीं",
+    "past_bookings": "पिछली पूछताछ",
+    "bookings_completed": "@count पूछताछ पूरी",
+    "no_bookings": "अभी कोई पूछताछ नहीं",
     "account_settings": "खाता सेटिंग्स",
     "manage_prefs": "अपनी प्राथमिकताएँ प्रबंधित करें",
     "get_help": "सहायता लें",

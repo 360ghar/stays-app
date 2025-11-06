@@ -16,12 +16,12 @@
     "per_night": "per night"
   },
   "booking": {
-    "confirm_booking": "Confirm Booking"
+    "confirm_booking": "Confirm Inquiry"
   },
   "nav": {
     "explore": "Explore",
     "wishlist": "Wishlist",
-    "enquiries": "Enquiry",
+    "enquiries": "Inquiry",
     "locate": "Locate",
     "profile": "Profile"
   },
@@ -50,9 +50,9 @@
     }
   },
   "profile": {
-    "past_bookings": "Past Bookings",
-    "bookings_completed": "@count bookings completed",
-    "no_bookings": "No bookings yet",
+    "past_bookings": "Past Inquiries",
+    "bookings_completed": "@count inquiries completed",
+    "no_bookings": "No inquiries yet",
     "account_settings": "Account Settings",
     "manage_prefs": "Manage your preferences",
     "get_help": "Get Help",
@@ -68,12 +68,12 @@
     "version_info": "Version 1.0.0 — Made with love"
   },
   "enquiries": {
-    "title": "Enquiries",
-    "empty_title": "No enquiries yet",
-    "empty_body": "When you send an enquiry through our app,\nyour requests will appear here.",
+    "title": "Inquiries",
+    "empty_title": "No inquiries yet",
+    "empty_body": "When you send an inquiry through our app,\nyour requests will appear here.",
     "browse_stays": "Browse stays",
-    "no_match_title": "No enquiries match the filters",
-    "no_match_body": "Try adjusting your filter options or clear them to revisit all your enquiries.",
+    "no_match_title": "No inquiries match the filters",
+    "no_match_body": "Try adjusting your filter options or clear them to revisit all your inquiries.",
     "adjust_filters": "Adjust filters",
     "clear_filters": "Clear filters"
   },

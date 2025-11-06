@@ -132,8 +132,9 @@ class AuthRepository {
         }
       }
     } on supabase.AuthException catch (e) {
-      final code =
-          e.statusCode == null ? null : int.tryParse('${e.statusCode}');
+      final code = e.statusCode == null
+          ? null
+          : int.tryParse('${e.statusCode}');
       throw ApiException(message: e.message, statusCode: code ?? 400);
     }
   }

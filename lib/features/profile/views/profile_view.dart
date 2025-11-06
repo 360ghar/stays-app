@@ -53,9 +53,9 @@ class ProfileView extends GetView<ProfileController> {
                             ),
                             _MenuTile(
                               icon: Icons.event_available_outlined,
-                              title: 'Enquiries',
+                              title: 'Inquiries',
                               subtitle: 'Review your submitted stay requests',
-                              onTap: controller.navigateToEnquiries,
+                              onTap: controller.navigateToInquiries,
                             ),
                             _MenuTile(
                               icon: Icons.credit_card,
@@ -226,7 +226,7 @@ class ProfileView extends GetView<ProfileController> {
             Text(
               controller.completion.value >= 0.9
                   ? 'Great! Your profile is ready for the next stay.'
-                  : 'Complete your profile for faster enquiries and better recommendations.',
+                  : 'Complete your profile for faster inquiries and better recommendations.',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -243,7 +243,7 @@ class ProfileView extends GetView<ProfileController> {
         children: [
           Expanded(
             child: _StatCard(
-              label: 'Enquiries',
+              label: 'Inquiries',
               value: controller.totalTrips.value.toString(),
               icon: Icons.flight_takeoff_outlined,
               color: const Color(0xFF60A5FA),
@@ -290,23 +290,22 @@ class ProfileView extends GetView<ProfileController> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(24),
           child: Column(
-            children:
-                tiles.asMap().entries.map((entry) {
-                  final isLast = entry.key == tiles.length - 1;
-                  return Column(
-                    children: [
-                      entry.value,
-                      if (!isLast)
-                        Divider(
-                          height: 1,
-                          indent: 72,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.outlineVariant.withValues(alpha: 0.2),
-                        ),
-                    ],
-                  );
-                }).toList(),
+            children: tiles.asMap().entries.map((entry) {
+              final isLast = entry.key == tiles.length - 1;
+              return Column(
+                children: [
+                  entry.value,
+                  if (!isLast)
+                    Divider(
+                      height: 1,
+                      indent: 72,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outlineVariant.withValues(alpha: 0.2),
+                    ),
+                ],
+              );
+            }).toList(),
           ),
         ),
       ],
@@ -320,10 +319,9 @@ class ProfileView extends GetView<ProfileController> {
         color: colorScheme.errorContainer.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
-          onTap:
-              controller.isActionInProgress.value
-                  ? null
-                  : controller.confirmLogout,
+          onTap: controller.isActionInProgress.value
+              ? null
+              : controller.confirmLogout,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(18),
@@ -344,12 +342,11 @@ class ProfileView extends GetView<ProfileController> {
                     children: [
                       Text(
                         'Sign out',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.error,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.error,
+                            ),
                       ),
                       const SizedBox(height: 4),
                       Text(

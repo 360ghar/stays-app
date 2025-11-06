@@ -32,26 +32,20 @@ class RegisterView extends GetView<AuthController> {
                 decoration: const InputDecoration(labelText: 'First name'),
                 controller: firstNameCtrl,
                 validator: ValidatorHelper.requiredField,
-                style: textStyles.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                ),
+                style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Last name'),
                 controller: lastNameCtrl,
-                style: textStyles.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                ),
+                style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Email'),
                 controller: emailCtrl,
                 validator: ValidatorHelper.email,
-                style: textStyles.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                ),
+                style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -59,9 +53,7 @@ class RegisterView extends GetView<AuthController> {
                 controller: passwordCtrl,
                 obscureText: true,
                 validator: ValidatorHelper.requiredField,
-                style: textStyles.bodyMedium?.copyWith(
-                  color: colors.onSurface,
-                ),
+                style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
               ),
               const SizedBox(height: 20),
               Obx(
@@ -69,18 +61,18 @@ class RegisterView extends GetView<AuthController> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                  onPressed: controller.isLoading.value
-                      ? null
-                      : () async {
-                          if (formKey.currentState?.validate() ?? false) {
-                            await controller.register(
-                              firstName: firstNameCtrl.text.trim(),
-                              lastName: lastNameCtrl.text.trim(),
-                              email: emailCtrl.text.trim(),
-                              password: passwordCtrl.text,
-                            );
-                          }
-                        },
+                    onPressed: controller.isLoading.value
+                        ? null
+                        : () async {
+                            if (formKey.currentState?.validate() ?? false) {
+                              await controller.register(
+                                firstName: firstNameCtrl.text.trim(),
+                                lastName: lastNameCtrl.text.trim(),
+                                email: emailCtrl.text.trim(),
+                                password: passwordCtrl.text,
+                              );
+                            }
+                          },
                     child: controller.isLoading.value
                         ? SizedBox(
                             height: 20,

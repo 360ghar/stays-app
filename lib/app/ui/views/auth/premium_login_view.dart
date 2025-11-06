@@ -50,12 +50,10 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
@@ -222,8 +220,8 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                     icon: Icons.lock_outline_rounded,
                                     obscureText: !isPasswordVisible.value,
                                     suffixIcon: IconButton(
-                                      onPressed:
-                                          () => isPasswordVisible.toggle(),
+                                      onPressed: () =>
+                                          isPasswordVisible.toggle(),
                                       icon: Icon(
                                         isPasswordVisible.value
                                             ? Icons.visibility_off_rounded
@@ -236,10 +234,9 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 const SizedBox(height: 24),
                                 Obx(
                                   () => _buildGradientButton(
-                                    text:
-                                        isLoginMode.value
-                                            ? 'Sign In'
-                                            : 'Create Account',
+                                    text: isLoginMode.value
+                                        ? 'Sign In'
+                                        : 'Create Account',
                                     isLoading: authController.isLoading.value,
                                     onPressed: _handleAuth,
                                     colors: colors,
@@ -247,24 +244,21 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
                                 ),
                                 const SizedBox(height: 20),
                                 Obx(
-                                  () =>
-                                      isLoginMode.value
-                                          ? TextButton(
-                                            onPressed:
-                                                () => _showComingSoon(
-                                                  'Password reset',
+                                  () => isLoginMode.value
+                                      ? TextButton(
+                                          onPressed: () =>
+                                              _showComingSoon('Password reset'),
+                                          child: Text(
+                                            'Forgot your password?',
+                                            style: textStyles.bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.white
+                                                      .withValues(alpha: 0.7),
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                            child: Text(
-                                              'Forgot your password?',
-                                              style: textStyles.bodySmall
-                                                  ?.copyWith(
-                                                    color: Colors.white
-                                                        .withValues(alpha: 0.7),
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                            ),
-                                          )
-                                          : const SizedBox.shrink(),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(),
                                 ),
                               ],
                             ),
@@ -476,27 +470,26 @@ class _PremiumLoginViewState extends State<PremiumLoginView>
               onTap: isLoading ? null : onPressed,
               borderRadius: BorderRadius.circular(16),
               child: Center(
-                child:
-                    isLoading
-                        ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              colors.onPrimary,
-                            ),
-                          ),
-                        )
-                        : Text(
-                          text,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                child: isLoading
+                    ? SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colors.onPrimary,
                           ),
                         ),
+                      )
+                    : Text(
+                        text,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
               ),
             ),
           ),

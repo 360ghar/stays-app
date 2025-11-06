@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import '../../data/models/property_model.dart';
 import '../../routes/app_routes.dart';
 
-class BookingConfirmationController extends GetxController {
-  BookingConfirmationController();
+class InquiryConfirmationController extends GetxController {
+  InquiryConfirmationController();
 
   final Rxn<Property> property = Rxn<Property>();
   final Rx<DateTime> checkInDate = Rx<DateTime>(
@@ -36,7 +36,7 @@ class BookingConfirmationController extends GetxController {
     if (property.value == null) {
       Future.microtask(() {
         Get.snackbar(
-          'Enquiry unavailable',
+          'Inquiry unavailable',
           'We could not load the property details. Please try again.',
           snackPosition: SnackPosition.BOTTOM,
         );
@@ -45,9 +45,7 @@ class BookingConfirmationController extends GetxController {
   }
 
   void _hydrateInitialState() {
-    final start = _clampCheckInDate(
-      checkInDate.value,
-    );
+    final start = _clampCheckInDate(checkInDate.value);
     checkInDate.value = start;
     final initialNights = math.min(
       _absoluteMaxNights,
@@ -62,12 +60,12 @@ class BookingConfirmationController extends GetxController {
     }
   }
 
-  Future<void> submitEnquiry() async {
+  Future<void> submitInquiry() async {
     final selectedProperty = property.value;
     if (selectedProperty == null) {
       Get.snackbar(
-        'Enquiry unavailable',
-        'No property was provided for this enquiry.',
+        'Inquiry unavailable',
+        'No property was provided for this inquiry.',
         snackPosition: SnackPosition.BOTTOM,
       );
       return;
@@ -81,7 +79,7 @@ class BookingConfirmationController extends GetxController {
     }
 
     await Get.offNamed(
-      Routes.enquiry,
+      Routes.inquiry,
       arguments: {
         'property': selectedProperty,
         'checkIn': checkInDate.value,
@@ -93,8 +91,10 @@ class BookingConfirmationController extends GetxController {
 
   // --- Public getters ---
 
-  int get minimumStay =>
-      math.min(_absoluteMaxNights, math.max(1, property.value?.minimumStay ?? 1));
+  int get minimumStay => math.min(
+    _absoluteMaxNights,
+    math.max(1, property.value?.minimumStay ?? 1),
+  );
 
   int get maxGuests => math.max(1, property.value?.maxGuests ?? 1);
 
@@ -200,8 +200,9 @@ class BookingConfirmationController extends GetxController {
   DateTime _clampCheckInDate(DateTime date) {
     final normalized = _normalizeDate(date);
     final minDate = minSelectableDate;
-    final maximumCheckIn =
-        maxSelectableDate.subtract(Duration(days: minimumStay));
+    final maximumCheckIn = maxSelectableDate.subtract(
+      Duration(days: minimumStay),
+    );
     if (maximumCheckIn.isBefore(minDate)) {
       return minDate;
     }
@@ -217,8 +218,7 @@ class BookingConfirmationController extends GetxController {
   DateTime _clampCheckOutDate(DateTime checkIn, DateTime date) {
     final normalized = _normalizeDate(date);
     final minCheckOut = checkIn.add(const Duration(days: 1));
-    final enforcedMin =
-        checkIn.add(Duration(days: minimumStay));
+    final enforcedMin = checkIn.add(Duration(days: minimumStay));
     final effectiveMin = enforcedMin.isAfter(minCheckOut)
         ? enforcedMin
         : minCheckOut;

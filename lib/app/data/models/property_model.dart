@@ -189,8 +189,9 @@ class Property {
   factory Property.fromJson(Map<String, dynamic> json) {
     final model = _$PropertyFromJson(json);
     final dynamic likedValue = json['liked'] ?? json['is_liked'];
-    final bool shouldMarkFavorite =
-        likedValue is bool ? likedValue : model.liked == true;
+    final bool shouldMarkFavorite = likedValue is bool
+        ? likedValue
+        : model.liked == true;
     return shouldMarkFavorite ? model.copyWith(isFavorite: true) : model;
   }
   Map<String, dynamic> toJson() => _$PropertyToJson(this);

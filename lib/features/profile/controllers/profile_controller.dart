@@ -192,8 +192,9 @@ class ProfileController extends GetxController {
     }
     totalNights.value = nights;
     totalSpent.value = spend;
-    favoriteDestination.value =
-        destinations.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
+    favoriteDestination.value = destinations.entries
+        .reduce((a, b) => a.value >= b.value ? a : b)
+        .key;
   }
 
   void updateUser(UserModel updated) {
@@ -250,7 +251,9 @@ class ProfileController extends GetxController {
 
   void navigateToAbout() => Get.toNamed(Routes.profileAbout);
 
-  void navigateToEnquiries() => Get.toNamed(Routes.enquiries);
+  void navigateToInquiries() => Get.toNamed(Routes.inquiries);
+  // Backwards-compatible alias
+  void navigateToEnquiries() => navigateToInquiries();
 
   Future<void> confirmLogout() async {
     final shouldLogout =

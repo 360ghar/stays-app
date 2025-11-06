@@ -9,8 +9,9 @@ abstract class Routes {
   static const search = '/search';
   static const searchResults = '/search-results';
   static const listingDetail = '/listing/:id';
-  static const enquiry = '/enquiry';
-  static const enquiryConfirmation = '/enquiry-confirmation';
+  // Inquiry flow (client-side wording)
+  static const inquiry = '/inquiry';
+  static const inquiryConfirmation = '/inquiry-confirmation';
   static const payment = '/payment';
   static const paymentMethods = '/payment-methods';
   static const profile = '/profile';
@@ -20,7 +21,7 @@ abstract class Routes {
   static const wishlist = '/wishlist';
 
   // Profile related routes
-  static const enquiries = '/enquiries';
+  static const inquiries = '/inquiries';
   static const accountSettings = '/account-settings';
   static const editProfile = '/profile/edit';
   static const profilePreferences = '/profile/preferences';
@@ -31,9 +32,12 @@ abstract class Routes {
   static const profileLegal = '/profile/legal';
 
   // Backwards compatibility aliases (will be removed once consumers migrate)
-  static const booking = enquiry;
-  static const bookingConfirmation = enquiryConfirmation;
-  static const trips = enquiries;
+  static const enquiry = inquiry; // British spelling alias
+  static const enquiryConfirmation = inquiryConfirmation;
+  static const booking = inquiry; // Legacy naming alias
+  static const bookingConfirmation = inquiryConfirmation;
+  static const enquiries = inquiries; // British spelling alias
+  static const trips = inquiries;
   static const help = profileHelp;
   static const profileView = editProfile;
   static const privacySecurity = profilePrivacy;

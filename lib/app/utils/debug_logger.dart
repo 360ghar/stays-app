@@ -75,8 +75,9 @@ class DebugLogger {
     String? userEmail,
   }) {
     if (kDebugMode) {
-      final tokenPreview =
-          token.length > 20 ? '${token.substring(0, 20)}...' : token;
+      final tokenPreview = token.length > 20
+          ? '${token.substring(0, 20)}...'
+          : token;
       var message = 'JWT Token: $tokenPreview';
 
       if (expiresAt != null) {

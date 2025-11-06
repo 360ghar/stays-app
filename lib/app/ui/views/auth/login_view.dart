@@ -115,7 +115,9 @@ class _LoginViewState extends State<LoginView> {
                         hint: 'Enter your password',
                         isVisible: _isPasswordVisible,
                         onToggleVisibility: () {
-                          setState(() => _isPasswordVisible = !_isPasswordVisible);
+                          setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
+                          );
                         },
                         error: _passwordError,
                         onChanged: (value) {
@@ -130,41 +132,43 @@ class _LoginViewState extends State<LoginView> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             // Remember-me checkbox mirrors controller state via Obx.
-                            Obx(
-                              () {
-                                final isChecked = authController.rememberMe.value;
-                                return InkWell(
-                                  onTap: () => authController.setRememberMe(!isChecked),
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isChecked,
-                                        onChanged: (value) => authController
-                                            .setRememberMe(value ?? false),
-                                        activeColor: colors.primary,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Remember me',
-                                        style: textStyles.bodyMedium?.copyWith(
-                                              color: colors.onSurface
-                                                  .withValues(alpha: 0.8),
-                                            ) ??
-                                            TextStyle(
-                                              color: colors.onSurface
-                                                  .withValues(alpha: 0.8),
-                                              fontSize: 14,
+                            Obx(() {
+                              final isChecked = authController.rememberMe.value;
+                              return InkWell(
+                                onTap: () =>
+                                    authController.setRememberMe(!isChecked),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isChecked,
+                                      onChanged: (value) => authController
+                                          .setRememberMe(value ?? false),
+                                      activeColor: colors.primary,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Remember me',
+                                      style:
+                                          textStyles.bodyMedium?.copyWith(
+                                            color: colors.onSurface.withValues(
+                                              alpha: 0.8,
                                             ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                                          ) ??
+                                          TextStyle(
+                                            color: colors.onSurface.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            fontSize: 14,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }),
                             TextButton(
                               onPressed: () {
                                 Get.snackbar(
@@ -199,7 +203,9 @@ class _LoginViewState extends State<LoginView> {
                         children: [
                           Expanded(
                             child: Divider(
-                              color: colors.outlineVariant.withValues(alpha: 0.6),
+                              color: colors.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                           Padding(
@@ -207,15 +213,16 @@ class _LoginViewState extends State<LoginView> {
                             child: Text(
                               'or',
                               style: textStyles.bodyMedium?.copyWith(
-                                color:
-                                    colors.onSurface.withValues(alpha: 0.6),
+                                color: colors.onSurface.withValues(alpha: 0.6),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
                           Expanded(
                             child: Divider(
-                              color: colors.outlineVariant.withValues(alpha: 0.6),
+                              color: colors.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -354,7 +361,8 @@ class _LoginViewState extends State<LoginView> {
       fontWeight: FontWeight.w600,
       color: colors.onSurface,
     );
-    final fieldStyle = textStyles.bodyMedium?.copyWith(
+    final fieldStyle =
+        textStyles.bodyMedium?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: colors.onSurface,
@@ -408,7 +416,8 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+              style:
+                  textStyles.bodySmall?.copyWith(color: colors.error) ??
                   TextStyle(color: colors.error, fontSize: 12),
             ),
           ),
@@ -433,7 +442,8 @@ class _LoginViewState extends State<LoginView> {
       fontWeight: FontWeight.w600,
       color: colors.onSurface,
     );
-    final fieldStyle = textStyles.bodyMedium?.copyWith(
+    final fieldStyle =
+        textStyles.bodyMedium?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w500,
           color: colors.onSurface,
@@ -494,7 +504,8 @@ class _LoginViewState extends State<LoginView> {
             padding: const EdgeInsets.only(top: 4),
             child: Text(
               error,
-              style: textStyles.bodySmall?.copyWith(color: colors.error) ??
+              style:
+                  textStyles.bodySmall?.copyWith(color: colors.error) ??
                   TextStyle(color: colors.error, fontSize: 12),
             ),
           ),
@@ -535,7 +546,8 @@ class _LoginViewState extends State<LoginView> {
               )
             : Text(
                 text,
-                style: textStyles.titleMedium?.copyWith(
+                style:
+                    textStyles.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: colors.onPrimary,
                     ) ??
@@ -583,7 +595,8 @@ class _LoginViewState extends State<LoginView> {
             const SizedBox(width: 12),
             Text(
               text,
-              style: textStyles.titleMedium?.copyWith(
+              style:
+                  textStyles.titleMedium?.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                     color: foregroundColor,

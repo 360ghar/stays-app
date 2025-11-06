@@ -12,10 +12,7 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/webview_helper.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
-  const VirtualTourEmbed({
-    super.key,
-    required this.tourUrl,
-  });
+  const VirtualTourEmbed({super.key, required this.tourUrl});
 
   final String tourUrl;
 
@@ -29,11 +26,10 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   bool _hasError = false;
   int _progress = 0;
 
-  static final Set<Factory<OneSequenceGestureRecognizer>>
-      _gestureRecognizers =
+  static final Set<Factory<OneSequenceGestureRecognizer>> _gestureRecognizers =
       <Factory<OneSequenceGestureRecognizer>>{
-    Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
-  };
+        Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+      };
 
   @override
   void initState() {
@@ -87,27 +83,25 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   Widget _buildWebView(BuildContext context) {
     PlatformWebViewWidgetCreationParams params =
         PlatformWebViewWidgetCreationParams(
-      controller: _controller.platform,
-      layoutDirection: Directionality.of(context),
-      gestureRecognizers: _gestureRecognizers,
-    );
+          controller: _controller.platform,
+          layoutDirection: Directionality.of(context),
+          gestureRecognizers: _gestureRecognizers,
+        );
 
     if (!kIsWeb && Platform.isIOS) {
       params =
           WebKitWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
-        params,
-      );
+            params,
+          );
     } else if (!kIsWeb && Platform.isAndroid) {
       params =
           AndroidWebViewWidgetCreationParams.fromPlatformWebViewWidgetCreationParams(
-        params,
-        displayWithHybridComposition: true,
-      );
+            params,
+            displayWithHybridComposition: true,
+          );
     }
 
-    return WebViewWidget.fromPlatformCreationParams(
-      params: params,
-    );
+    return WebViewWidget.fromPlatformCreationParams(params: params);
   }
 
   void _openFullscreen() {
@@ -161,9 +155,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
         if (_isLoading)
           Container(
             color: Colors.black.withValues(alpha: 0.05),
-            child: const Center(
-              child: CircularProgressIndicator(),
-            ),
+            child: const Center(child: CircularProgressIndicator()),
           ),
       ],
     );

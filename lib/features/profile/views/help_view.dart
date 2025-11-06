@@ -58,18 +58,16 @@ class HelpView extends GetView<HelpController> {
             const SizedBox(height: 12),
             Obx(
               () => ElevatedButton.icon(
-                onPressed:
-                    controller.isSubmittingFeedback.value
-                        ? null
-                        : controller.submitFeedback,
-                icon:
-                    controller.isSubmittingFeedback.value
-                        ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.send_outlined),
+                onPressed: controller.isSubmittingFeedback.value
+                    ? null
+                    : controller.submitFeedback,
+                icon: controller.isSubmittingFeedback.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.send_outlined),
                 label: Text(
                   controller.isSubmittingFeedback.value
                       ? 'Sending feedback...'

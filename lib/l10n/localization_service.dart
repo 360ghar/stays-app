@@ -50,7 +50,6 @@ class LocalizationService extends Translations {
 
       // Log missing keys for debugging
       _logMissingKeys(hindiKeys, englishKeys);
-
     } catch (e) {
       // Fallback to empty maps if asset loading fails
       _keys['en_US'] = {};
@@ -75,9 +74,13 @@ class LocalizationService extends Translations {
     Map<String, String> hindiKeys,
     Map<String, String> englishKeys,
   ) {
-    final missingKeys = englishKeys.keys.where((key) => !hindiKeys.containsKey(key)).toList();
+    final missingKeys = englishKeys.keys
+        .where((key) => !hindiKeys.containsKey(key))
+        .toList();
     if (missingKeys.isNotEmpty) {
-      AppLogger.warning('Missing Hindi translations for keys: ${missingKeys.join(', ')}');
+      AppLogger.warning(
+        'Missing Hindi translations for keys: ${missingKeys.join(', ')}',
+      );
     }
   }
 

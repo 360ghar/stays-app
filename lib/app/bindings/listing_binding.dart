@@ -19,9 +19,8 @@ class ListingBinding extends Bindings {
       permanent: true,
     );
     Get.lazyPut<ListingDetailController>(
-      () => ListingDetailController(
-        repository: Get.find<PropertiesRepository>(),
-      ),
+      () =>
+          ListingDetailController(repository: Get.find<PropertiesRepository>()),
     );
   }
 }

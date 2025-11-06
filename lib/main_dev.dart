@@ -5,7 +5,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-
 import 'config/app_config.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
@@ -96,7 +95,9 @@ class _MyAppState extends State<MyApp> {
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      AppLogger.info('Foreground message received: ${message.notification?.title}');
+      AppLogger.info(
+        'Foreground message received: ${message.notification?.title}',
+      );
       // TODO: Show local notification if needed
     });
   }

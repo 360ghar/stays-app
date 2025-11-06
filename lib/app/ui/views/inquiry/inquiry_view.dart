@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../controllers/auth/auth_controller.dart';
-import '../../../controllers/booking/booking_controller.dart';
+import '../../../controllers/inquiry/inquiry_controller.dart';
 import '../../../controllers/trips_controller.dart';
 import '../../../controllers/filter_controller.dart';
 import '../../../data/models/property_model.dart';
@@ -14,16 +14,17 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../../data/providers/bookings_provider.dart';
 import '../../../data/repositories/booking_repository.dart';
+import '../../../data/services/storage_service.dart';
 
-class EnquiryView extends StatefulWidget {
-  const EnquiryView({super.key});
+class InquiryView extends StatefulWidget {
+  const InquiryView({super.key});
 
   @override
-  State<EnquiryView> createState() => _EnquiryViewState();
+  State<InquiryView> createState() => _InquiryViewState();
 }
 
-class _EnquiryViewState extends State<EnquiryView> {
-  late final BookingController bookingController;
+class _InquiryViewState extends State<InquiryView> {
+  late final InquiryController bookingController;
   TripsController? tripsController;
   AuthController? authController;
 
@@ -32,24 +33,23 @@ class _EnquiryViewState extends State<EnquiryView> {
   DateTime? checkOutDate;
   int guests = 1;
 
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
 
   final DateFormat _dateFormat = DateFormat('EEE, MMM d, yyyy');
   void _ensureDependencies() {
-    final bookingsProvider =
-        Get.isRegistered<BookingsProvider>()
-            ? Get.find<BookingsProvider>()
-            : Get.put(BookingsProvider(), permanent: true);
+    final bookingsProvider = Get.isRegistered<BookingsProvider>()
+        ? Get.find<BookingsProvider>()
+        : Get.put(BookingsProvider(), permanent: true);
 
-    final bookingRepository =
-        Get.isRegistered<BookingRepository>()
-            ? Get.find<BookingRepository>()
-            : Get.put(
-              BookingRepository(provider: bookingsProvider),
-              permanent: true,
-            );
+    final bookingRepository = Get.isRegistered<BookingRepository>()
+        ? Get.find<BookingRepository>()
+        : Get.put(
+            BookingRepository(provider: bookingsProvider),
+            permanent: true,
+          );
 
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
@@ -62,12 +62,12 @@ class _EnquiryViewState extends State<EnquiryView> {
       Get.find<TripsController>();
     }
 
-    if (!Get.isRegistered<BookingController>()) {
-      Get.put<BookingController>(
-        BookingController(repository: bookingRepository),
+    if (!Get.isRegistered<InquiryController>()) {
+      Get.put<InquiryController>(
+        InquiryController(repository: bookingRepository),
       );
     } else {
-      Get.find<BookingController>();
+      Get.find<InquiryController>();
     }
   }
 
@@ -75,7 +75,7 @@ class _EnquiryViewState extends State<EnquiryView> {
   void initState() {
     super.initState();
     _ensureDependencies();
-    bookingController = Get.find<BookingController>();
+    bookingController = Get.find<InquiryController>();
     if (Get.isRegistered<TripsController>()) {
       tripsController = Get.find<TripsController>();
     }
@@ -138,7 +138,28 @@ class _EnquiryViewState extends State<EnquiryView> {
     final resolvedName = _resolveUserName(user);
     nameController = TextEditingController(text: resolvedName);
     emailController = TextEditingController(text: user?.email ?? '');
-    phoneController = TextEditingController(text: user?.phone ?? '');
+    phoneController = TextEditingController(
+      text: _normalizePhoneForDisplay(user?.phone),
+    );
+
+    // Reactively prefill if profile loads/updates later
+    if (authController != null) {
+      authController!.currentUser.listen((u) => _prefillFromUser(u));
+    }
+    // Fallback: try cached storage if fields are empty
+    _tryPrefillFromStorage();
+
+    // If missing name/email/phone, trigger a profile refresh once
+    if (authController != null) {
+      final needsFetch =
+          user == null ||
+          resolvedName.isEmpty ||
+          ((user.email ?? '').isEmpty) ||
+          ((user.phone ?? '').isEmpty);
+      if (needsFetch) {
+        authController!.fetchAndCacheProfile();
+      }
+    }
   }
 
   @override
@@ -172,6 +193,51 @@ class _EnquiryViewState extends State<EnquiryView> {
       return at > 0 ? email.substring(0, at) : email;
     }
     return '';
+  }
+
+  void _prefillFromUser(UserModel? user) {
+    if (user == null) return;
+    final name = _resolveUserName(user);
+    if (nameController.text.trim().isEmpty && name.isNotEmpty) {
+      nameController.text = name;
+    }
+    if (emailController.text.trim().isEmpty && (user.email ?? '').isNotEmpty) {
+      emailController.text = user.email!.trim();
+    }
+    if (phoneController.text.trim().isEmpty && (user.phone ?? '').isNotEmpty) {
+      phoneController.text = _normalizePhoneForDisplay(user.phone);
+    }
+  }
+
+  Future<void> _tryPrefillFromStorage() async {
+    try {
+      if (!Get.isRegistered<StorageService>()) return;
+      final storage = Get.find<StorageService>();
+      final map = await storage.getUserData();
+      if (map == null) return;
+      final cachedUser = UserModel.fromMap(map);
+      _prefillFromUser(cachedUser);
+    } catch (_) {
+      // ignore silently; UI already has manual entry available
+    }
+  }
+
+  String _normalizePhoneForDisplay(String? raw) {
+    final value = (raw ?? '').trim();
+    if (value.isEmpty) return '';
+    var digits = value.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.startsWith('+91')) {
+      digits = digits.substring(3);
+    } else if (digits.startsWith('91') && digits.length > 10) {
+      digits = digits.substring(2);
+    }
+    if (digits.startsWith('0') && digits.length == 11) {
+      digits = digits.substring(1);
+    }
+    if (digits.length > 10) {
+      digits = digits.substring(digits.length - 10);
+    }
+    return digits;
   }
 
   Future<void> _pickDates() async {
@@ -220,8 +286,12 @@ class _EnquiryViewState extends State<EnquiryView> {
     return baseAmount + serviceCharges + taxesAmount - discountAmount;
   }
 
-  Future<void> _submitEnquiry() async {
+  Future<void> _submitInquiry() async {
     if (bookingController.isSubmitting.value) return;
+    final form = _formKey.currentState;
+    if (form != null && !form.validate()) {
+      return;
+    }
     if (property == null) {
       Get.snackbar('Missing property', 'Unable to identify this listing.');
       return;
@@ -243,8 +313,27 @@ class _EnquiryViewState extends State<EnquiryView> {
     }
 
     final trimmedEmail = emailController.text.trim();
-    final checkInIso = checkInDate!.toIso8601String();
-    final checkOutIso = checkOutDate!.toIso8601String();
+    if (trimmedEmail.isEmpty) {
+      Get.snackbar('Email', 'Please provide a valid email address.');
+      return;
+    }
+    if (!GetUtils.isEmail(trimmedEmail)) {
+      Get.snackbar('Email', 'Please enter a valid email address.');
+      return;
+    }
+    final trimmedPhone = phoneController.text.trim();
+    if (trimmedPhone.isEmpty) {
+      Get.snackbar('Phone', 'Please provide a valid phone number.');
+      return;
+    }
+    final digits = trimmedPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+    if (digits.replaceAll('+', '').length != 10) {
+      Get.snackbar('Phone', 'Please enter a valid phone number.');
+      return;
+    }
+    final sanitizedPhone = _normalizePhoneForDisplay(trimmedPhone);
+    final checkInIso = checkInDate!.toUtc().toIso8601String();
+    final checkOutIso = checkOutDate!.toUtc().toIso8601String();
 
     final localBaseAmount = baseAmount;
     final localTaxesAmount = taxesAmount;
@@ -266,8 +355,8 @@ class _EnquiryViewState extends State<EnquiryView> {
       checkOutIso: checkOutIso,
       guests: guests,
       primaryGuestName: nameController.text.trim(),
-      primaryGuestPhone: phoneController.text.trim(),
-      primaryGuestEmail: trimmedEmail.isEmpty ? null : trimmedEmail,
+      primaryGuestPhone: sanitizedPhone,
+      primaryGuestEmail: trimmedEmail,
       nights: nights,
       fallbackPricing: fallbackPricing,
       additionalPayload: {
@@ -283,13 +372,13 @@ class _EnquiryViewState extends State<EnquiryView> {
     final isSuccessful =
         latestBooking != null && !status.toLowerCase().contains('failed');
 
-    if (isSuccessful && latestBooking != null) {
+    if (isSuccessful) {
       if (tripsController != null) {
         await tripsController!.loadPastBookings(forceRefresh: true);
       }
       Get.snackbar(
-        'Enquiry Sent Successfully',
-        'We have recorded your enquiry for ${property!.name}.',
+        'Inquiry Sent Successfully',
+        'We have recorded your inquiry for ${property!.name}.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green[100],
         colorText: Colors.green[800],
@@ -297,12 +386,14 @@ class _EnquiryViewState extends State<EnquiryView> {
       Get.offAllNamed(Routes.home, arguments: 0);
     } else {
       final rawError = bookingController.errorMessage.value;
-      final errorMessage =
-          rawError.isNotEmpty ? rawError : 'Failed to send enquiry. Please try again.';
-      final truncatedError =
-          errorMessage.length > 100 ? '${errorMessage.substring(0, 97)}...' : errorMessage;
+      final errorMessage = rawError.isNotEmpty
+          ? rawError
+          : 'Failed to send inquiry. Please try again.';
+      final truncatedError = errorMessage.length > 100
+          ? '${errorMessage.substring(0, 97)}...'
+          : errorMessage;
       Get.snackbar(
-        'Enquiry failed',
+        'Inquiry failed',
         truncatedError,
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(8),
@@ -314,69 +405,66 @@ class _EnquiryViewState extends State<EnquiryView> {
   @override
   Widget build(BuildContext context) {
     final prop = property;
-    const buttonLabel = 'Send Enquiry';
+    const buttonLabel = 'Send Inquiry';
     return Scaffold(
-      appBar: AppBar(title: Text(prop?.name ?? 'Send enquiry')),
-      body:
-          prop == null
-              ? const Center(child: Text('Property details unavailable'))
-              : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  _buildPropertyHeader(prop),
-                  const SizedBox(height: 16),
-                  _buildStayDetailsCard(prop),
-                  const SizedBox(height: 16),
-                  _buildContactCard(),
-                  const SizedBox(height: 16),
-                  _buildPriceSummaryCard(prop),
-                  const SizedBox(height: 24),
-                ],
-              ),
-      bottomNavigationBar:
-          prop == null
-              ? null
-              : SafeArea(
-                minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                child: Obx(() {
-                  final isLoading = bookingController.isSubmitting.value;
-                  final message = bookingController.statusMessage.value;
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (isLoading && message.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            message,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: isLoading ? null : _submitEnquiry,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                          child:
-                              isLoading
-                                  ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : Text(buttonLabel),
+      appBar: AppBar(title: Text(prop?.name ?? 'Send inquiry')),
+      body: prop == null
+          ? const Center(child: Text('Property details unavailable'))
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _buildPropertyHeader(prop),
+                const SizedBox(height: 16),
+                _buildStayDetailsCard(prop),
+                const SizedBox(height: 16),
+                _buildContactCard(),
+                const SizedBox(height: 16),
+                _buildPriceSummaryCard(prop),
+                const SizedBox(height: 24),
+              ],
+            ),
+      bottomNavigationBar: prop == null
+          ? null
+          : SafeArea(
+              minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Obx(() {
+                final isLoading = bookingController.isSubmitting.value;
+                final message = bookingController.statusMessage.value;
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (isLoading && message.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          message,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ),
-                    ],
-                  );
-                }),
-              ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _submitInquiry,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(buttonLabel),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
     );
   }
 
@@ -385,7 +473,11 @@ class _EnquiryViewState extends State<EnquiryView> {
     final colors = theme.colorScheme;
     final width = MediaQuery.of(context).size.width;
     final double horizontalPadding = width >= 480 ? 18 : 12;
-    final double maxCardWidth = width >= 960 ? 320 : width >= 720 ? 300 : 260;
+    final double maxCardWidth = width >= 960
+        ? 320
+        : width >= 720
+        ? 300
+        : 260;
     final double cardWidth = math.max(
       200,
       math.min(maxCardWidth, width - (horizontalPadding * 2)),
@@ -399,12 +491,7 @@ class _EnquiryViewState extends State<EnquiryView> {
     final reviews = prop.reviewsCount;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        horizontalPadding,
-        0,
-        horizontalPadding,
-        20,
-      ),
+      padding: EdgeInsets.fromLTRB(horizontalPadding, 0, horizontalPadding, 20),
       child: Center(
         child: Material(
           color: colors.surface,
@@ -414,10 +501,7 @@ class _EnquiryViewState extends State<EnquiryView> {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: () => Get.toNamed(
-              Routes.listingDetail.replaceFirst(
-                ':id',
-                prop.id.toString(),
-              ),
+              Routes.listingDetail.replaceFirst(':id', prop.id.toString()),
               arguments: prop,
             ),
             child: SizedBox(
@@ -598,8 +682,9 @@ class _EnquiryViewState extends State<EnquiryView> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline),
-                      onPressed:
-                          guests > 1 ? () => setState(() => guests--) : null,
+                      onPressed: guests > 1
+                          ? () => setState(() => guests--)
+                          : null,
                     ),
                     Text(
                       '$guests',
@@ -607,10 +692,9 @@ class _EnquiryViewState extends State<EnquiryView> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline),
-                      onPressed:
-                          guests < maxGuests
-                              ? () => setState(() => guests++)
-                              : null,
+                      onPressed: guests < maxGuests
+                          ? () => setState(() => guests++)
+                          : null,
                     ),
                   ],
                 ),
@@ -645,40 +729,68 @@ class _EnquiryViewState extends State<EnquiryView> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Primary guest details',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Full name',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Primary guest details',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: 'Phone',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: nameController,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Full name',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter your full name';
+                  }
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email (optional)',
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Phone',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final v = (value ?? '').trim();
+                  if (v.isEmpty) return 'Please enter your phone number';
+                  final digits = v.replaceAll(RegExp(r'[^0-9+]'), '');
+                  if (digits.replaceAll('+', '').length != 10) {
+                    return 'Enter a valid 10-digit phone number';
+                  }
+                  return null;
+                },
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  final v = (value ?? '').trim();
+                  if (v.isEmpty) return 'Please enter your email address';
+                  if (!GetUtils.isEmail(v)) return 'Enter a valid email';
+                  return null;
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

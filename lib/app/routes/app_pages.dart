@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 import '../bindings/auth_binding.dart';
-import '../bindings/booking_binding.dart';
+import '../bindings/inquiry_binding.dart';
 import '../bindings/home_binding.dart';
 import '../bindings/listing_binding.dart';
 import '../bindings/message_binding.dart';
@@ -17,8 +17,8 @@ import '../ui/views/auth/phone_login_view.dart';
 import '../ui/views/auth/reset_password_view.dart';
 import '../ui/views/auth/signup_view.dart';
 import '../ui/views/auth/verification_view.dart';
-import '../ui/views/enquiry/enquiry_view.dart';
-import '../ui/views/enquiry/enquiry_confirmation_view.dart';
+import '../ui/views/inquiry/inquiry_view.dart';
+import '../ui/views/inquiry/inquiry_confirmation_view.dart';
 import '../ui/views/home/home_shell_view.dart';
 import '../ui/views/listing/listing_detail_view.dart';
 import '../ui/views/listing/location_search_view.dart';
@@ -29,7 +29,7 @@ import '../ui/views/payment/payment_methods_view.dart';
 import '../ui/views/payment/payment_view.dart';
 import '../ui/views/settings/settings_view.dart';
 import '../ui/views/splash/splash_view.dart';
-import '../ui/views/enquiry/enquiry_page.dart';
+import '../ui/views/inquiry/inquiry_page.dart';
 import '../ui/views/tour/tour_view.dart';
 import 'app_routes.dart';
 import 'package:stays_app/features/profile/bindings/profile_binding.dart'
@@ -126,15 +126,15 @@ class AppPages {
       transition: Transition.fadeIn,
     ),
     GetPage(
-      name: Routes.enquiry,
-      page: () => const EnquiryView(),
-      binding: BookingBinding(),
+      name: Routes.inquiry,
+      page: () => const InquiryView(),
+      binding: InquiryBinding(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
-      name: Routes.enquiryConfirmation,
-      page: () => const EnquiryConfirmationView(),
-      binding: BookingBinding(),
+      name: Routes.inquiryConfirmation,
+      page: () => const InquiryConfirmationView(),
+      binding: InquiryBinding(),
       middlewares: [AuthMiddleware()],
     ),
     GetPage(
@@ -217,8 +217,8 @@ class AppPages {
       transition: Transition.cupertino,
     ),
     GetPage(
-      name: Routes.enquiries,
-      page: () => EnquiriesPage(),
+      name: Routes.inquiries,
+      page: () => InquiriesPage(),
       binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),

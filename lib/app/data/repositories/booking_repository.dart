@@ -17,7 +17,11 @@ class BookingRepository {
       AppLogger.error('createBooking failed', error, stackTrace);
       rethrow;
     } catch (error, stackTrace) {
-      AppLogger.error('createBooking encountered an unexpected error', error, stackTrace);
+      AppLogger.error(
+        'createBooking encountered an unexpected error',
+        error,
+        stackTrace,
+      );
       throw ApiException(
         message: 'Unable to create booking. Please try again later.',
         statusCode: 500,

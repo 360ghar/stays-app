@@ -118,8 +118,8 @@ class EditProfileView extends GetView<EditProfileController> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed:
-                          () => controller.pickImage(ImageSource.gallery),
+                      onPressed: () =>
+                          controller.pickImage(ImageSource.gallery),
                       icon: const Icon(Icons.photo_library_outlined),
                       label: const Text('Gallery'),
                     ),
@@ -130,14 +130,13 @@ class EditProfileView extends GetView<EditProfileController> {
               Obx(
                 () => ElevatedButton.icon(
                   onPressed: controller.isSaving.value ? null : controller.save,
-                  icon:
-                      controller.isSaving.value
-                          ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                          : const Icon(Icons.check_circle_outline),
+                  icon: controller.isSaving.value
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.check_circle_outline),
                   label: Text(
                     controller.isSaving.value
                         ? 'Saving changes...'

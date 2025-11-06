@@ -13,14 +13,13 @@ class PreferencesView extends GetView<PreferencesController> {
         actions: [
           Obx(
             () => IconButton(
-              icon:
-                  controller.isSaving.value
-                      ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                      : const Icon(Icons.save_outlined),
+              icon: controller.isSaving.value
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_outlined),
               onPressed: controller.isSaving.value ? null : controller.save,
             ),
           ),
@@ -38,16 +37,15 @@ class PreferencesView extends GetView<PreferencesController> {
               const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
-                children:
-                    controller.supportedThemes
-                        .map(
-                          (mode) => ChoiceChip(
-                            label: Text(mode.capitalizeFirst ?? mode),
-                            selected: controller.themeMode.value == mode,
-                            onSelected: (_) => controller.selectTheme(mode),
-                          ),
-                        )
-                        .toList(),
+                children: controller.supportedThemes
+                    .map(
+                      (mode) => ChoiceChip(
+                        label: Text(mode.capitalizeFirst ?? mode),
+                        selected: controller.themeMode.value == mode,
+                        onSelected: (_) => controller.selectTheme(mode),
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 24),
               _SectionHeader(
@@ -57,20 +55,16 @@ class PreferencesView extends GetView<PreferencesController> {
               const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
-                children:
-                    controller.supportedLanguages
-                        .map(
-                          (entry) => ChoiceChip(
-                            label: Text(entry['label'] ?? entry['code'] ?? ''),
-                            selected:
-                                controller.language.value == entry['code'],
-                            onSelected:
-                                (_) => controller.selectLanguage(
-                                  entry['code'] ?? 'en',
-                                ),
-                          ),
-                        )
-                        .toList(),
+                children: controller.supportedLanguages
+                    .map(
+                      (entry) => ChoiceChip(
+                        label: Text(entry['label'] ?? entry['code'] ?? ''),
+                        selected: controller.language.value == entry['code'],
+                        onSelected: (_) =>
+                            controller.selectLanguage(entry['code'] ?? 'en'),
+                      ),
+                    )
+                    .toList(),
               ),
               const SizedBox(height: 24),
               _SectionHeader(
@@ -113,21 +107,20 @@ class PreferencesView extends GetView<PreferencesController> {
               const SizedBox(height: 24),
               _SectionHeader(
                 title: 'Currency',
-                subtitle: 'Select your preferred currency for enquiries.',
+                subtitle: 'Select your preferred currency for inquiries.',
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: controller.currency.value,
                 decoration: const InputDecoration(labelText: 'Currency'),
-                items:
-                    controller.supportedCurrencies
-                        .map(
-                          (code) => DropdownMenuItem<String>(
-                            value: code,
-                            child: Text(code),
-                          ),
-                        )
-                        .toList(),
+                items: controller.supportedCurrencies
+                    .map(
+                      (code) => DropdownMenuItem<String>(
+                        value: code,
+                        child: Text(code),
+                      ),
+                    )
+                    .toList(),
                 onChanged: (value) {
                   if (value != null) controller.selectCurrency(value);
                 },
@@ -135,14 +128,13 @@ class PreferencesView extends GetView<PreferencesController> {
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 onPressed: controller.isSaving.value ? null : controller.save,
-                icon:
-                    controller.isSaving.value
-                        ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.save_alt_outlined),
+                icon: controller.isSaving.value
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_alt_outlined),
                 label: Text(
                   controller.isSaving.value
                       ? 'Saving preferences...'

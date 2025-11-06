@@ -8,7 +8,7 @@ class ConversationListController extends GetxController {
     super.onInit();
     // Seed some sample data for UI preview
     conversations.assignAll([
-      'Booking #A1 · Host Alice',
+      'Inquiry #A1 · Host Alice',
       'Inquiry · Cozy loft',
       'Re: Check-in time',
     ]);

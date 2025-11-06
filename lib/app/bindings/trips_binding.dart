@@ -8,10 +8,9 @@ import '../data/repositories/booking_repository.dart';
 class TripsBinding extends Bindings {
   @override
   void dependencies() {
-    final bookingsProvider =
-        Get.isRegistered<BookingsProvider>()
-            ? Get.find<BookingsProvider>()
-            : Get.put(BookingsProvider(), permanent: true);
+    final bookingsProvider = Get.isRegistered<BookingsProvider>()
+        ? Get.find<BookingsProvider>()
+        : Get.put(BookingsProvider(), permanent: true);
 
     if (!Get.isRegistered<BookingRepository>()) {
       Get.put<BookingRepository>(

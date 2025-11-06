@@ -103,14 +103,11 @@ class PropertyCard extends StatelessWidget {
     return CachedNetworkImage(
       imageUrl: imageUrl,
       fit: BoxFit.cover,
-      placeholder:
-          (context, url) => Shimmer.fromColors(
-            baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-            highlightColor: colors.surfaceContainerHighest.withValues(
-              alpha: 0.15,
-            ),
-            child: Container(color: colors.surface),
-          ),
+      placeholder: (context, url) => Shimmer.fromColors(
+        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
+        child: Container(color: colors.surface),
+      ),
       errorWidget: (context, url, error) => placeholder,
     );
   }
@@ -246,10 +243,9 @@ class PropertyCard extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: colors.surface.withValues(
-              alpha:
-                  (Theme.of(context).brightness == Brightness.dark)
-                      ? 0.55
-                      : 0.3,
+              alpha: (Theme.of(context).brightness == Brightness.dark)
+                  ? 0.55
+                  : 0.3,
             ),
             shape: BoxShape.circle,
           ),
@@ -298,7 +294,9 @@ class PropertyCardShimmer extends StatelessWidget {
           borderRadius: borderRadius,
           child: Shimmer.fromColors(
             baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.38),
-            highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.16),
+            highlightColor: colors.surfaceContainerHighest.withValues(
+              alpha: 0.16,
+            ),
             child: Container(color: colors.surface),
           ),
         ),

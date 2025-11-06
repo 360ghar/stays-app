@@ -334,25 +334,24 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              _propertyTypeOptions.map((option) {
-                final selected = _selectedTypes.contains(option);
-                return FilterChip(
-                  label: Text(_formatPropertyType(option)),
-                  selected: selected,
-                  selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
-                  checkmarkColor: _colorScheme.onPrimaryContainer,
-                  onSelected: (value) {
-                    setState(() {
-                      if (value) {
-                        _selectedTypes.add(option);
-                      } else {
-                        _selectedTypes.remove(option);
-                      }
-                    });
-                  },
-                );
-              }).toList(),
+          children: _propertyTypeOptions.map((option) {
+            final selected = _selectedTypes.contains(option);
+            return FilterChip(
+              label: Text(_formatPropertyType(option)),
+              selected: selected,
+              selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
+              checkmarkColor: _colorScheme.onPrimaryContainer,
+              onSelected: (value) {
+                setState(() {
+                  if (value) {
+                    _selectedTypes.add(option);
+                  } else {
+                    _selectedTypes.remove(option);
+                  }
+                });
+              },
+            );
+          }).toList(),
         ),
       ],
     );
@@ -362,10 +361,9 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return option
         .split('_')
         .map(
-          (word) =>
-              word.isEmpty
-                  ? word
-                  : '${word[0].toUpperCase()}${word.substring(1)}',
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1)}',
         )
         .join(' ');
   }
@@ -430,16 +428,15 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              quickFilters.map((option) {
-                return FilterChip(
-                  label: Text(option.label),
-                  selected: option.value,
-                  selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
-                  checkmarkColor: _colorScheme.onPrimaryContainer,
-                  onSelected: option.onChanged,
-                );
-              }).toList(),
+          children: quickFilters.map((option) {
+            return FilterChip(
+              label: Text(option.label),
+              selected: option.value,
+              selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
+              checkmarkColor: _colorScheme.onPrimaryContainer,
+              onSelected: option.onChanged,
+            );
+          }).toList(),
         ),
       ],
     );

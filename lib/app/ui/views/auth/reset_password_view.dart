@@ -118,7 +118,9 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                     Text(
                       '• At least 6 characters long\n• Both passwords must match',
                       style: textStyles.bodySmall?.copyWith(
-                        color: colors.onSecondaryContainer.withValues(alpha: 0.9),
+                        color: colors.onSecondaryContainer.withValues(
+                          alpha: 0.9,
+                        ),
                         height: 1.3,
                       ),
                     ),
@@ -182,7 +184,8 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                     Expanded(
                       child: Text(
                         'Your password will be encrypted and stored securely.',
-                        style: textStyles.bodySmall?.copyWith(
+                        style:
+                            textStyles.bodySmall?.copyWith(
                               color: colors.onSurface.withValues(alpha: 0.7),
                             ) ??
                             TextStyle(
@@ -211,81 +214,80 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     final colors = context.colors;
     final textStyles = context.textStyles;
 
-    return Obx(
-      () {
-        final hasError = errorStream.value.isNotEmpty;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: textStyles.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+    return Obx(() {
+      final hasError = errorStream.value.isNotEmpty;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: textStyles.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: colors.onSurface,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              color: context.elevatedSurface(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: hasError ? colors.error : colors.outlineVariant,
+                width: hasError ? 1.5 : 1,
+              ),
+            ),
+            child: TextFormField(
+              controller: controller,
+              obscureText: !this.controller.isPasswordVisible.value,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                hintText: label == 'New Password'
+                    ? 'Enter new password'
+                    : 'Confirm new password',
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
+                prefixIcon: Icon(
+                  Icons.lock_outline,
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    this.controller.isPasswordVisible.value
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                  onPressed: this.controller.togglePasswordVisibility,
+                ),
+                hintStyle: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              style: textStyles.bodyMedium?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
                 color: colors.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: context.elevatedSurface(0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: hasError ? colors.error : colors.outlineVariant,
-                  width: hasError ? 1.5 : 1,
-                ),
+          ),
+          if (hasError)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                errorStream.value,
+                style:
+                    textStyles.bodySmall?.copyWith(color: colors.error) ??
+                    TextStyle(color: colors.error, fontSize: 12),
               ),
-              child: TextFormField(
-                controller: controller,
-                obscureText: !this.controller.isPasswordVisible.value,
-                onChanged: onChanged,
-                decoration: InputDecoration(
-                  hintText: label == 'New Password'
-                      ? 'Enter new password'
-                      : 'Confirm new password',
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.lock_outline,
-                    color: colors.onSurface.withValues(alpha: 0.6),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      this.controller.isPasswordVisible.value
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: colors.onSurface.withValues(alpha: 0.6),
-                    ),
-                    onPressed: this.controller.togglePasswordVisibility,
-                  ),
-                  hintStyle: textStyles.bodyMedium?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                style: textStyles.bodyMedium?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: colors.onSurface,
-                ),
-              ),
-            ),
-            if (hasError)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  errorStream.value,
-                  style: textStyles.bodySmall?.copyWith(color: colors.error) ??
-                      TextStyle(color: colors.error, fontSize: 12),
-                ),
-              )
-            else
-              const SizedBox(height: 4),
-          ],
-        );
-      },
-    );
+            )
+          else
+            const SizedBox(height: 4),
+        ],
+      );
+    });
   }
 
   void _handleResetPassword() {

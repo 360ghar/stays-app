@@ -30,4 +30,3 @@ class LocaleService extends GetxService {
     await _box.write(_countryCodeKey, locale.countryCode ?? '');
   }
 }
-
