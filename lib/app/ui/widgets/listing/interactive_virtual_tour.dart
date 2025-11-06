@@ -10,20 +10,28 @@ class InteractiveVirtualTour extends StatefulWidget {
     this.placeholderImageUrl,
     this.aspectRatio = 0.9,
     this.borderRadius = 16,
+    this.startActive = false,
   });
 
   final String tourUrl;
   final String? placeholderImageUrl;
   final double aspectRatio;
   final double borderRadius;
+  final bool startActive;
 
   @override
   State<InteractiveVirtualTour> createState() => _InteractiveVirtualTourState();
 }
 
 class _InteractiveVirtualTourState extends State<InteractiveVirtualTour> {
-  bool _isInteractive = false;
+  late bool _isInteractive;
   ScrollHoldController? _scrollHoldController;
+
+  @override
+  void initState() {
+    super.initState();
+    _isInteractive = widget.startActive;
+  }
 
   void _holdParentScroll() {
     if (_scrollHoldController != null) return;

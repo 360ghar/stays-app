@@ -84,8 +84,6 @@ class PropertyGridCard extends StatelessWidget {
     final imageUrl = property.displayImage;
     final overlayInset = isCompact ? 12.0 : 14.0;
     final aspectRatio = isCompact ? 2.05 : 3 / 2;
-    final propertyTypeLabel = property.propertyTypeDisplay.trim();
-    final hasPropertyTypeLabel = propertyTypeLabel.isNotEmpty;
 
     Widget placeholder() {
       return Container(
@@ -145,47 +143,11 @@ class PropertyGridCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (hasPropertyTypeLabel)
-              _buildPropertyTypeBadge(overlayInset, propertyTypeLabel),
             if (onFavoriteToggle != null)
               _buildFavoriteButton(context, overlayInset),
             if (property.distanceKm != null && property.distanceKm! > 0)
               _buildDistanceBadge(overlayInset),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPropertyTypeBadge(double inset, String label) {
-    return Positioned(
-      top: inset,
-      left: inset,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isCompact ? 9 : 10,
-            vertical: isCompact ? 4 : 5,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.home_work_outlined, size: 14, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

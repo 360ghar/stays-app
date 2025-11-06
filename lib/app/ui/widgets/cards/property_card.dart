@@ -40,8 +40,6 @@ class PropertyCard extends StatelessWidget {
     final shadowColor = theme.brightness == Brightness.dark
         ? Colors.black.withValues(alpha: 0.3)
         : Colors.black.withValues(alpha: 0.12);
-    final propertyTypeLabel = property.propertyTypeDisplay.trim();
-    final hasPropertyTypeLabel = propertyTypeLabel.isNotEmpty;
 
     return GestureDetector(
       onTap: onTap,
@@ -71,8 +69,6 @@ class PropertyCard extends StatelessWidget {
                   children: [
                     _buildImage(context),
                     _buildGradientOverlay(),
-                    if (hasPropertyTypeLabel)
-                      _buildPropertyTypeBadge(context, propertyTypeLabel),
                     _buildContent(context),
                     if (onFavoriteToggle != null) _buildFavoriteButton(context),
                   ],
@@ -202,38 +198,6 @@ class PropertyCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPropertyTypeBadge(
-    BuildContext context,
-    String propertyTypeLabel,
-  ) {
-    return Positioned(
-      top: 12,
-      left: 12,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.home_work_outlined, color: Colors.white, size: 14),
-            const SizedBox(width: 4),
-            Text(
-              propertyTypeLabel,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

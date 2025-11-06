@@ -60,18 +60,17 @@ class ListingDetailView extends GetView<ListingDetailController> {
                 delegate: SliverChildListDelegate([
                   _buildPrimaryDetails(context, listing),
 
-                  if (listing.hasVirtualTour)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
-                      child: _buildVirtualTourSection(context, listing),
-                    ),
-
                   if (amenities.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 32),
 
                       child: _buildAmenitiesSection(context, amenities),
+                    ),
+
+                  if (listing.hasVirtualTour)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 32),
+                      child: _buildVirtualTourSection(context, listing),
                     ),
 
                   if (features.isNotEmpty)
@@ -87,6 +86,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                       child: _buildHostSection(context, listing),
                     ),
+
+                  Padding(
+                    padding: const EdgeInsets.only(top: 32),
+                    child: _buildLocationSection(context, listing),
+                  ),
 
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
                 ]),
@@ -345,69 +349,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
                 ),
               ),
 
-              Positioned(
-                left: 20,
-
-                right: 20,
-
-                bottom: 28,
-
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                  children: [
-                    if (listing.propertyTypeDisplay.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-
-                          vertical: 10,
-                        ),
-
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-
-                        child: Text(
-                          listing.propertyTypeDisplay,
-
-                          style: Theme.of(
-                            context,
-                          ).textTheme.labelLarge?.copyWith(color: Colors.white),
-                        ),
-                      ),
-
-                    Obx(() {
-                      final index = controller.currentImageIndex.value;
-
-                      final safeIndex = (index % itemCount) + 1;
-
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-
-                          vertical: 8,
-                        ),
-
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.55),
-
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-
-                        child: Text(
-                          '$safeIndex / $itemCount',
-
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(color: Colors.white),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-              ),
+              // Removed property type badge overlay per design request.
             ],
           );
         },
@@ -428,8 +370,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
           const SizedBox(height: 24),
           _buildAboutSection(context, description),
         ],
-        const SizedBox(height: 24),
-        _buildLocationSection(context, listing),
+        // Map relocated to end of details per design request.
       ],
     );
   }
@@ -492,23 +433,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
         ),
       );
     }
-    if ((listing.bathrooms ?? 0) > 0) {
-      final count = listing.bathrooms!;
-      items.add(
-        MapEntry(
-          Icons.bathtub_outlined,
-          '$count ${count == 1 ? 'bath' : 'baths'}',
-        ),
-      );
-    }
-    if ((listing.parkingSpaces ?? 0) > 0) {
-      final count = listing.parkingSpaces!;
-      items.add(MapEntry(Icons.local_parking, '$count parking'));
-    }
-    if ((listing.squareFeet ?? 0) > 0) {
-      final sqft = listing.squareFeet!.toStringAsFixed(0);
-      items.add(MapEntry(Icons.square_foot_outlined, '$sqft sqft'));
-    }
+    // Removed bathroom, parking, and square footage pills per design request.
 
     if (items.isEmpty) return const [];
 
@@ -572,17 +497,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
             placeholderImageUrl: listing.displayImage,
             borderRadius: 16,
             aspectRatio: 0.8,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.open_in_new),
-            label: const Text('Open full tour'),
-            onPressed: () {
-              Get.toNamed(Routes.tour, arguments: listing.virtualTourUrl);
-            },
+            startActive: true,
           ),
         ),
       ],
