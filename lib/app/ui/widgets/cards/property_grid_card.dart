@@ -84,6 +84,8 @@ class PropertyGridCard extends StatelessWidget {
     final imageUrl = property.displayImage;
     final overlayInset = isCompact ? 12.0 : 14.0;
     final aspectRatio = isCompact ? 2.05 : 3 / 2;
+    final propertyTypeLabel = property.propertyTypeDisplay.trim();
+    final hasPropertyTypeLabel = propertyTypeLabel.isNotEmpty;
 
     Widget placeholder() {
       return Container(
@@ -143,7 +145,8 @@ class PropertyGridCard extends StatelessWidget {
                 ),
               ),
             ),
-            if (property.hasVirtualTour == true) _buildTourBadge(overlayInset),
+            if (hasPropertyTypeLabel)
+              _buildPropertyTypeBadge(overlayInset, propertyTypeLabel),
             if (onFavoriteToggle != null)
               _buildFavoriteButton(context, overlayInset),
             if (property.distanceKm != null && property.distanceKm! > 0)
@@ -154,7 +157,7 @@ class PropertyGridCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTourBadge(double inset) {
+  Widget _buildPropertyTypeBadge(double inset, String label) {
     return Positioned(
       top: inset,
       left: inset,
@@ -170,12 +173,12 @@ class PropertyGridCard extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              Icon(Icons.threesixty, size: 14, color: Colors.white),
-              SizedBox(width: 4),
+            children: [
+              const Icon(Icons.home_work_outlined, size: 14, color: Colors.white),
+              const SizedBox(width: 4),
               Text(
-                '360 Tour',
-                style: TextStyle(
+                label,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

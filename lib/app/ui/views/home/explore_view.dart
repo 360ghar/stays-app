@@ -30,9 +30,7 @@ class ExploreView extends GetView<ExploreController> {
               _buildSliverAppBar(context),
               _buildActiveFilters(context),
               _buildBannerSection(),
-              _buildPopularHomes(),
-              _buildNearbyHotels(),
-              _buildRecommendedSection(),
+              _buildPropertiesSection(context),
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
@@ -51,7 +49,7 @@ class ExploreView extends GetView<ExploreController> {
       snap: true,
       backgroundColor: colors.surface,
       elevation: 0,
-      toolbarHeight: 70,
+      toolbarHeight: 64,
       titleSpacing: 16,
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -60,24 +58,28 @@ class ExploreView extends GetView<ExploreController> {
             child: SearchBarWidget(
               placeholder: 'explore.search_placeholder'.tr,
               onTap: controller.navigateToSearch,
+              fontSize: 14,
+              iconSize: 20,
               trailing: TextButton.icon(
                 onPressed: controller.useMyLocation,
-                icon: Icon(Icons.my_location, size: 18, color: colors.primary),
-                label: Text('explore.use_my_location'.tr),
+                icon: Icon(Icons.my_location, size: 16, color: colors.primary),
+                label: Padding(
+                  padding: const EdgeInsets.only(left: 2),
+                  child: Text('explore.use_my_location'.tr),
+                ),
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   foregroundColor: colors.primary,
                   textStyle: textStyles.labelMedium?.copyWith(
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               margin: EdgeInsets.zero,
-              height: 52,
+              height: 48,
               borderRadius: BorderRadius.circular(18),
               shadowColor: colors.shadow.withValues(alpha: 0.08),
               backgroundColor: colors.surface,
@@ -159,89 +161,36 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildPopularHomes() {
+  Widget _buildPropertiesSection(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
         final city = controller.locationName;
         final isLoading = controller.isLoading.value;
-        final properties = controller.popularHomes;
+        final properties = controller.allExploreProperties;
+        final textStyles = context.textStyles;
+        final colors = context.colors;
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           child: Column(
-            key: ValueKey('popular-$city'),
+            key: ValueKey('all-$city-${properties.length}'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 24),
               SectionHeader(
                 title: 'explore.popular_stays'.trParams({'city': city}),
                 onViewAll: () => controller.navigateToAllProperties(city),
+                titleStyle: textStyles.titleMedium?.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: colors.onSurface,
+                ),
               ),
               const SizedBox(height: 16),
               SizedBox(
                 height: 200,
                 child: isLoading
                     ? _buildShimmerList()
-                    : _buildHotelsList(properties, 'popular'),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildNearbyHotels() {
-    return SliverToBoxAdapter(
-      child: Obx(() {
-        final nearbyCity = controller.locationName;
-        final isLoading = controller.isLoading.value;
-        final properties = controller.nearbyHotels;
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: Column(
-            key: ValueKey('nearby-$nearbyCity'),
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 32),
-              SectionHeader(
-                title: 'explore.popular_hotels'.trParams({'city': nearbyCity}),
-                onViewAll: () => controller.navigateToAllProperties(nearbyCity),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: isLoading
-                    ? _buildShimmerList()
-                    : _buildHotelsList(properties, 'nearby'),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildRecommendedSection() {
-    return SliverToBoxAdapter(
-      child: Obx(() {
-        final recommendations = controller.recommendedHotels;
-        if (recommendations.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        final isLoading = controller.isLoading.value;
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 32),
-              SectionHeader(title: 'explore.recommended'.tr),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: isLoading
-                    ? _buildShimmerList()
-                    : _buildHotelsList(recommendations, 'recommended'),
+                    : _buildHotelsList(properties, 'all'),
               ),
             ],
           ),

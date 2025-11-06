@@ -17,6 +17,8 @@ class SearchBarWidget extends StatelessWidget {
   final double height;
   final BorderRadiusGeometry? borderRadius;
   final Color? shadowColor;
+  final double fontSize;
+  final double iconSize;
 
   const SearchBarWidget({
     super.key,
@@ -34,6 +36,8 @@ class SearchBarWidget extends StatelessWidget {
     this.height = 50,
     this.borderRadius,
     this.shadowColor,
+    this.fontSize = 16,
+    this.iconSize = 24,
   });
 
   @override
@@ -74,7 +78,7 @@ class SearchBarWidget extends StatelessWidget {
                       Icon(
                         Icons.search_rounded,
                         color: colors.onSurfaceVariant,
-                        size: 24,
+                        size: iconSize,
                       ),
                 ),
                 const SizedBox(width: 12),
@@ -85,15 +89,16 @@ class SearchBarWidget extends StatelessWidget {
                           onChanged: onChanged,
                           onSubmitted: onSubmitted,
                           autofocus: true,
+                          maxLines: 1,
                           style: textStyles.bodyMedium?.copyWith(
-                            fontSize: 16,
+                            fontSize: fontSize,
                             fontWeight: FontWeight.w500,
                             color: colors.onSurface,
                           ),
                           decoration: InputDecoration(
                             hintText: placeholder,
                             hintStyle: textStyles.bodyMedium?.copyWith(
-                              fontSize: 16,
+                              fontSize: fontSize,
                               color: hintColor,
                               fontWeight: FontWeight.w400,
                             ),
@@ -105,10 +110,12 @@ class SearchBarWidget extends StatelessWidget {
                       : Text(
                           placeholder,
                           style: textStyles.bodyMedium?.copyWith(
-                            fontSize: 16,
+                            fontSize: fontSize,
                             color: hintColor,
                             fontWeight: FontWeight.w400,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                 ),
                 if (trailing != null)

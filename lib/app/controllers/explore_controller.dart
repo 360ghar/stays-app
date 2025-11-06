@@ -33,6 +33,21 @@ class ExploreController extends GetxController {
       : _locationService.locationName;
   String get nearbyCity => _selectedCityNormalized();
   List<Property> get recommendedHotels => nearbyHotels.toList();
+  List<Property> get allExploreProperties {
+    final seen = <int>{};
+    final combined = <Property>[];
+    for (final property in popularHomes) {
+      if (seen.add(property.id)) {
+        combined.add(property);
+      }
+    }
+    for (final property in nearbyHotels) {
+      if (seen.add(property.id)) {
+        combined.add(property);
+      }
+    }
+    return combined;
+  }
 
   Future<void> refreshLocation() async {
     await _locationService.getCurrentLocation(ensurePrecise: true);

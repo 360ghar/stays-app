@@ -86,7 +86,7 @@
   "explore": {
     "search_placeholder": "स्टे खोजें",
     "use_my_location": "मेरी लोकेशन का उपयोग करें",
-    "popular_stays": "@city के पास लोकप्रिय स्टे",
+    "popular_stays": "@city में लोकप्रिय स्टे",
     "popular_hotels": "@city के पास लोकप्रिय होटल",
     "recommended": "आपके लिए अनुशंसित",
     "no_results": "अभी कोई स्टे उपलब्ध नहीं।"

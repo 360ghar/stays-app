@@ -6,12 +6,14 @@ class SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onViewAll;
   final EdgeInsetsGeometry padding;
+  final TextStyle? titleStyle;
 
   const SectionHeader({
     super.key,
     required this.title,
     this.onViewAll,
     this.padding = const EdgeInsets.symmetric(horizontal: 20),
+    this.titleStyle,
   });
 
   @override
@@ -24,11 +26,12 @@ class SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: context.textStyles.titleMedium?.copyWith(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: context.colors.onSurface,
-              ),
+              style: titleStyle ??
+                  context.textStyles.titleMedium?.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: context.colors.onSurface,
+                  ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
