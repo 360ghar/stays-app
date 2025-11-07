@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -627,6 +628,23 @@ class _BookingImageHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    Widget buildPlaceholder() => Container(
+          color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.hotel,
+            size: 40,
+            color: colors.onSurface.withValues(alpha: 0.5),
+          ),
+        );
+    final imageWidget = imageUrl.isEmpty
+        ? buildPlaceholder()
+        : CachedNetworkImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => buildPlaceholder(),
+            errorWidget: (context, url, error) => buildPlaceholder(),
+          );
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
       child: AspectRatio(
@@ -634,18 +652,7 @@ class _BookingImageHeader extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (imageUrl.isNotEmpty)
-              Image.network(imageUrl, fit: BoxFit.cover)
-            else
-              Container(
-                color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.hotel,
-                  size: 40,
-                  color: colors.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
+            imageWidget,
             Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(

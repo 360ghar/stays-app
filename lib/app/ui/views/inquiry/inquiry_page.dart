@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -107,49 +108,30 @@ class InquiriesPage extends StatelessWidget {
             }
 
             final filtered = _filteredBookings(_controller.pastBookings);
-            final stats = _computeStats(filtered);
 
             if (filtered.isEmpty) {
               return RefreshIndicator(
                 onRefresh: () =>
                     _controller.loadPastBookings(forceRefresh: true),
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 24,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
                   children: [
-                    _TravelStatsCard(
-                      totalSpent: stats.totalSpent,
-                      totalStays: stats.totalStays,
-                      topDestination: stats.topDestination,
-                    ),
-                    const SizedBox(height: 32),
                     _EmptyState(onReset: () => _statusFilter.value = null),
                   ],
                 ),
               );
             }
 
-            final items = _buildListItems(filtered, stats);
+            final items = _buildListItems(filtered);
 
             return RefreshIndicator(
               onRefresh: () => _controller.loadPastBookings(forceRefresh: true),
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
                   switch (item.type) {
-                    case _ListItemType.stats:
-                      return _TravelStatsCard(
-                        totalSpent: item.stats!.totalSpent,
-                        totalStays: item.stats!.totalStays,
-                        topDestination: item.stats!.topDestination,
-                      );
                     case _ListItemType.spacing:
                       return SizedBox(height: item.spacing ?? 16);
                     case _ListItemType.yearHeader:
@@ -224,40 +206,10 @@ class InquiriesPage extends StatelessWidget {
     }).toList();
   }
 
-  _TravelStats _computeStats(List<Map<String, dynamic>> bookings) {
-    final totalSpent = bookings.fold<num>(
-      0,
-      (sum, booking) => sum + (booking['totalAmount'] as num? ?? 0),
-    );
-    final totalStays = bookings.length;
-    final destinationCounts = <String, int>{};
-    for (final booking in bookings) {
-      final location = (booking['location'] ?? '').toString();
-      if (location.isEmpty) continue;
-      destinationCounts.update(
-        location,
-        (value) => value + 1,
-        ifAbsent: () => 1,
-      );
-    }
-    String topDestination = '–';
-    if (destinationCounts.isNotEmpty) {
-      destinationCounts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      topDestination = destinationCounts.entries.first.key;
-    }
-    return _TravelStats(
-      totalSpent: totalSpent.toDouble(),
-      totalStays: totalStays,
-      topDestination: topDestination,
-    );
-  }
-
   List<_ListItem> _buildListItems(
     List<Map<String, dynamic>> bookings,
-    _TravelStats stats,
   ) {
-    final items = <_ListItem>[_ListItem.stats(stats)];
+    final items = <_ListItem>[];
     final grouped = <int, List<Map<String, dynamic>>>{};
     final sorted = List<Map<String, dynamic>>.from(bookings)
       ..sort((a, b) {
@@ -276,7 +228,9 @@ class InquiriesPage extends StatelessWidget {
     final years = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
     var animationIndex = 0;
     for (final year in years) {
-      items.add(_ListItem.spacing(items.length == 1 ? 20 : 24));
+      if (items.isNotEmpty) {
+        items.add(_ListItem.spacing(24));
+      }
       items.add(_ListItem.year(year));
       items.add(_ListItem.spacing(12));
       for (final booking in grouped[year]!) {
@@ -350,18 +304,6 @@ class InquiriesPage extends StatelessWidget {
   }
 }
 
-class _TravelStats {
-  const _TravelStats({
-    required this.totalSpent,
-    required this.totalStays,
-    required this.topDestination,
-  });
-
-  final double totalSpent;
-  final int totalStays;
-  final String topDestination;
-}
-
 class _ListItem {
   const _ListItem._(
     this.type, {
@@ -369,7 +311,6 @@ class _ListItem {
     this.year,
     this.spacing,
     this.animationIndex = 0,
-    this.stats,
   });
 
   final _ListItemType type;
@@ -377,10 +318,6 @@ class _ListItem {
   final int? year;
   final double? spacing;
   final int animationIndex;
-  final _TravelStats? stats;
-
-  factory _ListItem.stats(_TravelStats stats) =>
-      _ListItem._(_ListItemType.stats, stats: stats);
   factory _ListItem.year(int year) =>
       _ListItem._(_ListItemType.yearHeader, year: year);
   factory _ListItem.booking(
@@ -395,164 +332,7 @@ class _ListItem {
       _ListItem._(_ListItemType.spacing, spacing: value);
 }
 
-enum _ListItemType { stats, yearHeader, booking, spacing }
-
-class _TravelStatsCard extends StatelessWidget {
-  const _TravelStatsCard({
-    required this.totalSpent,
-    required this.totalStays,
-    required this.topDestination,
-  });
-
-  final double totalSpent;
-  final int totalStays;
-  final String topDestination;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final currencyFormat = NumberFormat.currency(
-      locale: 'en_IN',
-      symbol: '₹',
-      decimalDigits: 0,
-    );
-    final items = [
-      _StatItemData(
-        icon: Icons.hotel_rounded,
-        background: const Color(0xFFEAF4FF),
-        iconColor: const Color(0xFF60A5FA),
-        value: '$totalStays',
-        label: 'Total stays',
-      ),
-      _StatItemData(
-        icon: Icons.currency_rupee_rounded,
-        background: const Color(0xFFE9FBE7),
-        iconColor: const Color(0xFF15803D),
-        value: currencyFormat.format(totalSpent),
-        label: 'Total spent',
-      ),
-      _StatItemData(
-        icon: Icons.place_rounded,
-        background: const Color(0xFFFFF4DB),
-        iconColor: const Color(0xFFEA580C),
-        value: topDestination.isEmpty ? '–' : topDestination,
-        label: 'Top destination',
-      ),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Your Travel Stats',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 18,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: items
-                .map(
-                  (item) => Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: _StatItem(data: item),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatItemData {
-  const _StatItemData({
-    required this.icon,
-    required this.background,
-    required this.iconColor,
-    required this.value,
-    required this.label,
-  });
-
-  final IconData icon;
-  final Color background;
-  final Color iconColor;
-  final String value;
-  final String label;
-}
-
-class _StatItem extends StatelessWidget {
-  const _StatItem({required this.data});
-
-  final _StatItemData data;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: data.background,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(data.icon, color: data.iconColor, size: 22),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            data.value,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: theme.colorScheme.onSurface,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            data.label,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w400,
-              fontSize: 12,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-}
+enum _ListItemType { yearHeader, booking, spacing }
 
 class _BookingCard extends StatelessWidget {
   const _BookingCard({
@@ -574,63 +354,65 @@ class _BookingCard extends StatelessWidget {
     final imageUrl = (booking['image'] ?? '').toString();
     final dateRange = _formatDateRange(booking);
     final guestsLabel = _formatGuests(booking);
+    Widget buildImagePlaceholder() => Container(
+          color: colors.surfaceVariant,
+          alignment: Alignment.center,
+          child: Icon(
+            Icons.photo,
+            size: 28,
+            color: colors.onSurface.withValues(alpha: 0.5),
+          ),
+        );
+    Widget buildImage() {
+      if (imageUrl.isEmpty) return buildImagePlaceholder();
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => buildImagePlaceholder(),
+        errorWidget: (context, url, error) => buildImagePlaceholder(),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: colors.outlineVariant.withValues(alpha: 0.4),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               child: SizedBox(
-                width: 96,
-                height: 96,
+                width: 80,
+                height: 80,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: colors.surfaceVariant,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          Icons.photo,
-                          size: 28,
-                          color: colors.onSurface.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
+                    buildImage(),
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 6,
+                      right: 6,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: badgeColor,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 6,
+                            vertical: 2,
                           ),
                           child: Text(
                             _statusBadgeLabel(statusCategory),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
-                              fontSize: 10,
+                              fontSize: 8.5,
                               color: Colors.white,
                             ),
                           ),
@@ -641,100 +423,92 @@ class _BookingCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    (booking['hotelName'] ?? 'Stay').toString(),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                      color: colors.onSurface,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    (booking['location'] ?? '').toString(),
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w400,
-                      fontSize: 13,
-                      color: colors.onSurface.withValues(alpha: 0.7),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              (booking['hotelName'] ?? 'Stay').toString(),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14.5,
+                                color: colors.onSurface,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              (booking['location'] ?? '').toString(),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: 11.5,
+                                color: colors.onSurface.withValues(alpha: 0.7),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      Icon(
-                        Icons.calendar_today_rounded,
-                        size: 15,
-                        color: colors.onSurface.withValues(alpha: 0.6),
+                      _DetailChip(
+                        icon: Icons.calendar_today_rounded,
+                        label: dateRange,
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          dateRange,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                            color: colors.onSurface,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _DetailChip(
+                            icon: Icons.group_rounded,
+                            label: guestsLabel,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.group_rounded,
-                        size: 15,
-                        color: colors.onSurface.withValues(alpha: 0.6),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        guestsLabel,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w400,
-                          fontSize: 12,
-                          color: colors.onSurface.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        priceLabel,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                          color: colors.onSurface,
-                        ),
-                      ),
-                      if (onCancel != null)
-                        TextButton(
-                          onPressed: onCancel,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.redAccent,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                          const SizedBox(width: 8),
+                          Text(
+                            priceLabel,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: colors.primary,
                             ),
-                            textStyle: const TextStyle(fontSize: 13),
                           ),
-                          child: const Text('Cancel'),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
+                  if (onCancel != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: onCancel,
+                        style: TextButton.styleFrom(
+                          foregroundColor: colors.error,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          textStyle: const TextStyle(fontSize: 12),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -820,4 +594,41 @@ class _StatusOption {
 
   final String? value;
   final String label;
+}
+
+class _DetailChip extends StatelessWidget {
+  const _DetailChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 12,
+            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

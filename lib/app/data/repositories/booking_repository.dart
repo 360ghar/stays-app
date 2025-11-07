@@ -103,6 +103,31 @@ class BookingRepository {
     return Booking.fromJson(_extractBookingPayload(data));
   }
 
+  Future<void> cancelBooking({
+    required int bookingId,
+    String reason = 'User cancelled the inquiry',
+  }) async {
+    try {
+      await _provider.cancelBooking(
+        bookingId: bookingId,
+        reason: reason,
+      );
+    } on ApiException catch (error, stackTrace) {
+      AppLogger.error('cancelBooking failed', error, stackTrace);
+      rethrow;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'cancelBooking encountered an unexpected error',
+        error,
+        stackTrace,
+      );
+      throw ApiException(
+        message: 'Unable to cancel inquiry. Please try again later.',
+        statusCode: 500,
+      );
+    }
+  }
+
   Map<String, dynamic> _extractBookingPayload(Map<String, dynamic> source) {
     if (source['booking'] is Map<String, dynamic>) {
       return Map<String, dynamic>.from(source['booking'] as Map);

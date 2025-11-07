@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import '../controllers/filter_controller.dart';
 import '../controllers/trips_controller.dart';
 import '../data/providers/bookings_provider.dart';
+import '../data/providers/properties_provider.dart';
 import '../data/repositories/booking_repository.dart';
+import '../data/repositories/properties_repository.dart';
 
 class TripsBinding extends Bindings {
   @override
@@ -16,6 +18,17 @@ class TripsBinding extends Bindings {
       Get.put<BookingRepository>(
         BookingRepository(provider: bookingsProvider),
         permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<PropertiesProvider>()) {
+      Get.lazyPut<PropertiesProvider>(() => PropertiesProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<PropertiesRepository>()) {
+      Get.lazyPut<PropertiesRepository>(
+        () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
+        fenix: true,
       );
     }
 

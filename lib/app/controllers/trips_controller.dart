@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 
 import '../data/models/unified_filter_model.dart';
 import '../data/models/booking_model.dart';
+import '../data/models/property_model.dart';
 import '../data/repositories/booking_repository.dart';
+import '../data/repositories/properties_repository.dart';
 import 'filter_controller.dart';
 import '../utils/exceptions/app_exceptions.dart';
 import '../utils/logger/app_logger.dart';
@@ -14,6 +16,7 @@ class TripsController extends GetxController {
   final RxBool isLoading = false.obs;
 
   late final BookingRepository _bookingRepository;
+  PropertiesRepository? _propertiesRepository;
   FilterController? _filterController;
 
   final List<Map<String, dynamic>> _allBookings = [];
@@ -24,6 +27,11 @@ class TripsController extends GetxController {
   void onInit() {
     super.onInit();
     _bookingRepository = Get.find<BookingRepository>();
+    if (Get.isRegistered<PropertiesRepository>()) {
+      _propertiesRepository = Get.find<PropertiesRepository>();
+    } else {
+      AppLogger.warning('PropertiesRepository not found for TripsController');
+    }
     _initializeFilterSync();
     loadPastBookings();
   }
@@ -62,6 +70,7 @@ class TripsController extends GetxController {
       final bookings = await _bookingRepository.fetchBookings();
       final mapped = bookings.map(_mapBooking).toList()
         ..sort(_bookingComparator);
+      await _enrichBookingsWithProperties(mapped);
       _allBookings
         ..clear()
         ..addAll(mapped);
@@ -116,6 +125,88 @@ class TripsController extends GetxController {
     };
   }
 
+  Future<void> _enrichBookingsWithProperties(
+    List<Map<String, dynamic>> bookings,
+  ) async {
+    if (_propertiesRepository == null) return;
+    final targets = bookings
+        .where(_needsPropertyHydration)
+        .map((booking) => booking['propertyId'])
+        .whereType<int>()
+        .toSet();
+    if (targets.isEmpty) return;
+
+    final fetchedEntries = await Future.wait(
+      targets.map((propertyId) async {
+        try {
+          final property = await _propertiesRepository!.getDetails(propertyId);
+          return MapEntry(propertyId, property);
+        } catch (error, stackTrace) {
+          AppLogger.error(
+            'Failed to load property $propertyId for bookings',
+            error,
+            stackTrace,
+          );
+          return null;
+        }
+      }),
+    );
+    final propertyById = <int, Property>{};
+    for (final entry in fetchedEntries) {
+      if (entry == null) continue;
+      propertyById[entry.key] = entry.value;
+    }
+    if (propertyById.isEmpty) return;
+
+    for (final booking in bookings) {
+      final propertyId = booking['propertyId'];
+      if (propertyId is! int) continue;
+      final property = propertyById[propertyId];
+      if (property == null) continue;
+      booking
+        ..['hotelName'] = property.name
+        ..['image'] = property.displayImage ?? ''
+        ..['location'] = property.fullAddress
+        ..['property'] = property;
+    }
+  }
+
+  bool _needsPropertyHydration(Map<String, dynamic> booking) {
+    final image = booking['image']?.toString() ?? '';
+    final title = booking['hotelName']?.toString() ?? '';
+    final location = booking['location']?.toString() ?? '';
+    return image.isEmpty || title == 'Stay' || location.isEmpty;
+  }
+
+  _BookingSnapshot? _setBookingStatusLocally(
+    String bookingId, {
+    required String status,
+  }) {
+    final index = _allBookings.indexWhere(
+      (booking) => booking['id'] == bookingId,
+    );
+    if (index == -1) return null;
+    final previous = Map<String, dynamic>.from(_allBookings[index]);
+    final updated = Map<String, dynamic>.from(previous)..['status'] = status;
+    _allBookings[index] = updated;
+
+    final pastIndex = pastBookings.indexWhere(
+      (booking) => booking['id'] == bookingId,
+    );
+    if (pastIndex != -1) {
+      pastBookings[pastIndex] = Map<String, dynamic>.from(updated);
+    }
+    _applyFilters();
+    return _BookingSnapshot(index: index, booking: previous);
+  }
+
+  void _restoreBookingSnapshot(_BookingSnapshot? snapshot) {
+    if (snapshot == null) return;
+    final insertIndex = snapshot.index.clamp(0, _allBookings.length);
+    _allBookings.insert(insertIndex, snapshot.booking);
+    _applyFilters();
+  }
+
   void _applyFilters() {
     if (_allBookings.isEmpty) {
       pastBookings.clear();
@@ -166,18 +257,41 @@ class TripsController extends GetxController {
       return;
     }
 
-    final before = _allBookings.length;
-    _allBookings.removeWhere((booking) => booking['id'] == bookingId);
-    pastBookings.removeWhere((booking) => booking['id'] == bookingId);
-    if (before != _allBookings.length) {
-      _applyFilters();
+    final parsedId = int.tryParse(bookingId);
+    if (parsedId == null) {
+      Get.snackbar(
+        'Unable to cancel',
+        'This inquiry is missing a valid identifier.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final snapshot = _setBookingStatusLocally(
+      bookingId,
+      status: 'cancelled',
+    );
+    try {
+      await _bookingRepository.cancelBooking(bookingId: parsedId);
       Get.snackbar(
         'Inquiry cancelled',
         'Your inquiry has been cancelled.',
         snackPosition: SnackPosition.BOTTOM,
       );
-    } else {
-      pastBookings.refresh();
+    } on ApiException catch (error) {
+      _restoreBookingSnapshot(snapshot);
+      Get.snackbar(
+        'Unable to cancel',
+        error.message,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (_) {
+      _restoreBookingSnapshot(snapshot);
+      Get.snackbar(
+        'Unable to cancel',
+        'We could not cancel this inquiry. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -388,4 +502,10 @@ class TripsController extends GetxController {
     }
     return locations.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
+}
+
+class _BookingSnapshot {
+  const _BookingSnapshot({required this.index, required this.booking});
+  final int index;
+  final Map<String, dynamic> booking;
 }
