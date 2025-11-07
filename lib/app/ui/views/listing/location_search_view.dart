@@ -7,8 +7,6 @@ class LocationSearchView extends GetView<LocationSearchController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is available if no binding provided
-    Get.put<LocationSearchController>(LocationSearchController());
     return Scaffold(
       appBar: AppBar(title: const Text('Search location')),
       body: Column(

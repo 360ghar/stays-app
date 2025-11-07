@@ -9,18 +9,34 @@ import '../data/repositories/wishlist_repository.dart';
 class ListingBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<PropertiesProvider>(() => PropertiesProvider());
-    Get.lazyPut<PropertiesRepository>(
-      () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
-    );
-    Get.lazyPut<SwipesProvider>(() => SwipesProvider());
-    Get.put<WishlistRepository>(
-      WishlistRepository(provider: Get.find<SwipesProvider>()),
-      permanent: true,
-    );
-    Get.lazyPut<ListingDetailController>(
-      () =>
-          ListingDetailController(repository: Get.find<PropertiesRepository>()),
-    );
+    if (!Get.isRegistered<PropertiesProvider>()) {
+      Get.lazyPut<PropertiesProvider>(() => PropertiesProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<PropertiesRepository>()) {
+      Get.lazyPut<PropertiesRepository>(
+        () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<SwipesProvider>()) {
+      Get.lazyPut<SwipesProvider>(() => SwipesProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<WishlistRepository>()) {
+      Get.lazyPut<WishlistRepository>(
+        () => WishlistRepository(provider: Get.find<SwipesProvider>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<ListingDetailController>()) {
+      Get.lazyPut<ListingDetailController>(
+        () => ListingDetailController(
+          repository: Get.find<PropertiesRepository>(),
+        ),
+      );
+    }
   }
 }

@@ -17,15 +17,20 @@ class PropertiesRepository {
     double radiusKm = 10,
     Map<String, dynamic>? filters,
   }) async {
-    double la = lat ?? 19.0760;
-    double ln = lng ?? 72.8777;
-    try {
-      final loc = Get.find<LocationService>();
-      if (loc.latitude != null && loc.longitude != null) {
-        la = loc.latitude!;
-        ln = loc.longitude!;
-      }
-    } catch (_) {}
+    const defaultLat = 19.0760;
+    const defaultLng = 72.8777;
+
+    double? la = lat;
+    double? ln = lng;
+    if (la == null || ln == null) {
+      try {
+        final loc = Get.find<LocationService>();
+        la ??= loc.latitude;
+        ln ??= loc.longitude;
+      } catch (_) {}
+    }
+    la ??= defaultLat;
+    ln ??= defaultLng;
     final queryFilters = <String, dynamic>{...?filters}
       ..removeWhere((key, value) => value == null);
     queryFilters.putIfAbsent('purpose', () => 'short_stay');

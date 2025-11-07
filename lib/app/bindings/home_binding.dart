@@ -7,6 +7,7 @@ import '../bindings/profile_binding.dart' as profile_binding;
 import '../controllers/auth/auth_controller.dart';
 import '../controllers/explore_controller.dart';
 import '../controllers/filter_controller.dart';
+import '../controllers/listing/location_search_controller.dart';
 import '../controllers/listing/listing_controller.dart';
 import '../controllers/navigation_controller.dart';
 import '../data/providers/properties_provider.dart';
@@ -86,6 +87,13 @@ class HomeBinding extends Bindings {
     if (!Get.isRegistered<ListingController>()) {
       Get.lazyPut<ListingController>(
         () => ListingController(repository: Get.find<PropertiesRepository>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<LocationSearchController>()) {
+      Get.lazyPut<LocationSearchController>(
+        () => LocationSearchController(),
         fenix: true,
       );
     }
