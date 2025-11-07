@@ -36,9 +36,9 @@ class ProfileView extends GetView<ProfileController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         _buildCompletionCard(context),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         _buildStatsRow(context),
                         const SizedBox(height: 24),
                         _buildSection(
@@ -56,12 +56,6 @@ class ProfileView extends GetView<ProfileController> {
                               title: 'Inquiries',
                               subtitle: 'Review your submitted stay requests',
                               onTap: controller.navigateToInquiries,
-                            ),
-                            _MenuTile(
-                              icon: Icons.credit_card,
-                              title: 'Payment methods',
-                              subtitle: 'Manage saved cards and UPI IDs',
-                              onTap: () => Get.toNamed(Routes.paymentMethods),
                             ),
                           ],
                         ),
@@ -130,38 +124,28 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  SliverAppBar _buildHeader(BuildContext context) {
+  SliverToBoxAdapter _buildHeader(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return SliverAppBar(
-      automaticallyImplyLeading: false,
-      backgroundColor: colorScheme.surface,
-      floating: false,
-      pinned: true,
-      expandedHeight: 220,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Obx(
-          () => Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  colorScheme.surface,
-                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-                ],
+    return SliverToBoxAdapter(
+      child: Obx(
+        () => Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            border: Border(
+              bottom: BorderSide(
+                color: colorScheme.outlineVariant.withValues(alpha: 0.4),
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 56, 20, 24),
-              child: ProfileHeader(
-                initials: controller.initials.value,
-                userName: controller.displayName.value,
-                userType: controller.roleLabel.value,
-                userEmail: controller.email.value,
-                isLoading: controller.isLoading.value,
-                avatarUrl: controller.avatarUrl.value,
-              ),
-            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: ProfileHeader(
+            initials: controller.initials.value,
+            userName: controller.displayName.value,
+            userType: controller.roleLabel.value,
+            userEmail: controller.email.value,
+            isLoading: controller.isLoading.value,
+            avatarUrl: controller.avatarUrl.value,
+            dense: false,
           ),
         ),
       ),
@@ -173,27 +157,24 @@ class ProfileView extends GetView<ProfileController> {
     final textTheme = Theme.of(context).textTheme;
     return Obx(
       () => Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.75),
-          borderRadius: BorderRadius.circular(24),
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.4),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.verified_user_outlined, color: colorScheme.primary),
+                Icon(
+                  Icons.assignment_turned_in_outlined,
+                  color: colorScheme.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -212,17 +193,17 @@ class ProfileView extends GetView<ProfileController> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: LinearProgressIndicator(
                 value: controller.completion.value.clamp(0, 1),
-                minHeight: 10,
+                minHeight: 6,
                 backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                 valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               controller.completion.value >= 0.9
                   ? 'Great! Your profile is ready for the next stay.'
@@ -238,38 +219,61 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildStatsRow(BuildContext context) {
-    return Obx(
-      () => Row(
-        children: [
-          Expanded(
-            child: _StatCard(
-              label: 'Inquiries',
-              value: controller.totalTrips.value.toString(),
-              icon: Icons.flight_takeoff_outlined,
-              color: const Color(0xFF60A5FA),
+    return Obx(() {
+      final stats = [
+        _StatData(
+          label: 'Inquiries',
+          value: controller.totalTrips.value.toString(),
+        ),
+        _StatData(
+          label: 'Nights',
+          value: controller.totalNights.value.toString(),
+        ),
+        _StatData(
+          label: 'Spent',
+          value: CurrencyHelper.format(controller.totalSpent.value),
+        ),
+      ];
+      final colorScheme = Theme.of(context).colorScheme;
+      final textTheme = Theme.of(context).textTheme;
+      return Row(
+        children: List.generate(stats.length, (index) {
+          final stat = stats[index];
+          final isLast = index == stats.length - 1;
+          return Expanded(
+            child: Container(
+              margin: EdgeInsets.only(right: isLast ? 0 : 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    stat.value,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    stat.label,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              label: 'Nights',
-              value: controller.totalNights.value.toString(),
-              icon: Icons.nightlight_round,
-              color: const Color(0xFF10B981),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _StatCard(
-              label: 'Spent',
-              value: CurrencyHelper.format(controller.totalSpent.value),
-              icon: Icons.payments_outlined,
-              color: const Color(0xFFF59E0B),
-            ),
-          ),
-        ],
-      ),
-    );
+          );
+        }).toList(),
+      );
+    });
   }
 
   Widget _buildSection(
@@ -287,8 +291,16 @@ class ProfileView extends GetView<ProfileController> {
         ),
         const SizedBox(height: 12),
         Material(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(24),
+          color: Theme.of(context).colorScheme.surface,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(
+              color: Theme.of(context)
+                  .colorScheme
+                  .outlineVariant
+                  .withValues(alpha: 0.5),
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Column(
             children: tiles.asMap().entries.map((entry) {
               final isLast = entry.key == tiles.length - 1;
@@ -373,61 +385,14 @@ class ProfileView extends GetView<ProfileController> {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
+class _StatData {
+  const _StatData({
     required this.label,
     required this.value,
-    required this.icon,
-    required this.color,
   });
 
   final String label;
   final String value;
-  final IconData icon;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.4),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _MenuTile extends StatelessWidget {
@@ -458,10 +423,10 @@ class _MenuTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.12),
+                color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Icon(icon, color: colorScheme.primary),
+              child: Icon(icon, color: colorScheme.onSurface),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -487,7 +452,7 @@ class _MenuTile extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ],
         ),

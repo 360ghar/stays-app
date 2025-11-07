@@ -6,6 +6,7 @@ class ProfileHeader extends StatelessWidget {
   final String userType;
   final String userEmail;
   final bool isLoading;
+  final bool dense;
   final String? avatarUrl;
 
   const ProfileHeader({
@@ -16,17 +17,27 @@ class ProfileHeader extends StatelessWidget {
     required this.userEmail,
     this.isLoading = false,
     this.avatarUrl,
+    this.dense = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final horizontalPadding = dense ? 8.0 : 16.0;
+    final verticalPadding = dense ? 6.0 : 12.0;
+    // Scale avatar back to roughly 70% of the previous size.
+    final avatarSize = dense ? 60.0 : 90.0;
+    final avatarRadius = avatarSize / 2;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.2),
         ),
@@ -35,22 +46,15 @@ class ProfileHeader extends StatelessWidget {
         children: [
           // Avatar
           Container(
-            width: 64,
-            height: 64,
+            width: avatarSize,
+            height: avatarSize,
             decoration: BoxDecoration(
               color: theme.colorScheme.primary,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: avatarUrl != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(32),
+                    borderRadius: BorderRadius.circular(avatarRadius),
                     child: Image.network(
                       avatarUrl!,
                       fit: BoxFit.cover,
@@ -61,26 +65,18 @@ class ProfileHeader extends StatelessWidget {
                 : _buildInitialsAvatar(theme),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 10),
 
           // User Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 if (isLoading) ...[
                   Container(
-                    width: 140,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 80,
-                    height: 14,
+                    width: 120,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.outline.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(4),
@@ -90,45 +86,21 @@ class ProfileHeader extends StatelessWidget {
                   Text(
                     userName,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: userType == 'Superhost'
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.secondary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          userType,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: userType == 'Superhost'
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (userEmail.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       userEmail,
-                      style: theme.textTheme.bodySmall?.copyWith(
+                      style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
+                          alpha: 0.9,
                         ),
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ],

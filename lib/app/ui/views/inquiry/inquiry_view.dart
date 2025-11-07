@@ -406,22 +406,27 @@ class _InquiryViewState extends State<InquiryView> {
   Widget build(BuildContext context) {
     final prop = property;
     const buttonLabel = 'Send Inquiry';
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: colors.surface,
       appBar: AppBar(title: Text(prop?.name ?? 'Send inquiry')),
       body: prop == null
           ? const Center(child: Text('Property details unavailable'))
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _buildPropertyHeader(prop),
-                const SizedBox(height: 16),
-                _buildStayDetailsCard(prop),
-                const SizedBox(height: 16),
-                _buildContactCard(),
-                const SizedBox(height: 16),
-                _buildPriceSummaryCard(prop),
-                const SizedBox(height: 24),
-              ],
+          : Container(
+              color: colors.surface,
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _buildPropertyHeader(prop),
+                  const SizedBox(height: 16),
+                  _buildStayDetailsCard(prop),
+                  const SizedBox(height: 16),
+                  _buildContactCard(),
+                  const SizedBox(height: 16),
+                  _buildPriceSummaryCard(prop),
+                  const SizedBox(height: 24),
+                ],
+              ),
             ),
       bottomNavigationBar: prop == null
           ? null

@@ -66,12 +66,13 @@ class InquiriesPage extends StatelessWidget {
     final theme = Theme.of(context);
     final textTheme = GoogleFonts.poppinsTextTheme(theme.textTheme);
 
+    final scaffoldColor = theme.colorScheme.surface;
     return Theme(
       data: theme.copyWith(textTheme: textTheme),
       child: Scaffold(
-        backgroundColor: const Color(0xFFFAFAFA),
+        backgroundColor: scaffoldColor,
         appBar: AppBar(
-          backgroundColor: const Color(0xFFFAFAFA),
+          backgroundColor: scaffoldColor,
           elevation: 0,
           title: Text(
             'Inquiry',
