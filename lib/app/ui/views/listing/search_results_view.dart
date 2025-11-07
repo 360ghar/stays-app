@@ -7,7 +7,7 @@ import '../../../controllers/filter_controller.dart';
 import '../../../data/models/unified_filter_model.dart';
 import '../../../controllers/listing/listing_controller.dart';
 import '../../../ui/widgets/cards/property_grid_card.dart';
-import '../../../ui/widgets/common/filter_button.dart';
+import '../../../ui/widgets/common/location_filter_app_bar.dart';
 import '../../../utils/helpers/responsive_helper.dart';
 // import removed: unused theme extension import
 
@@ -22,21 +22,10 @@ class SearchResultsView extends GetView<ListingController> {
     final textStyles = Theme.of(context).textTheme;
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        title: Text(
-          'Explore Properties',
-          style: textStyles.titleLarge?.copyWith(color: colors.onSurface),
-        ),
-        actions: [
-          Obx(() {
-            final isActive = filtersRx.value.isNotEmpty;
-            return FilterButton(
-              isActive: isActive,
-              onPressed: () =>
-                  filterController.openFilterSheet(context, FilterScope.locate),
-            );
-          }),
+      appBar: LocationFilterAppBar(
+        scope: FilterScope.locate,
+        showBackButton: true,
+        trailingActions: [
           IconButton(
             tooltip: 'Sort',
             icon: Icon(Icons.sort_rounded, color: colors.onSurface),

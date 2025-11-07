@@ -490,8 +490,17 @@ class TripsController extends GetxController {
 
   int get totalBookings => pastBookings.length;
 
-  double get totalSpent =>
-      pastBookings.fold(0, (sum, booking) => sum + booking['totalAmount']);
+  double get totalSpent => pastBookings.fold<double>(0, (sum, booking) {
+        final status = booking['status']?.toString();
+        if (!_shouldCountBookingStatus(status)) {
+          return sum;
+        }
+        final amount = booking['totalAmount'];
+        if (amount is num) {
+          return sum + amount.toDouble();
+        }
+        return sum;
+      });
 
   String get favoriteDestination {
     if (pastBookings.isEmpty) return 'None';
@@ -501,6 +510,24 @@ class TripsController extends GetxController {
       locations[location] = (locations[location] ?? 0) + 1;
     }
     return locations.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  }
+  bool _shouldCountBookingStatus(String? status) {
+    if (status == null) return false;
+    final normalized = status.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+    const negativeKeywords = [
+      'cancel',
+      'refund',
+      'fail',
+      'decline',
+      'reject',
+      'void',
+      'expired',
+    ];
+    if (negativeKeywords.any((keyword) => normalized.contains(keyword))) {
+      return false;
+    }
+    return true;
   }
 }
 

@@ -4,7 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../controllers/filter_controller.dart';
 import '../../../controllers/trips_controller.dart';
+import '../../widgets/common/location_filter_app_bar.dart';
 
 String _deriveStatusCategory(String? status) {
   final value = status?.toString().toLowerCase() ?? '';
@@ -72,18 +74,9 @@ class InquiriesPage extends StatelessWidget {
       data: theme.copyWith(textTheme: textTheme),
       child: Scaffold(
         backgroundColor: scaffoldColor,
-        appBar: AppBar(
-          backgroundColor: scaffoldColor,
-          elevation: 0,
-          title: Text(
-            'Inquiry',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 20,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-          actions: [
+        appBar: LocationFilterAppBar(
+          scope: FilterScope.booking,
+          trailingActions: [
             Obx(() {
               final hasFilter = _statusFilter.value != null;
               return IconButton(

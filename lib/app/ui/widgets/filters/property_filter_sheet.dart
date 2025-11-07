@@ -28,7 +28,6 @@ class _PropertyFilterSheet extends StatefulWidget {
 class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   static const double _priceFloor = 0;
   static const double _priceCeil = 200000;
-  static const double _defaultRadius = 10;
   static const List<String> _propertyTypeOptions = <String>[
     'apartment',
     'house',
@@ -48,8 +47,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   late bool _selfCheckIn;
   late bool _petsAllowed;
   late bool _smokingAllowed;
-  late double _radius;
-  late final TextEditingController _cityController;
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
   bool _isUpdatingPriceFields = false;
@@ -65,8 +62,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     _selfCheckIn = initial.selfCheckIn ?? false;
     _petsAllowed = initial.petsAllowed ?? false;
     _smokingAllowed = initial.smokingAllowed ?? false;
-    _radius = initial.radiusKm ?? _defaultRadius;
-    _cityController = TextEditingController(text: initial.city ?? '');
     _minPriceController = TextEditingController(
       text: _initialPriceText(initial.minPrice),
     )..addListener(_handleMinPriceInput);
@@ -80,7 +75,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   void dispose() {
     _minPriceController.dispose();
     _maxPriceController.dispose();
-    _cityController.dispose();
     super.dispose();
   }
 
@@ -204,8 +198,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                       _buildRatingSection(context),
                       const SizedBox(height: 24),
                       _buildExperienceSection(context),
-                      const SizedBox(height: 24),
-                      _buildLocationSection(context),
                     ],
                   ),
                 ),
@@ -442,49 +434,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     );
   }
 
-  Widget _buildLocationSection(BuildContext context) {
-    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Location', style: labelStyle),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _cityController,
-          decoration: InputDecoration(
-            labelText: 'City or locality',
-            hintText: 'e.g. Mumbai',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            prefixIcon: const Icon(Icons.location_on_outlined),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Search radius (km)', style: _theme.textTheme.bodyMedium),
-            Text(
-              _radius.toStringAsFixed(0),
-              style: _theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
-        Slider(
-          value: _radius,
-          min: 1,
-          max: 100,
-          divisions: 99,
-          activeColor: _colorScheme.primary,
-          inactiveColor: _colorScheme.primary.withValues(alpha: 0.15),
-          onChanged: (value) => setState(() => _radius = value),
-        ),
-      ],
-    );
-  }
-
   Widget _buildFooter(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -534,8 +483,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
       _selfCheckIn = false;
       _petsAllowed = false;
       _smokingAllowed = false;
-      _radius = _defaultRadius;
-      _cityController.clear();
     });
     _syncPriceControllers(_priceRange);
   }
@@ -543,7 +490,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   void _apply(BuildContext context) {
     final min = _parsePrice(_minPriceController.text);
     final max = _parsePrice(_maxPriceController.text);
-    final city = _cityController.text.trim();
     final model = UnifiedFilterModel(
       minPrice: min,
       maxPrice: max,
@@ -553,8 +499,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
       selfCheckIn: _selfCheckIn ? true : null,
       petsAllowed: _petsAllowed ? true : null,
       smokingAllowed: _smokingAllowed ? true : null,
-      city: city.isEmpty ? null : city,
-      radiusKm: (_radius - _defaultRadius).abs() < 0.5 ? null : _radius,
     );
     Navigator.of(context).pop(model);
   }

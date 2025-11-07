@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 
 import '../../../controllers/filter_controller.dart';
 import '../../../controllers/trips_controller.dart';
-import '../../widgets/common/filter_button.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../theme/theme_extensions.dart';
+import '../../widgets/common/location_filter_app_bar.dart';
 
 class TripsView extends GetView<TripsController> {
   const TripsView({super.key});
@@ -20,35 +20,9 @@ class TripsView extends GetView<TripsController> {
     final textStyles = context.textStyles;
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: AppBar(
-        backgroundColor: colors.surface,
-        elevation: 0,
-        title: Text(
-          'enquiries.title'.tr,
-          style: textStyles.titleLarge?.copyWith(
-            color: colors.onSurface,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Obx(() {
-            final isActive = filtersRx.value.isNotEmpty;
-            return Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: SizedBox(
-                height: 36,
-                child: FilterButton(
-                  isActive: isActive,
-                  onPressed: () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.booking,
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
+      appBar: LocationFilterAppBar(
+        title: 'enquiries.title'.tr,
+        scope: FilterScope.booking,
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.pastBookings.isEmpty) {

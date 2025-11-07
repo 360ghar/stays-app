@@ -186,7 +186,9 @@ class ProfileController extends GetxController {
     for (final trip in pastTrips) {
       final diff = trip.checkOut.difference(trip.checkIn).inDays;
       nights += max(diff, 1);
-      spend += trip.totalCost ?? 0;
+      if (_shouldIncludeInSpend(trip.status)) {
+        spend += trip.totalCost ?? 0;
+      }
       final key = trip.propertyName;
       destinations[key] = (destinations[key] ?? 0) + 1;
     }
@@ -195,6 +197,26 @@ class ProfileController extends GetxController {
     favoriteDestination.value = destinations.entries
         .reduce((a, b) => a.value >= b.value ? a : b)
         .key;
+  }
+
+  bool _shouldIncludeInSpend(String? status) {
+    if (status == null) return false;
+    final normalized = status.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+
+    const negativeKeywords = [
+      'cancel',
+      'refund',
+      'fail',
+      'decline',
+      'reject',
+      'void',
+      'expired',
+    ];
+    if (negativeKeywords.any((keyword) => normalized.contains(keyword))) {
+      return false;
+    }
+    return true;
   }
 
   void updateUser(UserModel updated) {

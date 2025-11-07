@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
-import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
+import 'package:stays_app/app/ui/widgets/common/location_filter_app_bar.dart';
 
 import '../../../controllers/wishlist_controller.dart';
 import '../../../data/models/property_model.dart';
@@ -21,36 +21,13 @@ class WishlistView extends GetView<WishlistController> {
     final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        title: Text(
-          'Wishlist',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Obx(() {
-            final isActive = filtersRx.value.isNotEmpty;
-            return Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: SizedBox(
-                height: 36,
-                child: FilterButton(
-                  isActive: isActive,
-                  onPressed: () => filterController.openFilterSheet(
-                    context,
-                    FilterScope.wishlist,
-                  ),
-                ),
-              ),
-            );
-          }),
+      appBar: LocationFilterAppBar(
+        scope: FilterScope.wishlist,
+        trailingActions: [
           Obx(
             () => controller.wishlistItems.isNotEmpty
                 ? IconButton(
+                    tooltip: 'Clear wishlist',
                     onPressed: controller.clearWishlist,
                     icon: Icon(Icons.delete_outline, color: colorScheme.error),
                   )
