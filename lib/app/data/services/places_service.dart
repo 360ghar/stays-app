@@ -1,6 +1,7 @@
-import 'package:dio/dio.dart';
+import 'package:get/get.dart';
 import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/extensions/http_extensions.dart';
 
 class PlacePrediction {
   final String description;
@@ -19,9 +20,31 @@ class PlaceDetailsResult {
   });
 }
 
-class PlacesService {
-  final Dio _dio;
-  PlacesService({Dio? dio}) : _dio = dio ?? Dio();
+class PlacesService extends GetConnect {
+  PlacesService();
+
+  @override
+  void onInit() {
+    httpClient.baseUrl = 'https://maps.googleapis.com/maps/api/place';
+    httpClient.timeout = const Duration(seconds: 20);
+    httpClient.addRequestModifier<Object?>((request) async {
+      // Ensure JSON responses and lightweight logging
+      request.headers['Accept'] = 'application/json';
+      AppLogger.logRequest({
+        'method': request.method,
+        'url': request.url.toString(),
+      });
+      return request;
+    });
+    httpClient.addResponseModifier<Object?>((request, response) async {
+      AppLogger.logResponse({
+        'status': response.statusCode,
+        'url': request.url.toString(),
+      });
+      return response;
+    });
+    super.onInit();
+  }
 
   String get _apiKey =>
       AppConfig.I.googleMapsApiKey ?? 'YOUR_GOOGLE_MAPS_API_KEY';
@@ -40,18 +63,15 @@ class PlacesService {
         // Optional biasing around a location for better suggestions
         if (lat != null && lng != null) 'location': '$lat,$lng',
         if (lat != null && lng != null) 'radius': '20000', // 20km bias
-      };
-      final res = await _dio.get(
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json',
-        queryParameters: params,
-      );
-      if (res.data is! Map) return [];
-      final data = res.data as Map;
+      }.asQueryParams();
+      final res = await get('/autocomplete/json', query: params);
+      if (!(res.isOk)) return [];
+      final data = res.bodyAsMap();
       final status = data['status'] as String? ?? '';
       if (status != 'OK' && status != 'ZERO_RESULTS') {
         AppLogger.warning('Places autocomplete status: $status');
       }
-      final preds = (data['predictions'] as List? ?? []);
+      final preds = (data['predictions'] as List? ?? const []);
       return preds
           .map((e) {
             final m = Map<String, dynamic>.from(e);
@@ -71,16 +91,16 @@ class PlacesService {
   Future<PlaceDetailsResult?> details(String placeId) async {
     if (placeId.isEmpty) return null;
     try {
-      final res = await _dio.get(
-        'https://maps.googleapis.com/maps/api/place/details/json',
-        queryParameters: {
+      final res = await get(
+        '/details/json',
+        query: {
           'place_id': placeId,
           'fields': 'geometry/location,name,formatted_address',
           'key': _apiKey,
-        },
+        }.asQueryParams(),
       );
-      if (res.data is! Map) return null;
-      final data = res.data as Map;
+      if (!res.isOk) return null;
+      final data = res.bodyAsMap();
       final status = data['status'] as String? ?? '';
       if (status != 'OK') {
         AppLogger.warning('Place details status: $status');
@@ -101,4 +121,5 @@ class PlacesService {
       return null;
     }
   }
+
 }

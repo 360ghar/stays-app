@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../utils/constants/app_constants.dart';
 
 import '../../../controllers/filter_controller.dart';
 import '../../../controllers/trips_controller.dart';
@@ -60,7 +61,7 @@ class InquiriesPage extends StatelessWidget {
   final RxnString _statusFilter;
   final NumberFormat _currencyFormat = NumberFormat.currency(
     locale: 'en_IN',
-    symbol: '₹',
+    symbol: AppConstants.defaultCurrencySymbol,
     decimalDigits: 0,
   );
 

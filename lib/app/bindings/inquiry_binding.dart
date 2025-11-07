@@ -8,13 +8,21 @@ import 'trips_binding.dart';
 import '../data/providers/bookings_provider.dart';
 import '../controllers/auth/auth_controller.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/providers/auth/i_auth_provider.dart';
+import '../data/providers/supabase_auth_provider.dart';
 
 class InquiryBinding extends Bindings {
   @override
   void dependencies() {
     // Ensure auth is available so inquiry view can prefill guest details
+    if (!Get.isRegistered<IAuthProvider>()) {
+      Get.put<IAuthProvider>(SupabaseAuthProvider(), permanent: true);
+    }
     if (!Get.isRegistered<AuthRepository>()) {
-      Get.put<AuthRepository>(AuthRepository(), permanent: true);
+      Get.put<AuthRepository>(
+        AuthRepository(provider: Get.find<IAuthProvider>()),
+        permanent: true,
+      );
     }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(

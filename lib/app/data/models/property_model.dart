@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'property_image_model.dart';
+import '../../utils/constants/app_constants.dart';
 
 part 'property_model.g.dart';
 
@@ -142,7 +143,7 @@ class Property {
     this.subLocality,
     this.landmark,
     required this.pricePerNight,
-    this.currency = 'INR',
+    this.currency = AppConstants.defaultCurrencyCode,
     this.basePrice,
     this.monthlyRent,
     this.securityDeposit,
@@ -235,7 +236,8 @@ class Property {
     return null;
   }
 
-  String get displayPrice => '₹${pricePerNight.toStringAsFixed(0)}';
+  String get displayPrice =>
+      '${AppConstants.defaultCurrencySymbol}${pricePerNight.toStringAsFixed(0)}';
 
   String get fullAddress => [
     if (locality != null) locality,

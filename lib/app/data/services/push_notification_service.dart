@@ -18,6 +18,7 @@ class PushNotificationService extends GetxService {
   PushNotificationService(StorageService _);
 
   late FirebaseMessaging _messaging;
+  bool _firebaseReady = false;
 
   Future<PushNotificationService> init() async {
     await _initFirebase();
@@ -28,40 +29,70 @@ class PushNotificationService extends GetxService {
 
   Future<void> _initFirebase() async {
     try {
+      // If options are not configured for this build, this can throw.
       await Firebase.initializeApp();
-    } catch (_) {
-      // If Firebase is already initialized, ignore the error.
+      _firebaseReady = true;
+    } catch (e) {
+      // If Firebase is already initialized or not configured, continue gracefully.
+      // Detect already-initialized case via Firebase.apps
+      try {
+        _firebaseReady = Firebase.apps.isNotEmpty;
+      } catch (_) {
+        _firebaseReady = false;
+      }
+      if (!_firebaseReady) {
+        AppLogger.warning(
+          'Firebase not configured; disabling PushNotificationService. Error: $e',
+        );
+      }
     }
   }
 
   Future<void> _initMessaging() async {
-    _messaging = FirebaseMessaging.instance;
-
-    // Register background handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Request permissions (iOS/macOS)
-    await _messaging.requestPermission(alert: true, badge: true, sound: true);
-
-    // Fetch token for diagnostics
-    try {
-      final token = await _messaging.getToken();
-      if (token != null) AppLogger.info('FCM Token: $token');
-    } catch (e) {
-      AppLogger.warning('Unable to retrieve FCM token: $e');
+    if (!_firebaseReady) {
+      // Do not attempt to interact with FirebaseMessaging if Firebase isn't ready.
+      return;
     }
 
-    // Foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      final title = message.notification?.title ?? 'Notification';
-      AppLogger.info('FCM foreground message: $title');
-      // TODO: Optionally show a local notification.
-    });
+    try {
+      _messaging = FirebaseMessaging.instance;
 
-    // When app is opened from a notification tap
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      AppLogger.info('Opened from notification ${message.messageId}');
-      // TODO: Navigate user to a specific screen based on message data.
-    });
+      // Register background handler
+      try {
+        FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler,
+        );
+      } catch (e) {
+        // Non-fatal; continue without background handling
+        AppLogger.warning('Failed to set background handler: $e');
+      }
+
+      // Request permissions (iOS/macOS)
+      await _messaging.requestPermission(alert: true, badge: true, sound: true);
+
+      // Fetch token for diagnostics
+      try {
+        final token = await _messaging.getToken();
+        if (token != null) AppLogger.info('FCM Token: $token');
+      } catch (e) {
+        AppLogger.warning('Unable to retrieve FCM token: $e');
+      }
+
+      // Foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final title = message.notification?.title ?? 'Notification';
+        AppLogger.info('FCM foreground message: $title');
+        // TODO: Optionally show a local notification.
+      });
+
+      // When app is opened from a notification tap
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        AppLogger.info('Opened from notification ${message.messageId}');
+        // TODO: Navigate user to a specific screen based on message data.
+      });
+    } catch (e) {
+      // Guard against any remaining initialization errors.
+      AppLogger.warning('Push notifications disabled due to init error: $e');
+    }
   }
 }

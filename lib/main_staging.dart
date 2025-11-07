@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
@@ -12,11 +13,24 @@ import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/controllers/settings/theme_controller.dart';
+import 'app/utils/security/cert_pinning.dart';
+import 'app/utils/security/security_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: '.env.staging');
   AppConfig.setConfig(AppConfig.staging());
+  if (Get.isRegistered<SecurityService>()) {
+    SecurityService.I.validateApiKeys();
+  }
+  final pinsRaw = dotenv.env['API_CERT_SHA256'];
+  if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
+    final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+    final pins = pinsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+    if (pins.isNotEmpty) {
+      HttpOverrides.global = PinningHttpOverrides(allowedPins: pins, host: host);
+    }
+  }
 
   final themeService = await Get.putAsync<ThemeService>(
     () async => ThemeService().init(),

@@ -1,147 +1,79 @@
 import 'package:get/get.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../services/storage_service.dart';
 import '../models/user_model.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../providers/auth/i_auth_provider.dart';
 
 class AuthRepository {
-  // Supabase client handles auth, session persistence, refresh
-  final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
+  final IAuthProvider _provider;
   final StorageService _storage = Get.find<StorageService>();
 
-  AuthRepository();
+  AuthRepository({required IAuthProvider provider}) : _provider = provider;
 
-  // Email + password sign-in (kept for backward compatibility)
   Future<UserModel> loginWithEmail({
     required String email,
     required String password,
   }) async {
     try {
-      final res = await _supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      final session = res.session;
-      final user = res.user;
-      if (user == null) {
-        throw ApiException(message: 'Invalid credentials', statusCode: 401);
-      }
-      // Optionally sync tokens for legacy consumers
-      await _syncTokensFromSession(session);
-      final mapped = _mapUser(user);
-      await _persistUserData(mapped);
-      return mapped;
-    } on supabase.AuthException catch (e) {
-      throw ApiException(message: e.message, statusCode: 401);
+      final res = await _provider.loginWithEmail(email: email, password: password);
+      await _persistTokens(res);
+      final user = _mapUser(res.rawUser);
+      await _persistUserData(user);
+      return user;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: e.toString(), statusCode: 400);
     }
   }
 
-  // Phone + password sign-in
   Future<UserModel> loginWithPhone({
     required String phone,
     required String password,
   }) async {
     try {
-      final formatted = _ensureE164(phone);
-      final res = await _supabase.auth.signInWithPassword(
-        phone: formatted,
-        password: password,
-      );
-      final session = res.session;
-      final user = res.user;
-      if (user == null) {
-        throw ApiException(message: 'Invalid credentials', statusCode: 401);
-      }
-      await _syncTokensFromSession(session);
-      final mapped = _mapUser(user);
-      await _persistUserData(mapped);
-      return mapped;
-    } on supabase.AuthException catch (e) {
-      throw ApiException(message: e.message, statusCode: 401);
+      final res = await _provider.loginWithPhone(phone: phone, password: password);
+      await _persistTokens(res);
+      final user = _mapUser(res.rawUser);
+      await _persistUserData(user);
+      return user;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: e.toString(), statusCode: 400);
     }
   }
 
-  // Email signup (optional)
   Future<UserModel> register({
     required String name,
     required String email,
     required String password,
   }) async {
     try {
-      final res = await _supabase.auth.signUp(
-        email: email,
-        password: password,
-        data: {'full_name': name},
-      );
-      final user = res.user;
-      if (user == null) {
-        throw ApiException(
-          message:
-              'Registration requires verification. Please check your email.',
-          statusCode: 202,
-        );
-      }
-      final mapped = _mapUser(user);
-      await _persistUserData(mapped);
-      await _syncTokensFromSession(res.session);
-      return mapped;
-    } on supabase.AuthException catch (e) {
-      throw ApiException(message: e.message, statusCode: 400);
+      final res = await _provider.register(name: name, email: email, password: password);
+      await _persistTokens(res);
+      final user = _mapUser(res.rawUser);
+      await _persistUserData(user);
+      return user;
+    } catch (e) {
+      if (e is ApiException) rethrow;
+      throw ApiException(message: e.toString(), statusCode: 400);
     }
   }
 
-  // Phone signup -> triggers SMS OTP. Returns true if OTP sent.
   Future<bool> signUpWithPhone({
     required String phone,
     required String password,
-  }) async {
-    try {
-      final formatted = _ensureE164(phone);
-      final res = await _supabase.auth.signUp(
-        phone: formatted,
-        password: password,
-      );
-      // For phone sign-up, session is usually null until OTP verified
-      AppLogger.info(
-        'SignUp (phone) response: user=${res.user?.id}, session=${res.session != null}',
-      );
-      return true;
-    } on supabase.AuthException catch (e) {
-      // If already registered, surface a helpful message
-      throw ApiException(message: e.message, statusCode: 400);
-    }
-  }
+  }) => _provider.signUpWithPhone(phone: phone, password: password);
 
   Future<void> updatePassword({
     required String newPassword,
     String? currentPassword,
-  }) async {
-    try {
-      await _supabase.auth.updateUser(
-        supabase.UserAttributes(password: newPassword),
-      );
-      if (currentPassword != null && currentPassword.isNotEmpty) {
-        final userEmail = _supabase.auth.currentUser?.email;
-        if (userEmail != null) {
-          await _supabase.auth.signInWithPassword(
-            email: userEmail,
-            password: newPassword,
-          );
-        }
-      }
-    } on supabase.AuthException catch (e) {
-      final code = e.statusCode == null
-          ? null
-          : int.tryParse('${e.statusCode}');
-      throw ApiException(message: e.message, statusCode: code ?? 400);
-    }
-  }
+  }) => _provider.updatePassword(newPassword: newPassword, currentPassword: currentPassword);
 
   Future<void> logout() async {
     try {
-      await _supabase.auth.signOut();
+      await _provider.logout();
     } finally {
       await _storage.clearTokens();
       await _storage.clearUserData();
@@ -149,13 +81,12 @@ class AuthRepository {
   }
 
   Future<UserModel?> getCurrentUser() async {
-    final u = _supabase.auth.currentUser;
-    if (u != null) {
-      final mapped = _mapUser(u);
-      await _persistUserData(mapped);
-      return mapped;
+    final raw = await _provider.getCurrentUserRaw();
+    if (raw != null) {
+      final user = _mapUser(raw);
+      await _persistUserData(user);
+      return user;
     }
-    // Fallback to cached user data if session not present
     final userData = await _storage.getUserData();
     if (userData != null) {
       return UserModel.fromMap(userData);
@@ -163,44 +94,33 @@ class AuthRepository {
     return null;
   }
 
-  Future<bool> isAuthenticated() async {
-    final session = _supabase.auth.currentSession;
-    return session != null && session.accessToken.isNotEmpty;
-  }
+  Future<bool> isAuthenticated() => _provider.isAuthenticated();
 
   // Helpers
-  UserModel _mapUser(supabase.User user) {
-    final meta = user.userMetadata ?? {};
+  UserModel _mapUser(Map<String, dynamic>? raw) {
+    final m = raw ?? const <String, dynamic>{};
     return UserModel(
-      id: user.id,
-      email: user.email,
-      phone: user.phone,
-      firstName: meta['first_name'] as String?,
-      lastName: meta['last_name'] as String?,
-      name: (meta['full_name'] as String?) ?? (meta['name'] as String?),
+      id: (m['id'] ?? m['user_id'] ?? '').toString(),
+      email: m['email'] as String?,
+      phone: m['phone'] as String?,
+      firstName: m['first_name'] as String?,
+      lastName: m['last_name'] as String?,
+      name: (m['full_name'] as String?) ?? (m['name'] as String?),
     );
   }
 
-  String _ensureE164(String phone) {
-    final trimmed = phone.replaceAll(RegExp(r'\s+'), '');
-    if (trimmed.startsWith('+')) return trimmed;
-    // Default to India code if not provided
-    return '+91$trimmed';
-  }
-
-  Future<void> _syncTokensFromSession(supabase.Session? session) async {
-    if (session == null) return;
+  Future<void> _persistTokens(ProviderAuthResult res) async {
     try {
-      await _storage.saveTokens(
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken,
-      );
+      if (res.accessToken != null) {
+        await _storage.saveTokens(
+          accessToken: res.accessToken!,
+          refreshToken: res.refreshToken,
+        );
+      }
     } catch (e) {
-      AppLogger.warning('Failed to sync tokens to legacy storage: $e');
+      AppLogger.warning('Failed to persist tokens: $e');
     }
   }
 
-  Future<void> _persistUserData(UserModel user) async {
-    await _storage.saveUserData(user.toMap());
-  }
+  Future<void> _persistUserData(UserModel user) => _storage.saveUserData(user.toMap());
 }

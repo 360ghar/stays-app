@@ -1,18 +1,7 @@
 import 'base_provider.dart';
+import '../../utils/extensions/http_extensions.dart';
 
 class SwipesProvider extends BaseProvider {
-  Map<String, String> _stringify(Map<String, dynamic> map) {
-    final out = <String, String>{};
-    map.forEach((key, value) {
-      if (value == null) return;
-      if (value is List) {
-        if (value.isNotEmpty) out[key] = value.join(',');
-      } else {
-        out[key] = value.toString();
-      }
-    });
-    return out;
-  }
 
   Future<void> swipe({required int propertyId, required bool isLiked}) async {
     final res = await post('/api/v1/swipes/', {
@@ -34,7 +23,7 @@ class SwipesProvider extends BaseProvider {
       if (isLiked != null) 'is_liked': isLiked,
       ...?filters,
     };
-    final res = await get('/api/v1/swipes/', query: _stringify(query));
+    final res = await get('/api/v1/swipes/', query: query.asQueryParams());
     return handleResponse(res, (json) => Map<String, dynamic>.from(json));
   }
 }

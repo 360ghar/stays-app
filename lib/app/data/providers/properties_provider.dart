@@ -1,20 +1,9 @@
 import 'base_provider.dart';
+import '../../utils/extensions/http_extensions.dart';
 import '../models/property_model.dart';
 import '../models/unified_property_response.dart';
 
 class PropertiesProvider extends BaseProvider {
-  Map<String, String> _stringify(Map<String, dynamic> m) {
-    final out = <String, String>{};
-    m.forEach((k, v) {
-      if (v == null) return;
-      if (v is List) {
-        if (v.isNotEmpty) out[k] = v.join(',');
-      } else {
-        out[k] = v.toString();
-      }
-    });
-    return out;
-  }
 
   Future<UnifiedPropertyResponse> explore({
     required double lat,
@@ -33,7 +22,7 @@ class PropertiesProvider extends BaseProvider {
         'radius': radiusKm,
       ...?filters,
     };
-    final res = await get('/api/v1/properties/', query: _stringify(query));
+    final res = await get('/api/v1/properties/', query: query.asQueryParams());
     return handleResponse(res, (json) {
       final rawList =
           (json['properties'] as List?) ??

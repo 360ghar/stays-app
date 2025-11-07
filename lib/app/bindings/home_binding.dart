@@ -14,6 +14,8 @@ import '../data/providers/properties_provider.dart';
 import '../data/providers/swipes_provider.dart';
 import '../data/providers/users_provider.dart';
 import '../data/repositories/auth_repository.dart';
+import '../data/providers/auth/i_auth_provider.dart';
+import '../data/providers/supabase_auth_provider.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/properties_repository.dart';
 import '../data/repositories/wishlist_repository.dart';
@@ -22,8 +24,14 @@ import '../data/services/location_service.dart';
 class HomeBinding extends Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<IAuthProvider>()) {
+      Get.put<IAuthProvider>(SupabaseAuthProvider(), permanent: true);
+    }
     if (!Get.isRegistered<AuthRepository>()) {
-      Get.put<AuthRepository>(AuthRepository(), permanent: true);
+      Get.put<AuthRepository>(
+        AuthRepository(provider: Get.find<IAuthProvider>()),
+        permanent: true,
+      );
     }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(

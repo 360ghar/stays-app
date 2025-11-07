@@ -13,8 +13,10 @@ import '../../utils/exceptions/app_exceptions.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/providers/users_provider.dart';
 import '../../data/services/storage_service.dart';
+import '../base/base_controller.dart';
+import 'form_validation_controller.dart';
 
-class AuthController extends GetxController {
+class AuthController extends BaseController {
   // Storage keys dedicated to the remember-me preference and cached tokens.
   static const String _rememberMeBox = 'auth_preferences';
   static const String _rememberMeFlagKey = 'remember_me';
@@ -36,9 +38,9 @@ class AuthController extends GetxController {
   final RxBool rememberMe = false.obs;
 
   // Form validation observables
-  final RxString emailOrPhoneError = ''.obs;
-  final RxString passwordError = ''.obs;
-  final RxString confirmPasswordError = ''.obs;
+  // Centralized form validation state
+  late final FormValidationController _validation =
+      Get.put<FormValidationController>(FormValidationController(), permanent: true);
 
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
@@ -74,32 +76,9 @@ class AuthController extends GetxController {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  String? _validateEmailOrPhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Email or phone is required';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? password) {
-    if (password == null || password.isEmpty) {
-      return 'Password is required';
-    }
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? password, String? confirmPassword) {
-    if (confirmPassword == null || confirmPassword.isEmpty) {
-      return 'Please confirm your password';
-    }
-    if (password != confirmPassword) {
-      return 'Passwords do not match';
-    }
-    return null;
-  }
+  RxString get emailOrPhoneError => _validation.emailOrPhoneError;
+  RxString get passwordError => _validation.passwordError;
+  RxString get confirmPasswordError => _validation.confirmPasswordError;
 
   Future<void> _checkAuthStatus() async {
     try {
@@ -142,7 +121,8 @@ class AuthController extends GetxController {
 
   void _bindAuthStateListener() {
     _authSubscription?.cancel();
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
+    _authSubscription = trackSubscription(
+      Supabase.instance.client.auth.onAuthStateChange.listen(
       (data) async {
         final event = data.event;
         final session = data.session;
@@ -161,7 +141,7 @@ class AuthController extends GetxController {
       onError: (Object error) {
         AppLogger.warning('Auth state listener error: $error');
       },
-    );
+    ));
   }
 
   // Update the remember-me flag and synchronise it to disk for future launches.
@@ -215,11 +195,10 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      emailOrPhoneError.value = '';
-      passwordError.value = '';
+      _validation.clearErrors();
 
-      final emailValidation = _validateEmailOrPhone(email);
-      final passwordValidation = _validatePassword(password);
+      final emailValidation = _validation.validateEmailOrPhone(email);
+      final passwordValidation = _validation.validatePassword(password);
       if (emailValidation != null) {
         emailOrPhoneError.value = emailValidation;
         return;
@@ -275,68 +254,9 @@ class AuthController extends GetxController {
   }
 
   // Phone-based login (if backend supports phone on same endpoint)
-  Future<void> loginWithPhone({
-    required String phone,
-    required String password,
-  }) async {
-    AppLogger.info('Attempting to log in with phone: $phone');
-    try {
-      isLoading.value = true;
-
-      // --- Validation logic ---
-      emailOrPhoneError.value = '';
-      passwordError.value = '';
-      final phoneValidation = _validateEmailOrPhone(phone);
-      final passwordValidation = _validatePassword(password);
-      if (phoneValidation != null) {
-        emailOrPhoneError.value = phoneValidation;
-        isLoading.value = false; // Stop loading on validation fail
-        return;
-      }
-      if (passwordValidation != null) {
-        passwordError.value = passwordValidation;
-        isLoading.value = false; // Stop loading on validation fail
-        return;
-      }
-      // --- End of validation ---
-
-      final user = await _authRepository.loginWithPhone(
-        phone: phone,
-        password: password,
-      );
-      currentUser.value = user;
-      isAuthenticated.value = true;
-
-      AppLogger.info(
-        'Login successful for user: ${user.name ?? user.firstName ?? user.phone}',
-      );
-
-      await _syncRememberMeStateAfterLogin();
-
-      // Refresh full profile and cache for later prefilling
-      fetchAndCacheProfile();
-
-      _showSuccessSnackbar(
-        title: 'Welcome Back!',
-        message: 'Hello ${user.name ?? user.firstName ?? user.phone}',
-      );
-      Get.offAllNamed(Routes.home);
-    } catch (e, stackTrace) {
-      // Corrected logging for AppLogger
-      AppLogger.error('LOGIN FAILED!', e, stackTrace);
-
-      // Show the actual error message from the server
-      String errorMessage = e.toString();
-      if (e is ApiException) {
-        errorMessage =
-            e.message; // Use the specific message from your custom exception
-      }
-
-      _showErrorSnackbar(title: 'Login Failed', message: errorMessage);
-    } finally {
-      AppLogger.info('Login process finished. Setting isLoading to false.');
-      isLoading.value = false;
-    }
+  Future<void> loginWithPhone({required String phone, required String password}) async {
+    // Delegate to the unified login path
+    return login(email: phone, password: password);
   }
 
   // Fetch latest profile from API, update observable and cache for fast prefill
@@ -364,8 +284,8 @@ class AuthController extends GetxController {
   }) async {
     try {
       isLoading.value = true;
-      final phoneValidation = _validateEmailOrPhone(phone);
-      final passwordValidation = _validatePassword(password);
+      final phoneValidation = _validation.validateEmailOrPhone(phone);
+      final passwordValidation = _validation.validatePassword(password);
       if (phoneValidation != null) {
         emailOrPhoneError.value = phoneValidation;
         return false;
@@ -403,7 +323,7 @@ class AuthController extends GetxController {
   // Backwards-compat: the current UI triggers an OTP flow for forgot password.
   // Provide a graceful error until a backend endpoint is available.
   Future<bool> sendForgotPasswordOTP(String phone) async {
-    final validation = _validateEmailOrPhone(phone);
+    final validation = _validation.validateEmailOrPhone(phone);
     if (validation != null) {
       emailOrPhoneError.value = validation;
       return false;
@@ -420,8 +340,8 @@ class AuthController extends GetxController {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    final passwordValidation = _validatePassword(newPassword);
-    final confirmValidation = _validateConfirmPassword(
+    final passwordValidation = _validation.validatePassword(newPassword);
+    final confirmValidation = _validation.validateConfirmPassword(
       newPassword,
       confirmPassword,
     );
@@ -484,13 +404,11 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
-      emailOrPhoneError.value = '';
-      passwordError.value = '';
-      confirmPasswordError.value = '';
+      _validation.clearErrors();
 
-      final emailValidation = _validateEmailOrPhone(email);
-      final passwordValidation = _validatePassword(password);
-      final confirmValidation = _validateConfirmPassword(
+      final emailValidation = _validation.validateEmailOrPhone(email);
+      final passwordValidation = _validation.validatePassword(password);
+      final confirmValidation = _validation.validateConfirmPassword(
         password,
         confirmPassword ?? password,
       );

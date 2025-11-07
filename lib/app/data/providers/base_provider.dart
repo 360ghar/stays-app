@@ -5,6 +5,7 @@ import '../../utils/logger/app_logger.dart';
 import '../services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/services/error_service.dart';
 
 abstract class BaseProvider extends GetConnect {
   final StorageService _storage = Get.find<StorageService>();
@@ -15,11 +16,10 @@ abstract class BaseProvider extends GetConnect {
     httpClient.timeout = const Duration(seconds: 30);
 
     httpClient.addRequestModifier<Object?>((request) async {
-      // Prefer Supabase session token; fallback to legacy storage
+      // Prefer Supabase session token; fallback to secure storage (async)
       final supabaseToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
-      final legacyToken =
-          _storage.getAccessTokenSync() ?? await _storage.getAccessToken();
+      final legacyToken = await _storage.getAccessToken();
       final token = supabaseToken ?? legacyToken;
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
@@ -28,6 +28,9 @@ abstract class BaseProvider extends GetConnect {
       }
       request.headers['Content-Type'] = 'application/json';
       request.headers['Accept'] = 'application/json';
+      // Lightweight request timing for performance monitoring
+      request.headers['x-start-ms'] =
+          DateTime.now().millisecondsSinceEpoch.toString();
       AppLogger.logRequest({
         'method': request.method,
         'url': request.url.toString(),
@@ -36,20 +39,67 @@ abstract class BaseProvider extends GetConnect {
     });
 
     httpClient.addResponseModifier<Object?>((request, response) async {
+      final startHeader = request.headers['x-start-ms'];
+      int? elapsedMs;
+      if (startHeader != null) {
+        final startMs = int.tryParse(startHeader);
+        if (startMs != null) {
+          elapsedMs = DateTime.now().millisecondsSinceEpoch - startMs;
+        }
+      }
       AppLogger.logResponse({
         'status': response.statusCode,
         'url': request.url.toString(),
+        if (elapsedMs != null) 'elapsed_ms': elapsedMs,
       });
-
-      // Handle 401 unauthorized - redirect to login
-      if (response.statusCode == 401 && !_isAuthEndpoint(request.url)) {
-        AppLogger.warning('Token expired, redirecting to login');
+      // Passive handler: authenticator below will retry.
+      return response;
+    });
+    // Retry once on 401 by attempting token refresh via Supabase.
+    httpClient.maxAuthRetries = 1;
+    httpClient.addAuthenticator<Object?>((request) async {
+      // Skip auth endpoints to avoid loops
+      if (_isAuthEndpoint(request.url)) return request;
+      AppLogger.info('Authenticator triggered for ${request.url}');
+      final client = Supabase.instance.client;
+      try {
+        final session = client.auth.currentSession;
+        if (session == null) {
+          // Try refresh with stored refresh token if available
+          final refreshToken = await _storage.getRefreshToken();
+          if (refreshToken == null || refreshToken.isEmpty) {
+            throw ApiException(message: 'No session to refresh', statusCode: 401);
+          }
+          // Supabase Flutter SDK refreshes based on current session; signInWithIdToken
+          // not applicable here. Attempt to set session from refresh token.
+          final res = await client.auth.refreshSession();
+          if (res.session == null) {
+            throw ApiException(message: 'Unable to refresh', statusCode: 401);
+          }
+        } else {
+          final res = await client.auth.refreshSession();
+          if (res.session == null) {
+            throw ApiException(message: 'Unable to refresh', statusCode: 401);
+          }
+        }
+        final newToken = client.auth.currentSession?.accessToken;
+        final newRefresh = client.auth.currentSession?.refreshToken;
+        if (newToken != null) {
+          await _storage.saveTokens(accessToken: newToken, refreshToken: newRefresh);
+          request.headers['Authorization'] = 'Bearer $newToken';
+          AppLogger.info('Auth token refreshed; retrying ${request.url}');
+          return request;
+        }
+        throw ApiException(message: 'Missing access token after refresh', statusCode: 401);
+      } catch (e, s) {
+        AppLogger.error('Token refresh failed', e, s);
         await _storage.clearTokens();
         await _storage.clearUserData();
-        Get.offAllNamed('/login');
+        if (Get.currentRoute != '/login') {
+          Get.offAllNamed('/login');
+        }
+        return request; // Let original request fail; no infinite retry
       }
-
-      return response;
     });
     super.onInit();
   }
@@ -70,79 +120,8 @@ abstract class BaseProvider extends GetConnect {
       }
       return parser(response.body);
     } else {
-      // ERROR CASE (Status codes 4xx, 5xx)
-      String errorMessage = 'An unknown error occurred.';
-
-      // Try to parse a specific error message from the backend response
-      final body = response.body;
-      if (body != null && body is Map) {
-        final map = body.cast<dynamic, dynamic>();
-        final dynamic detail = map['detail'];
-        if (detail is String && detail.trim().isNotEmpty) {
-          errorMessage = detail.trim();
-        } else if (detail is List) {
-          // FastAPI validation errors: detail is a list of objects with msg/loc
-          final messages = <String>[];
-          for (final item in detail) {
-            if (item is Map) {
-              final msg =
-                  item['msg']?.toString() ?? item['message']?.toString();
-              final loc = item['loc'] is List
-                  ? (item['loc'] as List).map((e) => e.toString()).toList()
-                  : null;
-              final field = loc != null && loc.isNotEmpty
-                  ? loc.last.toString()
-                  : null;
-              if (msg != null && msg.isNotEmpty) {
-                messages.add(
-                  field != null && field.isNotEmpty ? '$field: $msg' : msg,
-                );
-              }
-            } else if (item != null) {
-              messages.add(item.toString());
-            }
-          }
-          if (messages.isNotEmpty) {
-            errorMessage = messages.join('; ');
-          }
-        } else if (detail is Map) {
-          final msg =
-              detail['msg']?.toString() ?? detail['message']?.toString();
-          if (msg != null && msg.isNotEmpty) {
-            errorMessage = msg;
-          }
-        }
-
-        // Fallback to other common keys if still not resolved
-        if (errorMessage == 'An unknown error occurred.') {
-          final msg = map['message']?.toString();
-          final err = map['error']?.toString();
-          final errors = map['errors'];
-          if (msg != null && msg.isNotEmpty) {
-            errorMessage = msg;
-          } else if (err != null && err.isNotEmpty) {
-            errorMessage = err;
-          } else if (errors is List && errors.isNotEmpty) {
-            errorMessage = errors.map((e) => e.toString()).join('; ');
-          } else if (errors is Map && errors.isNotEmpty) {
-            errorMessage = errors.values.map((e) => e.toString()).join('; ');
-          }
-        }
-      } else if (response.bodyString != null &&
-          response.bodyString!.isNotEmpty) {
-        errorMessage = response.bodyString!;
-      } else if (response.statusText != null) {
-        errorMessage = response.statusText!;
-      }
-
-      // Log the error for debugging
-      AppLogger.error(
-        'API Error Response',
-        'Status: $statusCode, Message: $errorMessage',
-      );
-
-      // Throw our custom exception with the real status code and message
-      throw ApiException(message: errorMessage, statusCode: statusCode);
+      // Delegate to central error service
+      throw ErrorService.I.toApiException(response);
     }
   }
 

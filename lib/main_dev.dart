@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'config/app_config.dart';
 import 'app/bindings/initial_binding.dart';
@@ -13,22 +12,28 @@ import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/controllers/settings/theme_controller.dart';
+import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
-
-/// 🔹 Background message handler
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp();
-  AppLogger.info('Background message received: ${message.messageId}');
-}
+import 'app/utils/security/security_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
+  // Validate high-level API keys
+  if (Get.isRegistered<SecurityService>()) {
+    SecurityService.I.validateApiKeys();
+  }
+  final pinsRaw = dotenv.env['API_CERT_SHA256'];
+  if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
+    final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+    final pins = pinsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+    if (pins.isNotEmpty) {
+      HttpOverrides.global = PinningHttpOverrides(allowedPins: pins, host: host);
+      AppLogger.info('Certificate pinning enabled for $host');
+    }
+  }
 
   // 🔹 Theme Service
   final themeService = await Get.putAsync<ThemeService>(
@@ -62,45 +67,8 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late FirebaseMessaging firebaseMessaging;
-
-  @override
-  void initState() {
-    super.initState();
-    initFirebaseMessaging();
-  }
-
-  /// 🔹 Setup Firebase Messaging
-  Future<void> initFirebaseMessaging() async {
-    firebaseMessaging = FirebaseMessaging.instance;
-
-    // Request notification permission
-    await firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
-
-    // Get FCM Token (optional)
-    String? token = await firebaseMessaging.getToken();
-    AppLogger.info('FCM Token: $token');
-
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      AppLogger.info(
-        'Foreground message received: ${message.notification?.title}',
-      );
-      // TODO: Show local notification if needed
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import '../../utils/constants/app_constants.dart';
 
 part 'hotel_model.g.dart';
 
@@ -29,7 +30,7 @@ class Hotel {
     required this.rating,
     required this.reviews,
     required this.pricePerNight,
-    this.currency = '₹',
+    this.currency = AppConstants.defaultCurrencySymbol,
     this.propertyType = 'Hotel',
     this.isFavorite = false,
     this.latitude,

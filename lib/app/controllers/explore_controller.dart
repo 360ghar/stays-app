@@ -5,11 +5,13 @@ import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/constants/app_constants.dart';
 
 import 'filter_controller.dart';
 import 'favorites_controller.dart';
+import 'base/base_controller.dart';
 
-class ExploreController extends GetxController {
+class ExploreController extends BaseController {
   // Services are guaranteed to be available by the time this controller is created.
   final LocationService _locationService = Get.find<LocationService>();
   final PropertiesRepository _propertiesRepository =
@@ -88,7 +90,7 @@ class ExploreController extends GetxController {
     super.onInit();
     _filterController = Get.find<FilterController>();
     _activeFilters = _filterController.filterFor(FilterScope.explore);
-    _filterWorker = debounce<UnifiedFilterModel>(
+    _filterWorker = trackWorker(debounce<UnifiedFilterModel>(
       _filterController.rxFor(FilterScope.explore),
       (filters) async {
         if (_activeFilters == filters) return;
@@ -96,7 +98,7 @@ class ExploreController extends GetxController {
         await _reloadWithFilters();
       },
       time: const Duration(milliseconds: 180),
-    );
+    ));
     _fetchInitialData();
     // Reload properties when user selects a new location
     ever<String>(_locationService.locationNameRx, (_) {
@@ -220,15 +222,7 @@ class ExploreController extends GetxController {
     if (pc == normalizedTarget) return true;
 
     // Handle common synonyms
-    String canonical(String s) {
-      const map = {
-        'gurgaon': 'gurugram',
-        'bangalore': 'bengaluru',
-        'bombay': 'mumbai',
-        'delhi ncr': 'delhi',
-      };
-      return map[s] ?? s;
-    }
+    String canonical(String s) => AppConstants.cityCanonicalMap[s] ?? s;
 
     return canonical(pc) == canonical(normalizedTarget);
   }

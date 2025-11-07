@@ -3,6 +3,8 @@ import 'package:stays_app/app/controllers/auth/auth_controller.dart';
 import 'package:stays_app/app/controllers/settings/theme_controller.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
+import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
+import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/data/services/locale_service.dart';
 import 'package:stays_app/features/profile/controllers/about_controller.dart';
@@ -16,8 +18,14 @@ import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 class ProfileBinding extends Bindings {
   @override
   void dependencies() {
+    if (!Get.isRegistered<IAuthProvider>()) {
+      Get.put<IAuthProvider>(SupabaseAuthProvider(), permanent: true);
+    }
     if (!Get.isRegistered<AuthRepository>()) {
-      Get.put<AuthRepository>(AuthRepository(), permanent: true);
+      Get.put<AuthRepository>(
+        AuthRepository(provider: Get.find<IAuthProvider>()),
+        permanent: true,
+      );
     }
     final authRepository = Get.find<AuthRepository>();
     if (!Get.isRegistered<AuthController>()) {

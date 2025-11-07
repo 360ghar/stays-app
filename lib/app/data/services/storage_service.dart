@@ -52,32 +52,15 @@ class StorageService extends GetxService {
     return await _secureStorage.read(key: _refreshTokenKey);
   }
 
-  // Synchronous versions for middleware (fallback to async)
-  String? getAccessTokenSync() {
-    // Note: This should be avoided, but kept for backward compatibility
-    // Consider refactoring middleware to be async
-    return _box.read<String>('temp_$_accessTokenKey');
-  }
-
-  String? getRefreshTokenSync() {
-    return _box.read<String>('temp_$_refreshTokenKey');
-  }
-
   Future<bool> hasAccessToken() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
 
-  // Legacy sync version
-  bool hasAccessTokenSync() {
-    return getAccessTokenSync() != null;
-  }
-
   Future<void> clearTokens() async {
     await _secureStorage.delete(key: _accessTokenKey);
     await _secureStorage.delete(key: _refreshTokenKey);
-    await _box.remove('temp_$_accessTokenKey');
-    await _box.remove('temp_$_refreshTokenKey');
+    // No temp cache of tokens
   }
 
   // User data management
@@ -95,17 +78,8 @@ class StorageService extends GetxService {
     await _box.remove(_userDataKey);
   }
 
-  // Sync tokens to temp storage for middleware (called after login)
-  Future<void> _syncTokensToTemp() async {
-    final accessToken = await getAccessToken();
-    final refreshToken = await getRefreshToken();
-    if (accessToken != null) {
-      await _box.write('temp_$_accessTokenKey', accessToken);
-    }
-    if (refreshToken != null) {
-      await _box.write('temp_$_refreshTokenKey', refreshToken);
-    }
-  }
+  // Deprecated: temp sync removed for security. Kept as a no-op to avoid breakage.
+  Future<void> _syncTokensToTemp() async {}
 
   // Cache management (non-sensitive data)
   Future<void> cache(String key, Map<String, dynamic> value) async {

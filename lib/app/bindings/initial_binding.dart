@@ -7,6 +7,9 @@ import '../data/services/location_service.dart';
 import '../data/services/places_service.dart';
 import '../data/services/supabase_service.dart';
 import '../controllers/favorites_controller.dart';
+import '../utils/performance/performance_monitor.dart';
+import '../utils/services/error_service.dart';
+import '../utils/security/security_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -19,6 +22,9 @@ class InitialBinding extends Bindings {
       AnalyticsService(enabled: AppConfig.I.enableAnalytics),
       permanent: true,
     );
+    Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    Get.put<ErrorService>(ErrorService(), permanent: true);
+    Get.put<SecurityService>(SecurityService(), permanent: true);
     // PushNotificationService is now initialized in SplashController with StorageService dependency
     Get.put<NotificationController>(NotificationController(), permanent: true);
 

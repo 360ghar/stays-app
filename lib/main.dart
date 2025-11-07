@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
@@ -12,9 +13,8 @@ import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/controllers/settings/theme_controller.dart';
-import 'app/data/services/storage_service.dart';
-import 'app/data/services/push_notification_service.dart';
 import 'app/data/services/supabase_service.dart';
+import 'app/utils/security/cert_pinning.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +22,16 @@ Future<void> main() async {
   // Default to dev if launched via lib/main.dart
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
+
+  // Optional certificate pinning when API_CERT_SHA256 is provided
+  final pinsRaw = dotenv.env['API_CERT_SHA256'];
+  if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
+    final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+    final pins = pinsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+    if (pins.isNotEmpty) {
+      HttpOverrides.global = PinningHttpOverrides(allowedPins: pins, host: host);
+    }
+  }
 
   // Ensure Supabase is ready before any repository or controller resolves it.
   final supabaseService = SupabaseService(
@@ -33,19 +43,7 @@ Future<void> main() async {
     Get.put<SupabaseService>(supabaseService, permanent: true);
   }
 
-  final storageService = Get.isRegistered<StorageService>()
-      ? Get.find<StorageService>()
-      : await Get.putAsync<StorageService>(
-          () async => StorageService().initialize(),
-          permanent: true,
-        );
-
-  if (!Get.isRegistered<PushNotificationService>()) {
-    await Get.putAsync<PushNotificationService>(
-      () async => PushNotificationService(storageService).init(),
-      permanent: true,
-    );
-  }
+  // Storage is initialized later by SplashController if needed
 
   final themeService = await Get.putAsync<ThemeService>(
     () async => ThemeService().init(),
