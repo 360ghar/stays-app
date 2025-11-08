@@ -10,6 +10,7 @@ import '../controllers/auth/auth_controller.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/providers/auth/i_auth_provider.dart';
 import '../data/providers/supabase_auth_provider.dart';
+import '../utils/services/token_service.dart';
 
 class InquiryBinding extends Bindings {
   @override
@@ -26,7 +27,10 @@ class InquiryBinding extends Bindings {
     }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
-        AuthController(authRepository: Get.find<AuthRepository>()),
+        AuthController(
+          authRepository: Get.find<AuthRepository>(),
+          tokenService: Get.find<TokenService>(),
+        ),
         permanent: true,
       );
     }

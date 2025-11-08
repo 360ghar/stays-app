@@ -6,7 +6,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../controllers/listing/listing_detail_controller.dart';
 import '../../../data/models/property_model.dart';
-import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/currency_helper.dart';
 import '../../widgets/listing/interactive_virtual_tour.dart';
 

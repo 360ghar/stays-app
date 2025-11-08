@@ -1,5 +1,3 @@
-import '../../models/user_model.dart';
-
 class ProviderAuthResult {
   final String? accessToken;
   final String? refreshToken;

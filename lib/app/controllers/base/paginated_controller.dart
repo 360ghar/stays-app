@@ -7,8 +7,11 @@ import 'base_controller.dart';
 /// Generic pagination controller for list-based views.
 abstract class PaginatedController<T> extends BaseController {
   final RxList<T> items = <T>[].obs;
-  final RxBool isLoading = false.obs;
+  final RxBool _isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
+
+  @override
+  RxBool get isLoading => _isLoading;
   final RxBool hasMore = true.obs;
   final RxInt currentPage = 1.obs;
   final int pageSize;
@@ -31,9 +34,9 @@ abstract class PaginatedController<T> extends BaseController {
   }
 
   Future<void> loadMore() async {
-    if (isLoading.value || !hasMore.value) return;
+    if (_isLoading.value || !hasMore.value) return;
     try {
-      isLoading.value = true;
+      _isLoading.value = true;
       final next = currentPage.value + 1;
       final data = await fetchPage(page: next, limit: pageSize);
       if (data.isEmpty) {
@@ -44,7 +47,7 @@ abstract class PaginatedController<T> extends BaseController {
       currentPage.value = next;
       hasMore.value = data.length == pageSize;
     } finally {
-      isLoading.value = false;
+      _isLoading.value = false;
     }
   }
 }

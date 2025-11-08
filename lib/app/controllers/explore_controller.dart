@@ -12,24 +12,32 @@ import 'favorites_controller.dart';
 import 'base/base_controller.dart';
 
 class ExploreController extends BaseController {
-  // Services are guaranteed to be available by the time this controller is created.
-  final LocationService _locationService = Get.find<LocationService>();
-  final PropertiesRepository _propertiesRepository =
-      Get.find<PropertiesRepository>();
-  final WishlistRepository _wishlistRepository = Get.find<WishlistRepository>();
-  late final FilterController _filterController;
+  final LocationService _locationService;
+  final PropertiesRepository _propertiesRepository;
+  final WishlistRepository _wishlistRepository;
+  final FilterController _filterController;
+  final FavoritesController _favoritesController;
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   Worker? _filterWorker;
-  late final FavoritesController _favoritesController =
-      Get.find<FavoritesController>();
+
+  ExploreController({
+    required LocationService locationService,
+    required PropertiesRepository propertiesRepository,
+    required WishlistRepository wishlistRepository,
+    required FilterController filterController,
+    required FavoritesController favoritesController,
+  })  : _locationService = locationService,
+        _propertiesRepository = propertiesRepository,
+        _wishlistRepository = wishlistRepository,
+        _filterController = filterController,
+        _favoritesController = favoritesController;
 
   final RxList<Property> popularHomes = <Property>[].obs;
   final RxList<Property> nearbyHotels =
       <Property>[].obs; // This can be fetched by location
-  final RxBool isLoading = true.obs; // Start with loading true
-  final RxString errorMessage = ''.obs;
 
+  
   String get locationName => _locationService.locationName.isEmpty
       ? 'this area'
       : _locationService.locationName;
@@ -87,8 +95,10 @@ class ExploreController extends BaseController {
 
   @override
   void onInit() {
+    // Set initial loading state
+    isLoading.value = true;
     super.onInit();
-    _filterController = Get.find<FilterController>();
+    // _filterController is now injected via constructor
     _activeFilters = _filterController.filterFor(FilterScope.explore);
     _filterWorker = trackWorker(debounce<UnifiedFilterModel>(
       _filterController.rxFor(FilterScope.explore),

@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:get/get.dart';
 
 import '../../utils/exceptions/app_exceptions.dart';
@@ -5,6 +8,11 @@ import '../../utils/logger/app_logger.dart';
 
 class ErrorService extends GetxService {
   static ErrorService get I => Get.find<ErrorService>();
+
+  final RxList<String> _errorHistory = <String>[].obs;
+
+  /// Get the list of recent errors for debugging
+  List<String> get errorHistory => _errorHistory.toList();
 
   ApiException toApiException(Response response) {
     final int statusCode = response.statusCode ?? 500;
@@ -18,6 +26,61 @@ class ErrorService extends GetxService {
       'Status: $statusCode, Message: $message',
     );
     return ApiException(message: message, statusCode: statusCode);
+  }
+
+  /// Get user-friendly error message from any error type
+  String getErrorMessage(dynamic error) {
+    if (error == null) return 'An unknown error occurred.';
+
+    if (error is ApiException) {
+      return error.message;
+    }
+
+    if (error is Exception) {
+      final str = error.toString();
+      return str.startsWith('Exception: ') ? str.substring(11) : str;
+    }
+
+    if (error is String) {
+      return error;
+    }
+
+    return 'An unexpected error occurred. Please try again.';
+  }
+
+  /// Handle error with logging and context
+  void handleError(dynamic error, [StackTrace? stackTrace, String? context]) {
+    final String message = getErrorMessage(error);
+    final String contextInfo = context != null ? '[$context] ' : '';
+
+    AppLogger.error('${contextInfo}Error handled', error, stackTrace);
+
+    // Add to error history (keep last 50 errors)
+    _errorHistory.add('${DateTime.now().toIso8601String()}: $contextInfo$message');
+    if (_errorHistory.length > 50) {
+      _errorHistory.removeAt(0);
+    }
+  }
+
+  /// Clear error history
+  void clearErrorHistory() {
+    _errorHistory.clear();
+  }
+
+  /// Get network-related error message
+  String getNetworkErrorMessage(dynamic error) {
+    if (error == null) return getErrorMessage(error);
+
+    if (error is SocketException) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    if (error is TimeoutException) {
+      return 'Request timed out. Please check your connection and try again.';
+    }
+    if (error is HttpException) {
+      return 'Unable to connect to server. Please try again later.';
+    }
+    return getErrorMessage(error);
   }
 
   String? _extractMessage(dynamic body) {

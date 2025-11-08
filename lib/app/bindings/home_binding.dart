@@ -7,6 +7,7 @@ import '../bindings/profile_binding.dart' as profile_binding;
 import '../controllers/auth/auth_controller.dart';
 import '../controllers/explore_controller.dart';
 import '../controllers/filter_controller.dart';
+import '../controllers/favorites_controller.dart';
 import '../controllers/listing/location_search_controller.dart';
 import '../controllers/listing/listing_controller.dart';
 import '../controllers/navigation_controller.dart';
@@ -20,6 +21,7 @@ import '../data/repositories/profile_repository.dart';
 import '../data/repositories/properties_repository.dart';
 import '../data/repositories/wishlist_repository.dart';
 import '../data/services/location_service.dart';
+import '../utils/services/token_service.dart';
 
 class HomeBinding extends Bindings {
   @override
@@ -35,7 +37,10 @@ class HomeBinding extends Bindings {
     }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
-        AuthController(authRepository: Get.find<AuthRepository>()),
+        AuthController(
+          authRepository: Get.find<AuthRepository>(),
+          tokenService: Get.find<TokenService>(),
+        ),
         permanent: true,
       );
     }
@@ -55,8 +60,18 @@ class HomeBinding extends Bindings {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
 
+    if (!Get.isRegistered<FavoritesController>()) {
+      Get.put<FavoritesController>(FavoritesController(), permanent: true);
+    }
+
     if (!Get.isRegistered<ExploreController>()) {
-      Get.lazyPut<ExploreController>(() => ExploreController(), fenix: true);
+      Get.lazyPut<ExploreController>(() => ExploreController(
+        locationService: Get.find<LocationService>(),
+        propertiesRepository: Get.find<PropertiesRepository>(),
+        wishlistRepository: Get.find<WishlistRepository>(),
+        filterController: Get.find<FilterController>(),
+        favoritesController: Get.find<FavoritesController>(),
+      ), fenix: true);
     }
 
     if (!Get.isRegistered<PropertiesProvider>()) {

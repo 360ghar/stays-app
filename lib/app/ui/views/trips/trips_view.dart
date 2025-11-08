@@ -17,11 +17,9 @@ class TripsView extends GetView<TripsController> {
     final filtersRx = filterController.rxFor(FilterScope.booking);
 
     final colors = context.colors;
-    final textStyles = context.textStyles;
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: LocationFilterAppBar(
-        title: 'enquiries.title'.tr,
         scope: FilterScope.booking,
       ),
       body: Obx(() {
@@ -722,7 +720,7 @@ class _BookingDetailChip extends StatelessWidget {
     );
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: colors.surfaceVariant.withValues(alpha: 0.6),
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(

@@ -7,6 +7,8 @@ import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/data/services/locale_service.dart';
+import 'package:stays_app/app/utils/services/token_service.dart';
+import 'package:stays_app/app/utils/services/validation_service.dart';
 import 'package:stays_app/features/profile/controllers/about_controller.dart';
 import 'package:stays_app/features/profile/controllers/edit_profile_controller.dart';
 import 'package:stays_app/features/profile/controllers/help_controller.dart';
@@ -21,6 +23,15 @@ class ProfileBinding extends Bindings {
     if (!Get.isRegistered<IAuthProvider>()) {
       Get.put<IAuthProvider>(SupabaseAuthProvider(), permanent: true);
     }
+
+    // Ensure core services are registered
+    if (!Get.isRegistered<TokenService>()) {
+      Get.put<TokenService>(TokenService(), permanent: true);
+    }
+    if (!Get.isRegistered<ValidationService>()) {
+      Get.put<ValidationService>(ValidationService(), permanent: true);
+    }
+
     if (!Get.isRegistered<AuthRepository>()) {
       Get.put<AuthRepository>(
         AuthRepository(provider: Get.find<IAuthProvider>()),
@@ -30,7 +41,10 @@ class ProfileBinding extends Bindings {
     final authRepository = Get.find<AuthRepository>();
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
-        AuthController(authRepository: Get.find<AuthRepository>()),
+        AuthController(
+          authRepository: Get.find<AuthRepository>(),
+          tokenService: Get.find<TokenService>(),
+        ),
         permanent: true,
       );
     }

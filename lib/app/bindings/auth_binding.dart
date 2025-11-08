@@ -5,8 +5,8 @@ import '../controllers/auth/otp_controller.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/providers/auth/i_auth_provider.dart';
 import '../data/providers/supabase_auth_provider.dart';
-import '../../config/app_config.dart';
 import '../controllers/auth/form_validation_controller.dart';
+import '../utils/services/token_service.dart';
 
 class AuthBinding extends Bindings {
   @override
@@ -17,13 +17,20 @@ class AuthBinding extends Bindings {
       // For now, prefer Supabase in all flavors.
       return SupabaseAuthProvider();
     });
+
     Get.lazyPut<AuthRepository>(() => AuthRepository(provider: Get.find<IAuthProvider>()));
+
+    // Form validation controller (now managed properly)
     if (!Get.isRegistered<FormValidationController>()) {
-      Get.put<FormValidationController>(FormValidationController(), permanent: true);
+      Get.put<FormValidationController>(FormValidationController());
     }
-    Get.lazyPut<AuthController>(
-      () => AuthController(authRepository: Get.find<AuthRepository>()),
-    );
+
+    // Auth controller with proper dependency injection
+    Get.lazyPut<AuthController>(() => AuthController(
+      authRepository: Get.find<AuthRepository>(),
+      tokenService: Get.find<TokenService>(),
+    ));
+
     Get.lazyPut<OTPController>(() => OTPController());
   }
 }

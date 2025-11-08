@@ -58,3 +58,5 @@ app.*.map.json
 
 # Local developer tools/config that should not be committed
 .claude/
+.coderabbit_uncommitted_review.txt
+.coderabbit/

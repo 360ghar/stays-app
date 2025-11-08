@@ -5,8 +5,8 @@ import 'package:stays_app/app/data/providers/properties_provider.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/providers/swipes_provider.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
-
 import '../controllers/filter_controller.dart';
+import '../controllers/favorites_controller.dart';
 
 class ExploreBinding extends Bindings {
   @override
@@ -23,6 +23,16 @@ class ExploreBinding extends Bindings {
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
-    Get.lazyPut<ExploreController>(() => ExploreController());
+    if (!Get.isRegistered<FavoritesController>()) {
+      Get.put<FavoritesController>(FavoritesController(), permanent: true);
+    }
+
+    Get.lazyPut<ExploreController>(() => ExploreController(
+      locationService: Get.find<LocationService>(),
+      propertiesRepository: Get.find<PropertiesRepository>(),
+      wishlistRepository: Get.find<WishlistRepository>(),
+      filterController: Get.find<FilterController>(),
+      favoritesController: Get.find<FavoritesController>(),
+    ));
   }
 }

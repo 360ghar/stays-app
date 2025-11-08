@@ -13,6 +13,7 @@ import '../../utils/exceptions/app_exceptions.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/providers/users_provider.dart';
 import '../../data/services/storage_service.dart';
+import '../../utils/services/token_service.dart';
 import '../base/base_controller.dart';
 import 'form_validation_controller.dart';
 
@@ -24,23 +25,25 @@ class AuthController extends BaseController {
   static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
 
   final AuthRepository _authRepository;
+  final TokenService _tokenService;
+  late final FormValidationController _validation;
 
-  AuthController({required AuthRepository authRepository})
-    : _authRepository = authRepository;
-
-  // Local storage handle used to persist remember-me selection and tokens.
-  late final GetStorage _authPrefs;
+  AuthController({
+    required AuthRepository authRepository,
+    required TokenService tokenService,
+  }) : _authRepository = authRepository,
+       _tokenService = tokenService {
+    // Initialize validation controller
+    _validation = FormValidationController();
+  }
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-  final RxBool isLoading = false.obs;
   final RxBool isAuthenticated = false.obs;
   final RxBool isPasswordVisible = false.obs;
   final RxBool rememberMe = false.obs;
 
-  // Form validation observables
-  // Centralized form validation state
-  late final FormValidationController _validation =
-      Get.put<FormValidationController>(FormValidationController(), permanent: true);
+  // Local storage for remember-me preference
+  late final GetStorage _authPrefs;
 
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
@@ -50,8 +53,12 @@ class AuthController extends BaseController {
   @override
   void onInit() {
     super.onInit();
+
+    // Initialize storage
     _initializeRememberMePreference();
-    _checkAuthStatus();
+
+    // Defer initial auth status check until TokenService has loaded tokens
+    _initAuthStatus();
     _bindAuthStateListener();
   }
 
@@ -80,18 +87,38 @@ class AuthController extends BaseController {
   RxString get passwordError => _validation.passwordError;
   RxString get confirmPasswordError => _validation.confirmPasswordError;
 
+  Future<void> _initAuthStatus() async {
+    try {
+      // Wait for TokenService readiness so returning users aren't treated as logged out
+      await _tokenService.ready;
+    } catch (_) {
+      // If readiness throws, proceed with best-effort check
+    }
+    await _checkAuthStatus();
+  }
+
   Future<void> _checkAuthStatus() async {
     try {
-      final isAuth = await _authRepository.isAuthenticated();
-      isAuthenticated.value = isAuth;
+      // Use TokenService for authentication status
+      var tokenAuth = _tokenService.isAuthenticated.value;
+      final repoAuth = await _authRepository.isAuthenticated();
+
+      // If repository reports a valid session but TokenService hasn't caught up yet,
+      // refresh TokenService from the active session to prevent false negatives.
+      if (repoAuth && !tokenAuth) {
+        await _updateTokenServiceFromCurrentSession();
+        tokenAuth = _tokenService.isAuthenticated.value;
+      }
+
+      isAuthenticated.value = tokenAuth && repoAuth;
       AppLogger.info(
-        isAuth
+        isAuthenticated.value
             ? 'User is authenticated'
-            : 'No token found. Navigating to login.',
+            : 'No valid tokens found. User needs to login.',
       );
-      if (isAuth) {
+
+      if (isAuthenticated.value) {
         // Proactively refresh profile so dependent screens can prefill
-        // Fire-and-forget; listeners will react when currentUser updates
         fetchAndCacheProfile();
       }
     } catch (e) {
@@ -127,15 +154,22 @@ class AuthController extends BaseController {
         final event = data.event;
         final session = data.session;
         if (event == AuthChangeEvent.signedOut) {
+          // Keep TokenService in sync on sign-out events
+          await _tokenService.clearTokens();
           await _clearRememberedSession();
           return;
         }
-        if (!rememberMe.value || session == null) {
+        if (session == null) {
           return;
         }
         if (event == AuthChangeEvent.signedIn ||
             event == AuthChangeEvent.tokenRefreshed) {
-          await _persistRememberedSession(session: session);
+          // Update TokenService with latest tokens so late-bound controllers see auth state
+          await _updateTokenServiceFromSession(session);
+          // Only persist to local remember-me storage if opted in
+          if (rememberMe.value) {
+            await _persistRememberedSession(session: session);
+          }
         }
       },
       onError: (Object error) {
@@ -224,6 +258,9 @@ class AuthController extends BaseController {
 
       currentUser.value = user;
       isAuthenticated.value = true;
+
+      // Ensure TokenService reflects the authenticated session
+      await _updateTokenServiceFromCurrentSession();
 
       final displayName =
           user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
@@ -363,6 +400,8 @@ class AuthController extends BaseController {
     try {
       isLoading.value = true;
       await _authRepository.logout();
+      // Clear tokens from TokenService as well
+      await _tokenService.clearTokens();
       await setRememberMe(false);
       currentUser.value = null;
       isAuthenticated.value = false;
@@ -448,6 +487,9 @@ class AuthController extends BaseController {
       currentUser.value = user;
       isAuthenticated.value = true;
 
+      // Ensure TokenService reflects the authenticated session
+      await _updateTokenServiceFromCurrentSession();
+
       _showSuccessSnackbar(
         title: 'Welcome!',
         message:
@@ -463,6 +505,28 @@ class AuthController extends BaseController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // Sync TokenService state from a provided Supabase session
+  Future<void> _updateTokenServiceFromSession(Session session) async {
+    try {
+      final access = session.accessToken;
+      final refresh = session.refreshToken;
+      await _tokenService.storeTokens(
+        accessToken: access,
+        refreshToken: refresh,
+      );
+    } catch (e) {
+      AppLogger.warning('Failed to sync TokenService from session: $e');
+    }
+  }
+
+  // Sync TokenService using the current Supabase session if available
+  Future<void> _updateTokenServiceFromCurrentSession() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      await _updateTokenServiceFromSession(session);
     }
   }
 
