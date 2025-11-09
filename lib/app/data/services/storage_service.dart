@@ -53,14 +53,15 @@ class StorageService extends GetxService {
     String? refreshToken,
     String? expiresAt,
   }) async {
-    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
+    // Write with duplicate-safe fallback for iOS Keychain (-25299)
+    await _writeSecure(_accessTokenKey, accessToken);
     if (refreshToken != null) {
-      await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+      await _writeSecure(_refreshTokenKey, refreshToken);
     }
     if (expiresAt != null) {
-      await _secureStorage.write(key: _tokenExpiresAtKey, value: expiresAt);
+      await _writeSecure(_tokenExpiresAtKey, expiresAt);
     } else {
-      await _secureStorage.delete(key: _tokenExpiresAtKey);
+      await _deleteSecure(_tokenExpiresAtKey);
     }
     // Sync to temp storage for middleware
     await _syncTokensToTemp();
@@ -84,10 +85,41 @@ class StorageService extends GetxService {
   }
 
   Future<void> clearTokens() async {
-    await _secureStorage.delete(key: _accessTokenKey);
-    await _secureStorage.delete(key: _refreshTokenKey);
-    await _secureStorage.delete(key: _tokenExpiresAtKey);
+    await _deleteSecure(_accessTokenKey);
+    await _deleteSecure(_refreshTokenKey);
+    await _deleteSecure(_tokenExpiresAtKey);
     // No temp cache of tokens
+  }
+
+  Future<void> _writeSecure(String key, String? value) async {
+    if (value == null) {
+      await _deleteSecure(key);
+      return;
+    }
+    try {
+      await _secureStorage.write(key: key, value: value);
+    } catch (e) {
+      // Handle iOS duplicate item error (-25299) by deleting then retrying
+      final msg = e.toString();
+      if (msg.contains('-25299') || msg.contains('already exists in the keychain')) {
+        await _deleteSecure(key);
+        await _secureStorage.write(key: key, value: value);
+        return;
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _deleteSecure(String key) async {
+    try {
+      await _secureStorage.delete(key: key);
+    } catch (_) {
+      // Fallback: try deleting with default iOS options in case accessibility changed
+      try {
+        const fallback = FlutterSecureStorage();
+        await fallback.delete(key: key);
+      } catch (_) {}
+    }
   }
 
   // User data management

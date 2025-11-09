@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../services/storage_service.dart';
+import '../../utils/services/token_service.dart';
 import '../models/user_model.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/exceptions/app_exceptions.dart';
@@ -112,10 +113,20 @@ class AuthRepository {
   Future<void> _persistTokens(ProviderAuthResult res) async {
     try {
       if (res.accessToken != null) {
-        await _storage.saveTokens(
-          accessToken: res.accessToken!,
-          refreshToken: res.refreshToken,
-        );
+        // Centralize via TokenService so in-memory state and storage stay in sync
+        try {
+          final tokenService = Get.find<TokenService>();
+          await tokenService.storeTokens(
+            accessToken: res.accessToken!,
+            refreshToken: res.refreshToken,
+          );
+        } catch (_) {
+          // Fallback if TokenService hasn't finished async init yet
+          await _storage.saveTokens(
+            accessToken: res.accessToken!,
+            refreshToken: res.refreshToken,
+          );
+        }
       }
     } catch (e) {
       AppLogger.warning('Failed to persist tokens: $e');

@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
 import '../services/storage_service.dart';
+import '../../utils/services/token_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/services/error_service.dart';
@@ -85,7 +86,20 @@ abstract class BaseProvider extends GetConnect {
         final newToken = client.auth.currentSession?.accessToken;
         final newRefresh = client.auth.currentSession?.refreshToken;
         if (newToken != null) {
-          await _storage.saveTokens(accessToken: newToken, refreshToken: newRefresh);
+          // Keep TokenService + storage in sync via service layer
+          try {
+            final tokenService = Get.find<TokenService>();
+            await tokenService.storeTokens(
+              accessToken: newToken,
+              refreshToken: newRefresh,
+            );
+          } catch (_) {
+            // Fallback to direct storage if TokenService not available
+            await _storage.saveTokens(
+              accessToken: newToken,
+              refreshToken: newRefresh,
+            );
+          }
           request.headers['Authorization'] = 'Bearer $newToken';
           AppLogger.info('Auth token refreshed; retrying ${request.url}');
           return request;

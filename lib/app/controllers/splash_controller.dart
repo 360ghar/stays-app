@@ -7,6 +7,7 @@ import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/services/token_service.dart';
 
 class SplashController extends GetxController {
   static const String _rememberMeBox = 'auth_preferences';
@@ -192,12 +193,21 @@ class SplashController extends GetxController {
         );
         return null;
       }
-      if (Get.isRegistered<StorageService>()) {
-        final storage = Get.find<StorageService>();
-        await storage.saveTokens(
+      // Keep TokenService in sync so downstream auth checks see tokens immediately
+      try {
+        final tokenService = Get.find<TokenService>();
+        await tokenService.storeTokens(
           accessToken: restoredSession.accessToken,
           refreshToken: restoredSession.refreshToken,
         );
+      } catch (_) {
+        if (Get.isRegistered<StorageService>()) {
+          final storage = Get.find<StorageService>();
+          await storage.saveTokens(
+            accessToken: restoredSession.accessToken,
+            refreshToken: restoredSession.refreshToken,
+          );
+        }
       }
       await prefs.write(_rememberedAccessTokenKey, restoredSession.accessToken);
       final newRefreshToken = restoredSession.refreshToken;

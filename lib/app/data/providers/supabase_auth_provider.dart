@@ -18,7 +18,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
       email: email,
       password: password,
     );
-    await _syncTokens(res.session);
     return ProviderAuthResult(
       accessToken: res.session?.accessToken,
       refreshToken: res.session?.refreshToken,
@@ -35,7 +34,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
       phone: _ensureE164(phone),
       password: password,
     );
-    await _syncTokens(res.session);
     return ProviderAuthResult(
       accessToken: res.session?.accessToken,
       refreshToken: res.session?.refreshToken,
@@ -54,7 +52,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
       password: password,
       data: {'full_name': name},
     );
-    await _syncTokens(res.session);
     return ProviderAuthResult(
       accessToken: res.session?.accessToken,
       refreshToken: res.session?.refreshToken,
@@ -116,13 +113,8 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
     return session != null && session.accessToken.isNotEmpty;
   }
 
-  Future<void> _syncTokens(supabase.Session? session) async {
-    if (session == null) return;
-    await _storage.saveTokens(
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-    );
-  }
+  // Token persistence is handled at repository/service layer to avoid
+  // duplicate keychain writes and race conditions.
 
   Map<String, dynamic>? _mapUser(supabase.User? user) {
     if (user == null) return null;
@@ -143,4 +135,3 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
     return '+91$trimmed';
   }
 }
-

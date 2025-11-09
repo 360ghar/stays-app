@@ -33,8 +33,10 @@ class AuthController extends BaseController {
     required TokenService tokenService,
   }) : _authRepository = authRepository,
        _tokenService = tokenService {
-    // Initialize validation controller
-    _validation = FormValidationController();
+    // Resolve the shared FormValidationController via GetX so lifecycle hooks run
+    _validation = Get.isRegistered<FormValidationController>()
+        ? Get.find<FormValidationController>()
+        : Get.put<FormValidationController>(FormValidationController());
   }
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
@@ -259,8 +261,7 @@ class AuthController extends BaseController {
       currentUser.value = user;
       isAuthenticated.value = true;
 
-      // Ensure TokenService reflects the authenticated session
-      await _updateTokenServiceFromCurrentSession();
+      // Tokens already persisted via TokenService in repository
 
       final displayName =
           user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
@@ -487,8 +488,7 @@ class AuthController extends BaseController {
       currentUser.value = user;
       isAuthenticated.value = true;
 
-      // Ensure TokenService reflects the authenticated session
-      await _updateTokenServiceFromCurrentSession();
+      // Tokens already persisted via TokenService in repository
 
       _showSuccessSnackbar(
         title: 'Welcome!',
