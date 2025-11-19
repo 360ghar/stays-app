@@ -123,6 +123,27 @@ class UsersProvider extends BaseProvider {
     }
   }
 
+  Future<void> registerDeviceToken({
+    required String token,
+    required String platform,
+    String? appVersion,
+    String? locale,
+  }) async {
+    final payload = <String, dynamic>{
+      'token': token,
+      'platform': platform,
+      if (appVersion != null) 'app_version': appVersion,
+      if (locale != null) 'locale': locale,
+    };
+    final response = await post('/api/v1/notifications/devices/register', payload);
+    if (!response.isOk) {
+      throw ApiException(
+        message: response.statusText ?? 'Failed to register device token',
+        statusCode: response.statusCode ?? 500,
+      );
+    }
+  }
+
   UserModel _parseUser(dynamic body) {
     if (body == null) {
       throw ApiException(

@@ -1,7 +1,10 @@
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'storage_service.dart';
 
 /// Background handler must be a top-level function.
@@ -73,7 +76,10 @@ class PushNotificationService extends GetxService {
       // Fetch token for diagnostics
       try {
         final token = await _messaging.getToken();
-        if (token != null) AppLogger.info('FCM Token: $token');
+        if (token != null) {
+          AppLogger.info('FCM Token: $token');
+          await _registerTokenWithBackend(token);
+        }
       } catch (e) {
         AppLogger.warning('Unable to retrieve FCM token: $e');
       }
@@ -93,6 +99,41 @@ class PushNotificationService extends GetxService {
     } catch (e) {
       // Guard against any remaining initialization errors.
       AppLogger.warning('Push notifications disabled due to init error: $e');
+    }
+  }
+
+  Future<void> _registerTokenWithBackend(String token) async {
+    try {
+      if (!Get.isRegistered<UsersProvider>()) {
+        Get.put<UsersProvider>(UsersProvider());
+      }
+      final provider = Get.find<UsersProvider>();
+
+      String? appVersion;
+      try {
+        final info = await PackageInfo.fromPlatform();
+        appVersion = '${info.version}+${info.buildNumber}';
+      } catch (_) {
+        appVersion = null;
+      }
+
+      final locale = Get.locale?.toLanguageTag();
+      final platform = kIsWeb
+          ? 'web'
+          : (defaultTargetPlatform == TargetPlatform.iOS ||
+                  defaultTargetPlatform == TargetPlatform.macOS)
+              ? 'ios'
+              : 'android';
+
+      await provider.registerDeviceToken(
+        token: token,
+        platform: platform,
+        appVersion: appVersion,
+        locale: locale,
+      );
+      AppLogger.info('Device token registered with backend');
+    } catch (e, s) {
+      AppLogger.warning('Failed to register device token with backend: $e', s);
     }
   }
 }
