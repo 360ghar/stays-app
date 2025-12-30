@@ -19,7 +19,7 @@ class TripsView extends GetView<TripsController> {
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: LocationFilterAppBar(scope: FilterScope.booking),
+      appBar: const LocationFilterAppBar(scope: FilterScope.booking),
       body: Obx(() {
         if (controller.isLoading.value && controller.pastBookings.isEmpty) {
           return const Center(child: CircularProgressIndicator());

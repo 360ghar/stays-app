@@ -1,14 +1,20 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'trip_model.g.dart';
+
+@JsonSerializable()
 class TripModel {
   final String id;
   final String propertyName;
   final DateTime checkIn;
   final DateTime checkOut;
+  @JsonKey(defaultValue: 'pending')
   final String status;
   final String? propertyImage;
   final double? totalCost;
   final String? hostName;
 
-  TripModel({
+  const TripModel({
     required this.id,
     required this.propertyName,
     required this.checkIn,
@@ -19,25 +25,14 @@ class TripModel {
     this.hostName,
   });
 
-  factory TripModel.fromMap(Map<String, dynamic> map) => TripModel(
-    id: map['id']?.toString() ?? '',
-    propertyName: map['propertyName'] as String? ?? '',
-    checkIn: DateTime.parse(map['checkIn'] as String),
-    checkOut: DateTime.parse(map['checkOut'] as String),
-    status: map['status'] as String? ?? 'pending',
-    propertyImage: map['propertyImage'] as String?,
-    totalCost: (map['totalCost'] as num?)?.toDouble(),
-    hostName: map['hostName'] as String?,
-  );
+  factory TripModel.fromJson(Map<String, dynamic> json) =>
+      _$TripModelFromJson(json);
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'propertyName': propertyName,
-    'checkIn': checkIn.toIso8601String(),
-    'checkOut': checkOut.toIso8601String(),
-    'status': status,
-    'propertyImage': propertyImage,
-    'totalCost': totalCost,
-    'hostName': hostName,
-  };
+  Map<String, dynamic> toJson() => _$TripModelToJson(this);
+
+  // Backwards compatibility
+  factory TripModel.fromMap(Map<String, dynamic> map) =>
+      TripModel.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }

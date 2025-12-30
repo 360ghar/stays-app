@@ -2,10 +2,11 @@ import 'dart:math' as math;
 
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 
-class InquiryConfirmationController extends GetxController {
+class InquiryConfirmationController extends BaseController {
   InquiryConfirmationController();
 
   final Rxn<Property> property = Rxn<Property>();

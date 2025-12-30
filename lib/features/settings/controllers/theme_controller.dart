@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/services/theme_service.dart';
 
-class ThemeController extends GetxController {
+class ThemeController extends BaseController {
   ThemeController({required ThemeService themeService})
     : _themeService = themeService;
 

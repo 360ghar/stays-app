@@ -1,22 +1,24 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import 'config/app_config.dart';
-import 'app/routes/app_pages.dart';
-import 'l10n/localization_service.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/data/services/locale_service.dart';
-import 'app/ui/theme/app_theme.dart';
-import 'app/data/services/theme_service.dart';
 import 'app/data/services/supabase_service.dart';
+import 'app/data/services/theme_service.dart';
+import 'app/routes/app_pages.dart';
+import 'app/ui/theme/app_theme.dart';
+import 'app/utils/performance/performance_monitor.dart';
 import 'app/utils/security/cert_pinning.dart';
+import 'app/utils/services/error_service.dart';
+import 'config/app_config.dart';
 import 'features/settings/controllers/theme_controller.dart';
+import 'l10n/localization_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +26,12 @@ Future<void> main() async {
   // Default to dev if launched via lib/main.dart
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
+  if (!Get.isRegistered<ErrorService>()) {
+    Get.put<ErrorService>(ErrorService(), permanent: true);
+  }
+  if (!Get.isRegistered<PerformanceMonitor>()) {
+    Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+  }
 
   // Optional certificate pinning when API_CERT_SHA256 is provided
   final pinsRaw = dotenv.env['API_CERT_SHA256'];

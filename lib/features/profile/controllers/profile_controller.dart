@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/trip_model.dart';
@@ -10,7 +11,7 @@ import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
-class ProfileController extends GetxController {
+class ProfileController extends BaseController {
   ProfileController({
     required ProfileRepository profileRepository,
     required AuthController authController,
@@ -29,10 +30,9 @@ class ProfileController extends GetxController {
   final RxnString avatarUrl = RxnString();
   final Rx<DateTime?> memberSince = Rx<DateTime?>(null);
 
-  final RxBool isLoading = false.obs;
+  // Note: isLoading and errorMessage are inherited from BaseController
   final RxBool isRefreshing = false.obs;
   final RxBool isActionInProgress = false.obs;
-  final RxString errorMessage = ''.obs;
 
   final RxDouble completion = 0.0.obs;
   final RxList<TripModel> pastTrips = <TripModel>[].obs;

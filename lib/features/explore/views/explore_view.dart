@@ -316,7 +316,7 @@ class ExploreView extends GetView<ExploreController> {
             heroPrefix: '${heroPrefix}_$index',
             isFavorite: controller.isPropertyFavorite(property.id),
             onTap: () => controller.navigateToPropertyDetail(property),
-            onFavoriteToggle: () => controller.toggleFavorite(property),
+            onFavoriteToggle: () => controller.toggleFavoriteProperty(property),
           ),
         );
       },

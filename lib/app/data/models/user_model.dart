@@ -1,5 +1,11 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user_model.g.dart';
+
+@JsonSerializable(createFactory: false)
 class UserModel {
   final String id;
+  @JsonKey(name: 'supabase_id')
   final String? supabaseId;
   final String? email;
   final String? phone;
@@ -7,19 +13,30 @@ class UserModel {
   final String? lastName;
   final String? name;
   final String? avatarUrl;
+  @JsonKey(name: 'profile_image_url')
   final String? profileImageUrl;
   final String? bio;
+  @JsonKey(name: 'date_of_birth')
   final DateTime? dateOfBirth;
   final Map<String, dynamic>? preferences;
+  @JsonKey(name: 'notification_settings')
   final Map<String, dynamic>? notificationSettings;
+  @JsonKey(name: 'privacy_settings')
   final Map<String, dynamic>? privacySettings;
+  @JsonKey(name: 'current_latitude')
   final double? currentLatitude;
+  @JsonKey(name: 'current_longitude')
   final double? currentLongitude;
+  @JsonKey(name: 'is_active')
   final bool? isActive;
+  @JsonKey(name: 'is_verified')
   final bool? isVerified;
+  @JsonKey(name: 'created_at')
   final DateTime? createdAt;
+  @JsonKey(name: 'updated_at')
   final DateTime? updatedAt;
   final bool isSuperHost;
+  @JsonKey(name: 'agent_id')
   final String? agentId;
   final Map<String, dynamic>? metadata;
 
@@ -150,6 +167,10 @@ class UserModel {
     );
   }
 
+  // Custom fromJson to handle multiple field name variants from API
+  factory UserModel.fromJson(Map<String, dynamic> map) =>
+      UserModel.fromMap(map);
+
   factory UserModel.fromMap(Map<String, dynamic> map) {
     Map<String, dynamic>? parseMap(dynamic value) {
       if (value == null) return null;
@@ -208,37 +229,9 @@ class UserModel {
     );
   }
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      UserModel.fromMap(json);
+  Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'supabase_id': supabaseId,
-    'email': email,
-    'phone': phone,
-    'firstName': firstName,
-    'lastName': lastName,
-    'name': name,
-    'avatarUrl': avatarUrl,
-    'profileImageUrl': profileImageUrl ?? avatarUrl,
-    'profile_image_url': profileImageUrl ?? avatarUrl,
-    'bio': bio,
-    'date_of_birth': dateOfBirth?.toIso8601String(),
-    'preferences': preferences,
-    'notification_settings': notificationSettings,
-    'privacy_settings': privacySettings,
-    'current_latitude': currentLatitude,
-    'current_longitude': currentLongitude,
-    'is_active': isActive,
-    'is_verified': isVerified,
-    'created_at': createdAt?.toIso8601String(),
-    'updated_at': updatedAt?.toIso8601String(),
-    'isSuperHost': isSuperHost,
-    'agent_id': agentId,
-    'metadata': metadata,
-  };
-
-  Map<String, dynamic> toJson() => toMap();
+  Map<String, dynamic> toMap() => toJson();
 
   static double? _toDouble(dynamic value) {
     if (value == null) return null;

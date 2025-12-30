@@ -1,3 +1,8 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'message_model.g.dart';
+
+@JsonSerializable()
 class MessageModel {
   final String id;
   final String conversationId;
@@ -13,20 +18,14 @@ class MessageModel {
     required this.createdAt,
   });
 
-  factory MessageModel.fromMap(Map<String, dynamic> map) => MessageModel(
-    id: map['id']?.toString() ?? '',
-    conversationId: map['conversationId']?.toString() ?? '',
-    senderId: map['senderId']?.toString() ?? '',
-    content: map['content'] as String? ?? '',
-    createdAt:
-        DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-  );
+  factory MessageModel.fromJson(Map<String, dynamic> json) =>
+      _$MessageModelFromJson(json);
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'conversationId': conversationId,
-    'senderId': senderId,
-    'content': content,
-    'createdAt': createdAt.toIso8601String(),
-  };
+  Map<String, dynamic> toJson() => _$MessageModelToJson(this);
+
+  // Backwards compatibility
+  factory MessageModel.fromMap(Map<String, dynamic> map) =>
+      MessageModel.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }

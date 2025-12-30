@@ -38,19 +38,24 @@ class SectionHeader extends StatelessWidget {
             ),
           ),
           if (onViewAll != null)
-            GestureDetector(
-              onTap: onViewAll,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 16,
-                      color: context.colors.primary,
-                    ),
-                  ],
+            Semantics(
+              label: 'View all $title',
+              button: true,
+              child: GestureDetector(
+                onTap: onViewAll,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: context.colors.primary,
+                        semanticLabel: 'Navigate forward',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -22,9 +22,13 @@ class InitialBinding extends Bindings {
   @override
   void dependencies() {
     // Core services that don't depend on others
-    Get.put<ErrorService>(ErrorService(), permanent: true);
+    if (!Get.isRegistered<ErrorService>()) {
+      Get.put<ErrorService>(ErrorService(), permanent: true);
+    }
     Get.put<ValidationService>(ValidationService(), permanent: true);
-    Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    if (!Get.isRegistered<PerformanceMonitor>()) {
+      Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    }
     Get.put<SecurityService>(SecurityService(), permanent: true);
 
     // Connectivity monitoring service (early initialization)

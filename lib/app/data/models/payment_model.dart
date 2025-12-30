@@ -1,7 +1,14 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'payment_model.g.dart';
+
+@JsonSerializable()
 class PaymentModel {
   final String id;
   final num amount;
+  @JsonKey(defaultValue: 'USD')
   final String currency;
+  @JsonKey(defaultValue: 'pending')
   final String status;
 
   const PaymentModel({
@@ -11,17 +18,14 @@ class PaymentModel {
     this.status = 'pending',
   });
 
-  factory PaymentModel.fromMap(Map<String, dynamic> map) => PaymentModel(
-    id: map['id']?.toString() ?? '',
-    amount: map['amount'] as num? ?? 0,
-    currency: map['currency'] as String? ?? 'USD',
-    status: map['status'] as String? ?? 'pending',
-  );
+  factory PaymentModel.fromJson(Map<String, dynamic> json) =>
+      _$PaymentModelFromJson(json);
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'amount': amount,
-    'currency': currency,
-    'status': status,
-  };
+  Map<String, dynamic> toJson() => _$PaymentModelToJson(this);
+
+  // Backwards compatibility
+  factory PaymentModel.fromMap(Map<String, dynamic> map) =>
+      PaymentModel.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }

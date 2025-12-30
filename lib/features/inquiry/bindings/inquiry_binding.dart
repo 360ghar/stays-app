@@ -7,6 +7,7 @@ import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/features/trips/bindings/trips_binding.dart';
 import 'package:stays_app/app/data/providers/bookings_provider.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
+import 'package:stays_app/features/auth/controllers/session_controller.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
@@ -25,11 +26,20 @@ class InquiryBinding extends Bindings {
         permanent: true,
       );
     }
+    if (!Get.isRegistered<TokenService>()) {
+      Get.put<TokenService>(TokenService(), permanent: true);
+    }
+    if (!Get.isRegistered<SessionController>()) {
+      Get.put<SessionController>(
+        SessionController(tokenService: Get.find<TokenService>()),
+        permanent: true,
+      );
+    }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(
           authRepository: Get.find<AuthRepository>(),
-          tokenService: Get.find<TokenService>(),
+          sessionController: Get.find<SessionController>(),
         ),
         permanent: true,
       );

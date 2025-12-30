@@ -1,98 +1,80 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
-import 'package:stays_app/app/data/repositories/profile_repository.dart';
-import 'package:stays_app/app/data/providers/users_provider.dart';
-import 'package:stays_app/app/data/services/storage_service.dart';
-import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'form_validation_controller.dart';
+import 'session_controller.dart';
+import 'user_profile_controller.dart';
 
+/// Controller responsible for authentication operations.
+/// Handles login, logout, and registration flows.
+/// Delegates session management to SessionController and profile to UserProfileController.
 class AuthController extends BaseController {
-  // Storage keys dedicated to the remember-me preference and cached tokens.
-  static const String _rememberMeBox = 'auth_preferences';
-  static const String _rememberMeFlagKey = 'remember_me';
-  static const String _rememberedAccessTokenKey = 'remembered_access_token';
-  static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
-
-  final AuthRepository _authRepository;
-  final TokenService _tokenService;
-  late final FormValidationController _validation;
-
   AuthController({
     required AuthRepository authRepository,
-    required TokenService tokenService,
+    required SessionController sessionController,
   }) : _authRepository = authRepository,
-       _tokenService = tokenService {
-    // Resolve the shared FormValidationController via GetX so lifecycle hooks run
+       _sessionController = sessionController {
+    // Resolve the shared FormValidationController via GetX
     _validation = Get.isRegistered<FormValidationController>()
         ? Get.find<FormValidationController>()
         : Get.put<FormValidationController>(FormValidationController());
+
+    // Resolve or create UserProfileController
+    _userProfileController = Get.isRegistered<UserProfileController>()
+        ? Get.find<UserProfileController>()
+        : Get.put<UserProfileController>(UserProfileController());
   }
 
-  final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-  final RxBool isAuthenticated = false.obs;
-  final RxBool isPasswordVisible = false.obs;
-  final RxBool rememberMe = false.obs;
+  final AuthRepository _authRepository;
+  final SessionController _sessionController;
+  late final FormValidationController _validation;
+  late final UserProfileController _userProfileController;
 
-  // Local storage for remember-me preference
-  late final GetStorage _authPrefs;
+  // Expose session state for backwards compatibility
+  RxBool get isAuthenticated => _sessionController.isAuthenticated;
+  RxBool get rememberMe => _sessionController.rememberMe;
+
+  // Expose current user from profile controller
+  Rx<UserModel?> get currentUser => _userProfileController.currentUser;
+
+  final RxBool isPasswordVisible = false.obs;
 
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
-
-  StreamSubscription<AuthState>? _authSubscription;
+  RxString get emailOrPhoneError => _validation.emailOrPhoneError;
+  RxString get passwordError => _validation.passwordError;
+  RxString get confirmPasswordError => _validation.confirmPasswordError;
 
   @override
   void onInit() {
     super.onInit();
-
-    // Initialize storage asynchronously (GetStorage requires init before use)
-    unawaited(_initializeRememberMePreference());
-
-    // Defer initial auth status check until TokenService has loaded tokens
-    _initAuthStatus();
-    _bindAuthStateListener();
+    unawaited(_initAuthStatus());
   }
 
   @override
   void onReady() {
     super.onReady();
     unawaited(_loadSavedUser());
-    // Attempt to refresh profile details once ready
     if (isAuthenticated.value) {
-      // fire-and-forget; UI will react when currentUser updates
-      unawaited(fetchAndCacheProfile());
+      unawaited(_userProfileController.fetchAndCacheProfile());
     }
-  }
-
-  @override
-  void onClose() {
-    _authSubscription?.cancel();
-    super.onClose();
   }
 
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  RxString get emailOrPhoneError => _validation.emailOrPhoneError;
-  RxString get passwordError => _validation.passwordError;
-  RxString get confirmPasswordError => _validation.confirmPasswordError;
-
   Future<void> _initAuthStatus() async {
     try {
-      // Wait for TokenService readiness so returning users aren't treated as logged out
-      await _tokenService.ready;
+      await _sessionController.ready;
     } catch (_) {
       // If readiness throws, proceed with best-effort check
     }
@@ -101,18 +83,15 @@ class AuthController extends BaseController {
 
   Future<void> _checkAuthStatus() async {
     try {
-      // Use TokenService for authentication status
-      var tokenAuth = _tokenService.isAuthenticated.value;
+      var tokenAuth = _sessionController.isAuthenticated.value;
       final repoAuth = await _authRepository.isAuthenticated();
 
-      // If repository reports a valid session but TokenService hasn't caught up yet,
-      // refresh TokenService from the active session to prevent false negatives.
       if (repoAuth && !tokenAuth) {
-        await _updateTokenServiceFromCurrentSession();
-        tokenAuth = _tokenService.isAuthenticated.value;
+        await _sessionController.updateTokenServiceFromCurrentSession();
+        tokenAuth = _sessionController.isAuthenticated.value;
       }
 
-      isAuthenticated.value = tokenAuth && repoAuth;
+      _sessionController.setAuthenticated(value: tokenAuth && repoAuth);
       AppLogger.info(
         isAuthenticated.value
             ? 'User is authenticated'
@@ -120,12 +99,11 @@ class AuthController extends BaseController {
       );
 
       if (isAuthenticated.value) {
-        // Proactively refresh profile so dependent screens can prefill
-        unawaited(fetchAndCacheProfile());
+        unawaited(_userProfileController.fetchAndCacheProfile());
       }
     } catch (e) {
       AppLogger.error('Auth check failed', e);
-      isAuthenticated.value = false;
+      _sessionController.setAuthenticated(value: false);
     }
   }
 
@@ -133,7 +111,7 @@ class AuthController extends BaseController {
     try {
       final user = await _authRepository.getCurrentUser();
       if (user != null) {
-        currentUser.value = user;
+        _userProfileController.setUser(user);
         AppLogger.info('Loaded saved user: ${user.email ?? user.phone}');
       }
     } catch (e) {
@@ -141,98 +119,10 @@ class AuthController extends BaseController {
     }
   }
 
-  // Prepare the remember-me toggle with any value persisted from a previous run.
-  Future<void> _initializeRememberMePreference() async {
-    await GetStorage.init(_rememberMeBox);
-    _authPrefs = GetStorage(_rememberMeBox);
-    final storedPreference = _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
-    rememberMe.value = storedPreference;
-  }
-
-  void _bindAuthStateListener() {
-    _authSubscription?.cancel();
-    _authSubscription = trackSubscription(
-      Supabase.instance.client.auth.onAuthStateChange.listen(
-        (data) async {
-          final event = data.event;
-          final session = data.session;
-          if (event == AuthChangeEvent.signedOut) {
-            // Keep TokenService in sync on sign-out events
-            await _tokenService.clearTokens();
-            await _clearRememberedSession();
-            return;
-          }
-          if (session == null) {
-            return;
-          }
-          if (event == AuthChangeEvent.signedIn ||
-              event == AuthChangeEvent.tokenRefreshed) {
-            // Update TokenService with latest tokens so late-bound controllers see auth state
-            await _updateTokenServiceFromSession(session);
-            // Only persist to local remember-me storage if opted in
-            if (rememberMe.value) {
-              await _persistRememberedSession(session: session);
-            }
-          }
-        },
-        onError: (Object error) {
-          AppLogger.warning('Auth state listener error: $error');
-        },
-      ),
-    );
-  }
-
-  // Update the remember-me flag and synchronise it to disk for future launches.
-  Future<void> setRememberMe(bool value) async {
-    rememberMe.value = value;
-    await _authPrefs.write(_rememberMeFlagKey, value);
-    if (!value) {
-      await _clearRememberedSession();
-    }
-  }
-
-  // Persist the latest Supabase session details when the user opts in.
-  Future<void> _persistRememberedSession({Session? session}) async {
-    final activeSession =
-        session ?? Supabase.instance.client.auth.currentSession;
-    if (activeSession == null) {
-      AppLogger.warning(
-        'Unable to persist remember-me session because Supabase returned no session.',
-      );
-      return;
-    }
-    await _authPrefs.write(_rememberMeFlagKey, true);
-    await _authPrefs.write(
-      _rememberedAccessTokenKey,
-      activeSession.accessToken,
-    );
-    final refreshToken = activeSession.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
-    }
-  }
-
-  // Drop any cached credentials when the user opts out or signs out.
-  Future<void> _clearRememberedSession() async {
-    await _authPrefs.remove(_rememberedAccessTokenKey);
-    await _authPrefs.remove(_rememberedRefreshTokenKey);
-  }
-
-  // Centralised helper that applies the user's remember-me choice post-login.
-  Future<void> _syncRememberMeStateAfterLogin() async {
-    if (rememberMe.value) {
-      await _persistRememberedSession();
-      return;
-    }
-    await _authPrefs.write(_rememberMeFlagKey, false);
-    await _clearRememberedSession();
-  }
-
-  // Login with email or phone
+  /// Login with email or phone
   Future<void> login({required String email, required String password}) async {
     try {
       isLoading.value = true;
-
       _validation.clearErrors();
 
       final emailValidation = _validation.validateEmailOrPhone(email);
@@ -247,7 +137,6 @@ class AuthController extends BaseController {
       }
 
       UserModel user;
-      // Check if input is email or phone
       if (GetUtils.isEmail(email)) {
         user = await _authRepository.loginWithEmail(
           email: email,
@@ -260,10 +149,8 @@ class AuthController extends BaseController {
         );
       }
 
-      currentUser.value = user;
-      isAuthenticated.value = true;
-
-      // Tokens already persisted via TokenService in repository
+      _userProfileController.setUser(user);
+      _sessionController.setAuthenticated(value: true);
 
       final displayName =
           user.name ?? user.firstName ?? user.email ?? user.phone ?? 'User';
@@ -272,12 +159,8 @@ class AuthController extends BaseController {
         message: 'Hello $displayName',
       );
 
-      await _syncRememberMeStateAfterLogin();
-
-      // Refresh full profile and cache for later prefilling
-      unawaited(fetchAndCacheProfile());
-
-      // Navigate to home
+      await _sessionController.syncRememberMeStateAfterLogin();
+      unawaited(_userProfileController.fetchAndCacheProfile());
       await Get.offAllNamed(Routes.home);
     } on ApiException catch (e) {
       AppLogger.error('Login failed: ${e.message}', e);
@@ -293,34 +176,15 @@ class AuthController extends BaseController {
     }
   }
 
-  // Phone-based login (if backend supports phone on same endpoint)
+  /// Phone-based login (delegates to unified login path)
   Future<void> loginWithPhone({
     required String phone,
     required String password,
   }) async {
-    // Delegate to the unified login path
     return login(email: phone, password: password);
   }
 
-  // Fetch latest profile from API, update observable and cache for fast prefill
-  Future<UserModel?> fetchAndCacheProfile() async {
-    try {
-      final repo = _ensureProfileRepository();
-      final profile = await repo.getProfile();
-      currentUser.value = profile;
-      if (Get.isRegistered<StorageService>()) {
-        final storage = Get.find<StorageService>();
-        await storage.saveUserData(profile.toMap());
-      }
-      AppLogger.info('Profile refreshed for ${profile.email ?? profile.phone}');
-      return profile;
-    } catch (e) {
-      AppLogger.warning('Failed to refresh user profile: $e');
-      return null;
-    }
-  }
-
-  // Phone signup via Supabase: sends OTP for first-time validation
+  /// Phone signup via Supabase: sends OTP for first-time validation
   Future<bool> registerWithPhone({
     required String phone,
     required String password,
@@ -363,8 +227,7 @@ class AuthController extends BaseController {
     }
   }
 
-  // Backwards-compat: the current UI triggers an OTP flow for forgot password.
-  // Provide a graceful error until a backend endpoint is available.
+  /// Send forgot password OTP (stub until backend supports it)
   Future<bool> sendForgotPasswordOTP(String phone) async {
     final validation = _validation.validateEmailOrPhone(phone);
     if (validation != null) {
@@ -378,7 +241,7 @@ class AuthController extends BaseController {
     return false;
   }
 
-  // Backwards-compat stub, replace with real backend call when available
+  /// Reset password (stub until backend supports it)
   Future<void> resetPassword({
     required String newPassword,
     required String confirmPassword,
@@ -406,13 +269,10 @@ class AuthController extends BaseController {
     try {
       isLoading.value = true;
       await _authRepository.logout();
-      // Clear tokens from TokenService as well
-      await _tokenService.clearTokens();
-      await setRememberMe(false);
-      currentUser.value = null;
-      isAuthenticated.value = false;
+      await _sessionController.clearSession();
+      await _userProfileController.clearUser();
 
-      // Reset form/UI state before navigating so login screen starts enabled
+      // Reset form/UI state
       emailOrPhoneError.value = '';
       passwordError.value = '';
       confirmPasswordError.value = '';
@@ -424,7 +284,6 @@ class AuthController extends BaseController {
         message: 'You have been successfully logged out.',
       );
 
-      // Navigate to login after local state is reset
       await Get.offAllNamed(Routes.login);
     } catch (e) {
       AppLogger.error('Logout failed', e);
@@ -433,22 +292,20 @@ class AuthController extends BaseController {
         message: 'Failed to logout properly.',
       );
     } finally {
-      // Ensure loading is not stuck true in any race condition
       isLoading.value = false;
     }
   }
 
   Future<void> register({
-    String? name,
-    String? firstName,
-    String? lastName,
     required String email,
     required String password,
     String? confirmPassword,
+    String? name,
+    String? firstName,
+    String? lastName,
   }) async {
     try {
       isLoading.value = true;
-
       _validation.clearErrors();
 
       final emailValidation = _validation.validateEmailOrPhone(email);
@@ -474,11 +331,10 @@ class AuthController extends BaseController {
       final computedName = () {
         final n = name;
         if (n != null && n.trim().isNotEmpty) return n.trim();
-        final parts = <String>[];
-        final fn = firstName;
-        final ln = lastName;
-        if ((fn ?? '').trim().isNotEmpty) parts.add(fn!.trim());
-        if ((ln ?? '').trim().isNotEmpty) parts.add(ln!.trim());
+        final parts = <String>[
+          (firstName ?? '').trim(),
+          (lastName ?? '').trim(),
+        ]..removeWhere((value) => value.isEmpty);
         if (parts.isNotEmpty) return parts.join(' ');
         // Fallback: use email username
         final at = email.indexOf('@');
@@ -490,10 +346,8 @@ class AuthController extends BaseController {
         email: email,
         password: password,
       );
-      currentUser.value = user;
-      isAuthenticated.value = true;
-
-      // Tokens already persisted via TokenService in repository
+      _userProfileController.setUser(user);
+      _sessionController.setAuthenticated(value: true);
 
       _showSuccessSnackbar(
         title: 'Welcome!',
@@ -513,40 +367,17 @@ class AuthController extends BaseController {
     }
   }
 
-  // Sync TokenService state from a provided Supabase session
-  Future<void> _updateTokenServiceFromSession(Session session) async {
-    try {
-      final access = session.accessToken;
-      final refresh = session.refreshToken;
-      await _tokenService.storeTokens(
-        accessToken: access,
-        refreshToken: refresh,
-      );
-    } catch (e) {
-      AppLogger.warning('Failed to sync TokenService from session: $e');
-    }
+  /// Update the remember-me preference
+  Future<void> setRememberMe({required bool value}) async {
+    await _sessionController.setRememberMe(value: value);
   }
 
-  // Sync TokenService using the current Supabase session if available
-  Future<void> _updateTokenServiceFromCurrentSession() async {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session != null) {
-      await _updateTokenServiceFromSession(session);
-    }
+  /// Fetch and cache user profile (delegates to UserProfileController)
+  Future<UserModel?> fetchAndCacheProfile() async {
+    return _userProfileController.fetchAndCacheProfile();
   }
 
-  ProfileRepository _ensureProfileRepository() {
-    if (Get.isRegistered<ProfileRepository>()) {
-      return Get.find<ProfileRepository>();
-    }
-    if (!Get.isRegistered<UsersProvider>()) {
-      Get.put<UsersProvider>(UsersProvider());
-    }
-    final repo = ProfileRepository(provider: Get.find<UsersProvider>());
-    Get.put<ProfileRepository>(repo);
-    return repo;
-  }
-
+  /// Update user profile data (delegates to UserProfileController)
   Future<UserModel?> updateUserProfileData({
     String? firstName,
     String? lastName,
@@ -557,58 +388,36 @@ class AuthController extends BaseController {
     String? avatarUrl,
     String? agentId,
   }) async {
-    try {
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updateProfile(
-        firstName: firstName,
-        lastName: lastName,
-        fullName: fullName,
-        bio: bio,
-        phone: phone,
-        dateOfBirth: dateOfBirth,
-        avatarUrl: avatarUrl,
-        agentId: agentId,
-      );
-      currentUser.value = updated;
-      return updated;
-    } catch (e, stack) {
-      AppLogger.error('Failed to update user profile', e, stack);
-      rethrow;
-    }
+    return _userProfileController.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      fullName: fullName,
+      bio: bio,
+      phone: phone,
+      dateOfBirth: dateOfBirth,
+      avatarUrl: avatarUrl,
+      agentId: agentId,
+    );
   }
 
+  /// Update user preferences (delegates to UserProfileController)
   Future<UserModel?> updateUserPreferences(
     Map<String, dynamic> preferences,
   ) async {
-    try {
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updatePreferences(preferences);
-      currentUser.value = updated;
-      return updated;
-    } catch (e, stack) {
-      AppLogger.error('Failed to update user preferences', e, stack);
-      rethrow;
-    }
+    return _userProfileController.updatePreferences(preferences);
   }
 
+  /// Update user location (delegates to UserProfileController)
   Future<UserModel?> updateUserLocation({
     required double latitude,
     required double longitude,
     bool shareLocation = true,
   }) async {
-    try {
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updateLocation(
-        latitude: latitude,
-        longitude: longitude,
-        shareLocation: shareLocation,
-      );
-      currentUser.value = updated;
-      return updated;
-    } catch (e, stack) {
-      AppLogger.error('Failed to update user location', e, stack);
-      rethrow;
-    }
+    return _userProfileController.updateLocation(
+      latitude: latitude,
+      longitude: longitude,
+      shareLocation: shareLocation,
+    );
   }
 
   void _showSuccessSnackbar({required String title, required String message}) {

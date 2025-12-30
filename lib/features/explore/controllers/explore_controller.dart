@@ -13,10 +13,11 @@ import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/utils/services/connectivity_service.dart';
-import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
+import 'package:stays_app/app/utils/mixins/favorite_toggle_mixin.dart';
 
-class ExploreController extends BaseController with ImagePrefetchMixin {
+class ExploreController extends BaseController
+    with ImagePrefetchMixin, FavoriteToggleMixin {
   final LocationService _locationService;
   final PropertiesRepository _propertiesRepository;
   final WishlistRepository _wishlistRepository;
@@ -41,6 +42,13 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
        _wishlistRepository = wishlistRepository,
        _filterController = filterController,
        _favoritesController = favoritesController;
+
+  // FavoriteToggleMixin requirements
+  @override
+  WishlistRepository? get wishlistRepository => _wishlistRepository;
+
+  @override
+  FavoritesController get favoritesController => _favoritesController;
 
   final RxList<Property> popularHomes = <Property>[].obs;
   final RxList<Property> nearbyHotels =
@@ -318,44 +326,37 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     prefetchDetailImages(property);
   }
 
-  Future<void> toggleFavorite(Property property) async {
+  Future<void> toggleFavoriteProperty(Property property) async {
     final propertyId = property.id;
-    final isCurrentlyFavorite = _favoritesController.isFavorite(propertyId);
-    unawaited(HapticHelper.favoriteToggle());
+    final wasCurrentlyFavorite = isPropertyFavorite(propertyId);
 
-    try {
-      if (isCurrentlyFavorite) {
-        await _wishlistRepository.remove(propertyId);
-        _favoritesController.removeFavorite(propertyId);
-      } else {
-        await _wishlistRepository.add(propertyId);
-        _favoritesController.addFavorite(propertyId);
-      }
-      _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
-      Get.snackbar(
-        isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
-        '${property.name} updated.',
-        snackPosition: SnackPosition.TOP,
-      );
-    } catch (e) {
-      AppLogger.error('Error toggling favorite', e);
-      Get.snackbar('Error', 'Could not update wishlist. Please try again.');
+    final result = await toggleFavorite(
+      property,
+      onSuccess: () {
+        _updatePropertyFavoriteStatusInLists(propertyId, !wasCurrentlyFavorite);
+      },
+    );
+
+    if (!result.success) {
+      AppLogger.error('Failed to toggle favorite: ${result.errorMessage}');
     }
   }
 
   void _updatePropertyFavoriteStatusInLists(int propertyId, bool isFavorite) {
     // This correctly updates the UI by creating a new instance of the Property
-    int index = popularHomes.indexWhere((p) => p.id == propertyId);
+    final index = popularHomes.indexWhere((p) => p.id == propertyId);
     if (index != -1) {
       popularHomes[index] = popularHomes[index].copyWith(
         isFavorite: isFavorite,
       );
     }
-    // Repeat for other lists like nearbyHotels if you have them
-  }
-
-  bool isPropertyFavorite(int propertyId) {
-    return _favoritesController.isFavorite(propertyId);
+    // Update nearby hotels too
+    final hotelIndex = nearbyHotels.indexWhere((p) => p.id == propertyId);
+    if (hotelIndex != -1) {
+      nearbyHotels[hotelIndex] = nearbyHotels[hotelIndex].copyWith(
+        isFavorite: isFavorite,
+      );
+    }
   }
 
   void navigateToAllProperties(String categoryType) {

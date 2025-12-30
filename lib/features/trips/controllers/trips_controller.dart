@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
@@ -10,10 +11,10 @@ import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
-class TripsController extends GetxController {
+class TripsController extends BaseController {
   final RxList<Map<String, dynamic>> pastBookings =
       <Map<String, dynamic>>[].obs;
-  final RxBool isLoading = false.obs;
+  // Note: isLoading is inherited from BaseController
 
   late final BookingRepository _bookingRepository;
   PropertiesRepository? _propertiesRepository;
@@ -402,7 +403,7 @@ class TripsController extends GetxController {
             _buildDetailRow('Rooms', '${booking['rooms']} room(s)'),
             _buildDetailRow(
               'Total Amount',
-              '\$${booking['totalAmount'].toStringAsFixed(2)}',
+              '\$${(booking['totalAmount'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
             ),
             _buildDetailRow(
               'Status',

@@ -191,7 +191,7 @@ class LocateView extends GetView<HotelsMapController> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'locate.loading_hotels'.tr,
                         style: textStyles.bodyMedium?.copyWith(

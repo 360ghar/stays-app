@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/utils/services/validation_service.dart';
 
 /// Enhanced form validation controller using centralized ValidationService.
 /// Provides backward compatibility while leveraging improved validation.
-class FormValidationController extends GetxController {
+class FormValidationController extends BaseController {
   late final ValidationService _validationService;
 
   // Field keys for validation

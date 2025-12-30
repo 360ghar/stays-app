@@ -5,7 +5,7 @@ class PaymentProvider extends BaseProvider {
     String bookingId,
     num amount,
   ) async {
-    final response = await post('/payments/intent', {
+    final response = await postWithRetry('/payments/intent', {
       'bookingId': bookingId,
       'amount': amount,
     });

@@ -1,13 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 
-class ListingController extends GetxController {
+class ListingController extends BaseController {
   ListingController({required PropertiesRepository repository})
     : _repository = repository;
 
@@ -17,9 +18,8 @@ class ListingController extends GetxController {
   final ScrollController scrollController = ScrollController();
 
   final RxList<Property> listings = <Property>[].obs;
-  final RxBool isLoading = false.obs;
+  // Note: isLoading and errorMessage are inherited from BaseController
   final RxBool isRefreshing = false.obs;
-  final RxString errorMessage = ''.obs;
   final RxInt currentPage = 1.obs;
   final RxInt totalPages = 1.obs;
   final RxInt pageSize = 20.obs;

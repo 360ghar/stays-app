@@ -22,6 +22,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
       extendBody: true,
       extendBodyBehindAppBar: false,
       body: Obx(() {
+        // Only rebuild this when loading/error states or listing null-check changes
         if (controller.isLoading.value && controller.listing.value == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -33,66 +34,8 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (listing == null) {
           return const Center(child: Text('Listing not found'));
         }
-
-        final amenities = (listing.amenities ?? [])
-            .where((a) => a.trim().isNotEmpty)
-            .toList();
-
-        final features = (listing.features ?? [])
-            .where((f) => f.trim().isNotEmpty)
-            .toList();
-
-        return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-
-          slivers: [
-            _buildHeroSliver(context, listing),
-
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
-
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  _buildPrimaryDetails(context, listing),
-
-                  if (amenities.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
-                      child: _buildAmenitiesSection(context, amenities),
-                    ),
-
-                  if (listing.hasVirtualTour)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-                      child: _buildVirtualTourSection(context, listing),
-                    ),
-
-                  if (features.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
-                      child: _buildFeaturesSection(context, features),
-                    ),
-
-                  if (listing.ownerName?.isNotEmpty == true)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
-                      child: _buildHostSection(context, listing),
-                    ),
-
-                  Padding(
-                    padding: const EdgeInsets.only(top: 32),
-                    child: _buildLocationSection(context, listing),
-                  ),
-
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
-                ]),
-              ),
-            ),
-          ],
-        );
+        // Pass listing to a separate widget to avoid rebuilding
+        return _ListingContent(listing: listing, controller: controller);
       }),
 
       bottomNavigationBar: Obx(() {
@@ -1141,6 +1084,60 @@ class _AmenityTile extends StatelessWidget {
             style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Extracted content widget to avoid rebuilding entire content on every Rx change.
+/// Only rebuilds when the listing data itself changes, not on loading/error state changes.
+class _ListingContent extends StatelessWidget {
+  const _ListingContent({
+    required this.listing,
+    required this.controller,
+  });
+
+  final Property listing;
+  final ListingDetailController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    const parentView = ListingDetailView();
+    final amenities = listing.amenities ?? const [];
+    final features = listing.features ?? const [];
+    final hasVirtualTour = listing.virtualTourUrl?.isNotEmpty == true;
+    final hasHost = listing.ownerName?.isNotEmpty == true;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        parentView._buildHeroSliver(context, listing),
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              parentView._buildPrimaryDetails(context, listing),
+              if (amenities.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                parentView._buildAmenitiesSection(context, amenities),
+              ],
+              if (hasVirtualTour) ...[
+                const SizedBox(height: 24),
+                parentView._buildVirtualTourSection(context, listing),
+              ],
+              if (features.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                parentView._buildFeaturesSection(context, features),
+              ],
+              if (hasHost) ...[
+                const SizedBox(height: 24),
+                parentView._buildHostSection(context, listing),
+              ],
+              const SizedBox(height: 24),
+              parentView._buildLocationSection(context, listing),
+            ]),
           ),
         ),
       ],

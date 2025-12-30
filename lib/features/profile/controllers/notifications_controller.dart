@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
-class NotificationsController extends GetxController {
+class NotificationsController extends BaseController {
   NotificationsController({
     required ProfileRepository profileRepository,
     required ProfileController profileController,

@@ -2,15 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'auth_controller.dart';
 
 enum OTPType { signup, forgotPassword }
 
-class OTPController extends GetxController {
+class OTPController extends BaseController {
   final AuthController _authController = Get.find<AuthController>();
 
-  final RxBool isLoading = false.obs;
+  // OTP-specific error (separate from base errorMessage)
   final RxString otpError = ''.obs;
   final RxInt countdown = 30.obs;
   final RxBool canResend = false.obs;

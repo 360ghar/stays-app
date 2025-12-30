@@ -33,45 +33,49 @@ class PropertyGridCard extends StatelessWidget {
         ? (context.isDark ? 1.5 : 5.0)
         : (context.isDark ? 2.0 : 6.0);
 
-    return Material(
-      color: Colors.transparent,
-      elevation: elevation,
-      shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
-      borderRadius: borderRadius,
-      clipBehavior: Clip.antiAlias,
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
-              Color.alphaBlend(
-                colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
-                colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
-              ),
-            ],
-          ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: borderRadius,
-          splashColor: colors.primary.withValues(alpha: 0.12),
-          highlightColor: colors.primary.withValues(alpha: 0.06),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImage(context),
-              Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding,
-                  vertical: verticalPadding,
+    return Semantics(
+      label: '${property.name}, ${property.city}, ${property.pricePerNight} per night',
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        elevation: elevation,
+        shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+        borderRadius: borderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
+                Color.alphaBlend(
+                  colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
+                  colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
                 ),
-                child: _buildInfo(context),
-              ),
-            ],
+              ],
+            ),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: borderRadius,
+            splashColor: colors.primary.withValues(alpha: 0.12),
+            highlightColor: colors.primary.withValues(alpha: 0.06),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildImage(context),
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: verticalPadding,
+                  ),
+                  child: _buildInfo(context),
+                ),
+              ],
+            ),
           ),
         ),
       ),

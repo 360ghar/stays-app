@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/services/places_service.dart';
@@ -35,7 +36,7 @@ class HotelModel {
   String get propertyType => property.propertyType.toLowerCase();
 }
 
-class HotelsMapController extends GetxController {
+class HotelsMapController extends BaseController {
   late flutter_map.MapController mapController;
   late final PageController cardsController;
   final RxList<flutter_map.Marker> markers = <flutter_map.Marker>[].obs;

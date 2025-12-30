@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/models/unified_property_response.dart';
@@ -9,14 +10,13 @@ import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 
-class WishlistController extends GetxController {
+class WishlistController extends BaseController {
   WishlistRepository? _wishlistRepository;
   FilterController? _filterController;
 
   final RxList<Property> wishlistItems = <Property>[].obs;
-  final RxBool isLoading = false.obs;
+  // Note: isLoading and errorMessage are inherited from BaseController
   final RxBool isRefreshing = false.obs;
-  final RxString errorMessage = ''.obs;
   final RxInt currentPage = 1.obs;
   final RxInt totalPages = 1.obs;
   final RxInt pageSize = 20.obs;

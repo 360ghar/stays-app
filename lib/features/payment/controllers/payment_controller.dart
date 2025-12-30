@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
-class PaymentController extends GetxController {
+import 'package:stays_app/app/controllers/base/base_controller.dart';
+
+class PaymentController extends BaseController {
   final RxBool isProcessing = false.obs;
 }

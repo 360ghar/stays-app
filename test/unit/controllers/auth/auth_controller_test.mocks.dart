@@ -3,13 +3,18 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i5;
+import 'dart:async' as _i4;
+import 'dart:ui' as _i10;
 
 import 'package:get/get.dart' as _i3;
+import 'package:get/get_state_manager/src/simple/list_notifier.dart' as _i9;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i8;
 import 'package:stays_app/app/data/models/user_model.dart' as _i2;
-import 'package:stays_app/app/data/repositories/auth_repository.dart' as _i4;
+import 'package:stays_app/app/data/repositories/auth_repository.dart' as _i5;
 import 'package:stays_app/app/utils/services/token_service.dart' as _i6;
+import 'package:stays_app/features/auth/controllers/session_controller.dart'
+    as _i7;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -41,16 +46,26 @@ class _FakeInternalFinalCallback_2<T> extends _i1.SmartFake
     : super(parent, parentInvocation);
 }
 
+class _FakeRxString_3 extends _i1.SmartFake implements _i3.RxString {
+  _FakeRxString_3(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
+class _FakeCompleter_4<T1> extends _i1.SmartFake implements _i4.Completer<T1> {
+  _FakeCompleter_4(Object parent, Invocation parentInvocation)
+    : super(parent, parentInvocation);
+}
+
 /// A class which mocks [AuthRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
+class MockAuthRepository extends _i1.Mock implements _i5.AuthRepository {
   MockAuthRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Future<_i2.UserModel> loginWithEmail({
+  _i4.Future<_i2.UserModel> loginWithEmail({
     required String? email,
     required String? password,
   }) =>
@@ -59,7 +74,7 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               #email: email,
               #password: password,
             }),
-            returnValue: _i5.Future<_i2.UserModel>.value(
+            returnValue: _i4.Future<_i2.UserModel>.value(
               _FakeUserModel_0(
                 this,
                 Invocation.method(#loginWithEmail, [], {
@@ -69,10 +84,10 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               ),
             ),
           )
-          as _i5.Future<_i2.UserModel>);
+          as _i4.Future<_i2.UserModel>);
 
   @override
-  _i5.Future<_i2.UserModel> loginWithPhone({
+  _i4.Future<_i2.UserModel> loginWithPhone({
     required String? phone,
     required String? password,
   }) =>
@@ -81,7 +96,7 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               #phone: phone,
               #password: password,
             }),
-            returnValue: _i5.Future<_i2.UserModel>.value(
+            returnValue: _i4.Future<_i2.UserModel>.value(
               _FakeUserModel_0(
                 this,
                 Invocation.method(#loginWithPhone, [], {
@@ -91,10 +106,10 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               ),
             ),
           )
-          as _i5.Future<_i2.UserModel>);
+          as _i4.Future<_i2.UserModel>);
 
   @override
-  _i5.Future<_i2.UserModel> register({
+  _i4.Future<_i2.UserModel> register({
     required String? name,
     required String? email,
     required String? password,
@@ -105,7 +120,7 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               #email: email,
               #password: password,
             }),
-            returnValue: _i5.Future<_i2.UserModel>.value(
+            returnValue: _i4.Future<_i2.UserModel>.value(
               _FakeUserModel_0(
                 this,
                 Invocation.method(#register, [], {
@@ -116,10 +131,10 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               ),
             ),
           )
-          as _i5.Future<_i2.UserModel>);
+          as _i4.Future<_i2.UserModel>);
 
   @override
-  _i5.Future<bool> signUpWithPhone({
+  _i4.Future<bool> signUpWithPhone({
     required String? phone,
     required String? password,
   }) =>
@@ -128,12 +143,12 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               #phone: phone,
               #password: password,
             }),
-            returnValue: _i5.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i5.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i5.Future<void> updatePassword({
+  _i4.Future<void> updatePassword({
     required String? newPassword,
     String? currentPassword,
   }) =>
@@ -142,35 +157,35 @@ class MockAuthRepository extends _i1.Mock implements _i4.AuthRepository {
               #newPassword: newPassword,
               #currentPassword: currentPassword,
             }),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i4.Future<void>);
 
   @override
-  _i5.Future<void> logout() =>
+  _i4.Future<void> logout() =>
       (super.noSuchMethod(
             Invocation.method(#logout, []),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i4.Future<void>);
 
   @override
-  _i5.Future<_i2.UserModel?> getCurrentUser() =>
+  _i4.Future<_i2.UserModel?> getCurrentUser() =>
       (super.noSuchMethod(
             Invocation.method(#getCurrentUser, []),
-            returnValue: _i5.Future<_i2.UserModel?>.value(),
+            returnValue: _i4.Future<_i2.UserModel?>.value(),
           )
-          as _i5.Future<_i2.UserModel?>);
+          as _i4.Future<_i2.UserModel?>);
 
   @override
-  _i5.Future<bool> isAuthenticated() =>
+  _i4.Future<bool> isAuthenticated() =>
       (super.noSuchMethod(
             Invocation.method(#isAuthenticated, []),
-            returnValue: _i5.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i5.Future<bool>);
+          as _i4.Future<bool>);
 }
 
 /// A class which mocks [TokenService].
@@ -193,12 +208,12 @@ class MockTokenService extends _i1.Mock implements _i6.TokenService {
           as _i3.RxBool);
 
   @override
-  _i5.Future<void> get ready =>
+  _i4.Future<void> get ready =>
       (super.noSuchMethod(
             Invocation.getter(#ready),
-            returnValue: _i5.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i4.Future<void>);
 
   @override
   bool get hasValidToken =>
@@ -255,7 +270,7 @@ class MockTokenService extends _i1.Mock implements _i6.TokenService {
   );
 
   @override
-  _i5.Future<void> storeTokens({
+  _i4.Future<void> storeTokens({
     required String? accessToken,
     String? refreshToken,
     Duration? expiresIn,
@@ -266,27 +281,27 @@ class MockTokenService extends _i1.Mock implements _i6.TokenService {
               #refreshToken: refreshToken,
               #expiresIn: expiresIn,
             }),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i4.Future<void>);
 
   @override
-  _i5.Future<bool> refreshIfNeeded() =>
+  _i4.Future<bool> refreshIfNeeded() =>
       (super.noSuchMethod(
             Invocation.method(#refreshIfNeeded, []),
-            returnValue: _i5.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i5.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
-  _i5.Future<void> clearTokens() =>
+  _i4.Future<void> clearTokens() =>
       (super.noSuchMethod(
             Invocation.method(#clearTokens, []),
-            returnValue: _i5.Future<void>.value(),
-            returnValueForMissingStub: _i5.Future<void>.value(),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
           )
-          as _i5.Future<void>);
+          as _i4.Future<void>);
 
   @override
   bool validateTokenFormat(String? token) =>
@@ -297,12 +312,12 @@ class MockTokenService extends _i1.Mock implements _i6.TokenService {
           as bool);
 
   @override
-  _i5.Future<bool> performTokenRefresh() =>
+  _i4.Future<bool> performTokenRefresh() =>
       (super.noSuchMethod(
             Invocation.method(#performTokenRefresh, []),
-            returnValue: _i5.Future<bool>.value(false),
+            returnValue: _i4.Future<bool>.value(false),
           )
-          as _i5.Future<bool>);
+          as _i4.Future<bool>);
 
   @override
   void onReady() => super.noSuchMethod(
@@ -313,6 +328,323 @@ class MockTokenService extends _i1.Mock implements _i6.TokenService {
   @override
   void $configureLifeCycle() => super.noSuchMethod(
     Invocation.method(#$configureLifeCycle, []),
+    returnValueForMissingStub: null,
+  );
+}
+
+/// A class which mocks [SessionController].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSessionController extends _i1.Mock implements _i7.SessionController {
+  MockSessionController() {
+    _i1.throwOnMissingStub(this);
+  }
+
+  @override
+  _i3.RxBool get rememberMe =>
+      (super.noSuchMethod(
+            Invocation.getter(#rememberMe),
+            returnValue: _FakeRxBool_1(this, Invocation.getter(#rememberMe)),
+          )
+          as _i3.RxBool);
+
+  @override
+  _i3.RxBool get isAuthenticated =>
+      (super.noSuchMethod(
+            Invocation.getter(#isAuthenticated),
+            returnValue: _FakeRxBool_1(
+              this,
+              Invocation.getter(#isAuthenticated),
+            ),
+          )
+          as _i3.RxBool);
+
+  @override
+  _i4.Future<void> get ready =>
+      (super.noSuchMethod(
+            Invocation.getter(#ready),
+            returnValue: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i3.RxBool get isLoading =>
+      (super.noSuchMethod(
+            Invocation.getter(#isLoading),
+            returnValue: _FakeRxBool_1(this, Invocation.getter(#isLoading)),
+          )
+          as _i3.RxBool);
+
+  @override
+  _i3.RxString get errorMessage =>
+      (super.noSuchMethod(
+            Invocation.getter(#errorMessage),
+            returnValue: _FakeRxString_3(
+              this,
+              Invocation.getter(#errorMessage),
+            ),
+          )
+          as _i3.RxString);
+
+  @override
+  _i3.InternalFinalCallback<void> get onStart =>
+      (super.noSuchMethod(
+            Invocation.getter(#onStart),
+            returnValue: _FakeInternalFinalCallback_2<void>(
+              this,
+              Invocation.getter(#onStart),
+            ),
+          )
+          as _i3.InternalFinalCallback<void>);
+
+  @override
+  _i3.InternalFinalCallback<void> get onDelete =>
+      (super.noSuchMethod(
+            Invocation.getter(#onDelete),
+            returnValue: _FakeInternalFinalCallback_2<void>(
+              this,
+              Invocation.getter(#onDelete),
+            ),
+          )
+          as _i3.InternalFinalCallback<void>);
+
+  @override
+  bool get initialized =>
+      (super.noSuchMethod(Invocation.getter(#initialized), returnValue: false)
+          as bool);
+
+  @override
+  bool get isClosed =>
+      (super.noSuchMethod(Invocation.getter(#isClosed), returnValue: false)
+          as bool);
+
+  @override
+  bool get hasListeners =>
+      (super.noSuchMethod(Invocation.getter(#hasListeners), returnValue: false)
+          as bool);
+
+  @override
+  int get listeners =>
+      (super.noSuchMethod(Invocation.getter(#listeners), returnValue: 0)
+          as int);
+
+  @override
+  void onInit() => super.noSuchMethod(
+    Invocation.method(#onInit, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void onClose() => super.noSuchMethod(
+    Invocation.method(#onClose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i4.Future<void> setRememberMe({required bool? value}) =>
+      (super.noSuchMethod(
+            Invocation.method(#setRememberMe, [], {#value: value}),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> syncRememberMeStateAfterLogin() =>
+      (super.noSuchMethod(
+            Invocation.method(#syncRememberMeStateAfterLogin, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> updateTokenServiceFromCurrentSession() =>
+      (super.noSuchMethod(
+            Invocation.method(#updateTokenServiceFromCurrentSession, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> clearSession() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearSession, []),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
+  void setAuthenticated({required bool? value}) => super.noSuchMethod(
+    Invocation.method(#setAuthenticated, [], {#value: value}),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  T trackSubscription<T extends _i4.StreamSubscription<dynamic>>(T? sub) =>
+      (super.noSuchMethod(
+            Invocation.method(#trackSubscription, [sub]),
+            returnValue: _i8.dummyValue<T>(
+              this,
+              Invocation.method(#trackSubscription, [sub]),
+            ),
+          )
+          as T);
+
+  @override
+  T trackWorker<T extends _i3.Worker>(T? worker) =>
+      (super.noSuchMethod(
+            Invocation.method(#trackWorker, [worker]),
+            returnValue: _i8.dummyValue<T>(
+              this,
+              Invocation.method(#trackWorker, [worker]),
+            ),
+          )
+          as T);
+
+  @override
+  _i4.Completer<void> trackCompleter<T>(_i4.Completer<void>? completer) =>
+      (super.noSuchMethod(
+            Invocation.method(#trackCompleter, [completer]),
+            returnValue: _FakeCompleter_4<void>(
+              this,
+              Invocation.method(#trackCompleter, [completer]),
+            ),
+          )
+          as _i4.Completer<void>);
+
+  @override
+  void handleError(dynamic error, [StackTrace? stackTrace]) =>
+      super.noSuchMethod(
+        Invocation.method(#handleError, [error, stackTrace]),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i4.Future<T?> executeWithErrorHandling<T>(
+    _i4.Future<T> Function()? operation, {
+    bool? showLoading = true,
+    String? loadingMessage,
+    bool? swallowError = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #executeWithErrorHandling,
+              [operation],
+              {
+                #showLoading: showLoading,
+                #loadingMessage: loadingMessage,
+                #swallowError: swallowError,
+              },
+            ),
+            returnValue: _i4.Future<T?>.value(),
+          )
+          as _i4.Future<T?>);
+
+  @override
+  void clearError() => super.noSuchMethod(
+    Invocation.method(#clearError, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i4.Future<T?> executeWithRetry<T>(
+    _i4.Future<T> Function()? operation, {
+    int? maxRetries = 3,
+    Duration? delay = const Duration(seconds: 1),
+    bool? showLoading = true,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(
+              #executeWithRetry,
+              [operation],
+              {
+                #maxRetries: maxRetries,
+                #delay: delay,
+                #showLoading: showLoading,
+              },
+            ),
+            returnValue: _i4.Future<T?>.value(),
+          )
+          as _i4.Future<T?>);
+
+  @override
+  void onReady() => super.noSuchMethod(
+    Invocation.method(#onReady, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void update([List<Object>? ids, bool? condition = true]) =>
+      super.noSuchMethod(
+        Invocation.method(#update, [ids, condition]),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void $configureLifeCycle() => super.noSuchMethod(
+    Invocation.method(#$configureLifeCycle, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i9.Disposer addListener(_i9.GetStateUpdate? listener) =>
+      (super.noSuchMethod(
+            Invocation.method(#addListener, [listener]),
+            returnValue: () {},
+          )
+          as _i9.Disposer);
+
+  @override
+  void removeListener(_i10.VoidCallback? listener) => super.noSuchMethod(
+    Invocation.method(#removeListener, [listener]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void refresh() => super.noSuchMethod(
+    Invocation.method(#refresh, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void refreshGroup(Object? id) => super.noSuchMethod(
+    Invocation.method(#refreshGroup, [id]),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void notifyChildrens() => super.noSuchMethod(
+    Invocation.method(#notifyChildrens, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  void removeListenerId(Object? id, _i10.VoidCallback? listener) =>
+      super.noSuchMethod(
+        Invocation.method(#removeListenerId, [id, listener]),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  void dispose() => super.noSuchMethod(
+    Invocation.method(#dispose, []),
+    returnValueForMissingStub: null,
+  );
+
+  @override
+  _i9.Disposer addListenerId(Object? key, _i9.GetStateUpdate? listener) =>
+      (super.noSuchMethod(
+            Invocation.method(#addListenerId, [key, listener]),
+            returnValue: () {},
+          )
+          as _i9.Disposer);
+
+  @override
+  void disposeId(Object? id) => super.noSuchMethod(
+    Invocation.method(#disposeId, [id]),
     returnValueForMissingStub: null,
   );
 }

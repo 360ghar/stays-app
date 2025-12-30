@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
@@ -8,7 +9,7 @@ import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
-class PrivacyController extends GetxController {
+class PrivacyController extends BaseController {
   PrivacyController({
     required ProfileRepository profileRepository,
     required ProfileController profileController,

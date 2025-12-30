@@ -1,10 +1,11 @@
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/config/app_config.dart';
 
-class AboutController extends GetxController {
+class AboutController extends BaseController {
   final RxString version = ''.obs;
   final RxString buildNumber = ''.obs;
   final RxString environment = ''.obs;

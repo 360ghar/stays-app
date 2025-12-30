@@ -1,19 +1,21 @@
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/booking_pricing_model.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 
-class InquiryController extends GetxController {
-  final BookingRepository _repository;
+class InquiryController extends BaseController {
   InquiryController({required BookingRepository repository})
     : _repository = repository;
 
+  final BookingRepository _repository;
+
   final RxBool isSubmitting = false.obs;
   final RxString statusMessage = ''.obs;
-  final RxString errorMessage = ''.obs;
+  // Note: errorMessage is inherited from BaseController
   final Rxn<Booking> latestBooking = Rxn<Booking>();
 
   Future<void> createBooking(Map<String, dynamic> payload) async {
@@ -88,14 +90,14 @@ class InquiryController extends GetxController {
         });
       }
 
-      double? _sanitizeAmount(double? value) {
+      double? sanitizeAmount(double? value) {
         if (value == null) return null;
         if (value.isNaN || value.isInfinite) return null;
         return value;
       }
 
-      double _resolveRequiredAmount(String key, double? primary) {
-        final sanitized = _sanitizeAmount(primary);
+      double resolveRequiredAmount(String key, double? primary) {
+        final sanitized = sanitizeAmount(primary);
         if (sanitized != null) return sanitized;
         final fallbackValue = fallbackPricing?[key];
         if (fallbackValue != null) {
@@ -112,8 +114,8 @@ class InquiryController extends GetxController {
         return 0.0;
       }
 
-      double? _resolveOptionalAmount(String key, double? primary) {
-        final sanitized = _sanitizeAmount(primary);
+      double? resolveOptionalAmount(String key, double? primary) {
+        final sanitized = sanitizeAmount(primary);
         if (sanitized != null) return sanitized;
         final hasFallback = fallbackPricing?.containsKey(key) ?? false;
         if (hasFallback) {
@@ -127,23 +129,23 @@ class InquiryController extends GetxController {
         return null;
       }
 
-      final baseAmount = _resolveRequiredAmount(
+      final baseAmount = resolveRequiredAmount(
         'base_amount',
         pricingModel?.baseAmount,
       );
-      final taxesAmount = _resolveRequiredAmount(
+      final taxesAmount = resolveRequiredAmount(
         'taxes_amount',
         pricingModel?.taxesAmount,
       );
-      final serviceCharges = _resolveRequiredAmount(
+      final serviceCharges = resolveRequiredAmount(
         'service_charges',
         pricingModel?.serviceCharges,
       );
-      final totalAmount = _resolveRequiredAmount(
+      final totalAmount = resolveRequiredAmount(
         'total_amount',
         pricingModel?.totalAmount,
       );
-      final discountAmount = _resolveOptionalAmount(
+      final discountAmount = resolveOptionalAmount(
         'discount_amount',
         pricingModel?.discountAmount,
       );

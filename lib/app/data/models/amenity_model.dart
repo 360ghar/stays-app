@@ -1,16 +1,22 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'amenity_model.g.dart';
+
+@JsonSerializable()
 class AmenityModel {
   final String key;
   final String name;
 
   const AmenityModel({required this.key, required this.name});
 
-  factory AmenityModel.fromMap(Map<String, dynamic> map) =>
-      AmenityModel(key: map['key'] as String, name: map['name'] as String);
-
   factory AmenityModel.fromJson(Map<String, dynamic> json) =>
-      AmenityModel(key: json['key'] as String, name: json['name'] as String);
+      _$AmenityModelFromJson(json);
 
-  Map<String, dynamic> toMap() => {'key': key, 'name': name};
+  Map<String, dynamic> toJson() => _$AmenityModelToJson(this);
 
-  Map<String, dynamic> toJson() => {'key': key, 'name': name};
+  // Backwards compatibility
+  factory AmenityModel.fromMap(Map<String, dynamic> map) =>
+      AmenityModel.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }

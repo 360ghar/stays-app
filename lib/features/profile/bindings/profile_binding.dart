@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
+import 'package:stays_app/features/auth/controllers/session_controller.dart';
 import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
@@ -39,11 +40,17 @@ class ProfileBinding extends Bindings {
       );
     }
     final authRepository = Get.find<AuthRepository>();
+    if (!Get.isRegistered<SessionController>()) {
+      Get.put<SessionController>(
+        SessionController(tokenService: Get.find<TokenService>()),
+        permanent: true,
+      );
+    }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(
           authRepository: Get.find<AuthRepository>(),
-          tokenService: Get.find<TokenService>(),
+          sessionController: Get.find<SessionController>(),
         ),
         permanent: true,
       );

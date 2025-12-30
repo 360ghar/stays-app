@@ -11,7 +11,9 @@ import 'package:stays_app/app/controllers/favorites_controller.dart';
 class ExploreBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<LocationService>(() => LocationService(), fenix: true);
+    if (!Get.isRegistered<LocationService>()) {
+      Get.lazyPut<LocationService>(() => LocationService(), fenix: true);
+    }
     Get.lazyPut<PropertiesProvider>(() => PropertiesProvider());
     Get.lazyPut<PropertiesRepository>(
       () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),

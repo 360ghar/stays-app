@@ -1,7 +1,14 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'review_model.g.dart';
+
+@JsonSerializable()
 class ReviewModel {
   final String id;
   final String bookingId;
+  @JsonKey(defaultValue: 5)
   final int rating;
+  @JsonKey(defaultValue: '')
   final String comment;
 
   const ReviewModel({
@@ -11,17 +18,14 @@ class ReviewModel {
     required this.comment,
   });
 
-  factory ReviewModel.fromMap(Map<String, dynamic> map) => ReviewModel(
-    id: map['id']?.toString() ?? '',
-    bookingId: map['bookingId']?.toString() ?? '',
-    rating: map['rating'] as int? ?? 5,
-    comment: map['comment'] as String? ?? '',
-  );
+  factory ReviewModel.fromJson(Map<String, dynamic> json) =>
+      _$ReviewModelFromJson(json);
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'bookingId': bookingId,
-    'rating': rating,
-    'comment': comment,
-  };
+  Map<String, dynamic> toJson() => _$ReviewModelToJson(this);
+
+  // Backwards compatibility
+  factory ReviewModel.fromMap(Map<String, dynamic> map) =>
+      ReviewModel.fromJson(map);
+
+  Map<String, dynamic> toMap() => toJson();
 }

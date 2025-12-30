@@ -7,7 +7,7 @@ import 'base_provider.dart';
 
 class UsersProvider extends BaseProvider {
   Future<UserModel> getProfile() async {
-    final response = await get('/api/v1/users/profile/');
+    final response = await getWithRetry('/api/v1/users/profile/');
     return handleResponse(response, _parseUser);
   }
 
@@ -87,7 +87,7 @@ class UsersProvider extends BaseProvider {
     final bytes = await file.readAsBytes();
     final payload = {'filename': filename, 'file_base64': base64Encode(bytes)};
 
-    final response = await post('/api/v1/users/profile/avatar/', payload);
+    final response = await postWithRetry('/api/v1/users/profile/avatar/', payload);
     return handleResponse(response, (body) {
       if (body is Map<String, dynamic>) {
         if (body['url'] is String) return body['url'] as String;
@@ -104,7 +104,7 @@ class UsersProvider extends BaseProvider {
   }
 
   Future<void> requestDataExport() async {
-    final response = await post('/api/v1/users/export/', {});
+    final response = await postWithRetry('/api/v1/users/export/', {});
     if (!response.isOk) {
       throw ApiException(
         message: response.statusText ?? 'Failed to request data export',
@@ -135,7 +135,7 @@ class UsersProvider extends BaseProvider {
       if (appVersion != null) 'app_version': appVersion,
       if (locale != null) 'locale': locale,
     };
-    final response = await post(
+    final response = await postWithRetry(
       '/api/v1/notifications/devices/register',
       payload,
     );

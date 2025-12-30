@@ -81,14 +81,21 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                   Obx(() {
                     final rememberSelection = controller.rememberMe.value;
                     return InkWell(
-                      onTap: () => controller.setRememberMe(!rememberSelection),
+                      onTap: () async {
+                        await controller.setRememberMe(
+                          value: !rememberSelection,
+                        );
+                      },
                       borderRadius: BorderRadius.circular(8),
                       child: Row(
                         children: [
                           Checkbox(
                             value: rememberSelection,
-                            onChanged: (value) =>
-                                controller.setRememberMe(value ?? false),
+                            onChanged: (value) async {
+                              await controller.setRememberMe(
+                                value: value ?? false,
+                              );
+                            },
                             activeColor: colors.primary,
                             materialTapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
@@ -229,9 +236,9 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
+        DecoratedBox(
           decoration: BoxDecoration(
-            color: context.elevatedSurface(0.08),
+            color: context.elevatedSurface(),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colors.outlineVariant),
           ),
@@ -333,9 +340,9 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           final hasError = controller.passwordError.value.isNotEmpty;
           return Column(
             children: [
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
-                  color: context.elevatedSurface(0.08),
+                  color: context.elevatedSurface(),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: hasError ? colors.error : colors.outlineVariant,
@@ -396,8 +403,8 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
     );
   }
 
-  void _handleLogin() {
-    controller.loginWithPhone(
+  Future<void> _handleLogin() async {
+    await controller.loginWithPhone(
       phone: _phoneController.text.trim(),
       password: _passwordController.text,
     );

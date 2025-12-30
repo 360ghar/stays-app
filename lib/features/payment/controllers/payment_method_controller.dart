@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
-class PaymentMethodController extends GetxController {
+import 'package:stays_app/app/controllers/base/base_controller.dart';
+
+class PaymentMethodController extends BaseController {
   final RxList<String> methods = <String>[].obs;
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
@@ -9,7 +10,7 @@ import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 import 'package:stays_app/l10n/localization_service.dart';
 
-class PreferencesController extends GetxController {
+class PreferencesController extends BaseController {
   PreferencesController({
     required ProfileRepository profileRepository,
     required ProfileController profileController,

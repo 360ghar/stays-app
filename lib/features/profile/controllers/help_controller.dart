@@ -1,12 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/models/faq_item.dart';
 import 'package:stays_app/features/profile/models/support_channel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HelpController extends GetxController {
+class HelpController extends BaseController {
   final RxBool isSubmittingFeedback = false.obs;
   final TextEditingController feedbackController = TextEditingController();
 
