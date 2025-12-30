@@ -18,7 +18,10 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final res = await _provider.loginWithEmail(email: email, password: password);
+      final res = await _provider.loginWithEmail(
+        email: email,
+        password: password,
+      );
       await _persistTokens(res);
       final user = _mapUser(res.rawUser);
       await _persistUserData(user);
@@ -34,7 +37,10 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final res = await _provider.loginWithPhone(phone: phone, password: password);
+      final res = await _provider.loginWithPhone(
+        phone: phone,
+        password: password,
+      );
       await _persistTokens(res);
       final user = _mapUser(res.rawUser);
       await _persistUserData(user);
@@ -51,7 +57,11 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final res = await _provider.register(name: name, email: email, password: password);
+      final res = await _provider.register(
+        name: name,
+        email: email,
+        password: password,
+      );
       await _persistTokens(res);
       final user = _mapUser(res.rawUser);
       await _persistUserData(user);
@@ -70,7 +80,10 @@ class AuthRepository {
   Future<void> updatePassword({
     required String newPassword,
     String? currentPassword,
-  }) => _provider.updatePassword(newPassword: newPassword, currentPassword: currentPassword);
+  }) => _provider.updatePassword(
+    newPassword: newPassword,
+    currentPassword: currentPassword,
+  );
 
   Future<void> logout() async {
     try {
@@ -133,5 +146,6 @@ class AuthRepository {
     }
   }
 
-  Future<void> _persistUserData(UserModel user) => _storage.saveUserData(user.toMap());
+  Future<void> _persistUserData(UserModel user) =>
+      _storage.saveUserData(user.toMap());
 }

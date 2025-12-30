@@ -26,7 +26,8 @@ class SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: titleStyle ??
+              style:
+                  titleStyle ??
                   context.textStyles.titleMedium?.copyWith(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,

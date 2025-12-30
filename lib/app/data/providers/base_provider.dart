@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import 'dart:async';
+
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
 import '../services/storage_service.dart';
@@ -8,8 +10,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/services/error_service.dart';
 
+/// Retry configuration for transient failures
+const int _maxRetries = 3;
+const Duration _initialRetryDelay = Duration(milliseconds: 500);
+
+/// Status codes that are safe to retry
+const Set<int> _retryableStatusCodes = {408, 429, 500, 502, 503, 504};
+
 abstract class BaseProvider extends GetConnect {
-  final StorageService _storage = Get.find<StorageService>();
+  StorageService? _storage;
+
+  Future<StorageService> _getStorage() async {
+    if (_storage != null) return _storage!;
+    await StorageService.ready;
+    _storage = Get.find<StorageService>();
+    return _storage!;
+  }
 
   @override
   void onInit() {
@@ -20,7 +36,7 @@ abstract class BaseProvider extends GetConnect {
       // Prefer Supabase session token; fallback to secure storage (async)
       final supabaseToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
-      final legacyToken = await _storage.getAccessToken();
+      final legacyToken = await (await _getStorage()).getAccessToken();
       final token = supabaseToken ?? legacyToken;
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
@@ -30,8 +46,8 @@ abstract class BaseProvider extends GetConnect {
       request.headers['Content-Type'] = 'application/json';
       request.headers['Accept'] = 'application/json';
       // Lightweight request timing for performance monitoring
-      request.headers['x-start-ms'] =
-          DateTime.now().millisecondsSinceEpoch.toString();
+      request.headers['x-start-ms'] = DateTime.now().millisecondsSinceEpoch
+          .toString();
       AppLogger.logRequest({
         'method': request.method,
         'url': request.url.toString(),
@@ -67,9 +83,12 @@ abstract class BaseProvider extends GetConnect {
         final session = client.auth.currentSession;
         if (session == null) {
           // Try refresh with stored refresh token if available
-          final refreshToken = await _storage.getRefreshToken();
+          final refreshToken = await (await _getStorage()).getRefreshToken();
           if (refreshToken == null || refreshToken.isEmpty) {
-            throw ApiException(message: 'No session to refresh', statusCode: 401);
+            throw ApiException(
+              message: 'No session to refresh',
+              statusCode: 401,
+            );
           }
           // Supabase Flutter SDK refreshes based on current session; signInWithIdToken
           // not applicable here. Attempt to set session from refresh token.
@@ -95,7 +114,8 @@ abstract class BaseProvider extends GetConnect {
             );
           } catch (_) {
             // Fallback to direct storage if TokenService not available
-            await _storage.saveTokens(
+            final storage = await _getStorage();
+            await storage.saveTokens(
               accessToken: newToken,
               refreshToken: newRefresh,
             );
@@ -104,13 +124,17 @@ abstract class BaseProvider extends GetConnect {
           AppLogger.info('Auth token refreshed; retrying ${request.url}');
           return request;
         }
-        throw ApiException(message: 'Missing access token after refresh', statusCode: 401);
+        throw ApiException(
+          message: 'Missing access token after refresh',
+          statusCode: 401,
+        );
       } catch (e, s) {
         AppLogger.error('Token refresh failed', e, s);
-        await _storage.clearTokens();
-        await _storage.clearUserData();
+        final storage = await _getStorage();
+        await storage.clearTokens();
+        await storage.clearUserData();
         if (Get.currentRoute != '/login') {
-          Get.offAllNamed('/login');
+          unawaited(Get.offAllNamed('/login'));
         }
         return request; // Let original request fail; no infinite retry
       }
@@ -121,10 +145,16 @@ abstract class BaseProvider extends GetConnect {
   T handleResponse<T>(Response response, T Function(dynamic) parser) {
     final int statusCode = response.statusCode ?? 500;
 
-    // Log the raw response for debugging purposes
-    AppLogger.info(
-      'API Response [${response.request?.url}] - Status: $statusCode, Body: ${response.bodyString}',
-    );
+    // Only log response body in dev to prevent leaking sensitive data
+    if (AppConfig.isDev) {
+      AppLogger.info(
+        'API Response [${response.request?.url}] - Status: $statusCode, Body: ${response.bodyString}',
+      );
+    } else {
+      AppLogger.info(
+        'API Response [${response.request?.url}] - Status: $statusCode',
+      );
+    }
 
     if (response.isOk) {
       // SUCCESS CASE (Status codes 200-299)
@@ -144,5 +174,95 @@ abstract class BaseProvider extends GetConnect {
     return url.path.contains('/auth/') ||
         url.path.contains('/login') ||
         url.path.contains('/register');
+  }
+
+  /// Execute a GET request with automatic retry for transient failures
+  Future<Response<T>> getWithRetry<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) async {
+    return _executeWithRetry(
+      () => get<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      ),
+    );
+  }
+
+  /// Execute a POST request with automatic retry for transient failures
+  Future<Response<T>> postWithRetry<T>(
+    String url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) async {
+    return _executeWithRetry(
+      () => post<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+      ),
+    );
+  }
+
+  /// Internal retry logic with exponential backoff
+  Future<Response<T>> _executeWithRetry<T>(
+    Future<Response<T>> Function() operation,
+  ) async {
+    int attempt = 0;
+    Duration delay = _initialRetryDelay;
+
+    while (true) {
+      try {
+        final response = await operation();
+
+        // Check if response is retryable
+        final statusCode = response.statusCode ?? 0;
+        if (_retryableStatusCodes.contains(statusCode) &&
+            attempt < _maxRetries) {
+          attempt++;
+          AppLogger.warning(
+            'Request failed with status $statusCode. Retry attempt $attempt/$_maxRetries after ${delay.inMilliseconds}ms',
+          );
+          await Future<void>.delayed(delay);
+          delay *= 2; // Exponential backoff
+          continue;
+        }
+
+        return response;
+      } catch (e) {
+        // Retry on network errors (timeout, connection refused, etc.)
+        if (_isRetryableError(e) && attempt < _maxRetries) {
+          attempt++;
+          AppLogger.warning(
+            'Request failed with error: $e. Retry attempt $attempt/$_maxRetries after ${delay.inMilliseconds}ms',
+          );
+          await Future<void>.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+        rethrow;
+      }
+    }
+  }
+
+  /// Check if an error is retryable (network-related)
+  bool _isRetryableError(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    return errorStr.contains('timeout') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('socket') ||
+        errorStr.contains('network');
   }
 }

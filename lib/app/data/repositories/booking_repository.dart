@@ -108,10 +108,7 @@ class BookingRepository {
     String reason = 'User cancelled the inquiry',
   }) async {
     try {
-      await _provider.cancelBooking(
-        bookingId: bookingId,
-        reason: reason,
-      );
+      await _provider.cancelBooking(bookingId: bookingId, reason: reason);
     } on ApiException catch (error, stackTrace) {
       AppLogger.error('cancelBooking failed', error, stackTrace);
       rethrow;

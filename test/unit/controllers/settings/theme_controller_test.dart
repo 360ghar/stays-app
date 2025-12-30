@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/settings/theme_controller.dart';
 import 'package:stays_app/app/data/services/theme_service.dart';
+import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 
 class _FakeThemeService extends ThemeService {
   ThemeMode storedMode = ThemeMode.light;

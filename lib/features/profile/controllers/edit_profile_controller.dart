@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:stays_app/app/controllers/auth/auth_controller.dart';
+import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';

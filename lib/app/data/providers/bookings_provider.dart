@@ -13,10 +13,10 @@ class BookingsProvider extends BaseProvider {
       'check_out_date': checkOutIso,
       'guests': guests,
     });
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> calculatePricing({
@@ -31,20 +31,20 @@ class BookingsProvider extends BaseProvider {
       'check_out_date': checkOutIso,
       'guests': guests,
     });
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> createBooking(
     Map<String, dynamic> payload,
   ) async {
     final res = await post('/api/v1/bookings/', payload);
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> listBookings({
@@ -55,18 +55,18 @@ class BookingsProvider extends BaseProvider {
       '/api/v1/bookings/',
       query: {'page': '$page', 'limit': '$limit'},
     );
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> getBooking(int id) async {
     final res = await get('/api/v1/bookings/$id/');
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> updateBooking(
@@ -74,10 +74,10 @@ class BookingsProvider extends BaseProvider {
     Map<String, dynamic> update,
   ) async {
     final res = await put('/api/v1/bookings/$id/', update);
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 
   Future<Map<String, dynamic>> cancelBooking({
@@ -88,9 +88,9 @@ class BookingsProvider extends BaseProvider {
       'booking_id': bookingId,
       'reason': reason,
     });
-    return handleResponse(
-      res,
-      (json) => Map<String, dynamic>.from(json['data'] ?? json),
-    );
+    return handleResponse(res, (json) {
+      final map = json as Map<String, dynamic>;
+      return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
+    });
   }
 }

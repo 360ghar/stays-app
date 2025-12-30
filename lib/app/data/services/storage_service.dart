@@ -101,7 +101,8 @@ class StorageService extends GetxService {
     } catch (e) {
       // Handle iOS duplicate item error (-25299) by deleting then retrying
       final msg = e.toString();
-      if (msg.contains('-25299') || msg.contains('already exists in the keychain')) {
+      if (msg.contains('-25299') ||
+          msg.contains('already exists in the keychain')) {
         await _deleteSecure(key);
         await _secureStorage.write(key: key, value: value);
         return;

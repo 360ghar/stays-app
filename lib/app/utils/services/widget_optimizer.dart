@@ -22,9 +22,7 @@ class WidgetOptimizer {
       itemCount: itemCount,
       cacheExtent: kIsWeb ? 0 : 500, // Optimize for web/mobile
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          child: itemBuilder(context, index),
-        );
+        return RepaintBoundary(child: itemBuilder(context, index));
       },
     );
   }
@@ -48,9 +46,7 @@ class WidgetOptimizer {
       itemCount: itemCount,
       cacheExtent: kIsWeb ? 0 : 500,
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          child: itemBuilder(context, index),
-        );
+        return RepaintBoundary(child: itemBuilder(context, index));
       },
     );
   }
@@ -69,18 +65,14 @@ class WidgetOptimizer {
       physics: physics,
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        return RepaintBoundary(
-          child: itemBuilder(context, index),
-        );
+        return RepaintBoundary(child: itemBuilder(context, index));
       },
     );
   }
 
   /// Wrap expensive widgets with performance boundary
   static Widget performanceBoundary({required Widget child}) {
-    return RepaintBoundary(
-      child: child,
-    );
+    return RepaintBoundary(child: child);
   }
 
   /// Create optimized image widget with proper loading and error handling
@@ -247,10 +239,7 @@ class PerformanceMetrics {
   static Map<String, double> getAllMetrics() {
     return _renderTimes.map((key, times) {
       if (times.isEmpty) return MapEntry(key, 0.0);
-      return MapEntry(
-        key,
-        times.reduce((a, b) => a + b) / times.length,
-      );
+      return MapEntry(key, times.reduce((a, b) => a + b) / times.length);
     });
   }
 
@@ -268,10 +257,7 @@ class WidgetPerformanceAnalyzer {
     required String widgetName,
     required Widget child,
   }) {
-    return _PerformanceWrapper(
-      widgetName: widgetName,
-      child: child,
-    );
+    return _PerformanceWrapper(widgetName: widgetName, child: child);
   }
 }
 
@@ -279,10 +265,7 @@ class _PerformanceWrapper extends StatefulWidget {
   final String widgetName;
   final Widget child;
 
-  const _PerformanceWrapper({
-    required this.widgetName,
-    required this.child,
-  });
+  const _PerformanceWrapper({required this.widgetName, required this.child});
 
   @override
   State<_PerformanceWrapper> createState() => _PerformanceWrapperState();

@@ -38,4 +38,3 @@ abstract class IAuthProvider {
 
   Future<bool> isAuthenticated();
 }
-

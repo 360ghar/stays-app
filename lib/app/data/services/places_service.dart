@@ -48,6 +48,7 @@ class PlacesService extends GetConnect {
 
   String get _apiKey =>
       AppConfig.I.googleMapsApiKey ?? 'YOUR_GOOGLE_MAPS_API_KEY';
+  bool get _hasValidKey => _apiKey.isNotEmpty && !_apiKey.contains('YOUR_');
 
   Future<List<PlacePrediction>> autocomplete(
     String input, {
@@ -55,6 +56,10 @@ class PlacesService extends GetConnect {
     double? lng,
   }) async {
     if (input.trim().isEmpty) return [];
+    if (!_hasValidKey) {
+      AppLogger.warning('Places API key not configured. Skipping autocomplete.');
+      return [];
+    }
     try {
       final params = {
         'input': input,
@@ -90,6 +95,10 @@ class PlacesService extends GetConnect {
 
   Future<PlaceDetailsResult?> details(String placeId) async {
     if (placeId.isEmpty) return null;
+    if (!_hasValidKey) {
+      AppLogger.warning('Places API key not configured. Skipping details.');
+      return null;
+    }
     try {
       final res = await get(
         '/details/json',
@@ -121,5 +130,4 @@ class PlacesService extends GetConnect {
       return null;
     }
   }
-
 }

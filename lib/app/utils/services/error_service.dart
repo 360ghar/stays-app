@@ -17,14 +17,12 @@ class ErrorService extends GetxService {
   ApiException toApiException(Response response) {
     final int statusCode = response.statusCode ?? 500;
     final body = response.body;
-    String message = _extractMessage(body) ??
+    String message =
+        _extractMessage(body) ??
         response.bodyString ??
         response.statusText ??
         'An unknown error occurred.';
-    AppLogger.error(
-      'API Error',
-      'Status: $statusCode, Message: $message',
-    );
+    AppLogger.error('API Error', 'Status: $statusCode, Message: $message');
     return ApiException(message: message, statusCode: statusCode);
   }
 
@@ -56,7 +54,9 @@ class ErrorService extends GetxService {
     AppLogger.error('${contextInfo}Error handled', error, stackTrace);
 
     // Add to error history (keep last 50 errors)
-    _errorHistory.add('${DateTime.now().toIso8601String()}: $contextInfo$message');
+    _errorHistory.add(
+      '${DateTime.now().toIso8601String()}: $contextInfo$message',
+    );
     if (_errorHistory.length > 50) {
       _errorHistory.removeAt(0);
     }
@@ -93,8 +93,7 @@ class ErrorService extends GetxService {
         final messages = <String>[];
         for (final item in detail) {
           if (item is Map) {
-            final msg =
-                item['msg']?.toString() ?? item['message']?.toString();
+            final msg = item['msg']?.toString() ?? item['message']?.toString();
             final loc = item['loc'] is List
                 ? (item['loc'] as List).map((e) => e.toString()).toList()
                 : null;
@@ -102,7 +101,9 @@ class ErrorService extends GetxService {
                 ? loc.last.toString()
                 : null;
             if (msg != null && msg.isNotEmpty) {
-              messages.add(field != null && field.isNotEmpty ? '$field: $msg' : msg);
+              messages.add(
+                field != null && field.isNotEmpty ? '$field: $msg' : msg,
+              );
             }
           } else if (item != null) {
             messages.add(item.toString());
@@ -130,4 +131,3 @@ class ErrorService extends GetxService {
     return null;
   }
 }
-

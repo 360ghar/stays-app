@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/auth/auth_controller.dart';
-import 'package:stays_app/app/controllers/trips_controller.dart';
+import 'package:stays_app/features/auth/controllers/auth_controller.dart';
+import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/trip_model.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';

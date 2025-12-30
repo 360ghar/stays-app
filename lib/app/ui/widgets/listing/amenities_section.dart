@@ -38,9 +38,9 @@ class AmenitiesSection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           _buildAmenitiesGrid(displayItems, context),
@@ -57,7 +57,9 @@ class AmenitiesSection extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: amenitiesList.map((amenity) => _buildAmenityChip(amenity, context)).toList(),
+      children: amenitiesList
+          .map((amenity) => _buildAmenityChip(amenity, context))
+          .toList(),
     );
   }
 
@@ -77,11 +79,7 @@ class AmenitiesSection extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 16,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(icon, size: 16, color: theme.colorScheme.primary),
           const SizedBox(width: 6),
           Flexible(
             child: Text(
@@ -157,7 +155,8 @@ class AmenitiesSection extends StatelessWidget {
                     mainAxisSpacing: 12,
                   ),
                   itemCount: amenities.length,
-                  itemBuilder: (context, index) => _buildFullAmenityItem(amenities[index], context),
+                  itemBuilder: (context, index) =>
+                      _buildFullAmenityItem(amenities[index], context),
                 ),
               ),
             ],
@@ -182,18 +181,9 @@ class AmenitiesSection extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(icon, size: 20, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              amenity,
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+          Expanded(child: Text(amenity, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );
@@ -212,11 +202,13 @@ class AmenitiesSection extends StatelessWidget {
       return Icons.kitchen_outlined;
     } else if (amenityLower.contains('air') || amenityLower.contains('ac')) {
       return Icons.ac_unit_outlined;
-    } else if (amenityLower.contains('gym') || amenityLower.contains('fitness')) {
+    } else if (amenityLower.contains('gym') ||
+        amenityLower.contains('fitness')) {
       return Icons.fitness_center_outlined;
     } else if (amenityLower.contains('tv')) {
       return Icons.tv_outlined;
-    } else if (amenityLower.contains('wash') || amenityLower.contains('laundry')) {
+    } else if (amenityLower.contains('wash') ||
+        amenityLower.contains('laundry')) {
       return Icons.local_laundry_service_outlined;
     } else if (amenityLower.contains('pet')) {
       return Icons.pets_outlined;

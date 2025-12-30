@@ -177,10 +177,6 @@ abstract class BaseController extends GetxController {
     }
     _completers.clear();
 
-    // Clear reactive variables
-    isLoading.close();
-    errorMessage.close();
-
     super.onClose();
   }
 }

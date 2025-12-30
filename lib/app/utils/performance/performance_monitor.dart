@@ -18,4 +18,3 @@ class PerformanceSpan {
     AppLogger.info('Perf[$name] took ${elapsed.inMilliseconds}ms');
   }
 }
-

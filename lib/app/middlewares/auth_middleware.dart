@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
-import '../controllers/auth/auth_controller.dart';
-import '../routes/app_routes.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../utils/logger/app_logger.dart';
+
+import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override

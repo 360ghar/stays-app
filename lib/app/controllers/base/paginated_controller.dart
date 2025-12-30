@@ -51,4 +51,3 @@ abstract class PaginatedController<T> extends BaseController {
     }
   }
 }
-

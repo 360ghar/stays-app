@@ -35,4 +35,3 @@ extension ResponseParsing on Response {
     return <String, dynamic>{};
   }
 }
-

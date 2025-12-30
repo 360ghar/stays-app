@@ -53,9 +53,7 @@ class PropertyImageCarousel extends StatelessWidget {
   Widget _buildImage(String imageUrl) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(0),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(0)),
       child: Image.network(
         imageUrl,
         fit: BoxFit.cover,
@@ -75,7 +73,7 @@ class PropertyImageCarousel extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
               ),
             ),

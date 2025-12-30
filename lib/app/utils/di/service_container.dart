@@ -34,14 +34,18 @@ class ServiceContainer {
       Get.put<T>(service, permanent: permanent);
       AppLogger.debug('Service registered: $T (permanent: $permanent)');
     } else {
-      AppLogger.warning('Service $T already registered, skipping registration.');
+      AppLogger.warning(
+        'Service $T already registered, skipping registration.',
+      );
     }
   }
 
   /// Get a service dependency with type safety
   T get<T>() {
     if (!Get.isRegistered<T>()) {
-      throw Exception('Service $T is not registered. Register it using ServiceContainer().put() or registerLazy().');
+      throw Exception(
+        'Service $T is not registered. Register it using ServiceContainer().put() or registerLazy().',
+      );
     }
     return Get.find<T>();
   }

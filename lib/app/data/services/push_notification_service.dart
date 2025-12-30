@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'storage_service.dart';
@@ -77,7 +78,10 @@ class PushNotificationService extends GetxService {
       try {
         final token = await _messaging.getToken();
         if (token != null) {
-          AppLogger.info('FCM Token: $token');
+          // Only log token in dev environment to prevent leaking in production
+          if (AppConfig.isDev) {
+            AppLogger.info('FCM Token: $token');
+          }
           await _registerTokenWithBackend(token);
         }
       } catch (e) {
@@ -121,9 +125,9 @@ class PushNotificationService extends GetxService {
       final platform = kIsWeb
           ? 'web'
           : (defaultTargetPlatform == TargetPlatform.iOS ||
-                  defaultTargetPlatform == TargetPlatform.macOS)
-              ? 'ios'
-              : 'android';
+                defaultTargetPlatform == TargetPlatform.macOS)
+          ? 'ios'
+          : 'android';
 
       await provider.registerDeviceToken(
         token: token,

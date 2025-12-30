@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/settings/theme_controller.dart';
+import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/data/services/locale_service.dart';

@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/auth/auth_controller.dart';
-import 'package:stays_app/app/controllers/settings/theme_controller.dart';
+import 'package:stays_app/features/auth/controllers/auth_controller.dart';
+import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';

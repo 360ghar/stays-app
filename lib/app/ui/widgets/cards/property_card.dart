@@ -41,37 +41,53 @@ class PropertyCard extends StatelessWidget {
         ? Colors.black.withValues(alpha: 0.3)
         : Colors.black.withValues(alpha: 0.12);
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        margin: _propertyCardMargin,
-        child: Hero(
-          tag: '${heroPrefix ?? 'property'}-${property.id}',
-          child: Material(
-            color: Colors.transparent,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: borderRadius,
-                boxShadow: [
-                  BoxShadow(
-                    color: shadowColor,
-                    blurRadius: _propertyCardShadowBlur,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: borderRadius,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildImage(context),
-                    _buildGradientOverlay(),
-                    _buildContent(context),
-                    if (onFavoriteToggle != null) _buildFavoriteButton(context),
+    // Build semantic description for accessibility
+    final semanticLabel = StringBuffer();
+    semanticLabel.write(property.name);
+    semanticLabel.write(', ${property.fullAddress}');
+    if (showPrice) {
+      semanticLabel.write(', ${property.displayPrice} per night');
+    }
+    if (isFavorite) {
+      semanticLabel.write(', saved to wishlist');
+    }
+
+    return Semantics(
+      label: semanticLabel.toString(),
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          height: height,
+          margin: _propertyCardMargin,
+          child: Hero(
+            tag: '${heroPrefix ?? 'property'}-${property.id}',
+            child: Material(
+              color: Colors.transparent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: _propertyCardShadowBlur,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
+                ),
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildImage(context),
+                      _buildGradientOverlay(),
+                      _buildContent(context),
+                      if (onFavoriteToggle != null)
+                        _buildFavoriteButton(context),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -207,22 +223,27 @@ class PropertyCard extends StatelessWidget {
     return Positioned(
       top: 12,
       right: 12,
-      child: GestureDetector(
-        onTap: onFavoriteToggle,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface.withValues(
-              alpha: (Theme.of(context).brightness == Brightness.dark)
-                  ? 0.55
-                  : 0.3,
+      child: Semantics(
+        label: isFavorite ? 'Remove from wishlist' : 'Add to wishlist',
+        button: true,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onFavoriteToggle,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colors.surface.withValues(
+                alpha: (Theme.of(context).brightness == Brightness.dark)
+                    ? 0.55
+                    : 0.3,
+              ),
+              shape: BoxShape.circle,
             ),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? colors.error : Colors.white,
-            size: 20,
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? colors.error : Colors.white,
+              size: 20,
+            ),
           ),
         ),
       ),

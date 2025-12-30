@@ -82,7 +82,8 @@ class EmailOrPhoneRule extends ValidationRule {
     final phoneError = phoneRule.validate(value);
 
     if (emailError != null && phoneError != null) {
-      return customMessage ?? 'Please enter a valid email address or phone number';
+      return customMessage ??
+          'Please enter a valid email address or phone number';
     }
     return null;
   }
@@ -128,7 +129,8 @@ class PasswordRule extends ValidationRule {
       return 'Password must contain at least one number';
     }
 
-    if (requireSpecialChars && !value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+    if (requireSpecialChars &&
+        !value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
       return 'Password must contain at least one special character';
     }
 
@@ -189,7 +191,8 @@ class ValidationResult {
 
   const ValidationResult({required this.isValid, required this.errors});
 
-  factory ValidationResult.success() => const ValidationResult(isValid: true, errors: {});
+  factory ValidationResult.success() =>
+      const ValidationResult(isValid: true, errors: {});
   factory ValidationResult.failure(Map<String, String> errors) =>
       ValidationResult(isValid: false, errors: errors);
 }

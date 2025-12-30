@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +14,7 @@ import 'l10n/localization_service.dart';
 import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
-import 'app/controllers/settings/theme_controller.dart';
+import 'features/settings/controllers/theme_controller.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/security/security_service.dart';
 
@@ -26,32 +28,46 @@ Future<void> main() async {
   final pinsRaw = dotenv.env['API_CERT_SHA256'];
   if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
     final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
-    final pins = pinsRaw.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toSet();
+    final pins = pinsRaw
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet();
     if (pins.isNotEmpty) {
-      HttpOverrides.global = PinningHttpOverrides(allowedPins: pins, host: host);
+      HttpOverrides.global = PinningHttpOverrides(
+        allowedPins: pins,
+        host: host,
+      );
     }
   }
 
-  final themeService = await Get.putAsync<ThemeService>(
-    () async => ThemeService().init(),
-    permanent: true,
-  );
+  // Parallelize initialization of independent services for faster startup
+  late ThemeService themeService;
+  late LocaleService localeService;
+
+  await Future.wait([
+    // Theme service initialization
+    ThemeService().init().then((service) => themeService = service),
+    // Locale service initialization
+    LocaleService().init().then((service) => localeService = service),
+    // Orientation lock (lightweight, run in parallel)
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]),
+  ]);
+
+  // Register services with GetX after initialization
+  Get.put<ThemeService>(themeService, permanent: true);
+  Get.put<LocaleService>(localeService, permanent: true);
 
   Get.put<ThemeController>(
     ThemeController(themeService: themeService),
     permanent: true,
   );
-  // Locale service + load translations
-  final localeService = await Get.putAsync<LocaleService>(
-    () async => LocaleService().init(),
-    permanent: true,
-  );
+
   await LocalizationService.init(localeService);
-  Get.updateLocale(LocalizationService.initialLocale);
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  unawaited(Get.updateLocale(LocalizationService.initialLocale));
   runApp(const MyApp());
 }
 

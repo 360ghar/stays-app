@@ -1,18 +1,22 @@
 import 'package:get/get.dart';
 
 import '../../config/app_config.dart';
-import '../controllers/notification/notification_controller.dart';
+import 'package:stays_app/app/controllers/notification/notification_controller.dart';
 import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
 import '../data/services/places_service.dart';
 import '../data/services/storage_service.dart';
 import '../data/services/supabase_service.dart';
-import '../controllers/favorites_controller.dart';
+import 'package:stays_app/app/controllers/favorites_controller.dart';
 import '../utils/performance/performance_monitor.dart';
+import '../utils/services/connectivity_service.dart';
 import '../utils/services/error_service.dart';
 import '../utils/services/token_service.dart';
 import '../utils/services/validation_service.dart';
 import '../utils/security/security_service.dart';
+import '../data/services/property_cache_service.dart';
+import '../data/services/crash_reporting_service.dart';
+import '../data/services/image_prefetch_service.dart';
 
 class InitialBinding extends Bindings {
   @override
@@ -22,6 +26,14 @@ class InitialBinding extends Bindings {
     Get.put<ValidationService>(ValidationService(), permanent: true);
     Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
     Get.put<SecurityService>(SecurityService(), permanent: true);
+
+    // Connectivity monitoring service (early initialization)
+    Get.put<ConnectivityService>(ConnectivityService(), permanent: true);
+
+    // Crash reporting service (initialize early for error tracking)
+    Get.putAsync<CrashReportingService>(() async {
+      return CrashReportingService().init();
+    }, permanent: true);
 
     // Initialize async services in dependency order
     // 1) Kick off StorageService initialization asynchronously and keep its future
@@ -57,6 +69,20 @@ class InitialBinding extends Bindings {
     Get.put<AnalyticsService>(
       AnalyticsService(enabled: AppConfig.I.enableAnalytics),
     );
+
+    // Property cache service for offline support
+    Get.putAsync<PropertyCacheService>(() async {
+      final service = PropertyCacheService();
+      await service.init();
+      return service;
+    }, permanent: true);
+
+    // Image prefetch service for preloading images
+    Get.putAsync<ImagePrefetchService>(() async {
+      final service = ImagePrefetchService();
+      await service.init();
+      return service;
+    }, permanent: true);
 
     // NotificationController is initialized here during app startup
     Get.put<NotificationController>(NotificationController(), permanent: true);

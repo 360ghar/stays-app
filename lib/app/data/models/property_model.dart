@@ -260,11 +260,16 @@ class Property {
 
   bool get hasLocation => latitude != null && longitude != null;
 
-  String get propertyTypeDisplay => propertyType
-      .replaceAll('_', ' ')
-      .split(' ')
-      .map((word) => word[0].toUpperCase() + word.substring(1))
-      .join(' ');
+  String get propertyTypeDisplay {
+    final normalized = propertyType.trim();
+    if (normalized.isEmpty) return 'Property';
+    return normalized
+        .replaceAll('_', ' ')
+        .split(' ')
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
 
   Property copyWith({bool? isFavorite}) {
     return Property(

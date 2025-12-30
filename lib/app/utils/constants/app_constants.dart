@@ -19,4 +19,3 @@ class AppConstants {
   static const double defaultLatitude = 19.0760; // Mumbai
   static const double defaultLongitude = 72.8777; // Mumbai
 }
-

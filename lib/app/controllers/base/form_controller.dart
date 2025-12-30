@@ -16,4 +16,3 @@ abstract class FormController extends BaseController {
     return false;
   }
 }
-

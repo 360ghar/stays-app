@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
@@ -107,7 +108,7 @@ class LocalizationService extends Translations {
   ) async {
     if (Get.locale == locale) return;
     await localeService.saveLocale(locale);
-    Get.updateLocale(locale);
+    unawaited(Get.updateLocale(locale));
   }
 
   static Locale _getLocaleFromLanguage(String lang) {

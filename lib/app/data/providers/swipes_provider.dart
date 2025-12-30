@@ -2,7 +2,6 @@ import 'base_provider.dart';
 import '../../utils/extensions/http_extensions.dart';
 
 class SwipesProvider extends BaseProvider {
-
   Future<void> swipe({required int propertyId, required bool isLiked}) async {
     final res = await post('/api/v1/swipes/', {
       'property_id': propertyId,

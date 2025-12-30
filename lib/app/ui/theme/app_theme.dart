@@ -11,7 +11,6 @@ class AppTheme {
         brightness: Brightness.light,
       ).copyWith(
         surface: AppColors.surface,
-        background: AppColors.background,
         surfaceContainerHighest: const Color(0xFFE6F0FF),
         outlineVariant: const Color(0xFFD7E4FF),
         onSurface: AppColors.textPrimary,
@@ -23,7 +22,6 @@ class AppTheme {
         brightness: Brightness.dark,
       ).copyWith(
         surface: const Color(0xFF1E293B),
-        background: const Color(0xFF111827),
         surfaceContainerHighest: const Color(0xFF273449),
         outlineVariant: const Color(0xFF334155),
         onSurface: Colors.white,

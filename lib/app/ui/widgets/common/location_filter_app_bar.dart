@@ -26,7 +26,9 @@ class LocationFilterAppBar extends StatelessWidget
   final List<Widget>? trailingActions;
 
   FilterController? get _filterController =>
-      Get.isRegistered<FilterController>() ? Get.find<FilterController>() : null;
+      Get.isRegistered<FilterController>()
+      ? Get.find<FilterController>()
+      : null;
 
   LocationService? get _locationService =>
       Get.isRegistered<LocationService>() ? Get.find<LocationService>() : null;
@@ -49,11 +51,7 @@ class LocationFilterAppBar extends StatelessWidget
         children: [
           Expanded(child: _buildSearchField(context)),
           const SizedBox(width: 12),
-          SizedBox(
-            height: 52,
-            width: 52,
-            child: _buildFilterButton(context),
-          ),
+          SizedBox(height: 52, width: 52, child: _buildFilterButton(context)),
         ],
       ),
     );
@@ -109,8 +107,8 @@ class LocationFilterAppBar extends StatelessWidget
     return Obx(
       () => FilterButton(
         isActive: filtersRx.value.isNotEmpty,
-        onPressed: onFilterPressed ??
-            () => controller.openFilterSheet(context, scope),
+        onPressed:
+            onFilterPressed ?? () => controller.openFilterSheet(context, scope),
       ),
     );
   }
@@ -134,8 +132,7 @@ class LocationFilterAppBar extends StatelessWidget
     }
     return TextButton.icon(
       onPressed: () => _useMyLocation(),
-      icon: Icon(Icons.my_location,
-          size: 16, color: colors.primary),
+      icon: Icon(Icons.my_location, size: 16, color: colors.primary),
       label: Padding(
         padding: const EdgeInsets.only(left: 2),
         child: Text(

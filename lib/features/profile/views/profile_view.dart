@@ -294,10 +294,9 @@ class ProfileView extends GetView<ProfileController> {
           color: Theme.of(context).colorScheme.surface,
           shape: RoundedRectangleBorder(
             side: BorderSide(
-              color: Theme.of(context)
-                  .colorScheme
-                  .outlineVariant
-                  .withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withValues(alpha: 0.5),
             ),
             borderRadius: BorderRadius.circular(16),
           ),
@@ -386,10 +385,7 @@ class ProfileView extends GetView<ProfileController> {
 }
 
 class _StatData {
-  const _StatData({
-    required this.label,
-    required this.value,
-  });
+  const _StatData({required this.label, required this.value});
 
   final String label;
   final String value;

@@ -27,9 +27,7 @@ class AuthResult {
     );
   }
 
-  factory AuthResult.failure({
-    required String error,
-  }) {
+  factory AuthResult.failure({required String error}) {
     return AuthResult._(
       user: null,
       accessToken: null,
@@ -70,9 +68,7 @@ abstract class IAuthRepository {
   });
 
   /// Register a new user
-  Future<AuthResult> register({
-    required UserRegistrationData data,
-  });
+  Future<AuthResult> register({required UserRegistrationData data});
 
   /// Login with phone number and OTP
   Future<AuthResult> loginWithPhone({

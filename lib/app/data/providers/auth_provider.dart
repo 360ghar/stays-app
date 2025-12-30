@@ -15,8 +15,10 @@ class AuthProvider extends BaseProvider implements IAuthProvider {
     return handleResponse(response, (json) {
       final map = Map<String, dynamic>.from(json as Map);
       return ProviderAuthResult(
-        accessToken: map['accessToken']?.toString() ?? map['access_token']?.toString(),
-        refreshToken: map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
+        accessToken:
+            map['accessToken']?.toString() ?? map['access_token']?.toString(),
+        refreshToken:
+            map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
         rawUser: _extractUser(map),
       );
     });
@@ -34,8 +36,10 @@ class AuthProvider extends BaseProvider implements IAuthProvider {
     return handleResponse(response, (json) {
       final map = Map<String, dynamic>.from(json as Map);
       return ProviderAuthResult(
-        accessToken: map['accessToken']?.toString() ?? map['access_token']?.toString(),
-        refreshToken: map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
+        accessToken:
+            map['accessToken']?.toString() ?? map['access_token']?.toString(),
+        refreshToken:
+            map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
         rawUser: _extractUser(map),
       );
     });
@@ -55,8 +59,10 @@ class AuthProvider extends BaseProvider implements IAuthProvider {
     return handleResponse(response, (json) {
       final map = Map<String, dynamic>.from(json as Map);
       return ProviderAuthResult(
-        accessToken: map['accessToken']?.toString() ?? map['access_token']?.toString(),
-        refreshToken: map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
+        accessToken:
+            map['accessToken']?.toString() ?? map['access_token']?.toString(),
+        refreshToken:
+            map['refreshToken']?.toString() ?? map['refresh_token']?.toString(),
         rawUser: _extractUser(map),
       );
     });
@@ -120,4 +126,3 @@ class AuthProvider extends BaseProvider implements IAuthProvider {
     return null;
   }
 }
-

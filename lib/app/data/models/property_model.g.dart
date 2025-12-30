@@ -23,7 +23,7 @@ Property _$PropertyFromJson(Map<String, dynamic> json) => Property(
   subLocality: json['sub_locality'] as String?,
   landmark: json['landmark'] as String?,
   pricePerNight: (json['daily_rate'] as num).toDouble(),
-  currency: json['currency'] as String? ?? 'INR',
+  currency: json['currency'] as String? ?? AppConstants.defaultCurrencyCode,
   basePrice: (json['base_price'] as num?)?.toDouble(),
   monthlyRent: (json['monthly_rent'] as num?)?.toDouble(),
   securityDeposit: (json['security_deposit'] as num?)?.toDouble(),

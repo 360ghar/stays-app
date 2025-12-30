@@ -1,12 +1,13 @@
-import 'dart:convert';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../data/interfaces/i_auth_repository.dart';
 import '../../data/services/storage_service.dart';
 import '../logger/app_logger.dart';
 
-/// Token information with expiration tracking
 class TokenInfo {
   final String accessToken;
   final String? refreshToken;
@@ -20,18 +21,16 @@ class TokenInfo {
     required this.createdAt,
   });
 
-  /// Check if the access token is expired or will expire within the buffer time
   bool get isExpired {
-    if (expiresAt == null) return false;
+    final expAt = expiresAt;
+    if (expAt == null) return false;
     final now = DateTime.now();
-    final bufferTime = Duration(minutes: 5); // 5-minute buffer
-    return now.isAfter(expiresAt!.subtract(bufferTime));
+    final bufferTime = Duration(minutes: 5);
+    return now.isAfter(expAt.subtract(bufferTime));
   }
 
-  /// Check if the token should be refreshed
   bool get shouldRefresh => isExpired;
 
-  /// Convert to JSON for storage
   Map<String, dynamic> toJson() {
     return {
       'accessToken': accessToken,
@@ -41,7 +40,6 @@ class TokenInfo {
     };
   }
 
-  /// Create from JSON
   factory TokenInfo.fromJson(Map<String, dynamic> json) {
     return TokenInfo(
       accessToken: json['accessToken'] as String,
@@ -54,25 +52,26 @@ class TokenInfo {
   }
 }
 
-/// Secure token management service with automatic refresh
 class TokenService extends GetxService {
   static TokenService get I => Get.find<TokenService>();
 
   StorageService? _storageService;
+  IAuthRepository? _authRepository;
 
   TokenInfo? _currentToken;
   Timer? _refreshTimer;
   final RxBool isAuthenticated = false.obs;
   final Completer<void> _ready = Completer<void>();
+  bool _isRefreshing = false;
+  bool _supabaseSessionAvailable = false;
 
-  /// Future that completes once tokens have been loaded from storage
   Future<void> get ready => _ready.future;
 
-  TokenService({StorageService? storageService}) {
-    if (storageService != null) {
-      _storageService = storageService;
-    }
-  }
+  TokenService({
+    StorageService? storageService,
+    IAuthRepository? authRepository,
+  }) : _storageService = storageService,
+       _authRepository = authRepository;
 
   @override
   void onInit() {
@@ -86,7 +85,6 @@ class TokenService extends GetxService {
     super.onClose();
   }
 
-  /// Store tokens securely
   Future<void> storeTokens({
     required String accessToken,
     String? refreshToken,
@@ -109,6 +107,7 @@ class TokenService extends GetxService {
 
       await _saveTokens();
       isAuthenticated.value = true;
+      _startRefreshTimer();
 
       AppLogger.info('Tokens stored successfully');
     } catch (e) {
@@ -117,37 +116,70 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Get current access token
-  String? get accessToken => _currentToken?.accessToken;
+  String? get accessToken {
+    if (_supabaseSessionAvailable) {
+      final supabaseToken =
+          Supabase.instance.client.auth.currentSession?.accessToken;
+      if (supabaseToken != null) return supabaseToken;
+    }
+    return _currentToken?.accessToken;
+  }
 
-  /// Get current refresh token
   String? get refreshToken => _currentToken?.refreshToken;
 
-  /// Check if user is authenticated
-  bool get hasValidToken => _currentToken != null && !_currentToken!.isExpired;
+  bool get hasValidToken {
+    if (_supabaseSessionAvailable) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.isExpired == false) {
+        return true;
+      }
+    }
+    return _currentToken != null && !_currentToken!.isExpired;
+  }
 
-  /// Check if token needs refresh
-  bool get needsRefresh => _currentToken?.shouldRefresh ?? false;
+  bool get needsRefresh {
+    if (_supabaseSessionAvailable) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.isExpired == true) {
+        return true;
+      }
+    }
+    return _currentToken?.shouldRefresh ?? false;
+  }
 
-  /// Refresh tokens if needed
   Future<bool> refreshIfNeeded() async {
+    if (_supabaseSessionAvailable) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        if (session.isExpired == false) {
+          return true;
+        }
+        final refreshed = await _refreshWithSupabase();
+        if (refreshed) {
+          return true;
+        }
+      }
+    }
+
     if (_currentToken == null) {
       return false;
     }
+
     if (!_currentToken!.shouldRefresh) {
       return true;
     }
+
     return await _refreshTokens();
   }
 
-  /// Clear all stored tokens
   Future<void> clearTokens() async {
     if (!_ready.isCompleted) {
       await ready;
     }
     try {
       _currentToken = null;
-      await _storageService!.clearTokens();
+      _supabaseSessionAvailable = false;
+      await _storageService?.clearTokens();
       isAuthenticated.value = false;
       _stopRefreshTimer();
 
@@ -157,12 +189,10 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Validate current token format
   bool validateTokenFormat(String? token) {
     if (token == null || token.isEmpty) return false;
 
     try {
-      // Basic JWT format validation (header.payload.signature)
       final parts = token.split('.');
       return parts.length == 3 && parts.every((part) => part.isNotEmpty);
     } catch (e) {
@@ -170,7 +200,6 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Extract token payload (for debugging only, not for security decisions)
   Map<String, dynamic>? getTokenPayload(String? token) {
     if (!validateTokenFormat(token)) return null;
 
@@ -178,7 +207,6 @@ class TokenService extends GetxService {
       final parts = token!.split('.');
       final payload = parts[1];
 
-      // Pad base64 string if needed
       String paddedPayload = payload;
       while (paddedPayload.length % 4 != 0) {
         paddedPayload += '=';
@@ -192,10 +220,8 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Get token expiration time
   DateTime? get tokenExpiration => _currentToken?.expiresAt;
 
-  /// Get time until token expiration
   Duration? get timeUntilExpiration {
     final expiration = _currentToken?.expiresAt;
     if (expiration == null) return null;
@@ -205,15 +231,21 @@ class TokenService extends GetxService {
 
   Future<void> _initialize() async {
     try {
-      // Resolve StorageService if not injected
       if (_storageService == null) {
         await StorageService.ready;
         _storageService = Get.find<StorageService>();
       }
 
+      if (_authRepository == null && Get.isRegistered<IAuthRepository>()) {
+        _authRepository = Get.find<IAuthRepository>();
+      }
+
+      _checkSupabaseSession();
       await _loadStoredTokens();
-      // TODO: Enable timer after implementing _refreshTokens()
-      // _startRefreshTimer();
+
+      if (isAuthenticated.value) {
+        _startRefreshTimer();
+      }
     } finally {
       if (!_ready.isCompleted) {
         _ready.complete();
@@ -221,9 +253,30 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Load stored tokens from secure storage
+  void _checkSupabaseSession() {
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      _supabaseSessionAvailable = session != null;
+      if (_supabaseSessionAvailable) {
+        AppLogger.info('Supabase session detected');
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to check Supabase session: $e');
+      _supabaseSessionAvailable = false;
+    }
+  }
+
   Future<void> _loadStoredTokens() async {
     try {
+      if (_supabaseSessionAvailable) {
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null && session.isExpired == false) {
+          isAuthenticated.value = true;
+          AppLogger.info('Using Supabase session');
+          return;
+        }
+      }
+
       final accessToken = await _storageService!.getAccessToken();
       final refreshToken = await _storageService!.getRefreshToken();
       final expiresAtStr = await _storageService!.getTokenExpiration();
@@ -232,16 +285,18 @@ class TokenService extends GetxService {
         _currentToken = TokenInfo(
           accessToken: accessToken,
           refreshToken: refreshToken,
-          expiresAt: expiresAtStr != null ? DateTime.tryParse(expiresAtStr) : null,
+          expiresAt: expiresAtStr != null
+              ? DateTime.tryParse(expiresAtStr)
+              : null,
           createdAt: DateTime.now(),
         );
 
-        // Validate token format
-        if (validateTokenFormat(_currentToken!.accessToken) && !_currentToken!.isExpired) {
+        if (validateTokenFormat(_currentToken!.accessToken) &&
+            !_currentToken!.isExpired) {
           isAuthenticated.value = true;
-          AppLogger.info('Tokens loaded successfully');
+          AppLogger.info('Tokens loaded successfully from storage');
         } else {
-          AppLogger.warning('Invalid token format in storage');
+          AppLogger.warning('Invalid or expired token in storage');
           await clearTokens();
         }
       }
@@ -251,7 +306,6 @@ class TokenService extends GetxService {
     }
   }
 
-  /// Save tokens to secure storage
   Future<void> _saveTokens() async {
     if (_currentToken == null) return;
     if (!_ready.isCompleted) {
@@ -265,39 +319,72 @@ class TokenService extends GetxService {
     );
   }
 
-  /// Refresh tokens (placeholder - implement with your auth provider)
-  Future<bool> _refreshTokens() async {
-    if (_currentToken?.refreshToken == null) {
-      AppLogger.warning('No refresh token available');
-      await clearTokens();
+  Future<bool> _refreshWithSupabase() async {
+    try {
+      AppLogger.info('Refreshing Supabase session');
+      final response = await Supabase.instance.client.auth.refreshSession();
+
+      if (response.session != null) {
+        _supabaseSessionAvailable = true;
+        AppLogger.info('Supabase session refreshed successfully');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      AppLogger.error('Supabase session refresh failed', e);
+      _supabaseSessionAvailable = false;
       return false;
     }
+  }
 
+  Future<bool> _refreshTokens() async {
+    if (_isRefreshing) {
+      AppLogger.info('Token refresh already in progress, waiting...');
+      await Future.delayed(const Duration(seconds: 1));
+      return hasValidToken;
+    }
+
+    _isRefreshing = true;
     try {
-      // This should be implemented with your actual auth provider
-      // For now, this is a placeholder
-      AppLogger.info('Token refresh needed - implement with auth provider');
+      if (_currentToken?.refreshToken == null) {
+        AppLogger.warning('No refresh token available');
+        await clearTokens();
+        return false;
+      }
 
-      // Example implementation would be:
-      // final authRepository = Get.find<IAuthRepository>();
-      // final result = await authRepository.refreshTokens(_currentToken!.refreshToken!);
-      // if (result.isSuccess) {
-      //   await storeTokens(
-      //     accessToken: result.accessToken!,
-      //     refreshToken: result.refreshToken,
-      //   );
-      //   return true;
-      // }
+      if (_supabaseSessionAvailable) {
+        final success = await _refreshWithSupabase();
+        if (success) return true;
+      }
 
+      if (_authRepository != null) {
+        AppLogger.info('Refreshing tokens via auth repository');
+        final result = await _authRepository!.refreshTokens(
+          _currentToken!.refreshToken!,
+        );
+
+        if (result.isSuccess && result.accessToken != null) {
+          await storeTokens(
+            accessToken: result.accessToken!,
+            refreshToken: result.refreshToken,
+          );
+          AppLogger.info('Tokens refreshed successfully via repository');
+          return true;
+        }
+      }
+
+      AppLogger.warning('Token refresh failed - no valid auth provider');
+      await clearTokens();
       return false;
     } catch (e) {
       AppLogger.error('Token refresh failed', e);
       await clearTokens();
       return false;
+    } finally {
+      _isRefreshing = false;
     }
   }
 
-  /// Start automatic refresh timer
   void _startRefreshTimer() {
     _stopRefreshTimer();
 
@@ -307,20 +394,17 @@ class TokenService extends GetxService {
     );
   }
 
-  /// Stop refresh timer
   void _stopRefreshTimer() {
     _refreshTimer?.cancel();
     _refreshTimer = null;
   }
 
-  /// Check and refresh tokens periodically
   Future<void> _checkAndRefreshTokens() async {
     if (needsRefresh) {
       await refreshIfNeeded();
     }
   }
 
-  /// Manual token refresh for immediate needs
   Future<bool> performTokenRefresh() async {
     return await _refreshTokens();
   }

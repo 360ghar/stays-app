@@ -74,10 +74,7 @@ class PropertyInfoSection extends StatelessWidget {
           // Price and rating
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildPriceSection(textTheme),
-              _buildRatingRow(),
-            ],
+            children: [_buildPriceSection(textTheme), _buildRatingRow()],
           ),
 
           const SizedBox(height: 16),
@@ -98,18 +95,12 @@ class PropertyInfoSection extends StatelessWidget {
   Widget _buildLocationRow() {
     return Row(
       children: [
-        Icon(
-          Icons.location_on_outlined,
-          size: 16,
-          color: Colors.grey[600],
-        ),
+        Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[600]),
         const SizedBox(width: 4),
         Expanded(
           child: Text(
             property.address ?? '${property.city}, ${property.country}',
-            style: Get.textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Get.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -154,9 +145,7 @@ class PropertyInfoSection extends StatelessWidget {
         ),
         Text(
           'per night',
-          style: textTheme.bodySmall?.copyWith(
-            color: Colors.grey[600],
-          ),
+          style: textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
         ),
       ],
     );
@@ -180,9 +169,7 @@ class PropertyInfoSection extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '(${property.reviewsCount})',
-            style: Get.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
           ),
         ],
       ],
@@ -241,10 +228,7 @@ class PropertyInfoSection extends StatelessWidget {
             '${property.maxGuests} ${property.maxGuests == 1 ? 'Guest' : 'Guests'}',
           ),
         if (property.propertyType.isNotEmpty)
-          _buildDetailChip(
-            Icons.apartment_outlined,
-            property.propertyType,
-          ),
+          _buildDetailChip(Icons.apartment_outlined, property.propertyType),
       ],
     );
   }
@@ -263,9 +247,7 @@ class PropertyInfoSection extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             text,
-            style: Get.textTheme.bodySmall?.copyWith(
-              color: Colors.grey[700],
-            ),
+            style: Get.textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
           ),
         ],
       ),
