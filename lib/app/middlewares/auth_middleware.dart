@@ -1,10 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
-import '../controllers/auth/auth_controller.dart';
-import '../routes/app_routes.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../utils/logger/app_logger.dart';
+
+import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
@@ -19,7 +19,7 @@ class AuthMiddleware extends GetMiddleware {
         }
         return null;
       }
-      
+
       // If controller doesn't exist, check Supabase session
       final session = Supabase.instance.client.auth.currentSession;
       final hasSession = session != null && session.accessToken.isNotEmpty;
@@ -27,7 +27,7 @@ class AuthMiddleware extends GetMiddleware {
         AppLogger.info('No token found, redirecting to login');
         return const RouteSettings(name: Routes.login);
       }
-      
+
       // Token exists, allow navigation (controller will be created by binding)
       return null;
     } catch (e) {
@@ -36,7 +36,7 @@ class AuthMiddleware extends GetMiddleware {
       return const RouteSettings(name: Routes.login);
     }
   }
-  
+
   @override
   GetPage? onPageCalled(GetPage? page) {
     // Additional security check

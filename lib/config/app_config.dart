@@ -6,6 +6,7 @@ class AppConfig {
   final String supabaseUrl;
   final String supabaseAnonKey;
   final bool enableAnalytics;
+  final String? googleMapsApiKey;
 
   static late AppConfig _instance;
 
@@ -17,6 +18,7 @@ class AppConfig {
     required this.supabaseUrl,
     required this.supabaseAnonKey,
     this.enableAnalytics = false,
+    this.googleMapsApiKey,
   });
 
   static void setConfig(AppConfig config) {
@@ -40,7 +42,13 @@ class AppConfig {
       apiBaseUrl: env['API_BASE_URL'] ?? 'https://api.dev.360ghar.com',
       supabaseUrl: env['SUPABASE_URL'] ?? 'https://YOUR_DEV_SUPABASE_URL',
       supabaseAnonKey: env['SUPABASE_ANON_KEY'] ?? 'YOUR_DEV_SUPABASE_ANON_KEY',
-      enableAnalytics: (env['ENABLE_ANALYTICS'] ?? (environment == 'prod' ? 'true' : 'false')) == 'true',
+      enableAnalytics:
+          (env['ENABLE_ANALYTICS'] ??
+              (environment == 'prod' ? 'true' : 'false')) ==
+          'true',
+      // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY
+      googleMapsApiKey:
+          env['GOOGLE_MAPS_API_KEY'] ?? env['GOOGLE_PLACES_API_KEY'],
     );
   }
 }

@@ -8,32 +8,27 @@ description: Security best practices and configuration management for Flutter ap
 ## Environment Variables
 Environment files must be properly configured and never committed:
 
-### Required Environment Files
-- **`.env.dev`**: Development environment
-- **`.env.staging`**: Staging environment  
-- **`.env.prod`**: Production environment
+### Required Environment Files (Actual Implementation)
+- **`.env.dev`**: Development environment (loaded by `main_dev.dart`)
+- **`.env.staging`**: Staging environment (loaded by `main_staging.dart`)
+- **`.env.prod`**: Production environment (loaded by `main_prod.dart`)
 
-### Key Environment Variables
+### Key Environment Variables (Actual Usage)
 ```bash
 # API Configuration
-API_BASE_URL=https://api.stays-app.com
-API_TIMEOUT=30000
+API_BASE_URL=https://api.dev.360ghar.com
 
-# Supabase Configuration
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key-here
+# Supabase Configuration (main backend)
+SUPABASE_URL=https://dev-project.supabase.co
+SUPABASE_ANON_KEY=your-dev-anon-key-here
 
-# Payment Configuration
-STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_SECRET_KEY=sk_test_...
+# Analytics Configuration
+ENABLE_ANALYTICS=false
 
-# Analytics & Monitoring
-ANALYTICS_KEY=your-analytics-key
-SENTRY_DSN=your-sentry-dsn
-
-# Feature Flags
-ENABLE_ANALYTICS=true
-ENABLE_PUSH_NOTIFICATIONS=true
+# Maps Configuration (optional)
+GOOGLE_MAPS_API_KEY=your-dev-maps-key
+# or
+GOOGLE_PLACES_API_KEY=your-dev-places-key
 ```
 
 ## Security Best Practices
@@ -58,32 +53,102 @@ ENABLE_PUSH_NOTIFICATIONS=true
 
 ## Configuration Management
 
-### AppConfig Class
-Use the `AppConfig` class for environment-specific configuration:
+### AppConfig Class (Actual Implementation)
+Current configuration management in `lib/config/app_config.dart`:
 
 ```dart
 class AppConfig {
-  static late String apiBaseUrl;
-  static late String supabaseUrl;
-  static late String supabaseAnonKey;
-  static late bool enableAnalytics;
+  final String environment;
+  final String apiBaseUrl;
+  final String supabaseUrl;
+  final String supabaseAnonKey;
+  final bool enableAnalytics;
+  final String? googleMapsApiKey;
 
-  static void initialize(String env) {
-    // Load environment variables based on env
-    // Initialize configuration values
+  static late AppConfig _instance;
+
+  static AppConfig get I => _instance;
+
+  const AppConfig({
+    required this.environment,
+    required this.apiBaseUrl,
+    required this.supabaseUrl,
+    required this.supabaseAnonKey,
+    this.enableAnalytics = false,
+    this.googleMapsApiKey,
+  });
+
+  static void setConfig(AppConfig config) {
+    _instance = config;
+  }
+
+  static AppConfig dev() => fromDotEnv(environment: 'dev');
+  static AppConfig staging() => fromDotEnv(environment: 'staging');
+  static AppConfig prod() => fromDotEnv(environment: 'prod');
+
+  static bool get isProduction => I.environment == 'prod';
+  static bool get isStaging => I.environment == 'staging';
+  static bool get isDev => I.environment == 'dev';
+
+  static AppConfig fromDotEnv({required String environment}) {
+    final env = dotenv.env;
+    return AppConfig(
+      environment: environment,
+      apiBaseUrl: env['API_BASE_URL'] ?? 'https://api.dev.360ghar.com',
+      supabaseUrl: env['SUPABASE_URL'] ?? 'https://YOUR_DEV_SUPABASE_URL',
+      supabaseAnonKey: env['SUPABASE_ANON_KEY'] ?? 'YOUR_DEV_SUPABASE_ANON_KEY',
+      enableAnalytics: (env['ENABLE_ANALYTICS'] ?? (environment == 'prod' ? 'true' : 'false')) == 'true',
+      // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY
+      googleMapsApiKey: env['GOOGLE_MAPS_API_KEY'] ?? env['GOOGLE_PLACES_API_KEY'],
+    );
   }
 }
 ```
 
-### Environment-Specific Configuration
-Each environment should have its own configuration file:
+### Environment-Specific Configuration (Actual Structure)
+Current environment configuration in `lib/config/environments/`:
 
 ```dart
 // lib/config/environments/dev_config.dart
-class DevConfig {
-  static const String apiBaseUrl = 'https://dev-api.stays-app.com';
-  static const String supabaseUrl = 'https://dev-project.supabase.co';
-  // ... other dev-specific config
+import '../../app_config.dart';
+
+class DevConfig extends AppConfig {
+  DevConfig()
+      : super(
+          environment: 'dev',
+          apiBaseUrl: 'https://api.dev.360ghar.com',
+          supabaseUrl: 'https://dev-project.supabase.co',
+          supabaseAnonKey: 'your-dev-anon-key',
+          enableAnalytics: false,
+        );
+}
+
+// lib/config/environments/staging_config.dart
+import '../../app_config.dart';
+
+class StagingConfig extends AppConfig {
+  StagingConfig()
+      : super(
+          environment: 'staging',
+          apiBaseUrl: 'https://api.staging.360ghar.com',
+          supabaseUrl: 'https://staging-project.supabase.co',
+          supabaseAnonKey: 'your-staging-anon-key',
+          enableAnalytics: true,
+        );
+}
+
+// lib/config/environments/prod_config.dart
+import '../../app_config.dart';
+
+class ProdConfig extends AppConfig {
+  ProdConfig()
+      : super(
+          environment: 'prod',
+          apiBaseUrl: 'https://api.360ghar.com',
+          supabaseUrl: 'https://prod-project.supabase.co',
+          supabaseAnonKey: 'your-prod-anon-key',
+          enableAnalytics: true,
+        );
 }
 ```
 

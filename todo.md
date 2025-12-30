@@ -1,0 +1,4 @@
+- Replace loader with skeleton Loader. 
+- Wishlist State Update correctly. 
+- Reverse Geo Encoding for location. 
+- 

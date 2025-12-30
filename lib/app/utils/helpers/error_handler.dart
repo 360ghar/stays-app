@@ -38,19 +38,29 @@ class ErrorHandler {
         message = 'Server error. Please try again later.';
         break;
     }
-    Get.snackbar('Error', message,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: AppColors.error,
-        colorText: Colors.white);
+    Get.snackbar(
+      'Error',
+      message,
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: AppColors.error,
+      colorText: Colors.white,
+    );
   }
 
   static void _handleNetworkException(NetworkException error) {
-    Get.snackbar('Network Error', 'Please check your internet connection.',
-        snackPosition: SnackPosition.TOP);
+    Get.snackbar(
+      'Network Error',
+      'Please check your internet connection.',
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   static void _handleAuthException(AuthException error) {
-    Get.snackbar('Authentication Error', error.message, snackPosition: SnackPosition.TOP);
+    Get.snackbar(
+      'Authentication Error',
+      error.message,
+      snackPosition: SnackPosition.TOP,
+    );
     if (error.code == 'token_expired' || error.code == 'invalid_token') {
       Get.offAllNamed(Routes.login);
     }
@@ -58,13 +68,19 @@ class ErrorHandler {
 
   static void _handleValidationException(ValidationException error) {
     final firstError = error.errors.values.first.first;
-    Get.snackbar('Validation Error', firstError, snackPosition: SnackPosition.TOP);
+    Get.snackbar(
+      'Validation Error',
+      firstError,
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   static void _handleGenericError(dynamic error) {
     AppLogger.error('Unhandled error', error);
-    Get.snackbar('Error', 'An unexpected error occurred. Please try again.',
-        snackPosition: SnackPosition.TOP);
+    Get.snackbar(
+      'Error',
+      'An unexpected error occurred. Please try again.',
+      snackPosition: SnackPosition.TOP,
+    );
   }
 }
-

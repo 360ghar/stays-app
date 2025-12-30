@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Extension to provide consistent black text color for all TextField widgets
+/// Extension helpers for retrieving theme-aware input styles
 extension TextFieldThemeExtension on TextField {
-  static const TextStyle defaultInputStyle = TextStyle(
-    color: Colors.black,
-    fontSize: 16,
-  );
+  static TextStyle defaultInputStyle(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: colorScheme.onSurface,
+          fontSize: 16,
+        ) ??
+        TextStyle(color: colorScheme.onSurface, fontSize: 16);
+  }
 }
 
-/// Extension to provide consistent black text color for all TextFormField widgets  
+/// Extension to provide theme-aware input styles for TextFormField widgets
 extension TextFormFieldThemeExtension on TextFormField {
-  static const TextStyle defaultInputStyle = TextStyle(
-    color: Colors.black,
-    fontSize: 16,
-  );
+  static TextStyle defaultInputStyle(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: colorScheme.onSurface,
+          fontSize: 16,
+        ) ??
+        TextStyle(color: colorScheme.onSurface, fontSize: 16);
+  }
 }
 
 /// Custom TextField widget that ensures black text color
@@ -31,7 +39,7 @@ class ThemedTextField extends StatelessWidget {
   final bool? enabled;
   final int? maxLines;
   final TextStyle? style;
-  
+
   const ThemedTextField({
     super.key,
     this.controller,
@@ -47,9 +55,17 @@ class ThemedTextField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
-  
+
   @override
   Widget build(BuildContext context) {
+    final inputStyle = TextFieldThemeExtension.defaultInputStyle(context);
+    final hintStyle =
+        Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        ) ??
+        TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        );
     return TextField(
       controller: controller,
       obscureText: obscureText,
@@ -60,12 +76,10 @@ class ThemedTextField extends StatelessWidget {
       focusNode: focusNode,
       enabled: enabled,
       maxLines: maxLines,
-      // Always use black color for text, merge with provided style
-      style: const TextStyle(color: Colors.black).merge(style),
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-      ),
+      style: inputStyle.merge(style),
+      decoration:
+          decoration ??
+          InputDecoration(hintText: hintText, hintStyle: hintStyle),
     );
   }
 }
@@ -85,7 +99,7 @@ class ThemedTextFormField extends StatelessWidget {
   final bool? enabled;
   final int? maxLines;
   final TextStyle? style;
-  
+
   const ThemedTextFormField({
     super.key,
     this.controller,
@@ -102,9 +116,17 @@ class ThemedTextFormField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
-  
+
   @override
   Widget build(BuildContext context) {
+    final inputStyle = TextFormFieldThemeExtension.defaultInputStyle(context);
+    final hintStyle =
+        Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        ) ??
+        TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        );
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
@@ -116,12 +138,10 @@ class ThemedTextFormField extends StatelessWidget {
       focusNode: focusNode,
       enabled: enabled,
       maxLines: maxLines,
-      // Always use black color for text, merge with provided style
-      style: const TextStyle(color: Colors.black).merge(style),
-      decoration: decoration ?? InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(color: Colors.grey.shade500),
-      ),
+      style: inputStyle.merge(style),
+      decoration:
+          decoration ??
+          InputDecoration(hintText: hintText, hintStyle: hintStyle),
     );
   }
 }

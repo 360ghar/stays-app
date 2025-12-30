@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'property_image_model.dart';
+import '../../utils/constants/app_constants.dart';
 
 part 'property_model.g.dart';
 
@@ -12,7 +13,7 @@ class Property {
   @JsonKey(name: 'property_type')
   final String propertyType;
   final String purpose;
-  
+
   // Location
   @JsonKey(name: 'full_address')
   final String? address;
@@ -27,7 +28,7 @@ class Property {
   @JsonKey(name: 'sub_locality')
   final String? subLocality;
   final String? landmark;
-  
+
   // Pricing
   @JsonKey(name: 'daily_rate')
   final double pricePerNight;
@@ -42,7 +43,7 @@ class Property {
   final double? maintenanceCharges;
   @JsonKey(name: 'price_per_sqft')
   final double? pricePerSqft;
-  
+
   // Property details
   final int? bedrooms;
   final int? bathrooms;
@@ -61,7 +62,7 @@ class Property {
   final int? ageOfProperty;
   @JsonKey(name: 'minimum_stay_days')
   final int? minimumStay;
-  
+
   // Stats
   @JsonKey(name: 'view_count')
   final int? viewCount;
@@ -71,7 +72,7 @@ class Property {
   final int? interestCount;
   final double? rating;
   final int? reviewsCount;
-  
+
   // Owner information
   @JsonKey(name: 'owner_id')
   final int? ownerId;
@@ -81,7 +82,7 @@ class Property {
   final String? ownerContact;
   @JsonKey(name: 'builder_name')
   final String? builderName;
-  
+
   // Images and media
   @JsonKey(fromJson: _imagesFromJson)
   final List<PropertyImage>? images;
@@ -90,7 +91,9 @@ class Property {
   @JsonKey(name: 'virtual_tour_url')
   final String? virtualTourUrl;
   final bool? has360View;
-  
+
+  bool get hasVirtualTour => virtualTourUrl?.isNotEmpty == true;
+
   // Features and amenities
   @JsonKey(fromJson: _stringListFromJson)
   final List<String>? features;
@@ -98,7 +101,7 @@ class Property {
   final List<String>? amenities;
   @JsonKey(fromJson: _stringListFromJson)
   final List<String>? tags;
-  
+
   // Availability
   @JsonKey(name: 'is_available')
   final bool? available;
@@ -107,7 +110,7 @@ class Property {
   final String? status;
   @JsonKey(name: 'calendar_data')
   final Map<String, dynamic>? calendarData;
-  
+
   // Additional fields from API
   @JsonKey(name: 'created_at')
   final DateTime? createdAt;
@@ -118,8 +121,7 @@ class Property {
   final bool? liked;
   @JsonKey(name: 'user_has_scheduled_visit')
   final bool? userHasScheduledVisit;
-  
-  
+
   // Local state (not from API)
   @JsonKey(includeFromJson: false, includeToJson: false)
   final bool isFavorite;
@@ -141,7 +143,7 @@ class Property {
     this.subLocality,
     this.landmark,
     required this.pricePerNight,
-    this.currency = 'INR',
+    this.currency = AppConstants.defaultCurrencyCode,
     this.basePrice,
     this.monthlyRent,
     this.securityDeposit,
@@ -185,7 +187,14 @@ class Property {
     this.isFavorite = false,
   });
 
-  factory Property.fromJson(Map<String, dynamic> json) => _$PropertyFromJson(json);
+  factory Property.fromJson(Map<String, dynamic> json) {
+    final model = _$PropertyFromJson(json);
+    final dynamic likedValue = json['liked'] ?? json['is_liked'];
+    final bool shouldMarkFavorite = likedValue is bool
+        ? likedValue
+        : model.liked == true;
+    return shouldMarkFavorite ? model.copyWith(isFavorite: true) : model;
+  }
   Map<String, dynamic> toJson() => _$PropertyToJson(this);
 
   // Safe converters to handle non-list values gracefully
@@ -194,7 +203,7 @@ class Property {
       if (value is List) {
         return value
             .whereType<Map>()
-            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map((e) => PropertyImage.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       }
     } catch (_) {}
@@ -214,20 +223,22 @@ class Property {
   }
 
   // Helper methods
-  String get displayImage {
+  String? get displayImage {
     if (coverImage != null && coverImage!.isNotEmpty) return coverImage!;
     if (images != null && images!.isNotEmpty) {
       final mainImage = images!.firstWhere(
         (img) => img.isMainImage,
         orElse: () => images!.first,
       );
-      return mainImage.imageUrl;
+      if (mainImage.imageUrl.isNotEmpty) return mainImage.imageUrl;
     }
-    return '';
+    // Return null instead of empty string to prevent NetworkImage crashes
+    return null;
   }
-  
-  String get displayPrice => '₹${pricePerNight.toStringAsFixed(0)}';
-  
+
+  String get displayPrice =>
+      '${AppConstants.defaultCurrencySymbol}${pricePerNight.toStringAsFixed(0)}';
+
   String get fullAddress => [
     if (locality != null) locality,
     if (subLocality != null) subLocality,
@@ -235,26 +246,32 @@ class Property {
     if (state != null) state,
     country,
   ].where((s) => s != null && s.isNotEmpty).join(', ');
-  
+
   String get ratingText {
     if (rating == null) return 'New';
     return rating!.toStringAsFixed(1);
   }
-  
+
   String get reviewsText {
     if (likeCount == null || likeCount == 0) return 'No likes';
     if (likeCount == 1) return '1 like';
     return '$likeCount likes';
   }
-  
+
   bool get hasLocation => latitude != null && longitude != null;
-  
-  String get propertyTypeDisplay => propertyType.replaceAll('_', ' ').split(' ').map((word) => 
-    word[0].toUpperCase() + word.substring(1)).join(' ');
-  
-  Property copyWith({
-    bool? isFavorite,
-  }) {
+
+  String get propertyTypeDisplay {
+    final normalized = propertyType.trim();
+    if (normalized.isEmpty) return 'Property';
+    return normalized
+        .replaceAll('_', ' ')
+        .split(' ')
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
+  Property copyWith({bool? isFavorite}) {
     return Property(
       id: id,
       name: name,

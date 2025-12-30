@@ -1,0 +1,108 @@
+{
+  "app_name": "360ghar stays",
+  "tagline": "बुक करने से पहले चेक-इन करें।",
+  "auth": {
+    "login": "लॉग इन करें",
+    "signup": "साइन अप करें",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "forgot_password": "पासवर्ड भूल गए?",
+    "logout": "लॉग आउट"
+  },
+  "home": {
+    "explore_nearby": "नज़दीकी स्थान देखें"
+  },
+  "listing": {
+    "per_night": "प्रति रात"
+  },
+  "booking": {
+    "confirm_booking": "पूछताछ की पुष्टि करें"
+  },
+  "nav": {
+    "explore": "एक्सप्लोर",
+    "wishlist": "विशलिस्ट",
+    "enquiries": "पूछताछ",
+    "locate": "लोकेट",
+    "profile": "प्रोफ़ाइल"
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "description": "अपने अनुभव को लाइट और डार्क मोड में अनुकूलित करें।",
+    "appearance": "रूप-रंग",
+    "appearance_subtitle": "ऐप आपके परिवेश के अनुसार कैसे बदले, चुनें।",
+    "quick_actions": "त्वरित क्रियाएं",
+    "quick_subtitle": "किसी भी पेज से थीम बदलें।",
+    "toggle_title": "डार्क मोड त्वरित टॉगल",
+    "toggle_desc": "चयनित थीम को अस्थायी रूप से ओवरराइड करें।",
+    "language_title": "भाषा",
+    "language_subtitle": "अपनी पसंदीदा भाषा चुनें।",
+    "theme": {
+      "system_title": "सिस्टम डिफ़ॉल्ट",
+      "system_desc": "डिवाइस सेटिंग के अनुरूप रूप-रंग अपनाएं।",
+      "light_title": "लाइट मोड",
+      "light_desc": "दिन में बेहतर दृश्यता के लिए उजला रूप।",
+      "dark_title": "डार्क मोड",
+      "dark_desc": "कम रोशनी में आरामदेह गहरे रंग।"
+    },
+    "language": {
+      "english": "अंग्रेज़ी",
+      "hindi": "हिन्दी"
+    }
+  },
+  "profile": {
+    "past_bookings": "पिछली पूछताछ",
+    "bookings_completed": "@count पूछताछ पूरी",
+    "no_bookings": "अभी कोई पूछताछ नहीं",
+    "account_settings": "खाता सेटिंग्स",
+    "manage_prefs": "अपनी प्राथमिकताएँ प्रबंधित करें",
+    "get_help": "सहायता लें",
+    "support_faqs": "सहायता और सामान्य प्रश्न",
+    "view_profile": "प्रोफ़ाइल देखें",
+    "see_public_profile": "अपनी सार्वजनिक प्रोफ़ाइल देखें",
+    "privacy": "गोपनीयता",
+    "data_privacy_settings": "डेटा और गोपनीयता सेटिंग्स",
+    "legal": "कानूनी",
+    "terms_policies": "नियम और नीतियाँ",
+    "logout": "लॉग आउट",
+    "sign_out": "अपने खाते से साइन आउट करें",
+    "version_info": "संस्करण 1.0.0 — प्यार से बनाया गया"
+  },
+  "enquiries": {
+    "title": "पूछताछ",
+    "empty_title": "अभी कोई पूछताछ नहीं",
+    "empty_body": "जब आप ऐप से पूछताछ भेजेंगे, आपके अनुरोध यहां दिखाई देंगे।",
+    "browse_stays": "स्टे देखें",
+    "no_match_title": "कोई पूछताछ फ़िल्टर से मेल नहीं खा रही",
+    "no_match_body": "अपनी सभी पूछताछ देखने के लिए फ़िल्टर बदलें या साफ़ करें।",
+    "adjust_filters": "फ़िल्टर बदलें",
+    "clear_filters": "फ़िल्टर साफ़ करें"
+  },
+  "filters": {
+    "title": "फ़िल्टर",
+    "price_per_night": "प्रति रात कीमत",
+    "min": "न्यूनतम",
+    "max": "अधिकतम"
+  },
+  "explore": {
+    "search_placeholder": "स्टे खोजें",
+    "use_my_location": "मेरी लोकेशन का उपयोग करें",
+    "popular_stays": "@city में लोकप्रिय स्टे",
+    "popular_hotels": "@city के पास लोकप्रिय होटल",
+    "recommended": "आपके लिए अनुशंसित",
+    "no_results": "अभी कोई स्टे उपलब्ध नहीं।"
+  },
+  "locate": {
+    "search_hint": "स्थान खोजें...",
+    "loading_hotels": "नज़दीकी स्टे लोड हो रहे हैं...",
+    "hotels_count": "@count होटल"
+  },
+  "common": {
+    "ok": "ठीक",
+    "cancel": "रद्द करें",
+    "confirm": "पुष्टि करें",
+    "error": "त्रुटि",
+    "loading": "लोड हो रहा है...",
+    "clear": "साफ़ करें",
+    "view_details": "विवरण देखें"
+  }
+}

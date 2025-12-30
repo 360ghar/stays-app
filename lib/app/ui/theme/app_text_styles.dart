@@ -27,4 +27,3 @@ class AppTextStyles {
     color: Colors.white,
   );
 }
-

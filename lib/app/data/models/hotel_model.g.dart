@@ -15,7 +15,7 @@ Hotel _$HotelFromJson(Map<String, dynamic> json) => Hotel(
   rating: (json['rating'] as num).toDouble(),
   reviews: (json['reviews'] as num).toInt(),
   pricePerNight: (json['pricePerNight'] as num).toDouble(),
-  currency: json['currency'] as String? ?? '\$',
+  currency: json['currency'] as String? ?? AppConstants.defaultCurrencySymbol,
   propertyType: json['propertyType'] as String? ?? 'Hotel',
   isFavorite: json['isFavorite'] as bool? ?? false,
   latitude: (json['latitude'] as num?)?.toDouble(),

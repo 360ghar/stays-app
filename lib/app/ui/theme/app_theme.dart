@@ -1,78 +1,159 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
 class AppTheme {
-  static ThemeData lightTheme = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.light,
-    ).copyWith(
-      // Override onSurface which affects TextField text color
-      onSurface: Colors.black,
-    ),
-    // Set primary text selection theme
-    textSelectionTheme: const TextSelectionThemeData(
-      cursorColor: Colors.black,
-      selectionColor: Colors.blue,
-      selectionHandleColor: Colors.blue,
-    ),
-    // Override the default text theme to ensure input text is black
-    textTheme: const TextTheme(
-      // TextField uses bodyLarge by default in Material 3
-      bodyLarge: TextStyle(color: Colors.black),
-      // Some TextField widgets might use bodyMedium
-      bodyMedium: TextStyle(color: Colors.black),
-      // For labels and other text
-      titleMedium: TextStyle(color: Colors.black),
-    ),
-    appBarTheme: const AppBarTheme(
-      elevation: 0,
-      centerTitle: true,
-      backgroundColor: Colors.white,
-      foregroundColor: AppColors.textPrimary,
-      titleTextStyle: AppTextStyles.h2,
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        // Avoid infinite width in Rows/List views. Only enforce height.
-        minimumSize: const Size(0, 48),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        textStyle: AppTextStyles.button,
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: const Color(0xFFF2F2F2),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
-      // Set hint text color to grey
-      hintStyle: TextStyle(color: Colors.grey.shade500),
-      // Set label colors
-      labelStyle: const TextStyle(color: Colors.black),
-      floatingLabelStyle: const TextStyle(color: Colors.black),
-      // Set prefix and suffix text colors
-      prefixStyle: const TextStyle(color: Colors.black),
-      suffixStyle: const TextStyle(color: Colors.black),
-      counterStyle: const TextStyle(color: Colors.black),
-    ),
-  );
+  static final ColorScheme _lightColorScheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.light,
+      ).copyWith(
+        surface: AppColors.surface,
+        surfaceContainerHighest: const Color(0xFFE6F0FF),
+        outlineVariant: const Color(0xFFD7E4FF),
+        onSurface: AppColors.textPrimary,
+      );
 
-  static ThemeData darkTheme = ThemeData(
-    useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
-      brightness: Brightness.dark,
-    ),
-  );
+  static final ColorScheme _darkColorScheme =
+      ColorScheme.fromSeed(
+        seedColor: AppColors.primary,
+        brightness: Brightness.dark,
+      ).copyWith(
+        surface: const Color(0xFF1E293B),
+        surfaceContainerHighest: const Color(0xFF273449),
+        outlineVariant: const Color(0xFF334155),
+        onSurface: Colors.white,
+      );
+
+  static ThemeData get lightTheme => _baseTheme(_lightColorScheme);
+
+  static ThemeData get darkTheme => _baseTheme(_darkColorScheme);
+
+  static ThemeData _baseTheme(ColorScheme colorScheme) {
+    final bool isDark = colorScheme.brightness == Brightness.dark;
+    final baseTypography = ThemeData(
+      brightness: colorScheme.brightness,
+    ).textTheme;
+
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: colorScheme.surface,
+      canvasColor: colorScheme.surface,
+      splashColor: colorScheme.primary.withValues(alpha: 0.1),
+      highlightColor: colorScheme.primary.withValues(alpha: 0.05),
+      textTheme: baseTypography.apply(
+        bodyColor: colorScheme.onSurface,
+        displayColor: colorScheme.onSurface,
+      ),
+      primaryTextTheme: baseTypography.apply(
+        bodyColor: colorScheme.onPrimary,
+        displayColor: colorScheme.onPrimary,
+      ),
+      appBarTheme: AppBarTheme(
+        elevation: 0,
+        centerTitle: true,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        titleTextStyle: AppTextStyles.h2.copyWith(color: colorScheme.onSurface),
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+      ),
+      cardTheme: CardThemeData(
+        color: colorScheme.surface,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colorScheme.surface,
+        titleTextStyle: AppTextStyles.h2.copyWith(color: colorScheme.onSurface),
+        contentTextStyle: baseTypography.bodyMedium?.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      dividerTheme: DividerThemeData(color: colorScheme.outlineVariant),
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: colorScheme.surface,
+        contentTextStyle: baseTypography.bodyMedium?.copyWith(
+          color: colorScheme.onSurface,
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: colorScheme.surface,
+        selectedItemColor: colorScheme.primary,
+        unselectedItemColor: colorScheme.onSurface.withValues(alpha: 0.6),
+        showUnselectedLabels: true,
+        type: BottomNavigationBarType.fixed,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.primary;
+          }
+          return colorScheme.outlineVariant;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return colorScheme.primary.withValues(alpha: 0.4);
+          }
+          return colorScheme.outlineVariant.withValues(alpha: 0.5);
+        }),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size(0, 48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          foregroundColor: colorScheme.onPrimary,
+          backgroundColor: colorScheme.primary,
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: colorScheme.primary,
+        selectionColor: colorScheme.primary.withValues(alpha: 0.35),
+        selectionHandleColor: colorScheme.primary,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: isDark
+            ? colorScheme.surfaceContainerHighest.withValues(alpha: 0.6)
+            : AppColors.background,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        hintStyle: TextStyle(
+          color: colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
+        labelStyle: TextStyle(color: colorScheme.onSurface),
+        floatingLabelStyle: TextStyle(color: colorScheme.primary),
+        prefixStyle: TextStyle(color: colorScheme.onSurface),
+        suffixStyle: TextStyle(color: colorScheme.onSurface),
+        counterStyle: TextStyle(
+          color: colorScheme.onSurface.withValues(alpha: 0.8),
+        ),
+      ),
+    );
+  }
 }

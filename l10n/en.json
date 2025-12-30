@@ -16,6 +16,93 @@
     "per_night": "per night"
   },
   "booking": {
-    "confirm_booking": "Confirm Booking"
+    "confirm_booking": "Confirm Inquiry"
+  },
+  "nav": {
+    "explore": "Explore",
+    "wishlist": "Wishlist",
+    "enquiries": "Inquiry",
+    "locate": "Locate",
+    "profile": "Profile"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Personalise your stay experience across light and dark modes.",
+    "appearance": "Appearance",
+    "appearance_subtitle": "Choose how the app adapts to your environment.",
+    "quick_actions": "Quick actions",
+    "quick_subtitle": "Toggle the theme without leaving any page.",
+    "toggle_title": "Dark mode quick toggle",
+    "toggle_desc": "Override the selected theme temporarily.",
+    "language_title": "Language",
+    "language_subtitle": "Choose your preferred language.",
+    "theme": {
+      "system_title": "System default",
+      "system_desc": "Match the look and feel of your device settings.",
+      "light_title": "Light mode",
+      "light_desc": "Bright surfaces with high contrast for daytime use.",
+      "dark_title": "Dark mode",
+      "dark_desc": "Reduce eye strain with deeper hues and soft contrast."
+    },
+    "language": {
+      "english": "English",
+      "hindi": "Hindi"
+    }
+  },
+  "profile": {
+    "past_bookings": "Past Inquiries",
+    "bookings_completed": "@count inquiries completed",
+    "no_bookings": "No inquiries yet",
+    "account_settings": "Account Settings",
+    "manage_prefs": "Manage your preferences",
+    "get_help": "Get Help",
+    "support_faqs": "Support and FAQs",
+    "view_profile": "View Profile",
+    "see_public_profile": "See your public profile",
+    "privacy": "Privacy",
+    "data_privacy_settings": "Data and privacy settings",
+    "legal": "Legal",
+    "terms_policies": "Terms and policies",
+    "logout": "Log Out",
+    "sign_out": "Sign out of your account",
+    "version_info": "Version 1.0.0 — Made with love"
+  },
+  "enquiries": {
+    "title": "Inquiries",
+    "empty_title": "No inquiries yet",
+    "empty_body": "When you send an inquiry through our app,\nyour requests will appear here.",
+    "browse_stays": "Browse stays",
+    "no_match_title": "No inquiries match the filters",
+    "no_match_body": "Try adjusting your filter options or clear them to revisit all your inquiries.",
+    "adjust_filters": "Adjust filters",
+    "clear_filters": "Clear filters"
+  },
+  "filters": {
+    "title": "Filters",
+    "price_per_night": "Price per night",
+    "min": "Min",
+    "max": "Max"
+  },
+  "explore": {
+    "search_placeholder": "Search stays",
+    "use_my_location": "Use my location",
+    "popular_stays": "Popular stays in @city",
+    "popular_hotels": "Popular hotels near @city",
+    "recommended": "Recommended for you",
+    "no_results": "No stays available right now."
+  },
+  "locate": {
+    "search_hint": "Search location...",
+    "loading_hotels": "Loading stays nearby...",
+    "hotels_count": "@count hotels"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "error": "Error",
+    "loading": "Loading...",
+    "clear": "Clear",
+    "view_details": "View details"
   }
 }

@@ -62,11 +62,7 @@ class HotelCard extends StatelessWidget {
         placeholder: (context, url) => Shimmer.fromColors(
           baseColor: Colors.grey[300]!,
           highlightColor: Colors.grey[100]!,
-          child: Container(
-            width: width,
-            height: height,
-            color: Colors.white,
-          ),
+          child: Container(width: width, height: height, color: Colors.white),
         ),
         errorWidget: (context, url, error) => Container(
           width: width,
@@ -86,10 +82,7 @@ class HotelCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.7),
-            ],
+            colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
           ),
         ),
       ),
@@ -119,11 +112,7 @@ class HotelCard extends StatelessWidget {
           Row(
             children: [
               if (showRating) ...[
-                Icon(
-                  Icons.star_rounded,
-                  color: Colors.amber[400],
-                  size: 16,
-                ),
+                Icon(Icons.star_rounded, color: Colors.amber[400], size: 16),
                 const SizedBox(width: 4),
                 Text(
                   '${hotel.rating}',
@@ -194,11 +183,7 @@ class HotelCardShimmer extends StatelessWidget {
   final double width;
   final double height;
 
-  const HotelCardShimmer({
-    super.key,
-    this.width = 280,
-    this.height = 200,
-  });
+  const HotelCardShimmer({super.key, this.width = 280, this.height = 200});
 
   @override
   Widget build(BuildContext context) {

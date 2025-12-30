@@ -1,7 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:stays_app/app/data/models/property_model.dart';
+
+import '../../theme/theme_extensions.dart';
+
+const double _propertyCardCornerRadius = 18.0;
+const double _propertyCardShadowBlur = 20.0;
+const EdgeInsets _propertyCardMargin = EdgeInsets.only(right: 14);
 
 class PropertyCard extends StatelessWidget {
   final Property property;
@@ -19,33 +25,71 @@ class PropertyCard extends StatelessWidget {
     required this.property,
     required this.onTap,
     this.onFavoriteToggle,
-    this.width = 280,
-    this.height = 200,
+    this.width = 248,
+    this.height = 184,
     this.showPrice = true,
-    this.showRating = true,
+    this.showRating = false,
     this.heroPrefix,
     this.isFavorite = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        margin: const EdgeInsets.only(right: 16),
-        child: Hero(
-          tag: '${heroPrefix ?? 'property'}-${property.id}',
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
-              children: [
-                _buildImage(),
-                _buildGradientOverlay(),
-                _buildContent(),
-                if (onFavoriteToggle != null) _buildFavoriteButton(),
-              ],
+    final theme = Theme.of(context);
+    final borderRadius = BorderRadius.circular(_propertyCardCornerRadius);
+    final shadowColor = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.3)
+        : Colors.black.withValues(alpha: 0.12);
+
+    // Build semantic description for accessibility
+    final semanticLabel = StringBuffer();
+    semanticLabel.write(property.name);
+    semanticLabel.write(', ${property.fullAddress}');
+    if (showPrice) {
+      semanticLabel.write(', ${property.displayPrice} per night');
+    }
+    if (isFavorite) {
+      semanticLabel.write(', saved to wishlist');
+    }
+
+    return Semantics(
+      label: semanticLabel.toString(),
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          height: height,
+          margin: _propertyCardMargin,
+          child: Hero(
+            tag: '${heroPrefix ?? 'property'}-${property.id}',
+            child: Material(
+              color: Colors.transparent,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: _propertyCardShadowBlur,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: borderRadius,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildImage(context),
+                      _buildGradientOverlay(),
+                      _buildContent(context),
+                      if (onFavoriteToggle != null)
+                        _buildFavoriteButton(context),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -53,30 +97,33 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: CachedNetworkImage(
-        imageUrl: property.displayImage,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            color: Colors.white,
-          ),
-        ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey[200],
-          child: const Icon(
-            Icons.hotel,
-            size: 48,
-            color: Colors.grey,
-          ),
-        ),
+  Widget _buildImage(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final imageUrl = property.displayImage;
+
+    final placeholder = Container(
+      color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+      alignment: Alignment.center,
+      child: Icon(
+        Icons.hotel,
+        size: 44,
+        color: colors.onSurface.withValues(alpha: 0.5),
       ),
+    );
+
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return placeholder;
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Shimmer.fromColors(
+        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
+        child: Container(color: colors.surface),
+      ),
+      errorWidget: (context, url, error) => placeholder,
     );
   }
 
@@ -84,26 +131,26 @@ class PropertyCard extends StatelessWidget {
     return Positioned.fill(
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(_propertyCardCornerRadius),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.7),
+              Colors.black.withValues(alpha: 0.1),
+              Colors.black.withValues(alpha: 0.75),
             ],
-            stops: const [0.5, 1.0],
+            stops: const [0.35, 1.0],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(BuildContext context) {
     return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 16,
+      left: 14,
+      right: 14,
+      bottom: 14,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -143,11 +190,7 @@ class PropertyCard extends StatelessWidget {
               if (showRating && property.rating != null)
                 Row(
                   children: [
-                    const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                      size: 16,
-                    ),
+                    const Icon(Icons.star, color: Colors.amber, size: 16),
                     const SizedBox(width: 4),
                     Text(
                       property.ratingText,
@@ -175,22 +218,32 @@ class PropertyCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFavoriteButton() {
+  Widget _buildFavoriteButton(BuildContext context) {
+    final colors = context.colors;
     return Positioned(
       top: 12,
       right: 12,
-      child: GestureDetector(
-        onTap: onFavoriteToggle,
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : Colors.white,
-            size: 20,
+      child: Semantics(
+        label: isFavorite ? 'Remove from wishlist' : 'Add to wishlist',
+        button: true,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onFavoriteToggle,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colors.surface.withValues(
+                alpha: (Theme.of(context).brightness == Brightness.dark)
+                    ? 0.55
+                    : 0.3,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? colors.error : Colors.white,
+              size: 20,
+            ),
           ),
         ),
       ),
@@ -202,25 +255,40 @@ class PropertyCardShimmer extends StatelessWidget {
   final double width;
   final double height;
 
-  const PropertyCardShimmer({
-    super.key,
-    this.width = 280,
-    this.height = 200,
-  });
+  const PropertyCardShimmer({super.key, this.width = 248, this.height = 184});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final borderRadius = BorderRadius.circular(_propertyCardCornerRadius);
+    final shadowColor = theme.brightness == Brightness.dark
+        ? Colors.black.withValues(alpha: 0.28)
+        : Colors.black.withValues(alpha: 0.1);
+
     return Container(
       width: width,
       height: height,
-      margin: const EdgeInsets.only(right: 16),
-      child: Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+      margin: _propertyCardMargin,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: _propertyCardShadowBlur,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Shimmer.fromColors(
+            baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.38),
+            highlightColor: colors.surfaceContainerHighest.withValues(
+              alpha: 0.16,
+            ),
+            child: Container(color: colors.surface),
           ),
         ),
       ),

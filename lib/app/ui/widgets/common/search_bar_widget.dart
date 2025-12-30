@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/theme_extensions.dart';
+
 class SearchBarWidget extends StatelessWidget {
   final String placeholder;
   final VoidCallback onTap;
@@ -11,6 +13,12 @@ class SearchBarWidget extends StatelessWidget {
   final Widget? trailing;
   final Color? backgroundColor;
   final double elevation;
+  final EdgeInsetsGeometry margin;
+  final double height;
+  final BorderRadiusGeometry? borderRadius;
+  final Color? shadowColor;
+  final double fontSize;
+  final double iconSize;
 
   const SearchBarWidget({
     super.key,
@@ -24,39 +32,54 @@ class SearchBarWidget extends StatelessWidget {
     this.trailing,
     this.backgroundColor,
     this.elevation = 2,
+    this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    this.height = 50,
+    this.borderRadius,
+    this.shadowColor,
+    this.fontSize = 16,
+    this.iconSize = 24,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+    final textStyles = context.textStyles;
+    final borderRadiusValue = borderRadius ?? BorderRadius.circular(30);
+    final resolvedShadowColor =
+        shadowColor ??
+        colors.shadow.withValues(alpha: context.isDark ? 0.4 : 0.1);
+    final resolvedBackground = backgroundColor ?? colors.surface;
+    final borderColor = colors.outlineVariant.withValues(alpha: 0.4);
+    final hintColor = colors.onSurface.withValues(alpha: 0.6);
+
     return GestureDetector(
       onTap: enabled ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOutCubic,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        margin: margin,
         child: Material(
           elevation: elevation,
-          borderRadius: BorderRadius.circular(30),
-          shadowColor: Colors.black.withValues(alpha: 0.1),
+          borderRadius: borderRadiusValue,
+          shadowColor: resolvedShadowColor,
           child: Container(
-            height: 50,
+            height: height,
             decoration: BoxDecoration(
-              color: backgroundColor ?? Colors.white,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: Colors.grey.withValues(alpha: 0.2),
-                width: 0.5,
-              ),
+              color: resolvedBackground,
+              borderRadius: borderRadiusValue,
+              border: Border.all(color: borderColor, width: 0.5),
             ),
             child: Row(
               children: [
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: leading ?? Icon(
-                    Icons.search_rounded,
-                    color: Colors.grey[600],
-                    size: 24,
-                  ),
+                  child:
+                      leading ??
+                      Icon(
+                        Icons.search_rounded,
+                        color: colors.onSurfaceVariant,
+                        size: iconSize,
+                      ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -66,15 +89,17 @@ class SearchBarWidget extends StatelessWidget {
                           onChanged: onChanged,
                           onSubmitted: onSubmitted,
                           autofocus: true,
-                          style: const TextStyle(
-                            fontSize: 16,
+                          maxLines: 1,
+                          style: textStyles.bodyMedium?.copyWith(
+                            fontSize: fontSize,
                             fontWeight: FontWeight.w500,
+                            color: colors.onSurface,
                           ),
                           decoration: InputDecoration(
                             hintText: placeholder,
-                            hintStyle: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[500],
+                            hintStyle: textStyles.bodyMedium?.copyWith(
+                              fontSize: fontSize,
+                              color: hintColor,
                               fontWeight: FontWeight.w400,
                             ),
                             border: InputBorder.none,
@@ -84,11 +109,13 @@ class SearchBarWidget extends StatelessWidget {
                         )
                       : Text(
                           placeholder,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[500],
+                          style: textStyles.bodyMedium?.copyWith(
+                            fontSize: fontSize,
+                            color: hintColor,
                             fontWeight: FontWeight.w400,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                 ),
                 if (trailing != null)

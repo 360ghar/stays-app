@@ -5,4 +5,3 @@ class NotificationController extends GetxController {
 
   void markAllRead() => unreadCount.value = 0;
 }
-

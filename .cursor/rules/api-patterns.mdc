@@ -1,0 +1,541 @@
+---
+globs: *.dart
+description: API patterns and Dio HTTP client usage for Flutter app
+---
+
+# API Patterns & HTTP Client Guidelines
+
+## Overview
+The app uses Dio as the HTTP client for all API communications, with custom providers for different API endpoints and comprehensive error handling.
+
+## HTTP Client Setup
+
+### Base Provider Pattern
+Create a base provider for common Dio configuration:
+
+```dart
+// lib/app/data/providers/base_provider.dart
+import 'package:dio/dio.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+
+import '../../../config/app_config.dart';
+import '../../../utils/logger/app_logger.dart';
+
+class BaseProvider {
+  late final Dio _dio;
+
+  BaseProvider() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: AppConfig.I.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      ),
+    );
+
+    // Add interceptors
+    _dio.interceptors.addAll([
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+        error: true,
+        compact: true,
+      ),
+      _AuthInterceptor(),
+      _ErrorInterceptor(),
+    ]);
+  }
+
+  Dio get dio => _dio;
+}
+
+// Authentication interceptor
+class _AuthInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // Add auth token if available
+    // final token = await _storageService.getToken();
+    // if (token != null) {
+    //   options.headers['Authorization'] = 'Bearer $token';
+    // }
+
+    AppLogger.info('API Request: ${options.method} ${options.path}');
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    AppLogger.info('API Response: ${response.statusCode} ${response.requestOptions.path}');
+    handler.next(response);
+  }
+}
+
+// Error interceptor
+class _ErrorInterceptor extends Interceptor {
+  @override
+  void onError(DioException err, ErrorInterceptorHandler handler) {
+    AppLogger.error('API Error: ${err.type} ${err.requestOptions.path}', err);
+    handler.next(err);
+  }
+}
+```
+
+## Provider Implementation Patterns
+
+### Auth Provider
+```dart
+// lib/app/data/providers/auth_provider.dart
+import 'package:dio/dio.dart';
+
+import '../../../utils/exceptions/app_exceptions.dart';
+import 'base_provider.dart';
+
+class AuthProvider extends BaseProvider {
+  Future<Response> login({required String email, required String password}) async {
+    try {
+      final response = await dio.post(
+        '/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    } catch (e) {
+      AppLogger.error('Login API error', e);
+      throw ApiException(message: 'Login failed. Please try again.');
+    }
+  }
+
+  Future<Response> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/auth/register',
+        data: {
+          'name': name,
+          'email': email,
+          'password': password,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> signUpWithPhone({
+    required String phone,
+    required String password,
+  }) async {
+    try {
+      final response = await dio.post(
+        '/auth/signup-phone',
+        data: {
+          'phone': phone,
+          'password': password,
+        },
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  ApiException _handleDioError(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return ApiException(
+          message: 'Request timeout. Please check your connection.',
+          statusCode: e.response?.statusCode,
+        );
+
+      case DioExceptionType.badResponse:
+        final statusCode = e.response?.statusCode;
+        final responseData = e.response?.data;
+
+        String message = 'An error occurred';
+        if (responseData is Map<String, dynamic>) {
+          message = responseData['message'] ??
+                   responseData['error'] ??
+                   responseData['detail'] ??
+                   message;
+        }
+
+        return ApiException(
+          message: message,
+          statusCode: statusCode,
+        );
+
+      case DioExceptionType.cancel:
+        return ApiException(message: 'Request was cancelled');
+
+      case DioExceptionType.unknown:
+        if (e.error is SocketException) {
+          return ApiException(message: 'No internet connection. Please check your network.');
+        }
+        return ApiException(message: 'Network error. Please try again.');
+
+      default:
+        return ApiException(message: 'An unexpected error occurred');
+    }
+  }
+}
+```
+
+### Properties Provider
+```dart
+// lib/app/data/providers/properties_provider.dart
+class PropertiesProvider extends BaseProvider {
+  Future<Response> getProperties({
+    int? page,
+    int? limit,
+    Map<String, dynamic>? filters,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (page != null) queryParams['page'] = page;
+      if (limit != null) queryParams['limit'] = limit;
+      if (filters != null) queryParams.addAll(filters);
+
+      final response = await dio.get(
+        '/properties',
+        queryParameters: queryParams,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> getPropertyDetails(String propertyId) async {
+    try {
+      final response = await dio.get('/properties/$propertyId');
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> searchProperties(String query) async {
+    try {
+      final response = await dio.get(
+        '/properties/search',
+        queryParameters: {'q': query},
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> createProperty(Map<String, dynamic> propertyData) async {
+    try {
+      final response = await dio.post(
+        '/properties',
+        data: propertyData,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> updateProperty(String propertyId, Map<String, dynamic> propertyData) async {
+    try {
+      final response = await dio.put(
+        '/properties/$propertyId',
+        data: propertyData,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> deleteProperty(String propertyId) async {
+    try {
+      final response = await dio.delete('/properties/$propertyId');
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  ApiException _handleDioError(DioException e) {
+    // Similar to AuthProvider error handling
+    // Customize for property-specific errors
+    return ApiException(message: 'Property operation failed');
+  }
+}
+```
+
+## Repository Layer Integration
+
+### Repository Pattern with API Providers
+```dart
+// lib/app/data/repositories/auth_repository.dart
+class AuthRepository {
+  final AuthProvider _authProvider;
+
+  AuthRepository(this._authProvider);
+
+  Future<UserModel> loginWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _authProvider.login(
+      email: email,
+      password: password,
+    );
+    return UserModel.fromJson(response.data);
+  }
+
+  Future<UserModel> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    final response = await _authProvider.register(
+      name: name,
+      email: email,
+      password: password,
+    );
+    return UserModel.fromJson(response.data);
+  }
+
+  Future<bool> signUpWithPhone({
+    required String phone,
+    required String password,
+  }) async {
+    final response = await _authProvider.signUpWithPhone(
+      phone: phone,
+      password: password,
+    );
+    return response.statusCode == 200;
+  }
+}
+```
+
+## Controller Integration
+
+### API Calls in Controllers
+```dart
+class AuthController extends GetxController {
+  final AuthRepository _authRepository;
+
+  AuthController({required AuthRepository authRepository})
+      : _authRepository = authRepository;
+
+  final RxBool isLoading = false.obs;
+
+  Future<void> login({required String email, required String password}) async {
+    try {
+      isLoading.value = true;
+
+      final user = await _authRepository.loginWithEmail(
+        email: email,
+        password: password,
+      );
+
+      currentUser.value = user;
+      isAuthenticated.value = true;
+
+      AppLogger.info('Login successful for user: ${user.email}');
+      Get.offAllNamed(Routes.home);
+
+    } on ApiException catch (e) {
+      AppLogger.error('Login failed: ${e.message}', e);
+      _handleApiError('Login Failed', e);
+    } catch (e) {
+      AppLogger.error('Login error', e);
+      Get.snackbar('Error', 'An unexpected error occurred');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _handleApiError(String title, ApiException e) {
+    String message;
+    switch (e.statusCode) {
+      case 401:
+        message = 'Invalid credentials. Please check your email/phone and password.';
+        break;
+      case 404:
+        message = 'Account not found. Please check your credentials or sign up.';
+        break;
+      case 422:
+        message = 'Invalid input. Please check your information and try again.';
+        break;
+      case 429:
+        message = 'Too many attempts. Please try again later.';
+        break;
+      case 500:
+        message = 'Server error. Please try again later.';
+        break;
+      default:
+        message = e.message.isNotEmpty ? e.message : 'An error occurred. Please try again.';
+    }
+    Get.snackbar(title, message, snackPosition: SnackPosition.TOP);
+  }
+}
+```
+
+## Best Practices
+
+### Request/Response Patterns
+- Always wrap API calls in try-catch blocks
+- Use specific exception types for different error scenarios
+- Log API requests and responses for debugging
+- Handle loading states appropriately
+
+### Error Handling
+- Convert Dio errors to custom ApiException
+- Provide user-friendly error messages
+- Handle different HTTP status codes appropriately
+- Implement retry logic for transient failures
+
+### Authentication
+- Add auth tokens to request headers automatically
+- Handle token refresh on 401 responses
+- Clear tokens on logout
+
+### Data Serialization
+- Use JSON serialization for request/response bodies
+- Validate response data before using
+- Handle null values appropriately
+
+### Performance
+- Implement request caching where appropriate
+- Use pagination for large datasets
+- Implement request deduplication
+- Monitor API response times
+
+### Testing
+- Mock Dio instances for unit tests
+- Test error scenarios and edge cases
+- Verify request/response formats
+- Test authentication flow
+
+## Common API Patterns
+
+### CRUD Operations
+```dart
+class CrudProvider extends BaseProvider {
+  Future<Response> getAll({int? page, int? limit}) async {
+    return dio.get('', queryParameters: {'page': page, 'limit': limit});
+  }
+
+  Future<Response> getById(String id) async {
+    return dio.get('/$id');
+  }
+
+  Future<Response> create(Map<String, dynamic> data) async {
+    return dio.post('', data: data);
+  }
+
+  Future<Response> update(String id, Map<String, dynamic> data) async {
+    return dio.put('/$id', data: data);
+  }
+
+  Future<Response> delete(String id) async {
+    return dio.delete('/$id');
+  }
+}
+```
+
+### File Upload
+```dart
+class FileProvider extends BaseProvider {
+  Future<Response> uploadFile(String filePath, {String? fieldName}) async {
+    final file = await MultipartFile.fromFile(filePath, filename: basename(filePath));
+    final formData = FormData.fromMap({
+      fieldName ?? 'file': file,
+    });
+
+    return dio.post('/upload', data: formData);
+  }
+}
+```
+
+### Real-time Updates (WebSocket/SSE)
+```dart
+class RealtimeProvider extends BaseProvider {
+  // Implement WebSocket or Server-Sent Events for real-time updates
+  // This would typically integrate with socket.io or similar
+}
+```
+
+## Monitoring & Debugging
+
+### Request Logging
+```dart
+// Automatic logging via PrettyDioLogger interceptor
+// Customize log levels based on environment
+void _setupLogging() {
+  if (AppConfig.isDev) {
+    // Full logging in development
+  } else if (AppConfig.isStaging) {
+    // Partial logging in staging
+  } else {
+    // Minimal logging in production
+  }
+}
+```
+
+### Performance Monitoring
+```dart
+// Track API response times
+class PerformanceInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    options.extra['startTime'] = DateTime.now().millisecondsSinceEpoch;
+    handler.next(options);
+  }
+
+  @override
+  void onResponse(Response response, ResponseInterceptorHandler handler) {
+    final startTime = response.requestOptions.extra['startTime'] as int;
+    final duration = DateTime.now().millisecondsSinceEpoch - startTime;
+
+    AppLogger.info('API call took ${duration}ms: ${response.requestOptions.path}');
+
+    // Track slow requests
+    if (duration > 5000) { // 5 seconds
+      AppLogger.warning('Slow API call detected: ${response.requestOptions.path}');
+    }
+
+    handler.next(response);
+  }
+}
+```
+
+## Security Considerations
+
+### HTTPS Only
+- Always use HTTPS in production
+- Validate SSL certificates
+- Implement certificate pinning if required
+
+### Sensitive Data
+- Never log sensitive data (passwords, tokens, etc.)
+- Use secure storage for tokens
+- Implement proper token refresh mechanisms
+
+### Rate Limiting
+- Handle 429 responses appropriately
+- Implement client-side rate limiting
+- Show user-friendly messages for rate limits

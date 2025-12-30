@@ -6,13 +6,17 @@ part 'wishlist_model.g.dart';
 @JsonSerializable()
 class WishlistItem {
   final String id;
-  @JsonKey(name: 'propertyId', fromJson: _propertyIdFromJson, toJson: _propertyIdToJson)
+  @JsonKey(
+    name: 'propertyId',
+    fromJson: _propertyIdFromJson,
+    toJson: _propertyIdToJson,
+  )
   final int propertyId;
   final String? userId;
   final String action; // 'like', 'unlike', 'pass'
   final DateTime? timestamp;
   final Property? property; // May include property details
-  
+
   WishlistItem({
     required this.id,
     required this.propertyId,
@@ -22,22 +26,29 @@ class WishlistItem {
     this.property,
   });
 
-  factory WishlistItem.fromJson(Map<String, dynamic> json) => _$WishlistItemFromJson(json);
+  factory WishlistItem.fromJson(Map<String, dynamic> json) =>
+      _$WishlistItemFromJson(json);
   Map<String, dynamic> toJson() => _$WishlistItemToJson(this);
-  
+
   bool get isLiked => action == 'like';
+
+  String? get displayImage => property?.displayImage;
 }
 
 @JsonSerializable()
 class SwipeHistory {
   final String id;
-  @JsonKey(name: 'propertyId', fromJson: _propertyIdFromJson, toJson: _propertyIdToJson)
+  @JsonKey(
+    name: 'propertyId',
+    fromJson: _propertyIdFromJson,
+    toJson: _propertyIdToJson,
+  )
   final int propertyId;
   final String? userId;
   final String action;
   final DateTime timestamp;
   final Property? property;
-  
+
   SwipeHistory({
     required this.id,
     required this.propertyId,
@@ -47,7 +58,8 @@ class SwipeHistory {
     this.property,
   });
 
-  factory SwipeHistory.fromJson(Map<String, dynamic> json) => _$SwipeHistoryFromJson(json);
+  factory SwipeHistory.fromJson(Map<String, dynamic> json) =>
+      _$SwipeHistoryFromJson(json);
   Map<String, dynamic> toJson() => _$SwipeHistoryToJson(this);
 }
 

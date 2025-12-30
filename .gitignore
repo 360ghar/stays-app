@@ -28,9 +28,13 @@ migrate_working_dir/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.flutter-plugins
 .pub-cache/
 .pub/
 /build/
+/ios/build/
+/macos/Flutter/ephemeral/
+/linux/flutter/ephemeral/
 /coverage/
 
 # Symbolication related
@@ -51,3 +55,8 @@ app.*.map.json
 .env.dev
 .env.staging
 .env.prod
+
+# Local developer tools/config that should not be committed
+.claude/
+.coderabbit_uncommitted_review.txt
+.coderabbit/
