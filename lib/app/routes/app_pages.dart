@@ -49,6 +49,9 @@ import 'package:stays_app/features/trips/bindings/trips_binding.dart';
 import 'package:stays_app/features/tour/bindings/tour_binding.dart';
 import 'package:stays_app/features/tour/views/tour_view.dart';
 
+// Feature imports - Update
+import 'package:stays_app/features/update/update.dart';
+
 // Core imports - Middleware and Routes
 import '../middlewares/auth_middleware.dart';
 import '../middlewares/initial_middleware.dart';
@@ -74,6 +77,12 @@ class AppPages {
       page: () => const SplashView(),
       binding: SplashBinding(),
       middlewares: [InitialMiddleware()],
+    ),
+    GetPage(
+      name: Routes.forceUpdate,
+      page: () => const ForceUpdateView(),
+      binding: ForceUpdateBinding(),
+      transition: Transition.fade,
     ),
     GetPage(
       name: Routes.login,

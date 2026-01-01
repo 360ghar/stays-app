@@ -13,6 +13,7 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 - Messaging (Inbox + Chat UI) with basic local state
 - Bottom navigation shell (Explore, Trips, Inbox, Profile)
 - Location-aware explore + map view (Flutter Map markers, Google Places autocomplete)
+- **In-app update prompts** with optional and force update support ([docs](docs/app-updates.md))
 - Theming (Material 3), responsive helpers, reusable widgets
 - Localization scaffolding (EN/ES/FR) via GetX Translations
 - Clean, layered architecture (providers → repositories → controllers → views)

@@ -48,6 +48,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Android signing keys - NEVER commit these
+android/key.properties
+android/*.keystore
+android/*.jks
+android/keystores/
+
 # Env files
 .env
 .env.*

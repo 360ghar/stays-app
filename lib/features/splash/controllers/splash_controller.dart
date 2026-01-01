@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:stays_app/app/data/services/app_update_service.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
+import 'package:stays_app/app/ui/widgets/dialogs/update_dialog.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
@@ -78,8 +80,17 @@ class SplashController extends BaseController {
       }
 
       AppLogger.info(
-        'Core initialization finished. Proceeding to auth check...',
+        'Core initialization finished. Proceeding to update check...',
       );
+
+      // 3) Check for app updates
+      final shouldContinue = await _checkForAppUpdate();
+      if (!shouldContinue) {
+        // Force update required - navigation already handled
+        return;
+      }
+
+      AppLogger.info('Proceeding to auth check...');
       unawaited(_navigateToNextScreen());
     } catch (e, stackTrace) {
       AppLogger.error('CRITICAL STARTUP ERROR: $e', e, stackTrace);
@@ -230,5 +241,81 @@ class SplashController extends BaseController {
       );
       return null;
     }
+  }
+
+  /// Check for app updates.
+  ///
+  /// Returns `true` if the app should continue to the next screen,
+  /// `false` if a force update is required (navigation already handled).
+  Future<bool> _checkForAppUpdate() async {
+    try {
+      // Initialize AppUpdateService if not already registered
+      if (!Get.isRegistered<AppUpdateService>()) {
+        await Get.putAsync<AppUpdateService>(
+          () => AppUpdateService().init(),
+          permanent: true,
+        ).timeout(const Duration(seconds: 10));
+        AppLogger.info('AppUpdateService initialized.');
+      }
+
+      final updateService = Get.find<AppUpdateService>();
+      await updateService.checkForUpdate();
+
+      // Check if force update is required
+      if (updateService.isForceUpdate.value) {
+        AppLogger.info('Force update required. Navigating to update screen.');
+        _navigated = true;
+        _watchdog?.cancel();
+        unawaited(Get.offAllNamed(Routes.forceUpdate));
+        return false;
+      }
+
+      // Check if optional update is available and should be shown
+      if (updateService.isUpdateAvailable.value &&
+          updateService.shouldShowUpdatePrompt()) {
+        AppLogger.info('Optional update available. Will show dialog after navigation.');
+        // Schedule dialog to show after navigation completes
+        _scheduleOptionalUpdateDialog(updateService);
+      }
+
+      return true;
+    } catch (e) {
+      AppLogger.warning('Update check failed: $e. Continuing with app.');
+      return true;
+    }
+  }
+
+  /// Schedule the optional update dialog to show after navigation completes.
+  void _scheduleOptionalUpdateDialog(AppUpdateService updateService) {
+    // Use a post-frame callback to show the dialog after the next screen renders
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Wait a bit for the navigation to settle
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _showOptionalUpdateDialog(updateService);
+      });
+    });
+  }
+
+  /// Show the optional update dialog.
+  void _showOptionalUpdateDialog(AppUpdateService updateService) {
+    final context = Get.context;
+    if (context == null) {
+      AppLogger.warning('No context available for update dialog.');
+      return;
+    }
+
+    showUpdateDialog(
+      context,
+      currentVersion: updateService.currentVersion,
+      newVersion: updateService.storeVersion.value,
+      releaseNotes: updateService.releaseNotes.value.isNotEmpty
+          ? updateService.releaseNotes.value
+          : null,
+      onUpdate: () => updateService.openStore(),
+    ).then((result) {
+      if (result == UpdateDialogResult.later) {
+        updateService.recordDismissal();
+      }
+    });
   }
 }

@@ -5,10 +5,22 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     // Apply Google Services plugin here (only once, not at bottom)
     id("com.google.gms.google-services")
+    // Firebase Crashlytics
+    id("com.google.firebase.crashlytics")
+}
+
+import java.util.Properties
+import java.io.FileInputStream
+
+// Load key.properties for release signing
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
-    namespace = "com.example.stays_app"
+    namespace = "com.a360ghar.stays"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,8 +33,19 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
+        }
+    }
+
     defaultConfig {
-        applicationId = "com.example.stays_app"
+        applicationId = "com.a360ghar.stays"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -51,6 +74,21 @@ android {
 
     buildTypes {
         release {
+            // Use release signing if key.properties exists, otherwise fall back to debug for development
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+            // Enable code shrinking and obfuscation for release builds
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        debug {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
