@@ -49,8 +49,8 @@ class ListingController extends GetxController {
   }
 
   void _initQueryFromArgsOrService() {
-    final args = Get.arguments as Map<String, dynamic>?;
-    if (args != null) {
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
       _queryLat =
           (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
       _queryLng =

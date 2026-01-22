@@ -15,7 +15,10 @@ import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/data/services/supabase_service.dart';
+import 'app/data/services/crash_reporting_service.dart';
 import 'app/utils/security/cert_pinning.dart';
+import 'app/utils/logger/app_logger.dart';
+import 'app/utils/security/security_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 
 Future<void> main() async {
@@ -24,6 +27,7 @@ Future<void> main() async {
   // Default to dev if launched via lib/main.dart
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
+  SecurityService().validateApiKeys();
 
   // Optional certificate pinning when API_CERT_SHA256 is provided
   final pinsRaw = dotenv.env['API_CERT_SHA256'];
@@ -48,41 +52,52 @@ Future<void> main() async {
     anonKey: AppConfig.I.supabaseAnonKey,
   );
 
-  // Parallelize initialization of independent services for faster startup
-  late ThemeService themeService;
-  late LocaleService localeService;
+  await runZonedGuarded(() async {
+    // Parallelize initialization of independent services for faster startup
+    late ThemeService themeService;
+    late LocaleService localeService;
 
-  await Future.wait([
-    // Supabase initialization (critical)
-    supabaseService.initialize(),
-    // Theme service initialization
-    ThemeService().init().then((service) => themeService = service),
-    // Locale service initialization
-    LocaleService().init().then((service) => localeService = service),
-    // Orientation lock (lightweight, run in parallel)
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]),
-  ]);
+    await Future.wait([
+      // Supabase initialization (critical)
+      supabaseService.initialize(),
+      // Theme service initialization
+      ThemeService().init().then((service) => themeService = service),
+      // Locale service initialization
+      LocaleService().init().then((service) => localeService = service),
+      // Orientation lock (lightweight, run in parallel)
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]),
+    ]);
 
-  // Register services with GetX after initialization
-  if (!Get.isRegistered<SupabaseService>()) {
-    Get.put<SupabaseService>(supabaseService, permanent: true);
-  }
-  Get.put<ThemeService>(themeService, permanent: true);
-  Get.put<LocaleService>(localeService, permanent: true);
+    // Register services with GetX after initialization
+    if (!Get.isRegistered<SupabaseService>()) {
+      Get.put<SupabaseService>(supabaseService, permanent: true);
+    }
+    Get.put<ThemeService>(themeService, permanent: true);
+    Get.put<LocaleService>(localeService, permanent: true);
 
-  // Load translations (depends on localeService)
-  await LocalizationService.init(localeService);
-  unawaited(Get.updateLocale(LocalizationService.initialLocale));
+    // Load translations (depends on localeService)
+    await LocalizationService.init(localeService);
+    unawaited(Get.updateLocale(LocalizationService.initialLocale));
 
-  Get.put<ThemeController>(
-    ThemeController(themeService: themeService),
-    permanent: true,
-  );
+    Get.put<ThemeController>(
+      ThemeController(themeService: themeService),
+      permanent: true,
+    );
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+  }, (error, stackTrace) async {
+    AppLogger.error('Uncaught zone error', error, stackTrace);
+    if (Get.isRegistered<CrashReportingService>()) {
+      await Get.find<CrashReportingService>().recordError(
+        error,
+        stackTrace: stackTrace,
+        fatal: true,
+      );
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {

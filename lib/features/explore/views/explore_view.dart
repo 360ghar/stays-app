@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/features/explore/controllers/explore_controller.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
-import 'package:stays_app/app/data/models/property_model.dart';
-import 'package:stays_app/app/ui/widgets/cards/property_card.dart';
-import 'package:stays_app/app/ui/widgets/common/banner_carousel.dart';
+import 'package:stays_app/app/ui/theme/app_dimensions.dart';
+import 'package:stays_app/app/ui/theme/theme_extensions.dart';
+import 'package:stays_app/app/ui/widgets/common/explore_hero_header.dart';
 import 'package:stays_app/app/ui/widgets/common/filter_button.dart';
+import 'package:stays_app/app/ui/widgets/common/property_horizontal_section.dart';
 import 'package:stays_app/app/ui/widgets/common/search_bar_widget.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
-
-import 'package:stays_app/app/ui/theme/theme_extensions.dart';
+import 'package:stays_app/app/ui/widgets/cards/featured_property_card.dart';
 
 class ExploreView extends GetView<ExploreController> {
   const ExploreView({super.key});
@@ -30,9 +30,11 @@ class ExploreView extends GetView<ExploreController> {
               _buildSliverAppBar(context),
               _buildActiveFilters(context),
               _buildOfflineBanner(context),
-              _buildBannerSection(),
-              _buildPropertiesSection(context),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              _buildHeroGreeting(context),
+              _buildFeaturedSection(context),
+              _buildPopularInSection(context),
+              _buildNearbySection(context),
+              const SliverToBoxAdapter(child: SizedBox(height: 56)),
             ],
           ),
         ),
@@ -149,22 +151,6 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildBannerSection() {
-    const bannerUrls = <String>[
-      'https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1600&q=80',
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1600&q=80',
-      'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1600&q=80',
-      'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=80',
-    ];
-
-    return const SliverToBoxAdapter(
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-        child: BannerCarousel(imageUrls: bannerUrls, aspectRatio: 16 / 6),
-      ),
-    );
-  }
-
   Widget _buildOfflineBanner(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
@@ -214,66 +200,45 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildPropertiesSection(BuildContext context) {
+  Widget _buildHeroGreeting(BuildContext context) {
+    return const SliverToBoxAdapter(
+      child: ExploreHeroHeader(),
+    );
+  }
+
+  Widget _buildFeaturedSection(BuildContext context) {
     return SliverToBoxAdapter(
       child: Obx(() {
-        final city = controller.locationName;
         final isLoading = controller.isLoading.value;
-        final properties = controller.allExploreProperties;
-        final textStyles = context.textStyles;
-        final colors = context.colors;
+        final nearest = controller.nearestProperty;
         final errorMsg = controller.errorMessage.value;
 
         // Show error state for offline with no data
-        if (errorMsg.isNotEmpty && properties.isEmpty && !isLoading) {
-          return Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.wifi_off, size: 64, color: colors.outline),
-                const SizedBox(height: 16),
-                Text(
-                  errorMsg,
-                  style: textStyles.bodyLarge?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                TextButton.icon(
-                  onPressed: controller.refreshData,
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Try Again'),
-                ),
-              ],
-            ),
-          );
+        if (errorMsg.isNotEmpty && nearest == null && !isLoading) {
+          return const SizedBox.shrink();
         }
 
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
+        return Padding(
+          padding: const EdgeInsets.only(top: AppDimensions.exploreSectionSpacing),
           child: Column(
-            key: ValueKey('all-$city-${properties.length}'),
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 24),
               SectionHeader(
-                title: 'explore.popular_stays'.trParams({'city': city}),
-                onViewAll: () => controller.navigateToAllProperties(city),
-                titleStyle: textStyles.titleMedium?.copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: colors.onSurface,
+                title: 'Featured near you',
+                subtitle: 'Closest stay based on your location',
+                leadingIcon: Icons.near_me_rounded,
+              ),
+              const SizedBox(height: 12),
+              if (isLoading)
+                const FeaturedPropertyStripShimmer()
+              else if (nearest != null)
+                FeaturedPropertyStrip(
+                  property: nearest,
+                  heroPrefix: 'featured_strip',
+                  isFavorite: controller.isPropertyFavorite(nearest.id),
+                  onTap: () => controller.navigateToPropertyDetail(nearest),
+                  onFavoriteToggle: () => controller.toggleFavorite(nearest),
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 200,
-                child: isLoading
-                    ? _buildShimmerList()
-                    : _buildHotelsList(properties, 'all'),
-              ),
             ],
           ),
         );
@@ -281,55 +246,93 @@ class ExploreView extends GetView<ExploreController> {
     );
   }
 
-  Widget _buildHotelsList(List<Property> hotels, String heroPrefix) {
-    if (hotels.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.hotel_outlined, size: 48, color: Colors.grey[400]),
-              const SizedBox(height: 16),
-              Text(
-                'explore.no_results'.tr,
-                style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+  Widget _buildPopularInSection(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.exploreSectionSpacing,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: Obx(() {
+          final city = controller.locationName;
+          final isLoading = controller.isLoading.value;
+          final properties = controller.popularInCity;
+          final colors = context.colors;
+          final textStyles = context.textStyles;
+          final titleStyle = textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          );
+          final subtitleStyle = textStyles.labelMedium?.copyWith(
+            color: colors.onSurface.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w500,
+          );
 
-    return ListView.builder(
-      key: ValueKey('${heroPrefix}_list_${hotels.length}'),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      itemCount: hotels.length,
-      itemBuilder: (context, index) {
-        final property = hotels[index];
-        return RepaintBoundary(
-          child: PropertyCard(
-            property: property,
-            heroPrefix: '${heroPrefix}_$index',
-            isFavorite: controller.isPropertyFavorite(property.id),
-            onTap: () => controller.navigateToPropertyDetail(property),
-            onFavoriteToggle: () => controller.toggleFavorite(property),
-          ),
-        );
-      },
+          final locationLabel = city.isEmpty ? 'this area' : city;
+          return PropertyHorizontalSection(
+            title: 'Popular stay in $locationLabel',
+            leadingIcon: Icons.local_fire_department_rounded,
+            titleStyle: titleStyle,
+            subtitleStyle: subtitleStyle,
+            properties: properties,
+            isLoading: isLoading && properties.isEmpty,
+            sectionPrefix: 'popular',
+            cardHeight: 230,
+            cardWidth: 220,
+            onViewAll: () => controller.navigateToAllProperties(city),
+            onPropertyTap: (property) => controller.navigateToPropertyDetail(property),
+            onFavoriteToggle: (property) => controller.toggleFavorite(property),
+            isPropertyFavorite: (id) => controller.isPropertyFavorite(id),
+            emptyMessage: 'No popular stays found in $city',
+          );
+        }),
+      ),
     );
   }
 
-  Widget _buildShimmerList() {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: 3,
-      itemBuilder: (context, index) => const PropertyCardShimmer(),
+  Widget _buildNearbySection(BuildContext context) {
+    return SliverPadding(
+      padding: const EdgeInsets.only(
+        top: AppDimensions.exploreSectionSpacing,
+      ),
+      sliver: SliverToBoxAdapter(
+        child: Obx(() {
+          final isLoading = controller.isLoading.value;
+          final properties = controller.nearbyStays;
+          final city = controller.locationName;
+          final colors = context.colors;
+          final textStyles = context.textStyles;
+          final titleStyle = textStyles.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          );
+          final subtitleStyle = textStyles.labelMedium?.copyWith(
+            color: colors.onSurface.withValues(alpha: 0.6),
+            fontWeight: FontWeight.w500,
+          );
+
+          // Don't show this section if there are no nearby properties
+          if (properties.isEmpty && !isLoading) {
+            return const SizedBox.shrink();
+          }
+
+          final locationLabel = city.isEmpty ? 'this area' : city;
+          return PropertyHorizontalSection(
+            title: 'Nearby stay in $locationLabel',
+            leadingIcon: Icons.place_outlined,
+            titleStyle: titleStyle,
+            subtitleStyle: subtitleStyle,
+            properties: properties,
+            isLoading: isLoading,
+            sectionPrefix: 'nearby',
+            cardHeight: 230,
+            cardWidth: 220,
+            onPropertyTap: (property) => controller.navigateToPropertyDetail(property),
+            onFavoriteToggle: (property) => controller.toggleFavorite(property),
+            isPropertyFavorite: (id) => controller.isPropertyFavorite(id),
+            emptyMessage: 'No nearby stays found',
+          );
+        }),
+      ),
     );
   }
 }

@@ -51,10 +51,11 @@
      super.dispose();
    }
  
-   void _onScroll() {
-     if (_prefetchService == null) return;
-     if (widget.properties.isEmpty) return;
- 
+  void _onScroll() {
+    if (_prefetchService == null) return;
+    if (widget.properties.isEmpty) return;
+    if (!widget.scrollController.hasClients) return;
+
     final currentScroll = widget.scrollController.position.pixels;
      
      // Calculate approximate current item index based on scroll position

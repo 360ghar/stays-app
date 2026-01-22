@@ -10,6 +10,7 @@ import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/features/wishlist/controllers/wishlist_controller.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
+import 'package:stays_app/app/data/services/analytics_service.dart';
 
 class ListingDetailController extends BaseController {
   final PropertiesRepository _repository;
@@ -88,6 +89,7 @@ class ListingDetailController extends BaseController {
     }
     listing.value = property.copyWith(isFavorite: isFavorite);
     currentImageIndex.value = 0;
+    _logPropertyView(property);
     if (galleryController.hasClients) {
       galleryController.jumpToPage(0);
     }
@@ -149,9 +151,15 @@ class ListingDetailController extends BaseController {
       if (isCurrentlyFavorite) {
         await _wishlistRepository!.remove(propertyId);
         _favoritesController.removeFavorite(propertyId);
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logWishlistRemoved('$propertyId');
+        }
       } else {
         await _wishlistRepository!.add(propertyId);
         _favoritesController.addFavorite(propertyId);
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logWishlistAdded('$propertyId');
+        }
       }
       listing.value = listing.value?.copyWith(isFavorite: !isCurrentlyFavorite);
 
@@ -184,7 +192,22 @@ class ListingDetailController extends BaseController {
   }
 
   void navigateToInquiryConfirmation(Property property) {
+    if (Get.isRegistered<AnalyticsService>()) {
+      Get.find<AnalyticsService>().logBookingStarted(
+        '${property.id}',
+        property.pricePerNight,
+      );
+    }
     Get.toNamed(Routes.inquiryConfirmation, arguments: property);
+  }
+
+  void _logPropertyView(Property property) {
+    if (Get.isRegistered<AnalyticsService>()) {
+      Get.find<AnalyticsService>().logPropertyView(
+        '${property.id}',
+        property.name,
+      );
+    }
   }
 
   @override

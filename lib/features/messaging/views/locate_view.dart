@@ -341,11 +341,11 @@ class LocatePropertyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              flex: 1,
+              flex: 10,
               child: _buildImage(context, isSelected: isSelected),
             ),
             Expanded(
-              flex: 1,
+              flex: 11,
               child: _buildDetails(
                 context,
                 textStyles,
@@ -554,15 +554,16 @@ class LocatePropertyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 2),
+          // Reduced spacing to prevent overflow
+          const SizedBox(height: 1),
           Text(
             address,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: addressStyle,
           ),
           if (hotel.distanceKm > 0) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               '${hotel.distanceKm.toStringAsFixed(1)} km away',
               style: distanceStyle,

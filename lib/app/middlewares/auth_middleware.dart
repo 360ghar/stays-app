@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
+import 'package:stays_app/app/utils/services/token_service.dart';
 
 class AuthMiddleware extends GetMiddleware {
   @override
@@ -13,11 +14,17 @@ class AuthMiddleware extends GetMiddleware {
       // Check if AuthController exists and user is authenticated
       if (Get.isRegistered<AuthController>()) {
         final auth = Get.find<AuthController>();
-        if (!auth.isAuthenticated.value) {
-          AppLogger.info('User not authenticated, redirecting to login');
-          return const RouteSettings(name: Routes.login);
+        if (auth.isAuthenticated.value) {
+          return null;
         }
-        return null;
+      }
+
+      // Check TokenService for valid tokens (covers startup races)
+      if (Get.isRegistered<TokenService>()) {
+        final tokenService = Get.find<TokenService>();
+        if (tokenService.hasValidToken) {
+          return null;
+        }
       }
 
       // If controller doesn't exist, check Supabase session

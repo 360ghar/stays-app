@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:stays_app/app/ui/theme/app_dimensions.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
@@ -49,7 +50,12 @@ class ListingDetailView extends GetView<ListingDetailController> {
             _buildHeroSliver(context, listing),
 
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+              padding: EdgeInsets.fromLTRB(
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+              ),
 
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
@@ -57,33 +63,30 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                   if (amenities.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
                       child: _buildAmenitiesSection(context, amenities),
                     ),
 
                   if (listing.hasVirtualTour)
                     Padding(
-                      padding: const EdgeInsets.only(top: 32),
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
                       child: _buildVirtualTourSection(context, listing),
                     ),
 
                   if (features.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
                       child: _buildFeaturesSection(context, features),
                     ),
 
                   if (listing.ownerName?.isNotEmpty == true)
                     Padding(
-                      padding: const EdgeInsets.only(top: 32),
-
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
                       child: _buildHostSection(context, listing),
                     ),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: 32),
+                    padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
                     child: _buildLocationSection(context, listing),
                   ),
 
@@ -112,17 +115,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
     return SliverAppBar(
       backgroundColor: colors.surface,
-
-      expandedHeight: 360,
-
+      expandedHeight: context.responsiveHeroHeight,
       pinned: true,
-
       stretch: true,
-
       automaticallyImplyLeading: false,
-
       toolbarHeight: 64,
-
       titleSpacing: 0,
 
       flexibleSpace: LayoutBuilder(
@@ -671,7 +668,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
           if (lat != null && lng != null) ...[
             const SizedBox(height: 16),
             Container(
-              height: 150,
+              height: AppDimensions.mapHeight,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [

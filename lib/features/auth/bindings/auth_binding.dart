@@ -7,6 +7,8 @@ import 'package:stays_app/features/auth/controllers/user_profile_controller.dart
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
+import 'package:stays_app/app/data/providers/users_provider.dart';
+import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 
 class AuthBinding extends Bindings {
@@ -22,6 +24,17 @@ class AuthBinding extends Bindings {
     Get.lazyPut<AuthRepository>(
       () => AuthRepository(provider: Get.find<IAuthProvider>()),
     );
+
+    if (!Get.isRegistered<UsersProvider>()) {
+      Get.lazyPut<UsersProvider>(() => UsersProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<ProfileRepository>()) {
+      Get.lazyPut<ProfileRepository>(
+        () => ProfileRepository(provider: Get.find<UsersProvider>()),
+        fenix: true,
+      );
+    }
 
     // Form validation controller (now managed properly)
     if (!Get.isRegistered<FormValidationController>()) {
@@ -40,7 +53,11 @@ class AuthBinding extends Bindings {
 
     // User profile controller for profile management
     if (!Get.isRegistered<UserProfileController>()) {
-      Get.lazyPut<UserProfileController>(() => UserProfileController());
+      Get.lazyPut<UserProfileController>(
+        () => UserProfileController(
+          profileRepository: Get.find<ProfileRepository>(),
+        ),
+      );
     }
   }
 }

@@ -13,6 +13,7 @@ import 'package:stays_app/app/controllers/base/base_controller.dart';
 class SplashController extends BaseController {
   static const String _rememberMeBox = 'auth_preferences';
   static const String _rememberMeFlagKey = 'remember_me';
+  // Legacy keys from older builds (plaintext tokens). Kept for one-time cleanup.
   static const String _rememberedAccessTokenKey = 'remembered_access_token';
   static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
 
@@ -112,63 +113,71 @@ class SplashController extends BaseController {
       final prefs = GetStorage(_rememberMeBox);
       final bool rememberMeEnabled =
           prefs.read<bool>(_rememberMeFlagKey) ?? false;
-      final String? rememberedAccessToken = prefs.read<String>(
-        _rememberedAccessTokenKey,
-      );
-      final String? rememberedRefreshToken = prefs.read<String>(
-        _rememberedRefreshTokenKey,
-      );
-      final bool hasStoredToken =
-          rememberedAccessToken != null &&
-          rememberedAccessToken.isNotEmpty &&
-          rememberedRefreshToken != null &&
-          rememberedRefreshToken.isNotEmpty;
+
+      final storage = Get.find<StorageService>();
+      final tokenService = Get.isRegistered<TokenService>()
+          ? Get.find<TokenService>()
+          : null;
+      if (tokenService != null) {
+        await tokenService.ready;
+      }
+
+      final legacyAccess = prefs.read<String>(_rememberedAccessTokenKey);
+      final legacyRefresh = prefs.read<String>(_rememberedRefreshTokenKey);
 
       var session = Supabase.instance.client.auth.currentSession;
       bool hasActiveSession = session != null && session.accessToken.isNotEmpty;
 
-      if (rememberMeEnabled && hasStoredToken && !hasActiveSession) {
-        session = await _restoreRememberedSession(
-          prefs: prefs,
-          refreshToken: rememberedRefreshToken,
-        );
-        hasActiveSession = session != null && session.accessToken.isNotEmpty;
-      }
-
       if (!rememberMeEnabled) {
-        if (hasActiveSession) {
-          AppLogger.info(
-            'Remember-me disabled. Clearing existing Supabase session.',
-          );
-          await Supabase.instance.client.auth.signOut();
-        }
-        await prefs.remove(_rememberedAccessTokenKey);
-        await prefs.remove(_rememberedRefreshTokenKey);
-        AppLogger.info('Remember-me disabled. Navigating to login.');
+        AppLogger.info('Remember-me disabled. Clearing session/tokens.');
+        await _clearLegacyRememberedSession(prefs);
+        await _signOutAndClear(storage, tokenService);
         _navigated = true;
         _watchdog?.cancel();
         unawaited(Get.offAllNamed(Routes.login));
         return;
       }
 
-      if (rememberMeEnabled && hasStoredToken && hasActiveSession) {
-        AppLogger.info('Remember-me token found. Navigating to home.');
+      // Try to restore Supabase session if none exists
+      if (!hasActiveSession) {
+        if (legacyRefresh != null && legacyRefresh.isNotEmpty) {
+          session = await _restoreSessionFromRefreshToken(legacyRefresh);
+          hasActiveSession =
+              session != null && session.accessToken.isNotEmpty;
+        }
+        if (!hasActiveSession) {
+          final secureRefresh = await storage.getRefreshToken();
+          if (secureRefresh != null && secureRefresh.isNotEmpty) {
+            session = await _restoreSessionFromRefreshToken(secureRefresh);
+            hasActiveSession =
+                session != null && session.accessToken.isNotEmpty;
+          }
+        }
+      }
+
+      if (hasActiveSession) {
+        await _syncTokenServiceFromSession(session!, storage, tokenService);
+        await _clearLegacyRememberedSession(prefs);
+        AppLogger.info('Active session detected. Navigating to home.');
         _navigated = true;
         _watchdog?.cancel();
         unawaited(Get.offAllNamed(Routes.home));
         return;
       }
 
-      if (hasStoredToken && !hasActiveSession) {
-        AppLogger.warning(
-          'Remember-me token present but Supabase session missing. Clearing cached token.',
-        );
-        await prefs.remove(_rememberedAccessTokenKey);
-        await prefs.remove(_rememberedRefreshTokenKey);
+      // Fallback: if token service already has valid tokens, allow navigation.
+      if (tokenService?.hasValidToken == true) {
+        await _clearLegacyRememberedSession(prefs);
+        AppLogger.info('Valid tokens detected. Navigating to home.');
+        _navigated = true;
+        _watchdog?.cancel();
+        unawaited(Get.offAllNamed(Routes.home));
+        return;
       }
 
+      await _clearLegacyRememberedSession(prefs);
       AppLogger.info(
-        'Remember-me enabled but no valid session/token combination. Going to login.',
+        'Remember-me enabled but no valid session/tokens. Going to login.',
       );
       _navigated = true;
       _watchdog?.cancel();
@@ -184,13 +193,10 @@ class SplashController extends BaseController {
     }
   }
 
-  Future<Session?> _restoreRememberedSession({
-    required GetStorage prefs,
-    required String refreshToken,
-  }) async {
+  Future<Session?> _restoreSessionFromRefreshToken(String refreshToken) async {
     try {
       AppLogger.info(
-        'Attempting to restore Supabase session from stored refresh token.',
+        'Attempting to restore Supabase session from refresh token.',
       );
       final response = await Supabase.instance.client.auth.setSession(
         refreshToken,
@@ -198,37 +204,57 @@ class SplashController extends BaseController {
       final restoredSession = response.session;
       if (restoredSession == null) {
         AppLogger.warning(
-          'Supabase returned no session when restoring remember-me tokens.',
+          'Supabase returned no session when restoring refresh token.',
         );
         return null;
-      }
-      // Keep TokenService in sync so downstream auth checks see tokens immediately
-      try {
-        final tokenService = Get.find<TokenService>();
-        await tokenService.storeTokens(
-          accessToken: restoredSession.accessToken,
-          refreshToken: restoredSession.refreshToken,
-        );
-      } catch (_) {
-        if (Get.isRegistered<StorageService>()) {
-          final storage = Get.find<StorageService>();
-          await storage.saveTokens(
-            accessToken: restoredSession.accessToken,
-            refreshToken: restoredSession.refreshToken,
-          );
-        }
-      }
-      await prefs.write(_rememberedAccessTokenKey, restoredSession.accessToken);
-      final newRefreshToken = restoredSession.refreshToken;
-      if (newRefreshToken != null && newRefreshToken.isNotEmpty) {
-        await prefs.write(_rememberedRefreshTokenKey, newRefreshToken);
       }
       return restoredSession;
     } catch (e) {
       AppLogger.warning(
-        'Failed to restore Supabase session from remember-me tokens: $e',
+        'Failed to restore Supabase session from refresh token: $e',
       );
       return null;
     }
+  }
+
+  Future<void> _syncTokenServiceFromSession(
+    Session session,
+    StorageService storageService,
+    TokenService? tokenService,
+  ) async {
+    try {
+      if (tokenService != null) {
+        await tokenService.storeTokens(
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+        );
+        return;
+      }
+    } catch (_) {}
+    await storageService.saveTokens(
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken,
+    );
+  }
+
+  Future<void> _clearLegacyRememberedSession(GetStorage prefs) async {
+    await prefs.remove(_rememberedAccessTokenKey);
+    await prefs.remove(_rememberedRefreshTokenKey);
+  }
+
+  Future<void> _signOutAndClear(
+    StorageService storageService,
+    TokenService? tokenService,
+  ) async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (_) {}
+    try {
+      await tokenService?.clearTokens();
+    } catch (_) {}
+    try {
+      await storageService.clearTokens();
+      await storageService.clearUserData();
+    } catch (_) {}
   }
 }

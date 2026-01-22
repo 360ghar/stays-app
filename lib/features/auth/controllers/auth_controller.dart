@@ -15,12 +15,14 @@ import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
+import 'package:stays_app/app/data/services/analytics_service.dart';
 import 'form_validation_controller.dart';
 
 class AuthController extends BaseController {
   // Storage keys dedicated to the remember-me preference and cached tokens.
   static const String _rememberMeBox = 'auth_preferences';
   static const String _rememberMeFlagKey = 'remember_me';
+  // Legacy keys from older builds (plaintext tokens). Kept for one-time cleanup.
   static const String _rememberedAccessTokenKey = 'remembered_access_token';
   static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
 
@@ -147,6 +149,7 @@ class AuthController extends BaseController {
     _authPrefs = GetStorage(_rememberMeBox);
     final storedPreference = _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
     rememberMe.value = storedPreference;
+    await _migrateLegacyRememberedTokens();
   }
 
   void _bindAuthStateListener() {
@@ -193,29 +196,57 @@ class AuthController extends BaseController {
 
   // Persist the latest Supabase session details when the user opts in.
   Future<void> _persistRememberedSession({Session? session}) async {
-    final activeSession =
-        session ?? Supabase.instance.client.auth.currentSession;
-    if (activeSession == null) {
-      AppLogger.warning(
-        'Unable to persist remember-me session because Supabase returned no session.',
-      );
-      return;
-    }
+    // Tokens are already stored securely via TokenService/StorageService.
+    // We only keep a boolean flag in GetStorage to control auto-login.
     await _authPrefs.write(_rememberMeFlagKey, true);
-    await _authPrefs.write(
-      _rememberedAccessTokenKey,
-      activeSession.accessToken,
-    );
-    final refreshToken = activeSession.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
-    }
+    await _clearLegacyRememberedSession();
   }
 
   // Drop any cached credentials when the user opts out or signs out.
   Future<void> _clearRememberedSession() async {
+    await _clearLegacyRememberedSession();
+  }
+
+  Future<void> _clearLegacyRememberedSession() async {
     await _authPrefs.remove(_rememberedAccessTokenKey);
     await _authPrefs.remove(_rememberedRefreshTokenKey);
+  }
+
+  Future<void> _migrateLegacyRememberedTokens() async {
+    // If legacy plaintext tokens exist, migrate them to secure storage once.
+    try {
+      final legacyAccess = _authPrefs.read<String>(_rememberedAccessTokenKey);
+      final legacyRefresh = _authPrefs.read<String>(_rememberedRefreshTokenKey);
+
+      if ((legacyAccess == null || legacyAccess.isEmpty) &&
+          (legacyRefresh == null || legacyRefresh.isEmpty)) {
+        return;
+      }
+
+      if (rememberMe.value && legacyAccess != null && legacyAccess.isNotEmpty) {
+        try {
+          await _tokenService.ready;
+          await _tokenService.storeTokens(
+            accessToken: legacyAccess,
+            refreshToken: legacyRefresh,
+          );
+          AppLogger.info('Migrated legacy remember-me tokens to secure storage');
+        } catch (e) {
+          // Fallback to StorageService if TokenService not ready yet
+          if (Get.isRegistered<StorageService>()) {
+            final storage = Get.find<StorageService>();
+            await storage.saveTokens(
+              accessToken: legacyAccess,
+              refreshToken: legacyRefresh,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      AppLogger.warning('Failed to migrate legacy remember-me tokens: $e');
+    } finally {
+      await _clearLegacyRememberedSession();
+    }
   }
 
   // Centralised helper that applies the user's remember-me choice post-login.
@@ -253,11 +284,17 @@ class AuthController extends BaseController {
           email: email,
           password: password,
         );
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logLogin('email');
+        }
       } else {
         user = await _authRepository.loginWithPhone(
           phone: email,
           password: password,
         );
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logLogin('phone');
+        }
       }
 
       currentUser.value = user;
@@ -423,6 +460,9 @@ class AuthController extends BaseController {
         title: 'Logged Out',
         message: 'You have been successfully logged out.',
       );
+      if (Get.isRegistered<AnalyticsService>()) {
+        Get.find<AnalyticsService>().logLogout();
+      }
 
       // Navigate to login after local state is reset
       await Get.offAllNamed(Routes.login);
@@ -492,6 +532,9 @@ class AuthController extends BaseController {
       );
       currentUser.value = user;
       isAuthenticated.value = true;
+      if (Get.isRegistered<AnalyticsService>()) {
+        Get.find<AnalyticsService>().logSignup('email');
+      }
 
       // Tokens already persisted via TokenService in repository
 

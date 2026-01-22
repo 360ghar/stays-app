@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -13,6 +14,8 @@ import 'l10n/localization_service.dart';
 import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
+import 'app/data/services/supabase_service.dart';
+import 'app/data/services/crash_reporting_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
@@ -24,9 +27,13 @@ Future<void> main() async {
   await dotenv.load(fileName: '.env.dev');
   AppConfig.setConfig(AppConfig.dev());
   // Validate high-level API keys
-  if (Get.isRegistered<SecurityService>()) {
-    SecurityService.I.validateApiKeys();
-  }
+  SecurityService().validateApiKeys();
+
+  // Initialize Supabase service (required before other services)
+  final supabaseService = SupabaseService(
+    url: AppConfig.I.supabaseUrl,
+    anonKey: AppConfig.I.supabaseAnonKey,
+  );
   final pinsRaw = dotenv.env['API_CERT_SHA256'];
   if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
     final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
@@ -44,38 +51,54 @@ Future<void> main() async {
     }
   }
 
-  // Parallelize initialization of independent services for faster startup
-  late ThemeService themeService;
-  late LocaleService localeService;
+  await runZonedGuarded(() async {
+    // Parallelize initialization of independent services for faster startup
+    late ThemeService themeService;
+    late LocaleService localeService;
 
-  await Future.wait([
-    // Theme service initialization
-    ThemeService().init().then((service) => themeService = service),
-    // Locale service initialization
-    LocaleService().init().then((service) => localeService = service),
-    // Orientation lock (lightweight, run in parallel)
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]),
-  ]);
+    await Future.wait([
+      // Supabase initialization (critical)
+      supabaseService.initialize(),
+      // Theme service initialization
+      ThemeService().init().then((service) => themeService = service),
+      // Locale service initialization
+      LocaleService().init().then((service) => localeService = service),
+      // Orientation lock (lightweight, run in parallel)
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]),
+    ]);
 
-  // Register services with GetX after initialization
-  Get.put<ThemeService>(themeService, permanent: true);
-  Get.put<LocaleService>(localeService, permanent: true);
+    // Register services with GetX after initialization
+    if (!Get.isRegistered<SupabaseService>()) {
+      Get.put<SupabaseService>(supabaseService, permanent: true);
+    }
+    Get.put<ThemeService>(themeService, permanent: true);
+    Get.put<LocaleService>(localeService, permanent: true);
 
-  Get.put<ThemeController>(
-    ThemeController(themeService: themeService),
-    permanent: true,
-  );
+    Get.put<ThemeController>(
+      ThemeController(themeService: themeService),
+      permanent: true,
+    );
 
-  await LocalizationService.init(localeService);
-  unawaited(Get.updateLocale(LocalizationService.initialLocale));
-  AppLogger.info(
-    'Localization initialized with locale: ${LocalizationService.initialLocale}',
-  );
+    await LocalizationService.init(localeService);
+    unawaited(Get.updateLocale(LocalizationService.initialLocale));
+    AppLogger.info(
+      'Localization initialized with locale: ${LocalizationService.initialLocale}',
+    );
 
-  runApp(const MyApp());
+    runApp(const MyApp());
+  }, (error, stackTrace) async {
+    AppLogger.error('Uncaught zone error', error, stackTrace);
+    if (Get.isRegistered<CrashReportingService>()) {
+      await Get.find<CrashReportingService>().recordError(
+        error,
+        stackTrace: stackTrace,
+        fatal: true,
+      );
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -84,19 +107,27 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    return GetMaterialApp(
-      title: '360ghar stays (Dev)',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeController.themeMode.value,
-      translations: LocalizationService(),
-      locale: LocalizationService.initialLocale,
-      fallbackLocale: LocalizationService.fallbackLocale,
-      supportedLocales: LocalizationService.locales,
-      initialBinding: InitialBinding(),
-      initialRoute: AppPages.initial,
-      getPages: AppPages.routes,
-      debugShowCheckedModeBanner: false,
-    );
+    return Obx(() {
+      final currentLocale = Get.locale ?? LocalizationService.initialLocale;
+      return GetMaterialApp(
+        title: '360ghar stays (Dev)',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeController.themeMode.value,
+        translations: LocalizationService(),
+        locale: currentLocale,
+        fallbackLocale: LocalizationService.fallbackLocale,
+        supportedLocales: LocalizationService.locales,
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        initialBinding: InitialBinding(),
+        initialRoute: AppPages.initial,
+        getPages: AppPages.routes,
+        debugShowCheckedModeBanner: false,
+      );
+    });
   }
 }

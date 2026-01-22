@@ -15,6 +15,7 @@ import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/utils/services/connectivity_service.dart';
 import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
+import 'package:stays_app/app/data/services/analytics_service.dart';
 
 class ExploreController extends BaseController with ImagePrefetchMixin {
   final LocationService _locationService;
@@ -51,6 +52,51 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       : _locationService.locationName;
   String get nearbyCity => _selectedCityNormalized();
   List<Property> get recommendedHotels => nearbyHotels.toList();
+
+  /// Returns the property with the minimum distance from the current location.
+  /// Considers both in-city and nearby properties. Returns null if no properties have distance data.
+  Property? get nearestProperty {
+    final allProperties = allExploreProperties;
+    if (allProperties.isEmpty) return null;
+
+    Property? nearest;
+    double minDistance = double.infinity;
+
+    for (final property in allProperties) {
+      final distance = property.distanceKm;
+      if (distance != null && distance < minDistance) {
+        minDistance = distance;
+        nearest = property;
+      }
+    }
+
+    return nearest;
+  }
+
+  /// Returns a time-based greeting message.
+  static String getTimeBasedGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good morning';
+    } else if (hour < 17) {
+      return 'Good afternoon';
+    } else {
+      return 'Good evening';
+    }
+  }
+
+  /// Returns popular properties in the selected city, excluding the featured (nearest) property.
+  List<Property> get popularInCity {
+    final nearest = nearestProperty;
+    return popularHomes.where((p) => p.id != nearest?.id).toList();
+  }
+
+  /// Returns nearby properties (from nearby cities), excluding the featured (nearest) property.
+  List<Property> get nearbyStays {
+    final nearest = nearestProperty;
+    return nearbyHotels.where((p) => p.id != nearest?.id).toList();
+  }
+
   List<Property> get allExploreProperties {
     final seen = <int>{};
     final combined = <Property>[];
@@ -106,6 +152,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     // Set initial loading state
     isLoading.value = true;
     super.onInit();
+    _logScreenView();
     // _filterController is now injected via constructor
     _activeFilters = _filterController.filterFor(FilterScope.explore);
     _filterWorker = trackWorker(
@@ -128,10 +175,14 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     );
   }
 
+  void _logScreenView() {
+    if (Get.isRegistered<AnalyticsService>()) {
+      Get.find<AnalyticsService>().logScreenView('Explore');
+    }
+  }
+
   @override
   void onClose() {
-    _filterWorker?.dispose();
-    _locationWorker?.dispose();
     super.onClose();
   }
 
@@ -327,9 +378,15 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       if (isCurrentlyFavorite) {
         await _wishlistRepository.remove(propertyId);
         _favoritesController.removeFavorite(propertyId);
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logWishlistRemoved('$propertyId');
+        }
       } else {
         await _wishlistRepository.add(propertyId);
         _favoritesController.addFavorite(propertyId);
+        if (Get.isRegistered<AnalyticsService>()) {
+          Get.find<AnalyticsService>().logWishlistAdded('$propertyId');
+        }
       }
       _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
       Get.snackbar(
