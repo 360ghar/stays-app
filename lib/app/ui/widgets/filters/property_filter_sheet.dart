@@ -3,23 +3,71 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/unified_filter_model.dart';
+import '../../theme/app_animations.dart';
 
 Future<UnifiedFilterModel?> showPropertyFilterSheet({
   required BuildContext context,
   required UnifiedFilterModel initial,
-}) {
-  return showModalBottomSheet<UnifiedFilterModel>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _PropertyFilterSheet(initial: initial),
+}) async {
+  final result = await Navigator.of(context).push<_FilterSheetRouteResult>(
+    _FilterSheetRoute(
+      initial: initial,
+      curve: AppAnimations.sheetCurve,
+      duration: AppAnimations.sheetDuration,
+    ),
   );
+  return result?.filters;
+}
+
+class _FilterSheetRouteResult {
+  const _FilterSheetRouteResult({required this.filters});
+  final UnifiedFilterModel filters;
+}
+
+class _FilterSheetRoute extends PopupRoute<_FilterSheetRouteResult> {
+  _FilterSheetRoute({
+    required this.initial,
+    required this.curve,
+    required this.duration,
+  });
+
+  final UnifiedFilterModel initial;
+  final Curve curve;
+  final Duration duration;
+
+  @override
+  Color? get barrierColor => Colors.black.withValues(alpha: 0.5);
+
+  @override
+  bool get barrierDismissible => true;
+
+  @override
+  String? get barrierLabel => 'Dismiss filter sheet';
+
+  @override
+  Duration get transitionDuration => duration;
+
+  @override
+  Widget buildPage(BuildContext context, Animation<double> animation,
+      Animation<double> secondaryAnimation) {
+    return _PropertyFilterSheet(
+      initial: initial,
+      animation: animation,
+      curve: curve,
+    );
+  }
 }
 
 class _PropertyFilterSheet extends StatefulWidget {
-  const _PropertyFilterSheet({required this.initial});
+  const _PropertyFilterSheet({
+    required this.initial,
+    required this.animation,
+    required this.curve,
+  });
 
   final UnifiedFilterModel initial;
+  final Animation<double> animation;
+  final Curve curve;
 
   @override
   State<_PropertyFilterSheet> createState() => _PropertyFilterSheetState();
@@ -158,56 +206,75 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
 
     final mediaQuery = MediaQuery.of(context);
     final height = mediaQuery.size.height * 0.85;
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: Container(
-        height: height,
-        padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
-        decoration: BoxDecoration(
-          color: _colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: _colorScheme.shadow.withValues(
-                alpha: _isDarkTheme ? 0.6 : 0.12,
-              ),
-              blurRadius: 24,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Divider(height: 1, thickness: 1, color: _dividerColor),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
+    final curvedAnimation = CurvedAnimation(
+      parent: widget.animation,
+      curve: widget.curve,
+    );
+
+    return AnimatedBuilder(
+      animation: curvedAnimation,
+      builder: (context, child) {
+        return SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: FadeTransition(
+            opacity: curvedAnimation,
+            child: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: Container(
+                height: height,
+                padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+                decoration: BoxDecoration(
+                  color: _colorScheme.surface,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _colorScheme.shadow.withValues(
+                        alpha: _isDarkTheme ? 0.6 : 0.12,
+                      ),
+                      blurRadius: 24,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildPriceSection(context),
-                      const SizedBox(height: 24),
-                      _buildPropertyTypeSection(context),
-                      const SizedBox(height: 24),
-                      _buildRatingSection(context),
-                      const SizedBox(height: 24),
-                      _buildExperienceSection(context),
+                      _buildHeader(context),
+                      Divider(height: 1, thickness: 1, color: _dividerColor),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildPriceSection(context),
+                              const SizedBox(height: 24),
+                              _buildPropertyTypeSection(context),
+                              const SizedBox(height: 24),
+                              _buildRatingSection(context),
+                              const SizedBox(height: 24),
+                              _buildExperienceSection(context),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Divider(height: 1, thickness: 1, color: _dividerColor),
+                      _buildFooter(context),
                     ],
                   ),
                 ),
               ),
-              Divider(height: 1, thickness: 1, color: _dividerColor),
-              _buildFooter(context),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -500,7 +567,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
       petsAllowed: _petsAllowed ? true : null,
       smokingAllowed: _smokingAllowed ? true : null,
     );
-    Navigator.of(context).pop(model);
+    Navigator.of(context).pop(_FilterSheetRouteResult(filters: model));
   }
 }
 

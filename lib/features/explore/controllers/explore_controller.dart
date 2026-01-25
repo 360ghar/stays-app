@@ -12,7 +12,6 @@ import 'package:stays_app/app/utils/constants/app_constants.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
-import 'package:stays_app/app/utils/services/connectivity_service.dart';
 import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
 import 'package:stays_app/app/data/services/analytics_service.dart';
@@ -212,26 +211,98 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      AppLogger.info('ExploreController: Starting initial data fetch');
       // Wait for location service to initialize before loading properties
       await _waitForLocationInitialization();
+      AppLogger.info(
+        'ExploreController: Location initialized - '
+        'lat: ${_locationService.latitude}, lng: ${_locationService.longitude}',
+      );
       // Use Future.wait to run fetches in parallel for better performance
       await loadProperties();
-    } catch (e) {
-      errorMessage.value = 'Failed to load data. Please pull to refresh.';
-      AppLogger.error('Error fetching initial data', e);
+      AppLogger.info(
+        'ExploreController: Properties loaded - '
+        'popular: ${popularHomes.length}, nearby: ${nearbyHotels.length}',
+      );
+    } catch (e, s) {
+      AppLogger.error('ExploreController: Error fetching initial data', e, s);
+      errorMessage.value = _getUserFriendlyErrorMessage(e);
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> loadProperties() async {
-    // Check connectivity first
-    final connectivityService = _getConnectivityService();
-    final isOnline = connectivityService?.isOnline.value ?? true;
+  /// Converts exceptions to user-friendly error messages
+  String _getUserFriendlyErrorMessage(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
 
-    if (!isOnline) {
-      isOffline.value = true;
-      // Try to load cached data when offline
+    // Network connectivity issues
+    if (errorStr.contains('connection') ||
+        errorStr.contains('socket') ||
+        errorStr.contains('network')) {
+      return 'No internet connection. Please check your network and try again.';
+    }
+    if (errorStr.contains('timeout') || errorStr.contains('deadline')) {
+      return 'Request timed out. Please try again.';
+    }
+    if (errorStr.contains('host') ||
+        errorStr.contains('lookup') ||
+        errorStr.contains('unreachable')) {
+      return 'Cannot reach the server. Please check your connection.';
+    }
+
+    // Authentication issues
+    if (errorStr.contains('401') || errorStr.contains('unauthorized') || errorStr.contains('token')) {
+      return 'Session expired. Please log in again.';
+    }
+    if (errorStr.contains('403') || errorStr.contains('forbidden')) {
+      return 'Access denied. Please log in again.';
+    }
+
+    // Server errors
+    if (errorStr.contains('500') || errorStr.contains('502') || errorStr.contains('503') || errorStr.contains('504')) {
+      return 'Server is temporarily unavailable. Please try again later.';
+    }
+
+    // Not found
+    if (errorStr.contains('404') || errorStr.contains('not found')) {
+      return 'Requested resource not found.';
+    }
+
+    // Log the actual error for debugging
+    AppLogger.warning('Unhandled error type: ${error.runtimeType} - $error');
+
+    // Generic error message
+    return 'Unable to load properties. Pull down to refresh.';
+  }
+
+  Future<void> loadProperties() async {
+    // Clear offline flags before attempting to load
+    isOffline.value = false;
+    isShowingCachedData.value = false;
+
+    try {
+      // Fetch within a broader radius so nearby cities are included
+      final double radiusKm = _activeFilters.radiusKm ?? 100.0;
+      AppLogger.info(
+        'ExploreController: Fetching properties - radius: $radiusKm, '
+        'lat: ${_locationService.latitude}, lng: ${_locationService.longitude}',
+      );
+
+      final resp = await _propertiesRepository.explore(
+        limit: 30,
+        radiusKm: radiusKm,
+        filters: _activeFilters.toQueryParameters(),
+      );
+
+      final props = resp.properties;
+      AppLogger.info('ExploreController: Received ${props.length} properties from API');
+      _updatePropertiesFromResponse(props);
+    } catch (e, s) {
+      AppLogger.error('ExploreController: Error loading properties', e, s);
+      final friendlyError = _getUserFriendlyErrorMessage(e);
+
+      // Try to load cached data on error (could be network issue)
       final cached = _propertiesRepository.getOfflineExploreResults(
         lat: _locationService.latitude,
         lng: _locationService.longitude,
@@ -240,36 +311,17 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
         isShowingCachedData.value = true;
         _updatePropertiesFromResponse(cached.properties);
         AppLogger.info(
-          'Loaded ${cached.properties.length} cached properties (offline mode)',
+          'Loaded ${cached.properties.length} cached properties due to error',
         );
+        // Show cached data but also indicate there was an error
+        errorMessage.value = '$friendlyError Showing cached data.';
         return;
       }
-      errorMessage.value = 'You are offline. Please check your connection.';
-      AppLogger.warning('No cached data available for offline mode');
-      return;
-    }
 
-    // Online - clear offline flags
-    isOffline.value = false;
-    isShowingCachedData.value = false;
-
-    // Fetch within a broader radius so nearby cities are included
-    final double radiusKm = _activeFilters.radiusKm ?? 100.0;
-    final resp = await _propertiesRepository.explore(
-      limit: 30,
-      radiusKm: radiusKm,
-      filters: _activeFilters.toQueryParameters(),
-    );
-
-    final props = resp.properties;
-    _updatePropertiesFromResponse(props);
-  }
-
-  ConnectivityService? _getConnectivityService() {
-    try {
-      return Get.find<ConnectivityService>();
-    } catch (_) {
-      return null;
+      // No cached data available, show the error
+      isOffline.value = friendlyError.contains('internet') || friendlyError.contains('connection');
+      errorMessage.value = friendlyError;
+      rethrow;
     }
   }
 
@@ -314,10 +366,11 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     isLoading.value = true;
     errorMessage.value = '';
     try {
+      AppLogger.info('ExploreController: Reloading with filters');
       await loadProperties();
-    } catch (e) {
-      errorMessage.value = 'Unable to apply filters. Please pull to refresh.';
-      AppLogger.error('Error applying explore filters', e);
+    } catch (e, s) {
+      AppLogger.error('ExploreController: Error applying explore filters', e, s);
+      errorMessage.value = _getUserFriendlyErrorMessage(e);
     } finally {
       isLoading.value = false;
     }

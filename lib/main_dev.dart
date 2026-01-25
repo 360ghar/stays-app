@@ -22,36 +22,36 @@ import 'app/utils/logger/app_logger.dart';
 import 'app/utils/security/security_service.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await dotenv.load(fileName: '.env.dev');
-  AppConfig.setConfig(AppConfig.dev());
-  // Validate high-level API keys
-  SecurityService().validateApiKeys();
-
-  // Initialize Supabase service (required before other services)
-  final supabaseService = SupabaseService(
-    url: AppConfig.I.supabaseUrl,
-    anonKey: AppConfig.I.supabaseAnonKey,
-  );
-  final pinsRaw = dotenv.env['API_CERT_SHA256'];
-  if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
-    final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
-    final pins = pinsRaw
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet();
-    if (pins.isNotEmpty) {
-      HttpOverrides.global = PinningHttpOverrides(
-        allowedPins: pins,
-        host: host,
-      );
-      AppLogger.info('Certificate pinning enabled for $host');
-    }
-  }
-
   await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    await dotenv.load(fileName: '.env.dev');
+    AppConfig.setConfig(AppConfig.dev());
+    // Validate high-level API keys
+    SecurityService().validateApiKeys();
+
+    // Initialize Supabase service (required before other services)
+    final supabaseService = SupabaseService(
+      url: AppConfig.I.supabaseUrl,
+      anonKey: AppConfig.I.supabaseAnonKey,
+    );
+    final pinsRaw = dotenv.env['API_CERT_SHA256'];
+    if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
+      final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+      final pins = pinsRaw
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toSet();
+      if (pins.isNotEmpty) {
+        HttpOverrides.global = PinningHttpOverrides(
+          allowedPins: pins,
+          host: host,
+        );
+        AppLogger.info('Certificate pinning enabled for $host');
+      }
+    }
+
     // Parallelize initialization of independent services for faster startup
     late ThemeService themeService;
     late LocaleService localeService;

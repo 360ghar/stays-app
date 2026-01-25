@@ -3,11 +3,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
+import 'package:stays_app/app/ui/theme/app_animations.dart';
+import 'package:stays_app/app/ui/widgets/common/animated_widgets.dart';
+import 'package:stays_app/app/ui/widgets/common/animated_favorite_button.dart';
 
 /// A large, prominent featured property card for the Explore page.
 /// Displays a full-width card with cinematic 16:9 aspect ratio, gradient overlay,
-/// and "Nearest to you" badge.
-class FeaturedPropertyCard extends StatelessWidget {
+/// and "Nearest to you" badge with premium animations and effects.
+class FeaturedPropertyCard extends StatefulWidget {
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
@@ -24,44 +27,92 @@ class FeaturedPropertyCard extends StatelessWidget {
   });
 
   @override
+  State<FeaturedPropertyCard> createState() => _FeaturedPropertyCardState();
+}
+
+class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final borderRadius = BorderRadius.circular(22);
+    final borderRadius = BorderRadius.circular(24);
 
-    return Material(
-      color: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      borderRadius: borderRadius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: borderRadius,
-        splashColor: colors.primary.withValues(alpha: 0.15),
-        highlightColor: colors.primary.withValues(alpha: 0.08),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: borderRadius,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: context.isDark ? 0.35 : 0.15),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
+    return AnimatedScaleWrapper(
+      onTap: widget.onTap,
+      scaleFactor: 0.97,
+      duration: AppAnimations.cardPressDuration,
+      curve: AppAnimations.cardPressCurve,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        height: 200,
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+              blurRadius: 32,
+              offset: const Offset(0, 16),
+              spreadRadius: -4,
+            ),
+            BoxShadow(
+              color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              _buildImage(context),
+              _buildGradientOverlay(),
+              _buildShimmerEffect(),
+              _buildContent(context),
+              if (widget.onFavoriteToggle != null)
+                _buildFavoriteButton(context),
+              _buildNearestBadge(context),
+              _buildGlossOverlay(),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: borderRadius,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildImage(context),
-                _buildGradientOverlay(),
-                _buildContent(context),
-                if (onFavoriteToggle != null)
-                  _buildFavoriteButton(context),
-                _buildNearestBadge(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlossOverlay() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.05),
+                Colors.transparent,
+                Colors.transparent,
+                Colors.white.withValues(alpha: 0.02),
               ],
+              stops: const [0.0, 0.3, 0.7, 1.0],
             ),
           ),
         ),
@@ -69,10 +120,43 @@ class FeaturedPropertyCard extends StatelessWidget {
     );
   }
 
+  Widget _buildShimmerEffect() {
+    return Positioned.fill(
+      child: AnimatedBuilder(
+        animation: _shimmerController,
+        builder: (context, child) {
+          return ShaderMask(
+            shaderCallback: (bounds) {
+              return LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0.1),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.5, 1.0],
+                transform: _SlidingGradientTransform(
+                  slidePercent: _shimmerController.value,
+                ),
+              ).createShader(bounds);
+            },
+            blendMode: BlendMode.overlay,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildImage(BuildContext context) {
-    final heroTag = '${heroPrefix ?? 'featured'}-${property.id}';
+    final heroTag = '${widget.heroPrefix ?? 'featured'}-${widget.property.id}';
     final colors = Theme.of(context).colorScheme;
-    final imageUrl = property.displayImage;
+    final imageUrl = widget.property.displayImage;
 
     Widget placeholder() {
       return Container(
@@ -136,7 +220,6 @@ class FeaturedPropertyCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Property type badge
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -144,7 +227,7 @@ class FeaturedPropertyCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    property.propertyTypeDisplay,
+                    widget.property.propertyTypeDisplay,
                     style: textStyles.labelSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -154,9 +237,8 @@ class FeaturedPropertyCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                // Property name
                 Text(
-                  property.name,
+                  widget.property.name,
                   style: textStyles.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -167,7 +249,6 @@ class FeaturedPropertyCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                // Location
                 Row(
                   children: [
                     const Icon(
@@ -178,7 +259,7 @@ class FeaturedPropertyCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        property.fullAddress,
+                        widget.property.fullAddress,
                         style: textStyles.bodyMedium?.copyWith(
                           color: Colors.white.withValues(alpha: 0.85),
                         ),
@@ -189,11 +270,10 @@ class FeaturedPropertyCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 6),
-                // Price and rating row
                 Row(
                   children: [
                     Text(
-                      property.displayPrice,
+                      widget.property.displayPrice,
                       style: textStyles.titleMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
@@ -206,11 +286,11 @@ class FeaturedPropertyCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    if (property.rating != null && property.rating! > 0) ...[
+                    if (widget.property.rating != null && widget.property.rating! > 0) ...[
                       const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
                       const SizedBox(width: 4),
                       Text(
-                        property.ratingText,
+                        widget.property.ratingText,
                         style: textStyles.bodyMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
@@ -232,29 +312,34 @@ class FeaturedPropertyCard extends StatelessWidget {
     return Positioned(
       top: 16,
       right: 16,
-      child: Material(
-        color: colors.surface.withValues(alpha: context.isDark ? 0.55 : 0.85),
-        shape: const CircleBorder(),
-        elevation: context.isDark ? 0 : 6,
-        shadowColor: Colors.black.withValues(alpha: 0.25),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onFavoriteToggle,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? colors.error : Colors.white,
-              size: 22,
-            ),
-          ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface.withValues(alpha: context.isDark ? 0.55 : 0.85),
+          shape: BoxShape.circle,
+          boxShadow: context.isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: AnimatedFavoriteButton(
+          isFavorite: widget.isFavorite,
+          onToggle: (_) => widget.onFavoriteToggle?.call(),
+          size: 22,
+          normalColor: Colors.white.withValues(alpha: 0.9),
+          favoriteColor: colors.error,
+          hasBackground: false,
         ),
       ),
     );
   }
 
   Widget _buildNearestBadge(BuildContext context) {
-    final distance = property.distanceKm;
+    final distance = widget.property.distanceKm;
     final colors = context.colors;
 
     return Positioned(
@@ -333,56 +418,51 @@ class FeaturedPropertyStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final borderRadius = BorderRadius.circular(16);
-    final imageSize = 88.0;
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: borderRadius,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: borderRadius,
-        splashColor: colors.primary.withValues(alpha: 0.12),
-        highlightColor: colors.primary.withValues(alpha: 0.06),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: borderRadius,
-            border: Border.all(
-              color: colors.outlineVariant.withValues(alpha: 0.4),
+    return AnimatedScaleWrapper(
+      onTap: onTap,
+      scaleFactor: 0.97,
+      duration: AppAnimations.cardPressDuration,
+      curve: AppAnimations.cardPressCurve,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: colors.outlineVariant.withValues(alpha: 0.4),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              _FeaturedStripImage(
-                property: property,
-                heroPrefix: heroPrefix,
-                size: imageSize,
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: _FeaturedStripInfo(property: property)),
-              if (onFavoriteToggle != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: IconButton(
-                    onPressed: onFavoriteToggle,
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? colors.error : colors.onSurface,
-                      size: 20,
-                    ),
-                  ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _FeaturedStripImage(
+              property: property,
+              heroPrefix: heroPrefix,
+              size: 88,
+            ),
+            const SizedBox(width: 12),
+            Expanded(child: _FeaturedStripInfo(property: property)),
+            if (onFavoriteToggle != null)
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: AnimatedFavoriteButton(
+                  isFavorite: isFavorite,
+                  onToggle: (_) => onFavoriteToggle?.call(),
+                  size: 20,
+                  normalColor: colors.onSurface.withValues(alpha: 0.7),
+                  favoriteColor: colors.error,
+                  hasBackground: false,
                 ),
-            ],
-          ),
+              ),
+          ],
         ),
       ),
     );
@@ -531,18 +611,24 @@ class FeaturedPropertyCardShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final borderRadius = BorderRadius.circular(22);
+    final borderRadius = BorderRadius.circular(24);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      height: 180,
+      height: 200,
       decoration: BoxDecoration(
         borderRadius: borderRadius,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.1),
+            color: Colors.black.withValues(alpha: context.isDark ? 0.35 : 0.12),
+            blurRadius: 32,
+            offset: const Offset(0, 16),
+            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
             blurRadius: 24,
-            offset: const Offset(0, 12),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -554,6 +640,24 @@ class FeaturedPropertyCardShimmer extends StatelessWidget {
           child: Container(color: colors.surface),
         ),
       ),
+    );
+  }
+}
+
+/// Gradient transform for sliding shimmer effect.
+class _SlidingGradientTransform extends GradientTransform {
+  const _SlidingGradientTransform({
+    required this.slidePercent,
+  });
+
+  final double slidePercent;
+
+  @override
+  Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
+    return Matrix4.translationValues(
+      bounds.width * slidePercent,
+      0.0,
+      0.0,
     );
   }
 }

@@ -22,37 +22,37 @@ import 'app/utils/security/security_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Default to dev if launched via lib/main.dart
-  await dotenv.load(fileName: '.env.dev');
-  AppConfig.setConfig(AppConfig.dev());
-  SecurityService().validateApiKeys();
-
-  // Optional certificate pinning when API_CERT_SHA256 is provided
-  final pinsRaw = dotenv.env['API_CERT_SHA256'];
-  if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
-    final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
-    final pins = pinsRaw
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet();
-    if (pins.isNotEmpty) {
-      HttpOverrides.global = PinningHttpOverrides(
-        allowedPins: pins,
-        host: host,
-      );
-    }
-  }
-
-  // Initialize Supabase service (required before other services)
-  final supabaseService = SupabaseService(
-    url: AppConfig.I.supabaseUrl,
-    anonKey: AppConfig.I.supabaseAnonKey,
-  );
-
   await runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+
+    // Default to dev if launched via lib/main.dart
+    await dotenv.load(fileName: '.env.dev');
+    AppConfig.setConfig(AppConfig.dev());
+    SecurityService().validateApiKeys();
+
+    // Optional certificate pinning when API_CERT_SHA256 is provided
+    final pinsRaw = dotenv.env['API_CERT_SHA256'];
+    if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
+      final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+      final pins = pinsRaw
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toSet();
+      if (pins.isNotEmpty) {
+        HttpOverrides.global = PinningHttpOverrides(
+          allowedPins: pins,
+          host: host,
+        );
+      }
+    }
+
+    // Initialize Supabase service (required before other services)
+    final supabaseService = SupabaseService(
+      url: AppConfig.I.supabaseUrl,
+      anonKey: AppConfig.I.supabaseAnonKey,
+    );
+
     // Parallelize initialization of independent services for faster startup
     late ThemeService themeService;
     late LocaleService localeService;

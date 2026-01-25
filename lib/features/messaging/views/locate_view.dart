@@ -371,16 +371,16 @@ class LocatePropertyCard extends StatelessWidget {
     Widget fallback = _buildPlaceholder(colors);
     Widget infoChip(String text, {IconData? icon}) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
           color: colorScheme.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null) ...[
-              Icon(icon, color: colors.primary, size: 14),
+              Icon(icon, color: colors.primary, size: 12),
               const SizedBox(width: 4),
             ],
             Text(
@@ -390,7 +390,7 @@ class LocatePropertyCard extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 fontSize: _shrinkFont(
                   theme.textTheme.labelSmall?.fontSize,
-                  0.5,
+                  1.5,
                 ),
               ),
             ),
@@ -433,10 +433,10 @@ class LocatePropertyCard extends StatelessWidget {
             top: 12,
             left: 12,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer.withOpacity(0.92),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 hotel.property.propertyTypeDisplay.toUpperCase(),
@@ -444,7 +444,7 @@ class LocatePropertyCard extends StatelessWidget {
                   color: colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,
-                  fontSize: _shrinkFont(theme.textTheme.labelSmall?.fontSize),
+                  fontSize: _shrinkFont(theme.textTheme.labelSmall?.fontSize, 1.5),
                 ),
               ),
             ),

@@ -212,10 +212,11 @@ class ExploreView extends GetView<ExploreController> {
         final isLoading = controller.isLoading.value;
         final nearest = controller.nearestProperty;
         final errorMsg = controller.errorMessage.value;
+        final colors = context.colors;
 
-        // Show error state for offline with no data
+        // Show error state when no properties and error exists
         if (errorMsg.isNotEmpty && nearest == null && !isLoading) {
-          return const SizedBox.shrink();
+          return _buildErrorSection(context, errorMsg, colors);
         }
 
         return Padding(
@@ -238,7 +239,9 @@ class ExploreView extends GetView<ExploreController> {
                   isFavorite: controller.isPropertyFavorite(nearest.id),
                   onTap: () => controller.navigateToPropertyDetail(nearest),
                   onFavoriteToggle: () => controller.toggleFavorite(nearest),
-                ),
+                )
+              else if (errorMsg.isEmpty)
+                _buildEmptyState(context, 'No featured stays found nearby', Icons.near_me_rounded, colors),
             ],
           ),
         );
@@ -332,6 +335,82 @@ class ExploreView extends GetView<ExploreController> {
             emptyMessage: 'No nearby stays found',
           );
         }),
+      ),
+    );
+  }
+
+  /// Builds an error section with retry button
+  Widget _buildErrorSection(BuildContext context, String errorMsg, ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colors.errorContainer.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: colors.error.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: colors.error,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Unable to load properties',
+              style: context.textStyles.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              errorMsg,
+              style: context.textStyles.bodyMedium?.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.7),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: controller.refreshData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.error,
+                foregroundColor: colors.onError,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Builds an empty state when no properties are found
+  Widget _buildEmptyState(BuildContext context, String message, IconData icon, ColorScheme colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          Icon(
+            icon,
+            size: 56,
+            color: colors.onSurface.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: context.textStyles.bodyMedium?.copyWith(
+              color: colors.onSurface.withValues(alpha: 0.6),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

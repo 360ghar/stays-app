@@ -4,6 +4,9 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../data/models/property_model.dart';
 import '../../theme/theme_extensions.dart';
+import '../../theme/app_animations.dart';
+import '../common/animated_widgets.dart';
+import '../common/animated_favorite_button.dart';
 
 class PropertyGridCard extends StatelessWidget {
   final Property property;
@@ -33,32 +36,32 @@ class PropertyGridCard extends StatelessWidget {
         ? (context.isDark ? 1.5 : 5.0)
         : (context.isDark ? 2.0 : 6.0);
 
-    return Material(
-      color: Colors.transparent,
-      elevation: elevation,
-      shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
-      borderRadius: borderRadius,
-      clipBehavior: Clip.antiAlias,
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
-              Color.alphaBlend(
-                colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
-                colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
-              ),
-            ],
+    return AnimatedScaleWrapper(
+      onTap: onTap,
+      scaleFactor: 0.97,
+      duration: AppAnimations.cardPressDuration,
+      curve: AppAnimations.cardPressCurve,
+      child: Material(
+        color: Colors.transparent,
+        elevation: elevation,
+        shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+        borderRadius: borderRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
+                Color.alphaBlend(
+                  colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
+                  colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: borderRadius,
-          splashColor: colors.primary.withValues(alpha: 0.12),
-          highlightColor: colors.primary.withValues(alpha: 0.06),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final hasBoundedHeight = constraints.hasBoundedHeight &&
@@ -286,22 +289,27 @@ class PropertyGridCard extends StatelessWidget {
     return Positioned(
       top: inset,
       right: inset,
-      child: Material(
-        color: colors.surface.withValues(alpha: context.isDark ? 0.6 : 0.92),
-        shape: const CircleBorder(),
-        elevation: context.isDark ? 0 : 4,
-        shadowColor: Colors.black.withValues(alpha: 0.18),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: onFavoriteToggle,
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? colors.error : colors.onSurface,
-              size: 20,
-            ),
-          ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.surface.withValues(alpha: context.isDark ? 0.6 : 0.92),
+          shape: BoxShape.circle,
+          boxShadow: context.isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: AnimatedFavoriteButton(
+          isFavorite: isFavorite,
+          onToggle: (_) => onFavoriteToggle?.call(),
+          size: 20,
+          normalColor: colors.onSurface.withValues(alpha: 0.7),
+          favoriteColor: colors.error,
+          hasBackground: false,
         ),
       ),
     );

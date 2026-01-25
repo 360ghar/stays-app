@@ -4,6 +4,7 @@ import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
 import 'package:stays_app/app/ui/widgets/cards/property_grid_card.dart';
 import 'package:stays_app/app/ui/widgets/common/section_header.dart';
+import 'package:stays_app/app/ui/widgets/common/animated_widgets.dart';
 
 /// A reusable horizontal scrolling section for property cards.
 /// Displays a section title and a horizontally scrollable list of property cards.
@@ -84,20 +85,23 @@ class PropertyHorizontalSection extends StatelessWidget {
             itemBuilder: (context, index) {
               final property = properties[index];
               final width = cardWidth ?? 240;
-              return RepaintBoundary(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 14),
-                  child: SizedBox(
-                    width: width,
-                    child: PropertyGridCard(
-                      property: property,
-                      isCompact: true,
-                      heroPrefix: '${sectionPrefix}_$index',
-                      isFavorite: isPropertyFavorite?.call(property.id) ?? false,
-                      onTap: () => onPropertyTap?.call(property),
-                      onFavoriteToggle: onFavoriteToggle != null
-                          ? () => onFavoriteToggle!(property)
-                          : null,
+              return StaggeredListItem(
+                index: index,
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 14),
+                    child: SizedBox(
+                      width: width,
+                      child: PropertyGridCard(
+                        property: property,
+                        isCompact: true,
+                        heroPrefix: '${sectionPrefix}_$index',
+                        isFavorite: isPropertyFavorite?.call(property.id) ?? false,
+                        onTap: () => onPropertyTap?.call(property),
+                        onFavoriteToggle: onFavoriteToggle != null
+                            ? () => onFavoriteToggle!(property)
+                            : null,
+                      ),
                     ),
                   ),
                 ),
