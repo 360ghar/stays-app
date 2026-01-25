@@ -1,13 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 
-class ListingController extends GetxController {
+class ListingController extends BaseController {
   ListingController({required PropertiesRepository repository})
     : _repository = repository;
 
@@ -17,9 +18,7 @@ class ListingController extends GetxController {
   final ScrollController scrollController = ScrollController();
 
   final RxList<Property> listings = <Property>[].obs;
-  final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
-  final RxString errorMessage = ''.obs;
   final RxInt currentPage = 1.obs;
   final RxInt totalPages = 1.obs;
   final RxInt pageSize = 20.obs;
@@ -44,7 +43,7 @@ class ListingController extends GetxController {
   @override
   void onClose() {
     scrollController.dispose();
-    _filterWorker?.dispose();
+    // Worker is automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
@@ -85,7 +84,7 @@ class ListingController extends GetxController {
     } else {
       _activeFilters = _filterController!.filterFor(FilterScope.explore);
     }
-    _filterWorker = debounce<UnifiedFilterModel>(
+    _filterWorker = trackWorker(debounce<UnifiedFilterModel>(
       _filterController!.rxFor(FilterScope.locate),
       (filters) async {
         if (_activeFilters == filters) return;
@@ -93,7 +92,7 @@ class ListingController extends GetxController {
         await fetch(pageOverride: 1, jumpToTop: true);
       },
       time: const Duration(milliseconds: 150),
-    );
+    ));
   }
 
   Map<String, dynamic>? _buildFilters() {

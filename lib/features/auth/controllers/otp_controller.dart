@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'auth_controller.dart';
 
 enum OTPType { signup, forgotPassword }
@@ -222,56 +223,10 @@ class OTPController extends GetxController {
   }
 
   void _showSuccessSnackbar(String message) {
-    Get.snackbar(
-      '',
-      '',
-      titleText: const Text(
-        'Success',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
-      ),
-      messageText: Text(
-        message,
-        style: const TextStyle(color: Colors.white70, fontSize: 14),
-      ),
-      backgroundColor: const Color(0xFF4CAF50).withValues(alpha: 0.9),
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 2),
-      snackPosition: SnackPosition.TOP,
-      icon: const Icon(
-        Icons.check_circle_outline,
-        color: Colors.white,
-        size: 20,
-      ),
-    );
+    AppSnackbar.success(title: 'Success', message: message);
   }
 
   void _showErrorSnackbar(String message) {
-    Get.snackbar(
-      '',
-      '',
-      titleText: const Text(
-        'Error',
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
-      ),
-      messageText: Text(
-        message,
-        style: const TextStyle(color: Colors.white70, fontSize: 14),
-      ),
-      backgroundColor: const Color(0xFFE91E63).withValues(alpha: 0.9),
-      borderRadius: 12,
-      margin: const EdgeInsets.all(16),
-      duration: const Duration(seconds: 2),
-      snackPosition: SnackPosition.TOP,
-      icon: const Icon(Icons.error_outline, color: Colors.white, size: 20),
-    );
+    AppSnackbar.error(title: 'Error', message: message);
   }
 }

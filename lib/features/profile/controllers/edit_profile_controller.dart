@@ -4,13 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
-import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
-class EditProfileController extends GetxController {
+class EditProfileController extends BaseController {
   EditProfileController({
     required ProfileRepository profileRepository,
     required ProfileController profileController,
@@ -40,10 +41,12 @@ class EditProfileController extends GetxController {
   late final TextEditingController dobController;
 
   final Rx<DateTime?> dateOfBirth = Rx<DateTime?>(null);
-  final RxBool isSaving = false.obs;
   final RxBool isUploadingImage = false.obs;
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxString avatarUrl = ''.obs;
+
+  /// Alias for isLoading from BaseController for backwards compatibility
+  RxBool get isSaving => isLoading;
 
   String? get _firstName => firstNameController.text.trim().isEmpty
       ? null
@@ -60,17 +63,17 @@ class EditProfileController extends GetxController {
     _initializeFields();
 
     // Listen for profile changes and update form fields accordingly
-    _profileChangeWorker = ever(_profileController.user, (UserModel? user) {
+    _profileChangeWorker = trackWorker(ever(_profileController.user, (UserModel? user) {
       if (user != null) {
         _updateFieldsFromUser(user);
       }
-    });
+    }));
 
-    _authChangeWorker = ever(_authController.currentUser, (UserModel? user) {
+    _authChangeWorker = trackWorker(ever(_authController.currentUser, (UserModel? user) {
       if (user != null) {
         _updateFieldsFromUser(user);
       }
-    });
+    }));
   }
 
   void _initializeFields() {
@@ -102,8 +105,7 @@ class EditProfileController extends GetxController {
 
   @override
   void onClose() {
-    _profileChangeWorker.dispose();
-    _authChangeWorker.dispose();
+    // Workers are automatically disposed by BaseController via trackWorker
     firstNameController.dispose();
     lastNameController.dispose();
     emailController.dispose();
@@ -142,21 +144,19 @@ class EditProfileController extends GetxController {
       );
       if (picked == null) return;
       if (kIsWeb) {
-        Get.snackbar(
-          'Unsupported',
-          'Image uploads are not supported on web builds yet.',
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.warning(
+          title: 'Unsupported',
+          message: 'Image uploads are not supported on web builds yet.',
         );
         return;
       }
       final file = File(picked.path);
       selectedImage.value = file;
-    } catch (e, stack) {
-      AppLogger.error('Image picker failed', e, stack);
-      Get.snackbar(
-        'Image picker',
-        'Failed to pick image. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+    } catch (e) {
+      handleError(e);
+      AppSnackbar.error(
+        title: 'Image picker',
+        message: 'Failed to pick image. Please try again.',
       );
     }
   }
@@ -196,13 +196,12 @@ class EditProfileController extends GetxController {
   }
 
   Future<void> save() async {
-    if (isSaving.value) return;
+    if (isLoading.value) return;
     if (!(formKey.currentState?.validate() ?? false)) {
       return;
     }
 
-    try {
-      isSaving.value = true;
+    final result = await executeWithErrorHandling(() async {
       String? uploadedUrl;
 
       if (selectedImage.value != null) {
@@ -227,22 +226,21 @@ class EditProfileController extends GetxController {
 
       _profileController.updateUser(updated);
       selectedImage.value = null;
+      return updated;
+    });
+    isUploadingImage.value = false;
+
+    if (result != null) {
       Get.back(result: true);
-      Get.snackbar(
-        'Profile updated',
-        'Your profile changes have been saved.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.success(
+        title: 'Profile updated',
+        message: 'Your profile changes have been saved.',
       );
-    } catch (e, stack) {
-      AppLogger.error('Failed to update profile', e, stack);
-      Get.snackbar(
-        'Update failed',
-        'We could not save your changes. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Update failed',
+        message: 'We could not save your changes. Please try again.',
       );
-    } finally {
-      isUploadingImage.value = false;
-      isSaving.value = false;
     }
   }
 

@@ -36,14 +36,15 @@ class StorageService extends GetxService {
   }
 
   // Secure token management
+  // DEPRECATED: Prefer using TokenService for token operations
   static const _tokenExpiresAtKey = 'token_expires_at';
 
+  @Deprecated('Use TokenService.storeTokens() instead for centralized token management')
   Future<void> saveTokens({
     required String accessToken,
     String? refreshToken,
     String? expiresAt,
   }) async {
-    // Write with duplicate-safe fallback for iOS Keychain (-25299)
     await _writeSecure(_accessTokenKey, accessToken);
     if (refreshToken != null) {
       await _writeSecure(_refreshTokenKey, refreshToken);
@@ -53,32 +54,34 @@ class StorageService extends GetxService {
     } else {
       await _deleteSecure(_tokenExpiresAtKey);
     }
-    // Sync to temp storage for middleware
-    await _syncTokensToTemp();
   }
 
+  @Deprecated('Use TokenService.accessToken instead')
   Future<String?> getAccessToken() async {
     return await _secureStorage.read(key: _accessTokenKey);
   }
 
+  @Deprecated('Use TokenService.refreshToken instead')
   Future<String?> getRefreshToken() async {
     return await _secureStorage.read(key: _refreshTokenKey);
   }
 
+  @Deprecated('Use TokenService.tokenExpiration instead')
   Future<String?> getTokenExpiration() async {
     return await _secureStorage.read(key: _tokenExpiresAtKey);
   }
 
+  @Deprecated('Use TokenService.hasValidToken instead')
   Future<bool> hasAccessToken() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
   }
 
+  @Deprecated('Use TokenService.clearTokens() instead')
   Future<void> clearTokens() async {
     await _deleteSecure(_accessTokenKey);
     await _deleteSecure(_refreshTokenKey);
     await _deleteSecure(_tokenExpiresAtKey);
-    // No temp cache of tokens
   }
 
   Future<void> _writeSecure(String key, String? value) async {
@@ -127,9 +130,6 @@ class StorageService extends GetxService {
   Future<void> clearUserData() async {
     await _box.remove(_userDataKey);
   }
-
-  // Deprecated: temp sync removed for security. Kept as a no-op to avoid breakage.
-  Future<void> _syncTokensToTemp() async {}
 
   // Cache management (non-sensitive data)
   Future<void> cache(String key, Map<String, dynamic> value) async {

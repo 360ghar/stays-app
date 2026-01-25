@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
@@ -140,9 +141,9 @@ class ListingDetailController extends BaseController {
 
     if (_wishlistRepository == null) {
       AppLogger.error('WishlistRepository not available');
-      Get.snackbar(
-        'Error',
-        'Wishlist service not available. Please try again.',
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Wishlist service not available. Please try again.',
       );
       return;
     }
@@ -176,14 +177,16 @@ class ListingDetailController extends BaseController {
         );
       }
 
-      Get.snackbar(
-        isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
-        '${property.name} updated.',
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.success(
+        title: isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
+        message: '${property.name} updated.',
       );
     } catch (e) {
       AppLogger.error('Error toggling favorite', e);
-      Get.snackbar('Error', 'Could not update wishlist. Please try again.');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Could not update wishlist. Please try again.',
+      );
     }
   }
 

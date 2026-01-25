@@ -2,15 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/trip_model.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/helpers/booking_helpers.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
-class ProfileController extends GetxController {
+class ProfileController extends BaseController {
   ProfileController({
     required ProfileRepository profileRepository,
     required AuthController authController,
@@ -29,10 +32,8 @@ class ProfileController extends GetxController {
   final RxnString avatarUrl = RxnString();
   final Rx<DateTime?> memberSince = Rx<DateTime?>(null);
 
-  final RxBool isLoading = false.obs;
   final RxBool isRefreshing = false.obs;
   final RxBool isActionInProgress = false.obs;
-  final RxString errorMessage = ''.obs;
 
   final RxDouble completion = 0.0.obs;
   final RxList<TripModel> pastTrips = <TripModel>[].obs;
@@ -61,27 +62,21 @@ class ProfileController extends GetxController {
 
   Future<void> loadProfile({bool forceRefresh = false}) async {
     if (isLoading.value && !forceRefresh) return;
-    try {
-      if (forceRefresh) {
-        isRefreshing.value = true;
-      } else {
-        isLoading.value = true;
-      }
+    if (forceRefresh) {
+      isRefreshing.value = true;
+    }
+    await executeWithErrorHandling(() async {
       final profile = await _profileRepository.getProfile();
       _authController.currentUser.value = profile;
       _applyUser(profile);
       await _loadPastTrips();
-    } catch (e, stack) {
-      AppLogger.error('Failed to load profile', e, stack);
-      errorMessage.value = 'Failed to load your profile. Please try again.';
-      Get.snackbar(
-        'Profile',
-        errorMessage.value,
-        snackPosition: SnackPosition.BOTTOM,
+    });
+    isRefreshing.value = false;
+    if (errorMessage.isNotEmpty) {
+      AppSnackbar.error(
+        title: 'Profile',
+        message: 'Failed to load your profile. Please try again.',
       );
-    } finally {
-      isLoading.value = false;
-      isRefreshing.value = false;
     }
   }
 
@@ -186,7 +181,7 @@ class ProfileController extends GetxController {
     for (final trip in pastTrips) {
       final diff = trip.checkOut.difference(trip.checkIn).inDays;
       nights += max(diff, 1);
-      if (_shouldIncludeInSpend(trip.status)) {
+      if (shouldCountBookingStatus(trip.status)) {
         spend += trip.totalCost ?? 0;
       }
       final key = trip.propertyName;
@@ -197,26 +192,6 @@ class ProfileController extends GetxController {
     favoriteDestination.value = destinations.entries
         .reduce((a, b) => a.value >= b.value ? a : b)
         .key;
-  }
-
-  bool _shouldIncludeInSpend(String? status) {
-    if (status == null) return false;
-    final normalized = status.trim().toLowerCase();
-    if (normalized.isEmpty) return false;
-
-    const negativeKeywords = [
-      'cancel',
-      'refund',
-      'fail',
-      'decline',
-      'reject',
-      'void',
-      'expired',
-    ];
-    if (negativeKeywords.any((keyword) => normalized.contains(keyword))) {
-      return false;
-    }
-    return true;
   }
 
   void updateUser(UserModel updated) {
@@ -311,17 +286,15 @@ class ProfileController extends GetxController {
       await _authController.logout();
       user.value = null;
       Get.offAllNamed(Routes.login);
-      Get.snackbar(
-        'Signed out',
-        'You have been logged out safely.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.success(
+        title: 'Signed out',
+        message: 'You have been logged out safely.',
       );
     } catch (e, stack) {
       AppLogger.error('Logout failed', e, stack);
-      Get.snackbar(
-        'Logout failed',
-        'Please try again in a moment.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.error(
+        title: 'Logout failed',
+        message: 'Please try again in a moment.',
       );
     } finally {
       isActionInProgress.value = false;

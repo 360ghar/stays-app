@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
@@ -85,12 +85,9 @@ class SplashController extends BaseController {
     } catch (e, stackTrace) {
       AppLogger.error('CRITICAL STARTUP ERROR: $e', e, stackTrace);
       // If a critical service fails (like Storage), show error and fallback
-      Get.snackbar(
-        'Initialization Failed',
-        'Could not start the app. Please check your connection and restart.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
+      AppSnackbar.error(
+        title: 'Initialization Failed',
+        message: 'Could not start the app. Please check your connection and restart.',
       );
       await Future.delayed(const Duration(seconds: 2));
       unawaited(_navigateToNextScreen(forceLogin: true));

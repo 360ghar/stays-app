@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
@@ -8,12 +9,14 @@ import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/helpers/booking_helpers.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/features/trips/views/widgets/booking_details_sheet.dart';
 
-class TripsController extends GetxController {
+class TripsController extends BaseController {
   final RxList<Map<String, dynamic>> pastBookings =
       <Map<String, dynamic>>[].obs;
-  final RxBool isLoading = false.obs;
 
   late final BookingRepository _bookingRepository;
   PropertiesRepository? _propertiesRepository;
@@ -21,7 +24,6 @@ class TripsController extends GetxController {
 
   final List<Map<String, dynamic>> _allBookings = [];
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
-  Worker? _filterWorker;
 
   @override
   void onInit() {
@@ -40,7 +42,7 @@ class TripsController extends GetxController {
     if (!Get.isRegistered<FilterController>()) return;
     _filterController = Get.find<FilterController>();
     _activeFilters = _filterController!.filterFor(FilterScope.booking);
-    _filterWorker = debounce<UnifiedFilterModel>(
+    trackWorker(debounce<UnifiedFilterModel>(
       _filterController!.rxFor(FilterScope.booking),
       (filters) {
         if (_activeFilters == filters) return;
@@ -48,12 +50,12 @@ class TripsController extends GetxController {
         _applyFilters();
       },
       time: const Duration(milliseconds: 120),
-    );
+    ));
   }
 
   @override
   void onClose() {
-    _filterWorker?.dispose();
+    // Worker is automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
@@ -79,10 +81,9 @@ class TripsController extends GetxController {
       AppLogger.error('Failed to load bookings', error, stackTrace);
       if (forceRefresh || _allBookings.isEmpty) {
         pastBookings.clear();
-        Get.snackbar(
-          'Inquiries unavailable',
-          error.message,
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.error(
+          title: 'Inquiries unavailable',
+          message: error.message,
         );
       }
     } catch (error, stackTrace) {
@@ -93,10 +94,9 @@ class TripsController extends GetxController {
       );
       if (forceRefresh || _allBookings.isEmpty) {
         pastBookings.clear();
-        Get.snackbar(
-          'Inquiries unavailable',
-          'We could not load your inquiries right now. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.error(
+          title: 'Inquiries unavailable',
+          message: 'We could not load your inquiries right now. Please try again.',
         );
       }
     } finally {
@@ -260,10 +260,9 @@ class TripsController extends GetxController {
 
     final parsedId = int.tryParse(bookingId);
     if (parsedId == null) {
-      Get.snackbar(
-        'Unable to cancel',
-        'This inquiry is missing a valid identifier.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Unable to cancel',
+        message: 'This inquiry is missing a valid identifier.',
       );
       return;
     }
@@ -271,24 +270,21 @@ class TripsController extends GetxController {
     final snapshot = _setBookingStatusLocally(bookingId, status: 'cancelled');
     try {
       await _bookingRepository.cancelBooking(bookingId: parsedId);
-      Get.snackbar(
-        'Inquiry cancelled',
-        'Your inquiry has been cancelled.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.success(
+        title: 'Inquiry cancelled',
+        message: 'Your inquiry has been cancelled.',
       );
     } on ApiException catch (error) {
       _restoreBookingSnapshot(snapshot);
-      Get.snackbar(
-        'Unable to cancel',
-        error.message,
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.error(
+        title: 'Unable to cancel',
+        message: error.message,
       );
     } catch (_) {
       _restoreBookingSnapshot(snapshot);
-      Get.snackbar(
-        'Unable to cancel',
-        'We could not cancel this inquiry. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.error(
+        title: 'Unable to cancel',
+        message: 'We could not cancel this inquiry. Please try again.',
       );
     }
   }
@@ -298,13 +294,9 @@ class TripsController extends GetxController {
   int get totalHistoryCount => _allBookings.length;
 
   void rebookHotel(Map<String, dynamic> booking) {
-    Get.snackbar(
-      'Rebooking',
-      'Redirecting to ${booking['hotelName']} inquiry page',
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: Colors.blue[50],
-      colorText: Colors.blue[800],
-      duration: const Duration(seconds: 2),
+    AppSnackbar.info(
+      title: 'Rebooking',
+      message: 'Redirecting to ${booking['hotelName']} inquiry page',
     );
     // In real app: Get.toNamed('/inquiry', arguments: booking);
   }
@@ -334,13 +326,9 @@ class TripsController extends GetxController {
                 return IconButton(
                   onPressed: () {
                     Get.back();
-                    Get.snackbar(
-                      'Thank You!',
-                      'Your ${index + 1} star review has been submitted',
-                      snackPosition: SnackPosition.TOP,
-                      backgroundColor: Colors.green[50],
-                      colorText: Colors.green[800],
-                      duration: const Duration(seconds: 2),
+                    AppSnackbar.success(
+                      title: 'Thank You!',
+                      message: 'Your ${index + 1} star review has been submitted',
                     );
                   },
                   icon: const Icon(
@@ -362,104 +350,11 @@ class TripsController extends GetxController {
 
   void viewBookingDetails(Map<String, dynamic> booking) {
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Title
-            const Text(
-              'Inquiry Details',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            // Details
-            _buildDetailRow('Inquiry ID', booking['id']),
-            _buildDetailRow('Hotel', booking['hotelName']),
-            _buildDetailRow('Location', booking['location']),
-            _buildDetailRow('Check-in', _formatDate(booking['checkIn'])),
-            _buildDetailRow('Check-out', _formatDate(booking['checkOut'])),
-            _buildDetailRow('Guests', '${booking['guests']} guests'),
-            _buildDetailRow('Rooms', '${booking['rooms']} room(s)'),
-            _buildDetailRow(
-              'Total Amount',
-              '\$${booking['totalAmount'].toStringAsFixed(2)}',
-            ),
-            _buildDetailRow(
-              'Status',
-              booking['status'].toString().toUpperCase(),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Actions
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Get.back();
-                      rebookHotel(booking);
-                    },
-                    child: const Text('Inquire Again'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () => Get.back(),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+      BookingDetailsSheet(
+        booking: booking,
+        onRebook: () => rebookHotel(booking),
       ),
       isScrollControlled: true,
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -490,7 +385,7 @@ class TripsController extends GetxController {
 
   double get totalSpent => pastBookings.fold<double>(0, (sum, booking) {
     final status = booking['status']?.toString();
-    if (!_shouldCountBookingStatus(status)) {
+    if (!shouldCountBookingStatus(status)) {
       return sum;
     }
     final amount = booking['totalAmount'];
@@ -508,25 +403,6 @@ class TripsController extends GetxController {
       locations[location] = (locations[location] ?? 0) + 1;
     }
     return locations.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-  }
-
-  bool _shouldCountBookingStatus(String? status) {
-    if (status == null) return false;
-    final normalized = status.trim().toLowerCase();
-    if (normalized.isEmpty) return false;
-    const negativeKeywords = [
-      'cancel',
-      'refund',
-      'fail',
-      'decline',
-      'reject',
-      'void',
-      'expired',
-    ];
-    if (negativeKeywords.any((keyword) => normalized.contains(keyword))) {
-      return false;
-    }
-    return true;
   }
 }
 

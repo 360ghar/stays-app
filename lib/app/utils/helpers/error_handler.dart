@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../ui/theme/app_colors.dart';
 import '../../routes/app_routes.dart';
 import '../exceptions/app_exceptions.dart';
+import '../helpers/app_snackbar.dart';
 import '../logger/app_logger.dart';
 
 class ErrorHandler {
@@ -38,29 +37,18 @@ class ErrorHandler {
         message = 'Server error. Please try again later.';
         break;
     }
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.TOP,
-      backgroundColor: AppColors.error,
-      colorText: Colors.white,
-    );
+    AppSnackbar.error(title: 'Error', message: message);
   }
 
   static void _handleNetworkException(NetworkException error) {
-    Get.snackbar(
-      'Network Error',
-      'Please check your internet connection.',
-      snackPosition: SnackPosition.TOP,
+    AppSnackbar.error(
+      title: 'Network Error',
+      message: 'Please check your internet connection.',
     );
   }
 
   static void _handleAuthException(AuthException error) {
-    Get.snackbar(
-      'Authentication Error',
-      error.message,
-      snackPosition: SnackPosition.TOP,
-    );
+    AppSnackbar.error(title: 'Authentication Error', message: error.message);
     if (error.code == 'token_expired' || error.code == 'invalid_token') {
       Get.offAllNamed(Routes.login);
     }
@@ -68,19 +56,14 @@ class ErrorHandler {
 
   static void _handleValidationException(ValidationException error) {
     final firstError = error.errors.values.first.first;
-    Get.snackbar(
-      'Validation Error',
-      firstError,
-      snackPosition: SnackPosition.TOP,
-    );
+    AppSnackbar.warning(title: 'Validation Error', message: firstError);
   }
 
   static void _handleGenericError(dynamic error) {
     AppLogger.error('Unhandled error', error);
-    Get.snackbar(
-      'Error',
-      'An unexpected error occurred. Please try again.',
-      snackPosition: SnackPosition.TOP,
+    AppSnackbar.error(
+      title: 'Error',
+      message: 'An unexpected error occurred. Please try again.',
     );
   }
 }

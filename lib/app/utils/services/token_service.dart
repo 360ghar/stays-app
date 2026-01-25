@@ -71,8 +71,21 @@ class TokenService extends GetxService {
   final Completer<void> _ready = Completer<void>();
   bool _isRefreshing = false;
   bool _supabaseSessionAvailable = false;
+  bool _initializationComplete = false;
+  Object? _initializationError;
 
-  Future<void> get ready => _ready.future;
+  /// Returns a Future that completes when initialization is done.
+  /// Throws if initialization failed.
+  Future<void> get ready async {
+    await _ready.future;
+    if (_initializationError != null) {
+      throw _initializationError!;
+    }
+  }
+
+  /// Returns true if initialization has completed successfully.
+  /// Use this for synchronous checks when you need to know if the service is ready.
+  bool get isReady => _initializationComplete && _initializationError == null;
 
   @override
   void onInit() {
@@ -118,6 +131,18 @@ class TokenService extends GetxService {
   }
 
   String? get accessToken {
+    // Safe access even before initialization
+    if (!_initializationComplete) {
+      // Try Supabase session as fallback before init completes
+      try {
+        final supabaseToken =
+            Supabase.instance.client.auth.currentSession?.accessToken;
+        if (supabaseToken != null) return supabaseToken;
+      } catch (_) {
+        // Supabase not ready yet
+      }
+      return null;
+    }
     if (_supabaseSessionAvailable) {
       final supabaseToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
@@ -129,6 +154,19 @@ class TokenService extends GetxService {
   String? get refreshToken => _currentToken?.refreshToken;
 
   bool get hasValidToken {
+    // Safe access even before initialization - check Supabase first
+    try {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null && session.isExpired == false) {
+        return true;
+      }
+    } catch (_) {
+      // Supabase not ready yet
+    }
+    // If not initialized yet, don't trust in-memory token state
+    if (!_initializationComplete) {
+      return false;
+    }
     if (_supabaseSessionAvailable) {
       final session = Supabase.instance.client.auth.currentSession;
       if (session != null && session.isExpired == false) {
@@ -139,6 +177,18 @@ class TokenService extends GetxService {
   }
 
   bool get needsRefresh {
+    // If not initialized, can't determine refresh need from in-memory state
+    if (!_initializationComplete) {
+      try {
+        final session = Supabase.instance.client.auth.currentSession;
+        if (session != null && session.isExpired == true) {
+          return true;
+        }
+      } catch (_) {
+        // Supabase not ready yet
+      }
+      return false;
+    }
     if (_supabaseSessionAvailable) {
       final session = Supabase.instance.client.auth.currentSession;
       if (session != null && session.isExpired == true) {
@@ -247,6 +297,12 @@ class TokenService extends GetxService {
       if (isAuthenticated.value) {
         _startRefreshTimer();
       }
+
+      _initializationComplete = true;
+    } catch (e, s) {
+      AppLogger.error('TokenService initialization failed', e, s);
+      _initializationError = e;
+      _initializationComplete = false;
     } finally {
       if (!_ready.isCompleted) {
         _ready.complete();

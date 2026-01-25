@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LocationService extends GetxService {
@@ -83,10 +84,9 @@ class LocationService extends GetxService {
 
       final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar(
-          'Location Services',
-          'Please enable location services to get better recommendations',
-          snackPosition: SnackPosition.TOP,
+        AppSnackbar.warning(
+          title: 'Location Services',
+          message: 'Please enable location services to get better recommendations',
         );
         return null;
       }
@@ -100,10 +100,9 @@ class LocationService extends GetxService {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Location Permission',
-          'Location permissions are permanently denied, please enable from settings',
-          snackPosition: SnackPosition.TOP,
+        AppSnackbar.warning(
+          title: 'Location Permission',
+          message: 'Location permissions are permanently denied, please enable from settings',
         );
         return null;
       }

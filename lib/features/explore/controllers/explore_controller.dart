@@ -9,6 +9,7 @@ import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/constants/app_constants.dart';
 
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
@@ -128,18 +129,16 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       _locationService.clearSelectedLocation();
       await _locationService.updateLocation(ensurePrecise: true);
       await loadProperties();
-      Get.snackbar(
-        'Location Updated',
-        'Using your current location for nearby stays',
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.success(
+        title: 'Location Updated',
+        message: 'Using your current location for nearby stays',
         duration: const Duration(seconds: 2),
       );
     } catch (e) {
       AppLogger.error('Failed to update location', e);
-      Get.snackbar(
-        'Location',
-        'Unable to get your location. Check permissions.',
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.warning(
+        title: 'Location',
+        message: 'Unable to get your location. Check permissions.',
       );
     } finally {
       isLoading.value = false;
@@ -442,14 +441,16 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
         }
       }
       _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
-      Get.snackbar(
-        isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
-        '${property.name} updated.',
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.success(
+        title: isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
+        message: '${property.name} updated.',
       );
     } catch (e) {
       AppLogger.error('Error toggling favorite', e);
-      Get.snackbar('Error', 'Could not update wishlist. Please try again.');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Could not update wishlist. Please try again.',
+      );
     }
   }
 

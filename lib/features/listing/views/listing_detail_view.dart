@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:stays_app/app/ui/theme/app_dimensions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
@@ -941,7 +942,10 @@ class ListingDetailView extends GetView<ListingDetailController> {
     final lng = listing.longitude;
 
     if (lat == null || lng == null) {
-      Get.snackbar('Error', 'Location coordinates not available');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Location coordinates not available',
+      );
       return;
     }
 
@@ -957,11 +961,17 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (await canLaunchUrl(Uri.parse(webUrl))) {
           await launchUrl(Uri.parse(webUrl));
         } else {
-          Get.snackbar('Error', 'Could not open maps application');
+          AppSnackbar.error(
+            title: 'Error',
+            message: 'Could not open maps application',
+          );
         }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not open maps application');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Could not open maps application',
+      );
     }
   }
 
