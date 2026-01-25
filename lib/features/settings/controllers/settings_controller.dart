@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/services/locale_service.dart';
 import 'package:stays_app/l10n/localization_service.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
@@ -25,7 +24,7 @@ class ThemeOption {
   final IconData icon;
 }
 
-class SettingsController extends BaseController {
+class SettingsController extends GetxController {
   SettingsController({required ThemeController themeController})
     : _themeController = themeController;
 

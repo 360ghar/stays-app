@@ -89,7 +89,13 @@ class AuthRepository {
     try {
       await _provider.logout();
     } finally {
-      await _storage.clearTokens();
+      try {
+        final tokenService = Get.find<TokenService>();
+        await tokenService.ready;
+        await tokenService.clearTokens();
+      } catch (_) {
+        await _storage.clearTokens();
+      }
       await _storage.clearUserData();
     }
   }
@@ -124,23 +130,14 @@ class AuthRepository {
   }
 
   Future<void> _persistTokens(ProviderAuthResult res) async {
+    if (res.accessToken == null) return;
     try {
-      if (res.accessToken != null) {
-        // Centralize via TokenService so in-memory state and storage stay in sync
-        try {
-          final tokenService = Get.find<TokenService>();
-          await tokenService.storeTokens(
-            accessToken: res.accessToken!,
-            refreshToken: res.refreshToken,
-          );
-        } catch (_) {
-          // Fallback if TokenService hasn't finished async init yet
-          await _storage.saveTokens(
-            accessToken: res.accessToken!,
-            refreshToken: res.refreshToken,
-          );
-        }
-      }
+      final tokenService = Get.find<TokenService>();
+      await tokenService.ready;
+      await tokenService.storeTokens(
+        accessToken: res.accessToken!,
+        refreshToken: res.refreshToken,
+      );
     } catch (e) {
       AppLogger.warning('Failed to persist tokens: $e');
     }

@@ -1,14 +1,15 @@
-import 'package:get/get.dart';
-
 import 'dart:async';
+
+import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
-import '../services/storage_service.dart';
-import '../../utils/services/token_service.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/services/connectivity_service.dart';
 import '../../utils/services/error_service.dart';
+import '../../utils/services/token_service.dart';
+import '../services/storage_service.dart';
 
 /// Retry configuration for transient failures
 const int _maxRetries = 3;
@@ -185,7 +186,7 @@ abstract class BaseProvider extends GetConnect {
     Decoder<T>? decoder,
   }) async {
     return _executeWithRetry(
-      () => get<T>(
+      () => super.get<T>(
         url,
         headers: headers,
         contentType: contentType,
@@ -197,24 +198,140 @@ abstract class BaseProvider extends GetConnect {
 
   /// Execute a POST request with automatic retry for transient failures
   Future<Response<T>> postWithRetry<T>(
-    String url,
+    String? url,
     dynamic body, {
     String? contentType,
     Map<String, String>? headers,
     Map<String, dynamic>? query,
     Decoder<T>? decoder,
+    Progress? uploadProgress,
   }) async {
     return _executeWithRetry(
-      () => post<T>(
+      () => super.post<T>(
         url,
         body,
         contentType: contentType,
         headers: headers,
         query: query,
         decoder: decoder,
+        uploadProgress: uploadProgress,
       ),
     );
   }
+
+  /// Execute a PUT request with automatic retry for transient failures
+  Future<Response<T>> putWithRetry<T>(
+    String url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) async {
+    return _executeWithRetry(
+      () => super.put<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      ),
+    );
+  }
+
+  /// Execute a DELETE request with automatic retry for transient failures
+  Future<Response<T>> deleteWithRetry<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) async {
+    return _executeWithRetry(
+      () => super.delete<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      ),
+    );
+  }
+
+  @override
+  Future<Response<T>> get<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) =>
+      getWithRetry<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      );
+
+  @override
+  Future<Response<T>> post<T>(
+    String? url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) =>
+      postWithRetry<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      );
+
+  @override
+  Future<Response<T>> put<T>(
+    String url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) =>
+      putWithRetry<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      );
+
+  @override
+  Future<Response<T>> delete<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) =>
+      deleteWithRetry<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      );
 
   /// Internal retry logic with exponential backoff
   Future<Response<T>> _executeWithRetry<T>(
@@ -224,6 +341,12 @@ abstract class BaseProvider extends GetConnect {
     Duration delay = _initialRetryDelay;
 
     while (true) {
+      if (!await _hasNetworkConnection()) {
+        throw ApiException(
+          message: 'No internet connection. Please check your network and try again.',
+          statusCode: 0,
+        );
+      }
       try {
         final response = await operation();
 
@@ -252,6 +375,13 @@ abstract class BaseProvider extends GetConnect {
           delay *= 2;
           continue;
         }
+        if (_isRetryableError(e)) {
+          AppLogger.warning('Network request failed after $attempt retries: $e');
+          throw ApiException(
+            message: _networkErrorMessage(e),
+            statusCode: 408,
+          );
+        }
         rethrow;
       }
     }
@@ -264,5 +394,29 @@ abstract class BaseProvider extends GetConnect {
         errorStr.contains('connection') ||
         errorStr.contains('socket') ||
         errorStr.contains('network');
+  }
+
+  Future<bool> _hasNetworkConnection() async {
+    if (!Get.isRegistered<ConnectivityService>()) {
+      return true;
+    }
+    final service = Get.find<ConnectivityService>();
+    if (service.isCurrentlyOnline) {
+      return true;
+    }
+    return service.checkConnection();
+  }
+
+  String _networkErrorMessage(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    if (errorStr.contains('timeout')) {
+      return 'Request timed out. Please try again.';
+    }
+    if (errorStr.contains('socket') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('network')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    return 'Network request failed. Please try again.';
   }
 }

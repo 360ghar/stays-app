@@ -160,9 +160,9 @@ class WidgetOptimizer {
 
 /// Memoized widget that rebuilds only when necessary
 class _MemoizedWidget extends StatefulWidget {
-  final Widget Function() builder;
-
   const _MemoizedWidget({required this.builder});
+
+  final Widget Function() builder;
 
   @override
   State<_MemoizedWidget> createState() => _MemoizedWidgetState();
@@ -262,10 +262,10 @@ class WidgetPerformanceAnalyzer {
 }
 
 class _PerformanceWrapper extends StatefulWidget {
+  const _PerformanceWrapper({required this.widgetName, required this.child});
+
   final String widgetName;
   final Widget child;
-
-  const _PerformanceWrapper({required this.widgetName, required this.child});
 
   @override
   State<_PerformanceWrapper> createState() => _PerformanceWrapperState();

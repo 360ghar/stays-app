@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:stays_app/app/ui/theme/app_dimensions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
@@ -22,7 +24,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
       extendBody: true,
       extendBodyBehindAppBar: false,
       body: Obx(() {
-        // Only rebuild this when loading/error states or listing null-check changes
         if (controller.isLoading.value && controller.listing.value == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -34,8 +35,68 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (listing == null) {
           return const Center(child: Text('Listing not found'));
         }
-        // Pass listing to a separate widget to avoid rebuilding
-        return _ListingContent(listing: listing, controller: controller);
+
+        final amenities = (listing.amenities ?? [])
+            .where((a) => a.trim().isNotEmpty)
+            .toList();
+
+        final features = (listing.features ?? [])
+            .where((f) => f.trim().isNotEmpty)
+            .toList();
+
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+
+          slivers: [
+            _buildHeroSliver(context, listing),
+
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+              ),
+
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildPrimaryDetails(context, listing),
+
+                  if (amenities.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildAmenitiesSection(context, amenities),
+                    ),
+
+                  if (listing.hasVirtualTour)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildVirtualTourSection(context, listing),
+                    ),
+
+                  if (features.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildFeaturesSection(context, features),
+                    ),
+
+                  if (listing.ownerName?.isNotEmpty == true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildHostSection(context, listing),
+                    ),
+
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                    child: _buildLocationSection(context, listing),
+                  ),
+
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
+                ]),
+              ),
+            ),
+          ],
+        );
       }),
 
       bottomNavigationBar: Obx(() {
@@ -55,17 +116,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
     return SliverAppBar(
       backgroundColor: colors.surface,
-
-      expandedHeight: 360,
-
+      expandedHeight: context.responsiveHeroHeight,
       pinned: true,
-
       stretch: true,
-
       automaticallyImplyLeading: false,
-
       toolbarHeight: 64,
-
       titleSpacing: 0,
 
       flexibleSpace: LayoutBuilder(
@@ -614,7 +669,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
           if (lat != null && lng != null) ...[
             const SizedBox(height: 16),
             Container(
-              height: 150,
+              height: AppDimensions.mapHeight,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -887,7 +942,10 @@ class ListingDetailView extends GetView<ListingDetailController> {
     final lng = listing.longitude;
 
     if (lat == null || lng == null) {
-      Get.snackbar('Error', 'Location coordinates not available');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Location coordinates not available',
+      );
       return;
     }
 
@@ -903,11 +961,17 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (await canLaunchUrl(Uri.parse(webUrl))) {
           await launchUrl(Uri.parse(webUrl));
         } else {
-          Get.snackbar('Error', 'Could not open maps application');
+          AppSnackbar.error(
+            title: 'Error',
+            message: 'Could not open maps application',
+          );
         }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not open maps application');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Could not open maps application',
+      );
     }
   }
 
@@ -1084,60 +1148,6 @@ class _AmenityTile extends StatelessWidget {
             style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Extracted content widget to avoid rebuilding entire content on every Rx change.
-/// Only rebuilds when the listing data itself changes, not on loading/error state changes.
-class _ListingContent extends StatelessWidget {
-  const _ListingContent({
-    required this.listing,
-    required this.controller,
-  });
-
-  final Property listing;
-  final ListingDetailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    const parentView = ListingDetailView();
-    final amenities = listing.amenities ?? const [];
-    final features = listing.features ?? const [];
-    final hasVirtualTour = listing.virtualTourUrl?.isNotEmpty == true;
-    final hasHost = listing.ownerName?.isNotEmpty == true;
-
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        parentView._buildHeroSliver(context, listing),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              parentView._buildPrimaryDetails(context, listing),
-              if (amenities.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                parentView._buildAmenitiesSection(context, amenities),
-              ],
-              if (hasVirtualTour) ...[
-                const SizedBox(height: 24),
-                parentView._buildVirtualTourSection(context, listing),
-              ],
-              if (features.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                parentView._buildFeaturesSection(context, features),
-              ],
-              if (hasHost) ...[
-                const SizedBox(height: 24),
-                parentView._buildHostSection(context, listing),
-              ],
-              const SizedBox(height: 24),
-              parentView._buildLocationSection(context, listing),
-            ]),
           ),
         ),
       ],

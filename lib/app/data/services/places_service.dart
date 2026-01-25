@@ -4,20 +4,22 @@ import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/extensions/http_extensions.dart';
 
 class PlacePrediction {
+  const PlacePrediction({required this.description, required this.placeId});
+
   final String description;
   final String placeId;
-  const PlacePrediction({required this.description, required this.placeId});
 }
 
 class PlaceDetailsResult {
-  final double lat;
-  final double lng;
-  final String name; // formatted address or name
   const PlaceDetailsResult({
     required this.lat,
     required this.lng,
     required this.name,
   });
+
+  final double lat;
+  final double lng;
+  final String name; // formatted address or name
 }
 
 class PlacesService extends GetConnect {

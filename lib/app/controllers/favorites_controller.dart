@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
-
-class FavoritesController extends BaseController {
+class FavoritesController extends GetxController {
   FavoritesController();
 
   final RxSet<int> favoriteIds = <int>{}.obs;

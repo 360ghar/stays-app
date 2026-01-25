@@ -1,62 +1,46 @@
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'config/app_config.dart';
 import 'app/bindings/initial_binding.dart';
-import 'app/data/services/crash_reporting_service.dart';
-import 'app/data/services/locale_service.dart';
-import 'app/data/services/theme_service.dart';
 import 'app/routes/app_pages.dart';
+import 'l10n/localization_service.dart';
+import 'app/data/services/locale_service.dart';
 import 'app/ui/theme/app_theme.dart';
-import 'app/utils/performance/performance_monitor.dart';
+import 'app/data/services/theme_service.dart';
+import 'app/data/services/supabase_service.dart';
+import 'app/data/services/crash_reporting_service.dart';
+import 'features/settings/controllers/theme_controller.dart';
 import 'app/utils/security/cert_pinning.dart';
+import 'app/utils/logger/app_logger.dart';
+import 'app/utils/performance/performance_monitor.dart';
 import 'app/utils/security/security_service.dart';
 import 'app/utils/services/error_service.dart';
-import 'config/app_config.dart';
-import 'features/settings/controllers/theme_controller.dart';
-import 'l10n/localization_service.dart';
 
 Future<void> main() async {
-  // Wrap the entire app in a zone to catch all errors
-  runZonedGuarded<Future<void>>(() async {
+  await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
-
-    // Load environment and config
     await dotenv.load(fileName: '.env.prod');
     AppConfig.setConfig(AppConfig.prod());
-
-    // Initialize Firebase first
-    await Firebase.initializeApp();
-
-    // Initialize Crashlytics early to catch startup errors
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-
-    // Register core services
     if (!Get.isRegistered<ErrorService>()) {
       Get.put<ErrorService>(ErrorService(), permanent: true);
     }
     if (!Get.isRegistered<PerformanceMonitor>()) {
       Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
     }
+    SecurityService().validateApiKeys();
 
-    // Initialize crash reporting service
-    final crashReportingService = CrashReportingService();
-    await crashReportingService.init();
-    Get.put<CrashReportingService>(crashReportingService, permanent: true);
-
-    // Validate API keys in production
-    if (Get.isRegistered<SecurityService>()) {
-      SecurityService.I.validateApiKeys();
-    }
-
-    // Set up certificate pinning for production
+    // Initialize Supabase service (required before other services)
+    final supabaseService = SupabaseService(
+      url: AppConfig.I.supabaseUrl,
+      anonKey: AppConfig.I.supabaseAnonKey,
+    );
     final pinsRaw = dotenv.env['API_CERT_SHA256'];
     if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
       final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
@@ -78,6 +62,8 @@ Future<void> main() async {
     late LocaleService localeService;
 
     await Future.wait([
+      // Supabase initialization (critical)
+      supabaseService.initialize(),
       // Theme service initialization
       ThemeService().init().then((service) => themeService = service),
       // Locale service initialization
@@ -90,6 +76,9 @@ Future<void> main() async {
     ]);
 
     // Register services with GetX after initialization
+    if (!Get.isRegistered<SupabaseService>()) {
+      Get.put<SupabaseService>(supabaseService, permanent: true);
+    }
     Get.put<ThemeService>(themeService, permanent: true);
     Get.put<LocaleService>(localeService, permanent: true);
 
@@ -101,9 +90,15 @@ Future<void> main() async {
     await LocalizationService.init(localeService);
     unawaited(Get.updateLocale(LocalizationService.initialLocale));
     runApp(const MyApp());
-  }, (error, stack) {
-    // Catch any errors that weren't caught by Flutter's error handling
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+  }, (error, stackTrace) async {
+    AppLogger.error('Uncaught zone error', error, stackTrace);
+    if (Get.isRegistered<CrashReportingService>()) {
+      await Get.find<CrashReportingService>().recordError(
+        error,
+        stackTrace: stackTrace,
+        fatal: true,
+      );
+    }
   });
 }
 

@@ -19,6 +19,17 @@ class AppSnackbar {
   static const double _borderRadius = 16.0;
   static const EdgeInsets _margin = EdgeInsets.all(16);
 
+  /// Check if GetX is ready to show snackbars (has valid overlay context)
+  static bool get _canShowSnackbar {
+    try {
+      // Try to access the current route - if it fails, navigator isn't ready
+      Get.currentRoute;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Show a success snackbar
   static void success({
     required String title,
@@ -92,6 +103,7 @@ class AppSnackbar {
 
   /// Show a simple message snackbar (no title)
   static void show(String message, {bool isError = false}) {
+    if (!_canShowSnackbar) return; // Skip if GetX overlay isn't ready
     final colors = Get.theme.colorScheme;
     Get.snackbar(
       '',
@@ -119,6 +131,7 @@ class AppSnackbar {
     required Color iconColor,
     required Duration duration,
   }) {
+    if (!_canShowSnackbar) return; // Skip if GetX overlay isn't ready
     Get.snackbar(
       '',
       '',

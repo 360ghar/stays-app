@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import '../data/models/unified_filter_model.dart';
 import '../ui/widgets/filters/property_filter_sheet.dart';
 
 enum FilterScope { explore, wishlist, booking, locate }
 
-class FilterController extends BaseController {
+class FilterController extends GetxController {
   FilterController();
 
   final Map<FilterScope, Rx<UnifiedFilterModel>> _filters = {

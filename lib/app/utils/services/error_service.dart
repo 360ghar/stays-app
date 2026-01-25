@@ -17,7 +17,7 @@ class ErrorService extends GetxService {
   ApiException toApiException(Response response) {
     final int statusCode = response.statusCode ?? 500;
     final body = response.body;
-    String message =
+    final String message =
         _extractMessage(body) ??
         response.bodyString ??
         response.statusText ??

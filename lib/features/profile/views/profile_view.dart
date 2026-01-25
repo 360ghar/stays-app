@@ -179,16 +179,18 @@ class ProfileView extends GetView<ProfileController> {
                 Expanded(
                   child: Text(
                     'Profile completion',
-                    style: textTheme.titleMedium?.copyWith(
+                    style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
                   ),
                 ),
                 Text(
                   '${(controller.completion.value * 100).toInt()}%',
-                  style: textTheme.titleMedium?.copyWith(
+                  style: textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.primary,
+                    fontSize: 16,
                   ),
                 ),
               ],
@@ -210,6 +212,7 @@ class ProfileView extends GetView<ProfileController> {
                   : 'Complete your profile for faster inquiries and better recommendations.',
               style: textTheme.bodySmall?.copyWith(
                 color: colorScheme.onSurfaceVariant,
+                fontSize: 12,
               ),
             ),
           ],
@@ -256,8 +259,9 @@ class ProfileView extends GetView<ProfileController> {
                 children: [
                   Text(
                     stat.value,
-                    style: textTheme.titleMedium?.copyWith(
+                    style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -265,6 +269,7 @@ class ProfileView extends GetView<ProfileController> {
                     stat.label,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -287,7 +292,10 @@ class ProfileView extends GetView<ProfileController> {
       children: [
         Text(
           title,
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+          ),
         ),
         const SizedBox(height: 12),
         Material(
@@ -353,17 +361,18 @@ class ProfileView extends GetView<ProfileController> {
                     children: [
                       Text(
                         'Sign out',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.error,
-                            ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.error,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Securely logout from this device',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colorScheme.error.withValues(alpha: 0.7),
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -412,7 +421,7 @@ class _MenuTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
             Container(
@@ -431,8 +440,9 @@ class _MenuTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: textTheme.titleMedium?.copyWith(
+                    style: textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -440,6 +450,7 @@ class _MenuTile extends StatelessWidget {
                     subtitle,
                     style: textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
                     ),
                   ),
                 ],

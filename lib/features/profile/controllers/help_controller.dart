@@ -1,13 +1,13 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/models/faq_item.dart';
 import 'package:stays_app/features/profile/models/support_channel.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class HelpController extends BaseController {
+class HelpController extends GetxController {
   final RxBool isSubmittingFeedback = false.obs;
   final TextEditingController feedbackController = TextEditingController();
 
@@ -85,17 +85,15 @@ class HelpController extends BaseController {
       // Placeholder for API integration.
       await Future<void>.delayed(const Duration(milliseconds: 600));
       feedbackController.clear();
-      Get.snackbar(
-        'Feedback received',
-        'Thanks for sharing your experience. Our team will review it shortly.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.success(
+        title: 'Feedback received',
+        message: 'Thanks for sharing your experience. Our team will review it shortly.',
       );
     } catch (e, stack) {
       AppLogger.error('Feedback submission failed', e, stack);
-      Get.snackbar(
-        'Feedback not sent',
-        'We could not send your feedback. Please try again later.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.error(
+        title: 'Feedback not sent',
+        message: 'We could not send your feedback. Please try again later.',
       );
     } finally {
       isSubmittingFeedback.value = false;
@@ -104,10 +102,9 @@ class HelpController extends BaseController {
 
   Future<void> _launchUri(Uri uri) async {
     if (!await canLaunchUrl(uri)) {
-      Get.snackbar(
-        'Unavailable',
-        'Unable to launch ${uri.scheme} contact method on this device.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Unavailable',
+        message: 'Unable to launch ${uri.scheme} contact method on this device.',
       );
       return;
     }

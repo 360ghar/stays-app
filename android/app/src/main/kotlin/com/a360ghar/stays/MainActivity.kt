@@ -1,4 +1,4 @@
-package com.example.stays_app
+package com.a360ghar.stays
 
 import io.flutter.embedding.android.FlutterActivity
 

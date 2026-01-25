@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
-import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
 class NotificationsController extends BaseController {
@@ -32,8 +33,8 @@ class NotificationsController extends BaseController {
     'community': false,
   }.obs;
 
-  final RxBool isSaving = false.obs;
-  Worker? _userWorker;
+  /// Alias for isLoading from BaseController for backwards compatibility
+  RxBool get isSaving => isLoading;
 
   final List<String> supportedFrequencies = const [
     'realtime',
@@ -45,20 +46,20 @@ class NotificationsController extends BaseController {
   void onInit() {
     super.onInit();
     _hydrate(_profileController.user.value);
-    _userWorker = ever<UserModel?>(_profileController.user, _hydrate);
+    trackWorker(ever<UserModel?>(_profileController.user, _hydrate));
   }
 
   @override
   void onClose() {
-    _userWorker?.dispose();
+    // Workers are automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
   void _hydrate(UserModel? user) {
     if (user == null) return;
     final settings = user.notificationSettings ?? {};
-    pushEnabled.value = _asBool(settings['push'], fallback: true);
-    emailEnabled.value = _asBool(settings['email'], fallback: true);
+    pushEnabled.value = parseBool(settings['push'], fallback: true);
+    emailEnabled.value = parseBool(settings['email'], fallback: true);
     frequency.value = (settings['frequency'] ?? frequency.value).toString();
 
     final quietHours = settings['quietHours'];
@@ -71,24 +72,13 @@ class NotificationsController extends BaseController {
 
     final dynamic cats = settings['categories'];
     if (cats is Map) {
-      final parsed = cats.map(
-        (key, value) => MapEntry(
-          key.toString(),
-          _asBool(value, fallback: categories[key] ?? false),
-        ),
-      );
+      final parsed = <String, bool>{};
+      for (final entry in cats.entries) {
+        parsed[entry.key.toString()] =
+            parseBool(entry.value, fallback: categories[entry.key.toString()] ?? false);
+      }
       categories.assignAll(parsed);
     }
-  }
-
-  bool _asBool(dynamic value, {required bool fallback}) {
-    if (value is bool) return value;
-    if (value is num) return value != 0;
-    if (value is String) {
-      final normalized = value.toLowerCase();
-      return normalized == 'true' || normalized == '1' || normalized == 'yes';
-    }
-    return fallback;
   }
 
   TimeOfDay? _parseTimeOfDay(dynamic value) {
@@ -106,38 +96,35 @@ class NotificationsController extends BaseController {
       '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
 
   Future<void> save() async {
-    if (isSaving.value) return;
-    try {
-      isSaving.value = true;
-      final payload = {
-        'push': pushEnabled.value,
-        'email': emailEnabled.value,
-        'frequency': frequency.value,
-        'quietHours': {
-          'start': _timeToString(quietHoursStart.value),
-          'end': _timeToString(quietHoursEnd.value),
-        },
-        'categories': Map<String, bool>.from(categories),
-      };
+    if (isLoading.value) return;
+    final payload = {
+      'push': pushEnabled.value,
+      'email': emailEnabled.value,
+      'frequency': frequency.value,
+      'quietHours': {
+        'start': _timeToString(quietHoursStart.value),
+        'end': _timeToString(quietHoursEnd.value),
+      },
+      'categories': Map<String, bool>.from(categories),
+    };
+    final result = await executeWithErrorHandling(() async {
       final updated = await _profileRepository.updateNotificationSettings(
         payload,
       );
       _profileController.updateUser(updated);
       _profileController.updateNotificationSettingsLocal(payload);
-      Get.snackbar(
-        'Notifications',
-        'Notification preferences updated',
-        snackPosition: SnackPosition.BOTTOM,
+      return updated;
+    });
+    if (result != null) {
+      AppSnackbar.success(
+        title: 'Notifications',
+        message: 'Notification preferences updated',
       );
-    } catch (e, stack) {
-      AppLogger.error('Failed to update notifications', e, stack);
-      Get.snackbar(
-        'Update failed',
-        'Unable to update notification settings. Please retry.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Update failed',
+        message: 'Unable to update notification settings. Please retry.',
       );
-    } finally {
-      isSaving.value = false;
     }
   }
 
