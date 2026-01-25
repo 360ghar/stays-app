@@ -1,5 +1,6 @@
 abstract class Routes {
   static const initial = '/';
+  static const forceUpdate = '/force-update';
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';

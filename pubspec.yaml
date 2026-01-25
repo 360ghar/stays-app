@@ -42,14 +42,14 @@ dependencies:
   package_info_plus: ^8.0.0
   shimmer: ^3.0.0
   intl: ^0.20.2
-  connectivity_plus: ^6.0.3
+  connectivity_plus: ^7.0.0
   url_launcher: ^6.3.1
   flutter_svg: ^2.0.10+1
   equatable: ^2.0.5
-  flutter_dotenv: ^5.1.0
-  geolocator: ^13.0.2
-  geocoding: ^3.0.0
-  permission_handler: ^11.3.1
+  flutter_dotenv: ^6.0.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.1
   webview_flutter: ^4.8.0
   webview_flutter_android: ^4.10.2
   webview_flutter_wkwebview: ^3.23.0
@@ -61,10 +61,14 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_map: ^8.2.1
   latlong2: ^0.9.1
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^10.0.0
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.2
+  firebase_crashlytics: ^5.0.6
+  firebase_analytics: ^12.1.0
+  flutter_local_notifications: ^19.0.0
   google_fonts: ^6.2.1
+  upgrader: ^12.3.0
 
 dev_dependencies:
   flutter_test:
@@ -80,7 +84,7 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter_launcher_icons:
   android: true

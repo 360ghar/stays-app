@@ -18,6 +18,8 @@ import 'app/data/services/supabase_service.dart';
 import 'app/data/services/crash_reporting_service.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
+import 'app/utils/performance/performance_monitor.dart';
+import 'app/utils/services/error_service.dart';
 import 'app/utils/security/security_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 
@@ -28,6 +30,12 @@ Future<void> main() async {
     // Default to dev if launched via lib/main.dart
     await dotenv.load(fileName: '.env.dev');
     AppConfig.setConfig(AppConfig.dev());
+    if (!Get.isRegistered<ErrorService>()) {
+      Get.put<ErrorService>(ErrorService(), permanent: true);
+    }
+    if (!Get.isRegistered<PerformanceMonitor>()) {
+      Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    }
     SecurityService().validateApiKeys();
 
     // Optional certificate pinning when API_CERT_SHA256 is provided

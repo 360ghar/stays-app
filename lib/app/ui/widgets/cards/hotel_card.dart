@@ -27,23 +27,27 @@ class HotelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: height,
-        margin: const EdgeInsets.only(right: 16),
-        child: Hero(
-          tag: '${heroPrefix ?? 'hotel'}-${hotel.id}',
-          child: Material(
-            color: Colors.transparent,
-            child: Stack(
-              children: [
-                _buildImage(),
-                _buildGradientOverlay(),
-                _buildContent(),
-                if (onFavoriteToggle != null) _buildFavoriteButton(),
-              ],
+    return Semantics(
+      label: '${hotel.name}, ${hotel.rating} stars, ${hotel.currency}${hotel.pricePerNight.toStringAsFixed(0)} per night',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: width,
+          height: height,
+          margin: const EdgeInsets.only(right: 16),
+          child: Hero(
+            tag: '${heroPrefix ?? 'hotel'}-${hotel.id}',
+            child: Material(
+              color: Colors.transparent,
+              child: Stack(
+                children: [
+                  _buildImage(),
+                  _buildGradientOverlay(),
+                  _buildContent(),
+                  if (onFavoriteToggle != null) _buildFavoriteButton(),
+                ],
+              ),
             ),
           ),
         ),
@@ -157,21 +161,27 @@ class HotelCard extends StatelessWidget {
   }
 
   Widget _buildFavoriteButton() {
+    final isFavorite = hotel.isFavorite;
     return Positioned(
       top: 12,
       right: 12,
-      child: GestureDetector(
-        onTap: onFavoriteToggle,
-        child: Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Icon(
-            hotel.isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: hotel.isFavorite ? Colors.red : Colors.grey[700],
-            size: 20,
+      child: Semantics(
+        label: isFavorite ? 'Remove from favorites' : 'Add to favorites',
+        button: true,
+        child: GestureDetector(
+          onTap: onFavoriteToggle,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? Colors.red : Colors.grey[700],
+              size: 20,
+              semanticLabel: isFavorite ? 'Favorited' : 'Not favorited',
+            ),
           ),
         ),
       ),

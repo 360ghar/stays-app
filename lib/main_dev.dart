@@ -19,7 +19,9 @@ import 'app/data/services/crash_reporting_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
+import 'app/utils/performance/performance_monitor.dart';
 import 'app/utils/security/security_service.dart';
+import 'app/utils/services/error_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded(() async {
@@ -27,6 +29,12 @@ Future<void> main() async {
 
     await dotenv.load(fileName: '.env.dev');
     AppConfig.setConfig(AppConfig.dev());
+    if (!Get.isRegistered<ErrorService>()) {
+      Get.put<ErrorService>(ErrorService(), permanent: true);
+    }
+    if (!Get.isRegistered<PerformanceMonitor>()) {
+      Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    }
     // Validate high-level API keys
     SecurityService().validateApiKeys();
 

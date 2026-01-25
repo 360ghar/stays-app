@@ -127,6 +127,17 @@ jobs:
     - name: Get Flutter dependencies
       run: flutter pub get --no-offline
 
+    - name: Run static analysis
+      run: flutter analyze --no-fatal-infos
+
+    - name: Run tests
+      run: flutter test --coverage
+      continue-on-error: true
+
+    - name: Check code formatting
+      run: dart format --set-exit-if-changed lib/ test/
+      continue-on-error: true
+
     - name: Build APK
       run: flutter build apk --release --flavor ${{ steps.build-flavor.outputs.flavor }} -t ${{ steps.build-flavor.outputs.target }} --target-platform android-arm,android-arm64,android-x64
 

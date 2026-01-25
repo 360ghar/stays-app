@@ -19,13 +19,21 @@ import 'app/data/services/crash_reporting_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
+import 'app/utils/performance/performance_monitor.dart';
 import 'app/utils/security/security_service.dart';
+import 'app/utils/services/error_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     await dotenv.load(fileName: '.env.staging');
     AppConfig.setConfig(AppConfig.staging());
+    if (!Get.isRegistered<ErrorService>()) {
+      Get.put<ErrorService>(ErrorService(), permanent: true);
+    }
+    if (!Get.isRegistered<PerformanceMonitor>()) {
+      Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
+    }
     SecurityService().validateApiKeys();
 
     // Initialize Supabase service (required before other services)

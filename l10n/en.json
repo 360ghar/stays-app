@@ -104,5 +104,18 @@
     "loading": "Loading...",
     "clear": "Clear",
     "view_details": "View details"
+  },
+  "update": {
+    "title": "Update Available",
+    "new_version_available": "Version @version is now available",
+    "current_version": "Current version: @version",
+    "whats_new": "What's New",
+    "update_now": "Update Now",
+    "remind_later": "Remind Me Later",
+    "required_title": "Update Required",
+    "required_message": "A critical update is required to continue using this app. Please update to the latest version.",
+    "current_label": "Current version",
+    "latest_label": "Latest version",
+    "store_unavailable": "Unable to open the app store. Please update manually."
   }
 }
