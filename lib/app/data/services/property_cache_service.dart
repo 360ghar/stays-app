@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:get_storage/get_storage.dart';
@@ -142,7 +143,7 @@ class PropertyCacheService {
       final jsonStr = _storage.read<String>(key);
       if (jsonStr == null) return null;
       // Update access order asynchronously (fire-and-forget)
-      _updateAccessOrder(id);
+      unawaited(_updateAccessOrder(id));
 
       return Property.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
     } catch (e) {
@@ -199,8 +200,10 @@ class PropertyCacheService {
   Future<void> clearExpired() async {
     _ensureInitialized();
     final allKeys = _storage.getKeys();
-    if (allKeys == null) return;
-    final keyList = allKeys.whereType<String>().toList();
+    final keyList = allKeys is Iterable
+        ? allKeys.whereType<String>().toList()
+        : <String>[];
+    if (keyList.isEmpty) return;
     for (final key in keyList) {
       if (!key.endsWith(_timestampSuffix) && _isCacheExpired(key)) {
         await _storage.remove(key);
@@ -265,9 +268,19 @@ class PropertyCacheService {
   Map<String, dynamic> getCacheStats() {
     _ensureInitialized();
     final allKeys = _storage.getKeys();
-    final keyList = allKeys?.whereType<String>().toList() ?? [];
-    final propertyKeys = keyList.where((k) => k.startsWith(_detailsPrefix) && !k.endsWith(_timestampSuffix)).length;
-    final exploreKeys = keyList.where((k) => k.startsWith(_exploreKey) && !k.endsWith(_timestampSuffix)).length;
+    final keyList = allKeys is Iterable
+        ? allKeys.whereType<String>().toList()
+        : <String>[];
+    final propertyKeys = keyList
+        .where(
+          (k) => k.startsWith(_detailsPrefix) && !k.endsWith(_timestampSuffix),
+        )
+        .length;
+    final exploreKeys = keyList
+        .where(
+          (k) => k.startsWith(_exploreKey) && !k.endsWith(_timestampSuffix),
+        )
+        .length;
     return {
       'cachedProperties': propertyKeys,
       'cachedExplorePages': exploreKeys,

@@ -17,22 +17,12 @@ class StorageService extends GetxService {
   late final GetStorage _box;
   late FlutterSecureStorage _secureStorage;
 
-  static const AndroidOptions _androidOptions = AndroidOptions(
-    encryptedSharedPreferences: true,
-  );
-
-  static const IOSOptions _iosOptions = IOSOptions(
-    accessibility: KeychainAccessibility.first_unlock_this_device,
-  );
 
   Future<StorageService> initialize() async {
     try {
       await GetStorage.init(_boxName);
       _box = GetStorage(_boxName);
-      _secureStorage = const FlutterSecureStorage(
-        aOptions: _androidOptions,
-        iOptions: _iosOptions,
-      );
+      _secureStorage = const FlutterSecureStorage();
       if (!_ready.isCompleted) {
         _ready.complete();
       }

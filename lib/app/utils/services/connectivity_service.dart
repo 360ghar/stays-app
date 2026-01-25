@@ -23,13 +23,15 @@ class ConnectivityService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initialize();
+    unawaited(_initialize());
   }
 
   @override
   void onClose() {
-    _subscription?.cancel();
-    _connectionChangeController.close();
+    if (_subscription != null) {
+      unawaited(_subscription!.cancel());
+    }
+    unawaited(_connectionChangeController.close());
     super.onClose();
   }
 

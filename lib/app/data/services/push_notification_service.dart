@@ -72,7 +72,7 @@ class PushNotificationService extends GetxService {
       }
 
       // Request permissions (iOS/macOS)
-      await _messaging.requestPermission(alert: true, badge: true, sound: true);
+      await _messaging.requestPermission();
 
       // Fetch token for diagnostics
       try {

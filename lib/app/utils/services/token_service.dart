@@ -9,23 +9,34 @@ import '../../data/services/storage_service.dart';
 import '../logger/app_logger.dart';
 
 class TokenInfo {
+  const TokenInfo({
+    required this.accessToken,
+    required this.createdAt,
+    this.refreshToken,
+    this.expiresAt,
+  });
+
+  factory TokenInfo.fromJson(Map<String, dynamic> json) {
+    return TokenInfo(
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'] as String)
+          : null,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+
   final String accessToken;
   final String? refreshToken;
   final DateTime? expiresAt;
   final DateTime createdAt;
 
-  const TokenInfo({
-    required this.accessToken,
-    this.refreshToken,
-    this.expiresAt,
-    required this.createdAt,
-  });
-
   bool get isExpired {
     final expAt = expiresAt;
     if (expAt == null) return false;
     final now = DateTime.now();
-    final bufferTime = Duration(minutes: 5);
+    const bufferTime = Duration(minutes: 5);
     return now.isAfter(expAt.subtract(bufferTime));
   }
 
@@ -40,19 +51,15 @@ class TokenInfo {
     };
   }
 
-  factory TokenInfo.fromJson(Map<String, dynamic> json) {
-    return TokenInfo(
-      accessToken: json['accessToken'] as String,
-      refreshToken: json['refreshToken'] as String?,
-      expiresAt: json['expiresAt'] != null
-          ? DateTime.parse(json['expiresAt'] as String)
-          : null,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-    );
-  }
 }
 
 class TokenService extends GetxService {
+  TokenService({
+    StorageService? storageService,
+    IAuthRepository? authRepository,
+  }) : _storageService = storageService,
+       _authRepository = authRepository;
+
   static TokenService get I => Get.find<TokenService>();
 
   StorageService? _storageService;
@@ -67,16 +74,10 @@ class TokenService extends GetxService {
 
   Future<void> get ready => _ready.future;
 
-  TokenService({
-    StorageService? storageService,
-    IAuthRepository? authRepository,
-  }) : _storageService = storageService,
-       _authRepository = authRepository;
-
   @override
   void onInit() {
     super.onInit();
-    _initialize();
+    unawaited(_initialize());
   }
 
   @override

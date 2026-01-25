@@ -6,7 +6,12 @@ import 'package:get/get.dart';
 import '../../utils/logger/app_logger.dart';
 
 class AnalyticsService extends GetxService {
-  static AnalyticsService get I => Get.find<AnalyticsService>();
+  AnalyticsService({required this.enabled}) {
+    if (enabled) {
+      _initializeFirebaseAnalytics();
+      AppLogger.info('AnalyticsService initialized with Firebase Analytics');
+    }
+  }
 
   final bool enabled;
   final List<AnalyticsEvent> _eventQueue = [];
@@ -19,12 +24,7 @@ class AnalyticsService extends GetxService {
   /// Get the Firebase Analytics observer for navigation tracking
   FirebaseAnalyticsObserver? get observer => _observer;
 
-  AnalyticsService({required this.enabled}) {
-    if (enabled) {
-      _initializeFirebaseAnalytics();
-      AppLogger.info('AnalyticsService initialized with Firebase Analytics');
-    }
-  }
+  static AnalyticsService get I => Get.find<AnalyticsService>();
 
   void _initializeFirebaseAnalytics() {
     try {
@@ -32,7 +32,7 @@ class AnalyticsService extends GetxService {
       _observer = FirebaseAnalyticsObserver(analytics: _analytics!);
 
       // Enable analytics collection
-      _analytics!.setAnalyticsCollectionEnabled(true);
+      unawaited(_analytics!.setAnalyticsCollectionEnabled(true));
     } catch (e) {
       AppLogger.warning('Failed to initialize Firebase Analytics: $e');
     }
@@ -40,7 +40,7 @@ class AnalyticsService extends GetxService {
 
   @override
   void onClose() {
-    _eventsController.close();
+    unawaited(_eventsController.close());
     super.onClose();
   }
 
@@ -51,7 +51,7 @@ class AnalyticsService extends GetxService {
     _eventsController.add(event);
 
     // Send to Firebase Analytics
-    _sendToFirebase(event);
+    unawaited(_sendToFirebase(event));
 
     AppLogger.info('Analytics: ${event.name}', event.params);
   }
@@ -115,10 +115,10 @@ class AnalyticsService extends GetxService {
   void logScreenView(String screenName, [Map<String, dynamic>? params]) {
     if (_analytics != null) {
       // Use Firebase's built-in screen view logging
-      _analytics!.logScreenView(
+      unawaited(_analytics!.logScreenView(
         screenName: screenName,
         screenClass: params?['screen_class'] ?? screenName,
-      );
+      ));
     }
 
     log(
@@ -131,7 +131,7 @@ class AnalyticsService extends GetxService {
 
   void logSearch(String query, [Map<String, dynamic>? params]) {
     if (_analytics != null) {
-      _analytics!.logSearch(searchTerm: query);
+      unawaited(_analytics!.logSearch(searchTerm: query));
     }
 
     log(
@@ -148,7 +148,7 @@ class AnalyticsService extends GetxService {
 
   void logPropertyView(String propertyId, String propertyName) {
     if (_analytics != null) {
-      _analytics!.logViewItem(
+      unawaited(_analytics!.logViewItem(
         items: [
           AnalyticsEventItem(
             itemId: propertyId,
@@ -156,7 +156,7 @@ class AnalyticsService extends GetxService {
             itemCategory: 'property',
           ),
         ],
-      );
+      ));
     }
 
     log(
@@ -169,7 +169,7 @@ class AnalyticsService extends GetxService {
 
   void logBookingStarted(String propertyId, double price) {
     if (_analytics != null) {
-      _analytics!.logBeginCheckout(
+      unawaited(_analytics!.logBeginCheckout(
         value: price,
         currency: 'INR',
         items: [
@@ -179,7 +179,7 @@ class AnalyticsService extends GetxService {
             price: price,
           ),
         ],
-      );
+      ));
     }
 
     log(
@@ -196,11 +196,11 @@ class AnalyticsService extends GetxService {
     String paymentMethod,
   ) {
     if (_analytics != null) {
-      _analytics!.logPurchase(
+      unawaited(_analytics!.logPurchase(
         transactionId: bookingId,
         value: amount,
         currency: 'INR',
-      );
+      ));
     }
 
     log(
@@ -217,9 +217,9 @@ class AnalyticsService extends GetxService {
 
   void logBookingCancelled(String bookingId, String reason) {
     if (_analytics != null) {
-      _analytics!.logRefund(
+      unawaited(_analytics!.logRefund(
         transactionId: bookingId,
-      );
+      ));
     }
 
     log(
@@ -232,14 +232,14 @@ class AnalyticsService extends GetxService {
 
   void logWishlistAdded(String propertyId) {
     if (_analytics != null) {
-      _analytics!.logAddToWishlist(
+      unawaited(_analytics!.logAddToWishlist(
         items: [
           AnalyticsEventItem(
             itemId: propertyId,
             itemCategory: 'property',
           ),
         ],
-      );
+      ));
     }
 
     log(
@@ -261,7 +261,7 @@ class AnalyticsService extends GetxService {
 
   void logLogin(String method) {
     if (_analytics != null) {
-      _analytics!.logLogin(loginMethod: method);
+      unawaited(_analytics!.logLogin(loginMethod: method));
     }
 
     log(
@@ -274,7 +274,7 @@ class AnalyticsService extends GetxService {
 
   void logSignup(String method) {
     if (_analytics != null) {
-      _analytics!.logSignUp(signUpMethod: method);
+      unawaited(_analytics!.logSignUp(signUpMethod: method));
     }
 
     log(
@@ -287,7 +287,7 @@ class AnalyticsService extends GetxService {
 
   void logLogout() {
     // Clear user ID on logout
-    setUserId(null);
+    unawaited(setUserId(null));
 
     log(AnalyticsEvent(name: AnalyticsEventNames.logout));
   }
@@ -335,11 +335,11 @@ class AnalyticsService extends GetxService {
 
   void logShare(String contentType, String contentId) {
     if (_analytics != null) {
-      _analytics!.logShare(
+      unawaited(_analytics!.logShare(
         contentType: contentType,
         itemId: contentId,
         method: 'app',
-      );
+      ));
     }
 
     log(
@@ -368,7 +368,7 @@ class AnalyticsService extends GetxService {
     );
   }
 
-  void flush() async {
+  void flush() {
     if (_eventQueue.isNotEmpty) {
       AppLogger.info('Flushing ${_eventQueue.length} analytics events');
       _eventQueue.clear();
@@ -377,15 +377,15 @@ class AnalyticsService extends GetxService {
 }
 
 class AnalyticsEvent {
-  final String name;
-  final Map<String, dynamic> params;
-  final DateTime timestamp;
-
   AnalyticsEvent({
     required this.name,
     this.params = const {},
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
+
+  final String name;
+  final Map<String, dynamic> params;
+  final DateTime timestamp;
 
   Map<String, dynamic> toJson() {
     return {
