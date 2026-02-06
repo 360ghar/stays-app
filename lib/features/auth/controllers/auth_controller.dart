@@ -48,6 +48,7 @@ class AuthController extends BaseController {
 
   // Local storage for remember-me preference
   late final GetStorage _authPrefs;
+  Future<void>? _rememberMeReady;
 
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
@@ -59,7 +60,7 @@ class AuthController extends BaseController {
     super.onInit();
 
     // Initialize storage asynchronously (GetStorage requires init before use)
-    unawaited(_initializeRememberMePreference());
+    unawaited(_ensureRememberMePreferenceReady());
 
     // Defer initial auth status check until TokenService has loaded tokens
     _initAuthStatus();
@@ -152,6 +153,11 @@ class AuthController extends BaseController {
     await _migrateLegacyRememberedTokens();
   }
 
+  Future<void> _ensureRememberMePreferenceReady() async {
+    _rememberMeReady ??= _initializeRememberMePreference();
+    await _rememberMeReady;
+  }
+
   void _bindAuthStateListener() {
     _authSubscription?.cancel();
     _authSubscription = trackSubscription(
@@ -187,6 +193,7 @@ class AuthController extends BaseController {
 
   // Update the remember-me flag and synchronise it to disk for future launches.
   Future<void> setRememberMe(bool value) async {
+    await _ensureRememberMePreferenceReady();
     rememberMe.value = value;
     await _authPrefs.write(_rememberMeFlagKey, value);
     if (!value) {
@@ -196,6 +203,7 @@ class AuthController extends BaseController {
 
   // Persist the latest Supabase session details when the user opts in.
   Future<void> _persistRememberedSession({Session? session}) async {
+    await _ensureRememberMePreferenceReady();
     // Tokens are already stored securely via TokenService/StorageService.
     // We only keep a boolean flag in GetStorage to control auto-login.
     await _authPrefs.write(_rememberMeFlagKey, true);
@@ -204,6 +212,7 @@ class AuthController extends BaseController {
 
   // Drop any cached credentials when the user opts out or signs out.
   Future<void> _clearRememberedSession() async {
+    await _ensureRememberMePreferenceReady();
     await _clearLegacyRememberedSession();
   }
 
@@ -230,7 +239,9 @@ class AuthController extends BaseController {
             accessToken: legacyAccess,
             refreshToken: legacyRefresh,
           );
-          AppLogger.info('Migrated legacy remember-me tokens to secure storage');
+          AppLogger.info(
+            'Migrated legacy remember-me tokens to secure storage',
+          );
         } catch (e) {
           // Fallback to StorageService if TokenService not ready yet
           if (Get.isRegistered<StorageService>()) {
@@ -251,6 +262,7 @@ class AuthController extends BaseController {
 
   // Centralised helper that applies the user's remember-me choice post-login.
   Future<void> _syncRememberMeStateAfterLogin() async {
+    await _ensureRememberMePreferenceReady();
     if (rememberMe.value) {
       await _persistRememberedSession();
       return;
