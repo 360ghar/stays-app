@@ -10,11 +10,11 @@ import 'package:stays_app/app/controllers/base/base_controller.dart';
 /// Controller responsible for user profile management.
 /// Handles profile fetching, updating, and caching.
 class UserProfileController extends BaseController {
+  UserProfileController({required ProfileRepository profileRepository})
+    : _profileRepository = profileRepository;
+
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-
-  ProfileRepository? _profileRepository;
-
-  UserProfileController();
+  final ProfileRepository _profileRepository;
 
   /// Get the current user's display name
   String get displayName => currentUser.value?.displayName ?? 'Guest';
@@ -31,8 +31,7 @@ class UserProfileController extends BaseController {
   /// Fetch latest profile from API, update observable and cache for fast prefill
   Future<UserModel?> fetchAndCacheProfile() async {
     try {
-      final repo = _ensureProfileRepository();
-      final profile = await repo.getProfile();
+      final profile = await _profileRepository.getProfile();
       currentUser.value = profile;
       await _cacheUserData(profile);
       AppLogger.info('Profile refreshed for ${profile.email ?? profile.phone}');
@@ -74,8 +73,7 @@ class UserProfileController extends BaseController {
   }) async {
     try {
       isLoading.value = true;
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updateProfile(
+      final updated = await _profileRepository.updateProfile(
         firstName: firstName,
         lastName: lastName,
         fullName: fullName,
@@ -101,8 +99,7 @@ class UserProfileController extends BaseController {
   Future<UserModel?> updatePreferences(Map<String, dynamic> preferences) async {
     try {
       isLoading.value = true;
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updatePreferences(preferences);
+      final updated = await _profileRepository.updatePreferences(preferences);
       currentUser.value = updated;
       await _cacheUserData(updated);
       return updated;
@@ -123,8 +120,7 @@ class UserProfileController extends BaseController {
   }) async {
     try {
       isLoading.value = true;
-      final repo = _ensureProfileRepository();
-      final updated = await repo.updateLocation(
+      final updated = await _profileRepository.updateLocation(
         latitude: latitude,
         longitude: longitude,
         shareLocation: shareLocation,
@@ -156,22 +152,6 @@ class UserProfileController extends BaseController {
   /// Set the current user directly (e.g., after login)
   void setUser(UserModel user) {
     currentUser.value = user;
-  }
-
-  ProfileRepository _ensureProfileRepository() {
-    if (_profileRepository != null) {
-      return _profileRepository!;
-    }
-    if (Get.isRegistered<ProfileRepository>()) {
-      _profileRepository = Get.find<ProfileRepository>();
-      return _profileRepository!;
-    }
-    if (!Get.isRegistered<UsersProvider>()) {
-      Get.put<UsersProvider>(UsersProvider());
-    }
-    _profileRepository = ProfileRepository(provider: Get.find<UsersProvider>());
-    Get.put<ProfileRepository>(_profileRepository!);
-    return _profileRepository!;
   }
 
   Future<void> _cacheUserData(UserModel user) async {

@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+
+import 'package:stays_app/config/app_config.dart';
 
 import '../logger/app_logger.dart';
 
@@ -20,13 +23,15 @@ class ConnectivityService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initialize();
+    unawaited(_initialize());
   }
 
   @override
   void onClose() {
-    _subscription?.cancel();
-    _connectionChangeController.close();
+    if (_subscription != null) {
+      unawaited(_subscription!.cancel());
+    }
+    unawaited(_connectionChangeController.close());
     super.onClose();
   }
 
@@ -75,17 +80,25 @@ class ConnectivityService extends GetxService {
         {'previous': hadConnection, 'current': nowConnected},
       );
     }
+
+    // Verify actual internet reachability (transport alone can be wrong).
+    unawaited(_confirmInternetAccess(hadConnection: hadConnection));
   }
 
   Future<bool> checkConnection() async {
     try {
       final result = await Connectivity().checkConnectivity();
-      return result.contains(ConnectivityResult.wifi) ||
+      final hasTransport =
+          result.contains(ConnectivityResult.wifi) ||
           result.contains(ConnectivityResult.mobile) ||
           result.contains(ConnectivityResult.ethernet);
+      if (!hasTransport) {
+        return await _hasInternetAccess();
+      }
+      return await _hasInternetAccess();
     } catch (e) {
       AppLogger.error('Failed to check connection', e);
-      return false;
+      return _hasInternetAccess();
     }
   }
 
@@ -94,4 +107,73 @@ class ConnectivityService extends GetxService {
   bool get isOnWifi => status.value == ConnectivityStatus.wifi;
 
   bool get isOnMobile => status.value == ConnectivityStatus.mobile;
+
+  Future<void> _confirmInternetAccess({required bool hadConnection}) async {
+    final reachable = await _hasInternetAccess();
+    if (isOnline.value != reachable) {
+      isOnline.value = reachable;
+      _connectionChangeController.add(reachable);
+      AppLogger.info(
+        'Connection verified: ${reachable ? "Online" : "Offline"}',
+        {'previous': hadConnection, 'current': reachable},
+      );
+    }
+  }
+
+  Future<bool> _hasInternetAccess() async {
+    final apiHost = _resolveApiHost();
+    final hosts = <String>{
+      if (apiHost.isNotEmpty) apiHost,
+      'google.com',
+    };
+
+    for (final host in hosts) {
+      if (await _canReachHost(
+        host,
+        host == apiHost ? _resolveHealthPort() : 443,
+      )) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  String _resolveApiHost() {
+    try {
+      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      if (uri.host.isNotEmpty) return uri.host;
+    } catch (_) {}
+    return '';
+  }
+
+  int _resolveHealthPort() {
+    try {
+      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      if (uri.port > 0) return uri.port;
+      return uri.scheme == 'http' ? 80 : 443;
+    } catch (_) {
+      return 443;
+    }
+  }
+
+  Future<bool> _canReachHost(String host, int port) async {
+    try {
+      final result = await InternetAddress.lookup(host)
+          .timeout(const Duration(seconds: 3));
+      if (result.isNotEmpty && result.first.rawAddress.isNotEmpty) {
+        return true;
+      }
+    } catch (_) {}
+    try {
+      final socket = await Socket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 3),
+      );
+      socket.destroy();
+      return true;
+    } catch (_) {}
+    return false;
+  }
 }

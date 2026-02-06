@@ -1,14 +1,7 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'location_model.g.dart';
-
-@JsonSerializable()
 class LocationModel {
   final String city;
   final String country;
-  @JsonKey(defaultValue: 0.0)
   final double lat;
-  @JsonKey(defaultValue: 0.0)
   final double lng;
 
   const LocationModel({
@@ -18,14 +11,17 @@ class LocationModel {
     required this.lng,
   });
 
-  factory LocationModel.fromJson(Map<String, dynamic> json) =>
-      _$LocationModelFromJson(json);
+  factory LocationModel.fromMap(Map<String, dynamic> map) => LocationModel(
+    city: map['city'] as String? ?? '',
+    country: map['country'] as String? ?? '',
+    lat: (map['lat'] as num?)?.toDouble() ?? 0,
+    lng: (map['lng'] as num?)?.toDouble() ?? 0,
+  );
 
-  Map<String, dynamic> toJson() => _$LocationModelToJson(this);
-
-  // Backwards compatibility
-  factory LocationModel.fromMap(Map<String, dynamic> map) =>
-      LocationModel.fromJson(map);
-
-  Map<String, dynamic> toMap() => toJson();
+  Map<String, dynamic> toMap() => {
+    'city': city,
+    'country': country,
+    'lat': lat,
+    'lng': lng,
+  };
 }

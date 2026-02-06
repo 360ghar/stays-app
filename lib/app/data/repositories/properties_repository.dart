@@ -1,12 +1,14 @@
-import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:get/get.dart';
+
 import '../providers/properties_provider.dart';
-import '../models/unified_property_response.dart';
 import '../models/property_model.dart';
+import '../models/unified_property_response.dart';
 import '../services/location_service.dart';
 import '../services/property_cache_service.dart';
 import '../../utils/logger/app_logger.dart';
+import '../../utils/services/connectivity_service.dart';
 
 class PropertiesRepository {
   final PropertiesProvider _provider;
@@ -106,6 +108,10 @@ class PropertiesRepository {
     Map<String, dynamic> filters,
   ) async {
     try {
+      if (Get.isRegistered<ConnectivityService>() &&
+          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+        return;
+      }
       final response = await _provider.explore(
         lat: lat,
         lng: lng,
@@ -144,6 +150,10 @@ class PropertiesRepository {
 
   Future<void> _refreshDetailsInBackground(int id) async {
     try {
+      if (Get.isRegistered<ConnectivityService>() &&
+          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+        return;
+      }
       final property = await _provider.getDetails(id);
       await _cacheService?.cachePropertyDetails(property);
     } catch (e) {
@@ -172,6 +182,10 @@ class PropertiesRepository {
 
   Future<void> _refreshRecommendationsInBackground(int limit) async {
     try {
+      if (Get.isRegistered<ConnectivityService>() &&
+          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+        return;
+      }
       final properties = await _provider.recommendations(limit: limit);
       await _cacheService?.cacheRecommendations(properties);
     } catch (e) {

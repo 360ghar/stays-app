@@ -6,7 +6,8 @@ import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
-import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
 class PrivacyController extends BaseController {
@@ -30,7 +31,9 @@ class PrivacyController extends BaseController {
   final RxBool locationSharing = false.obs;
   final RxBool dataExportInFlight = false.obs;
   final RxBool accountDeletionInFlight = false.obs;
-  final RxBool isSaving = false.obs;
+
+  /// Alias for isLoading from BaseController for backwards compatibility
+  RxBool get isSaving => isLoading;
 
   final TextEditingController currentPasswordController =
       TextEditingController();
@@ -38,13 +41,11 @@ class PrivacyController extends BaseController {
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
-  Worker? _userWorker;
-
   @override
   void onInit() {
     super.onInit();
     _hydrate(_profileController.user.value);
-    _userWorker = ever<UserModel?>(_profileController.user, _hydrate);
+    trackWorker(ever<UserModel?>(_profileController.user, _hydrate));
   }
 
   @override
@@ -52,32 +53,16 @@ class PrivacyController extends BaseController {
     currentPasswordController.dispose();
     newPasswordController.dispose();
     confirmPasswordController.dispose();
-    _userWorker?.dispose();
+    // Worker is automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
   void _hydrate(UserModel? user) {
     if (user == null) return;
     final settings = user.privacySettings ?? {};
-    twoFactorEnabled.value = _asBool(
-      settings['twoFactorEnabled'],
-      fallback: false,
-    );
-    profileVisible.value = _asBool(settings['profileVisible'], fallback: true);
-    locationSharing.value = _asBool(
-      settings['locationSharing'],
-      fallback: false,
-    );
-  }
-
-  bool _asBool(dynamic value, {required bool fallback}) {
-    if (value is bool) return value;
-    if (value is num) return value != 0;
-    if (value is String) {
-      final normalized = value.toLowerCase();
-      return normalized == 'true' || normalized == '1' || normalized == 'yes';
-    }
-    return fallback;
+    twoFactorEnabled.value = parseBool(settings['twoFactorEnabled'], fallback: false);
+    profileVisible.value = parseBool(settings['profileVisible'], fallback: true);
+    locationSharing.value = parseBool(settings['locationSharing'], fallback: false);
   }
 
   void setTwoFactorEnabled(bool value) {
@@ -93,31 +78,28 @@ class PrivacyController extends BaseController {
   }
 
   Future<void> savePrivacySettings() async {
-    if (isSaving.value) return;
-    try {
-      isSaving.value = true;
-      final payload = {
-        'twoFactorEnabled': twoFactorEnabled.value,
-        'profileVisible': profileVisible.value,
-        'locationSharing': locationSharing.value,
-      };
+    if (isLoading.value) return;
+    final payload = {
+      'twoFactorEnabled': twoFactorEnabled.value,
+      'profileVisible': profileVisible.value,
+      'locationSharing': locationSharing.value,
+    };
+    final result = await executeWithErrorHandling(() async {
       final updated = await _profileRepository.updatePrivacySettings(payload);
       _profileController.updateUser(updated);
       _profileController.updatePrivacySettingsLocal(payload);
-      Get.snackbar(
-        'Privacy & Security',
-        'Settings updated successfully',
-        snackPosition: SnackPosition.BOTTOM,
+      return updated;
+    });
+    if (result != null) {
+      AppSnackbar.success(
+        title: 'Privacy & Security',
+        message: 'Settings updated successfully',
       );
-    } catch (e, stack) {
-      AppLogger.error('Failed to update privacy settings', e, stack);
-      Get.snackbar(
-        'Update failed',
-        'Unable to update privacy settings. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Update failed',
+        message: 'Unable to update privacy settings. Please try again.',
       );
-    } finally {
-      isSaving.value = false;
     }
   }
 
@@ -127,24 +109,21 @@ class PrivacyController extends BaseController {
     final confirm = confirmPasswordController.text.trim();
 
     if (newPassword.length < 8) {
-      Get.snackbar(
-        'Password',
-        'Password must be at least 8 characters long.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Password',
+        message: 'Password must be at least 8 characters long.',
       );
       return;
     }
     if (newPassword != confirm) {
-      Get.snackbar(
-        'Password',
-        'Passwords do not match.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Password',
+        message: 'Passwords do not match.',
       );
       return;
     }
 
-    try {
-      isSaving.value = true;
+    final result = await executeWithErrorHandling(() async {
       await _authRepository.updatePassword(
         newPassword: newPassword,
         currentPassword: current.isEmpty ? null : current,
@@ -152,42 +131,39 @@ class PrivacyController extends BaseController {
       currentPasswordController.clear();
       newPasswordController.clear();
       confirmPasswordController.clear();
-      Get.snackbar(
-        'Password updated',
-        'Your password has been changed successfully.',
-        snackPosition: SnackPosition.BOTTOM,
+      return true;
+    });
+    if (result == true) {
+      AppSnackbar.success(
+        title: 'Password updated',
+        message: 'Your password has been changed successfully.',
       );
-    } catch (e, stack) {
-      AppLogger.error('Password update failed', e, stack);
-      Get.snackbar(
-        'Password update failed',
-        'We were unable to change your password. Please verify and retry.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Password update failed',
+        message: 'We were unable to change your password. Please verify and retry.',
       );
-    } finally {
-      isSaving.value = false;
     }
   }
 
   Future<void> requestDataExport() async {
     if (dataExportInFlight.value) return;
-    try {
-      dataExportInFlight.value = true;
+    dataExportInFlight.value = true;
+    final result = await executeWithErrorHandling(() async {
       await _profileRepository.requestDataExport();
-      Get.snackbar(
-        'Data export requested',
-        'We will email you when your data export is ready.',
-        snackPosition: SnackPosition.BOTTOM,
+      return true;
+    }, showLoading: false);
+    dataExportInFlight.value = false;
+    if (result == true) {
+      AppSnackbar.success(
+        title: 'Data export requested',
+        message: 'We will email you when your data export is ready.',
       );
-    } catch (e, stack) {
-      AppLogger.error('Data export request failed', e, stack);
-      Get.snackbar(
-        'Request failed',
-        'Unable to request data export. Please try again later.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Request failed',
+        message: 'Unable to request data export. Please try again later.',
       );
-    } finally {
-      dataExportInFlight.value = false;
     }
   }
 
@@ -216,25 +192,24 @@ class PrivacyController extends BaseController {
         false;
     if (!confirmDeletion) return;
 
-    try {
-      accountDeletionInFlight.value = true;
+    accountDeletionInFlight.value = true;
+    final result = await executeWithErrorHandling(() async {
       await _profileRepository.deleteAccount();
       await _authController.logout();
+      return true;
+    }, showLoading: false);
+    accountDeletionInFlight.value = false;
+    if (result == true) {
       Get.offAllNamed(Routes.login);
-      Get.snackbar(
-        'Account deleted',
-        'Your account has been removed successfully.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.success(
+        title: 'Account deleted',
+        message: 'Your account has been removed successfully.',
       );
-    } catch (e, stack) {
-      AppLogger.error('Account deletion failed', e, stack);
-      Get.snackbar(
-        'Deletion failed',
-        'We could not delete your account. Please contact support.',
-        snackPosition: SnackPosition.BOTTOM,
+    } else {
+      AppSnackbar.error(
+        title: 'Deletion failed',
+        message: 'We could not delete your account. Please contact support.',
       );
-    } finally {
-      accountDeletionInFlight.value = false;
     }
   }
 }

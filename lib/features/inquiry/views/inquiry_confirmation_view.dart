@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import 'package:stays_app/features/inquiry/controllers/inquiry_confirmation_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 
 class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
@@ -477,10 +478,9 @@ class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
         : earliestCheckout;
     final lastDate = controller.maxSelectableDate;
     if (firstDate.isAfter(lastDate)) {
-      Get.snackbar(
-        'Unavailable',
-        'Please choose an earlier check-in date to extend your stay.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Unavailable',
+        message: 'Please choose an earlier check-in date to extend your stay.',
       );
       return;
     }

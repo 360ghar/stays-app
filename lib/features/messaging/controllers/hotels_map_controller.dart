@@ -5,7 +5,6 @@ import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/services/places_service.dart';
@@ -13,6 +12,7 @@ import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 
 class HotelModel {
   final Property property;
@@ -36,7 +36,7 @@ class HotelModel {
   String get propertyType => property.propertyType.toLowerCase();
 }
 
-class HotelsMapController extends BaseController {
+class HotelsMapController extends GetxController {
   late flutter_map.MapController mapController;
   late final PageController cardsController;
   final RxList<flutter_map.Marker> markers = <flutter_map.Marker>[].obs;
@@ -276,7 +276,10 @@ class HotelsMapController extends BaseController {
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar('Location Error', 'Location services are disabled');
+        AppSnackbar.error(
+          title: 'Location Error',
+          message: 'Location services are disabled',
+        );
         _loadSampleHotels();
         return;
       }
@@ -285,9 +288,9 @@ class HotelsMapController extends BaseController {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          Get.snackbar(
-            'Permission Denied',
-            'Location permission is required to show nearby hotels',
+          AppSnackbar.warning(
+            title: 'Permission Denied',
+            message: 'Location permission is required to show nearby hotels',
           );
           _loadSampleHotels();
           return;
@@ -306,7 +309,10 @@ class HotelsMapController extends BaseController {
 
       await _loadHotelsNearLocation(currentLocation.value);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to get current location: $e');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Failed to get current location: $e',
+      );
       _loadSampleHotels();
     } finally {
       isLoadingLocation.value = false;

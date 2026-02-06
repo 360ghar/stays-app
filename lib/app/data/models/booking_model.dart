@@ -1,43 +1,25 @@
-import 'package:json_annotation/json_annotation.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 
-part 'booking_model.g.dart';
-
-@JsonSerializable(createFactory: false)
 class Booking {
   final int id;
-  @JsonKey(name: 'property_id')
   final int propertyId;
-  @JsonKey(name: 'user_id')
   final int userId;
-  @JsonKey(name: 'booking_reference')
   final String bookingReference;
-  @JsonKey(name: 'check_in_date')
   final DateTime checkInDate;
-  @JsonKey(name: 'check_out_date')
   final DateTime checkOutDate;
   final int guests;
   final int nights;
-  @JsonKey(name: 'total_amount')
   final double totalAmount;
-  @JsonKey(name: 'booking_status')
   final String bookingStatus;
-  @JsonKey(name: 'payment_status')
   final String paymentStatus;
-  @JsonKey(name: 'created_at')
   final DateTime createdAt;
-  @JsonKey(includeToJson: false)
   final Property? property;
-  @JsonKey(name: 'property_title')
   final String? propertyTitle;
-  @JsonKey(name: 'property_city')
   final String? propertyCity;
-  @JsonKey(name: 'property_country')
   final String? propertyCountry;
-  @JsonKey(name: 'property_image_url')
   final String? propertyImageUrl;
 
-  const Booking({
+  Booking({
     required this.id,
     required this.propertyId,
     required this.userId,
@@ -57,7 +39,6 @@ class Booking {
     this.propertyImageUrl,
   });
 
-  // Custom fromJson to handle complex API response variations
   factory Booking.fromJson(Map<String, dynamic> json) {
     final checkIn = json['check_in_date'] != null
         ? DateTime.parse(json['check_in_date'] as String)
@@ -140,16 +121,27 @@ class Booking {
     return (city ?? country) ?? '';
   }
 
-  Map<String, dynamic> toJson() {
-    final result = _$BookingToJson(this);
-    if (property != null) {
-      result['property'] = property!.toJson();
-    }
-    return result;
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'property_id': propertyId,
+      'user_id': userId,
+      'booking_reference': bookingReference,
+      'check_in_date': checkInDate.toIso8601String(),
+      'check_out_date': checkOutDate.toIso8601String(),
+      'guests': guests,
+      'nights': nights,
+      'total_amount': totalAmount,
+      'booking_status': bookingStatus,
+      'payment_status': paymentStatus,
+      'created_at': createdAt.toIso8601String(),
+      'property_title': propertyTitle,
+      'property_city': propertyCity,
+      'property_country': propertyCountry,
+      'property_image_url': propertyImageUrl,
+      if (property != null) 'property': property!.toJson(),
+    };
   }
-
-  // Backwards compatibility
-  Map<String, dynamic> toMap() => toJson();
 
   static Property? _safePropertyFromJson(Map<dynamic, dynamic> value) {
     try {

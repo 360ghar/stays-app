@@ -18,7 +18,6 @@ class ListingController extends BaseController {
   final ScrollController scrollController = ScrollController();
 
   final RxList<Property> listings = <Property>[].obs;
-  // Note: isLoading and errorMessage are inherited from BaseController
   final RxBool isRefreshing = false.obs;
   final RxInt currentPage = 1.obs;
   final RxInt totalPages = 1.obs;
@@ -44,13 +43,13 @@ class ListingController extends BaseController {
   @override
   void onClose() {
     scrollController.dispose();
-    _filterWorker?.dispose();
+    // Worker is automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
   void _initQueryFromArgsOrService() {
-    final args = Get.arguments as Map<String, dynamic>?;
-    if (args != null) {
+    final args = Get.arguments;
+    if (args is Map<String, dynamic>) {
       _queryLat =
           (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
       _queryLng =
@@ -85,7 +84,7 @@ class ListingController extends BaseController {
     } else {
       _activeFilters = _filterController!.filterFor(FilterScope.explore);
     }
-    _filterWorker = debounce<UnifiedFilterModel>(
+    _filterWorker = trackWorker(debounce<UnifiedFilterModel>(
       _filterController!.rxFor(FilterScope.locate),
       (filters) async {
         if (_activeFilters == filters) return;
@@ -93,7 +92,7 @@ class ListingController extends BaseController {
         await fetch(pageOverride: 1, jumpToTop: true);
       },
       time: const Duration(milliseconds: 150),
-    );
+    ));
   }
 
   Map<String, dynamic>? _buildFilters() {

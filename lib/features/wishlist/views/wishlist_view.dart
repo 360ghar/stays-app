@@ -268,7 +268,7 @@ class WishlistView extends GetView<WishlistController> {
             arguments: item,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -319,22 +319,23 @@ class WishlistView extends GetView<WishlistController> {
                     children: [
                       Text(
                         item.name,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: textStyles.titleMedium?.copyWith(
+                        style: textStyles.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: colors.onSurface,
-                          height: 1.2,
+                          height: 1.1,
+                          fontSize: 14,
                         ),
                       ),
                       if (locationLine != null) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.place_outlined,
-                              size: 16,
+                              size: 14,
                               color: colors.primary,
                             ),
                             const SizedBox(width: 4),
@@ -347,6 +348,7 @@ class WishlistView extends GetView<WishlistController> {
                                   color: colors.onSurface.withValues(
                                     alpha: 0.7,
                                   ),
+                                  fontSize: 11,
                                 ),
                               ),
                             ),
@@ -354,28 +356,30 @@ class WishlistView extends GetView<WishlistController> {
                         ),
                       ],
                       if (featureSummary.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
                             Text(
                               featureSummary,
-                              style: textStyles.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
+                              style: textStyles.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
                                 color: colors.onSurface,
+                                fontSize: 13,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Text(
                               '${item.displayPrice}/night',
-                              style: textStyles.titleMedium?.copyWith(
+                              style: textStyles.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: colors.primary,
+                                fontSize: 14,
                               ),
                             ),
                           ],
                         ),
                       ],
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Wrap(
@@ -446,18 +450,19 @@ class WishlistView extends GetView<WishlistController> {
     final textStyles = context.textStyles;
     final widgets = <Widget>[];
 
-    if (hasRating && ratingLabel != null) {
-      widgets.addAll([
-        Icon(Icons.star_rounded, size: 16, color: Colors.amber),
-        const SizedBox(width: 4),
-        Text(
-          ratingLabel,
-          style: textStyles.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: colors.onSurface.withValues(alpha: 0.8),
-          ),
-        ),
-      ]);
+        if (hasRating && ratingLabel != null) {
+          widgets.addAll([
+            Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+            const SizedBox(width: 4),
+            Text(
+              ratingLabel,
+              style: textStyles.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: colors.onSurface.withValues(alpha: 0.8),
+                fontSize: 11,
+              ),
+            ),
+          ]);
 
       if (reviewsLabel != null) {
         widgets.addAll([
@@ -466,6 +471,7 @@ class WishlistView extends GetView<WishlistController> {
             reviewsLabel,
             style: textStyles.bodySmall?.copyWith(
               color: colors.onSurface.withValues(alpha: 0.6),
+              fontSize: 11,
             ),
           ),
         ]);
@@ -479,7 +485,7 @@ class WishlistView extends GetView<WishlistController> {
       widgets.addAll([
         Icon(
           Icons.directions_walk_outlined,
-          size: 16,
+          size: 14,
           color: colors.onSurface.withValues(alpha: 0.55),
         ),
         const SizedBox(width: 4),
@@ -487,6 +493,7 @@ class WishlistView extends GetView<WishlistController> {
           _formatDistance(distanceKm),
           style: textStyles.bodySmall?.copyWith(
             color: colors.onSurface.withValues(alpha: 0.6),
+            fontSize: 11,
           ),
         ),
       ]);

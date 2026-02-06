@@ -26,7 +26,7 @@ class ProfileHeader extends StatelessWidget {
     final horizontalPadding = dense ? 8.0 : 16.0;
     final verticalPadding = dense ? 6.0 : 12.0;
     // Scale avatar back to roughly 70% of the previous size.
-    final avatarSize = dense ? 60.0 : 90.0;
+    final avatarSize = dense ? 52.0 : 76.0;
     final avatarRadius = avatarSize / 2;
 
     return Container(
@@ -85,9 +85,10 @@ class ProfileHeader extends StatelessWidget {
                 ] else ...[
                   Text(
                     userName,
-                    style: theme.textTheme.titleLarge?.copyWith(
+                    style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
+                      fontSize: 18,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -95,10 +96,11 @@ class ProfileHeader extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       userEmail,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.9,
+                          alpha: 0.75,
                         ),
+                        fontSize: 12,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -116,7 +118,7 @@ class ProfileHeader extends StatelessWidget {
     return Center(
       child: Text(
         initials,
-        style: theme.textTheme.headlineSmall?.copyWith(
+        style: theme.textTheme.titleLarge?.copyWith(
           color: theme.colorScheme.onPrimary,
           fontWeight: FontWeight.bold,
         ),

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_controller.dart';
 import 'package:stays_app/app/ui/widgets/cards/property_grid_card.dart';
 import 'package:stays_app/app/ui/widgets/common/location_filter_app_bar.dart';
@@ -30,14 +31,20 @@ class SearchResultsView extends GetView<ListingController> {
             tooltip: 'Sort',
             icon: Icon(Icons.sort_rounded, color: colors.onSurface),
             onPressed: () {
-              Get.snackbar('Sort', 'Sorting options coming soon');
+              AppSnackbar.info(
+                title: 'Sort',
+                message: 'Sorting options coming soon',
+              );
             },
           ),
           IconButton(
             tooltip: 'Map',
             icon: Icon(Icons.map_outlined, color: colors.onSurface),
             onPressed: () {
-              Get.snackbar('Map', 'Map view coming soon');
+              AppSnackbar.info(
+                title: 'Map',
+                message: 'Map view coming soon',
+              );
             },
           ),
         ],

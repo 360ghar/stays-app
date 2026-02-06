@@ -7,7 +7,7 @@ class BookingsProvider extends BaseProvider {
     required String checkOutIso,
     required int guests,
   }) async {
-    final res = await postWithRetry('/api/v1/bookings/check-availability/', {
+    final res = await post('/api/v1/bookings/check-availability/', {
       'property_id': propertyId,
       'check_in_date': checkInIso,
       'check_out_date': checkOutIso,
@@ -25,7 +25,7 @@ class BookingsProvider extends BaseProvider {
     required String checkOutIso,
     required int guests,
   }) async {
-    final res = await postWithRetry('/api/v1/bookings/calculate-pricing/', {
+    final res = await post('/api/v1/bookings/calculate-pricing/', {
       'property_id': propertyId,
       'check_in_date': checkInIso,
       'check_out_date': checkOutIso,
@@ -40,7 +40,7 @@ class BookingsProvider extends BaseProvider {
   Future<Map<String, dynamic>> createBooking(
     Map<String, dynamic> payload,
   ) async {
-    final res = await postWithRetry('/api/v1/bookings/', payload);
+    final res = await post('/api/v1/bookings/', payload);
     return handleResponse(res, (json) {
       final map = json as Map<String, dynamic>;
       return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
@@ -51,7 +51,7 @@ class BookingsProvider extends BaseProvider {
     int page = 1,
     int limit = 20,
   }) async {
-    final res = await getWithRetry(
+    final res = await get(
       '/api/v1/bookings/',
       query: {'page': '$page', 'limit': '$limit'},
     );
@@ -62,7 +62,7 @@ class BookingsProvider extends BaseProvider {
   }
 
   Future<Map<String, dynamic>> getBooking(int id) async {
-    final res = await getWithRetry('/api/v1/bookings/$id/');
+    final res = await get('/api/v1/bookings/$id/');
     return handleResponse(res, (json) {
       final map = json as Map<String, dynamic>;
       return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
@@ -84,7 +84,7 @@ class BookingsProvider extends BaseProvider {
     required int bookingId,
     required String reason,
   }) async {
-    final res = await postWithRetry('/api/v1/bookings/cancel/', {
+    final res = await post('/api/v1/bookings/cancel/', {
       'booking_id': bookingId,
       'reason': reason,
     });

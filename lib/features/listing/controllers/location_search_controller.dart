@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/data/services/places_service.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
-class LocationSearchController extends BaseController {
+class LocationSearchController extends GetxController {
   late final PlacesService _placesService;
   late final LocationService _locationService;
 
   final RxString query = ''.obs;
-  // Note: isLoading is inherited from BaseController
+  final RxBool isLoading = false.obs;
   final RxList<PlacePrediction> predictions = <PlacePrediction>[].obs;
   final TextEditingController textController = TextEditingController();
   Worker? _searchWorker;

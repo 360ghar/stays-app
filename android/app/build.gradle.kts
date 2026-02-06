@@ -1,16 +1,16 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
-    // Apply Google Services plugin here (only once, not at bottom)
+    // Google Services plugin
     id("com.google.gms.google-services")
     // Firebase Crashlytics
     id("com.google.firebase.crashlytics")
 }
-
-import java.util.Properties
-import java.io.FileInputStream
 
 // Load key.properties for release signing
 val keystorePropertiesFile = rootProject.file("key.properties")
@@ -22,11 +22,12 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.a360ghar.stays"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -52,13 +53,13 @@ android {
         versionName = flutter.versionName
     }
 
-    // 🔹 Flavor setup
+    // Flavor setup
     flavorDimensions += listOf("env")
 
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationIdSuffix = ".dev"
+            applicationId = "com.example.stays_app.dev"
             resValue("string", "app_name", "360ghar stays (Dev)")
         }
         create("staging") {
@@ -93,7 +94,7 @@ android {
         }
     }
 
-    // 🔹 Automatically pick correct google-services.json based on flavor
+    // Automatically pick correct google-services.json based on flavor
     sourceSets {
         getByName("dev") {
             res.srcDirs("src/dev/res")
@@ -111,6 +112,10 @@ android {
             // android/app/src/prod/google-services.json
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
 
 flutter {

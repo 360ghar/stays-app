@@ -1,8 +1,3 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'notification_model.g.dart';
-
-@JsonSerializable()
 class NotificationModel {
   final String id;
   final String title;
@@ -16,14 +11,20 @@ class NotificationModel {
     required this.createdAt,
   });
 
-  factory NotificationModel.fromJson(Map<String, dynamic> json) =>
-      _$NotificationModelFromJson(json);
-
-  Map<String, dynamic> toJson() => _$NotificationModelToJson(this);
-
-  // Backwards compatibility
   factory NotificationModel.fromMap(Map<String, dynamic> map) =>
-      NotificationModel.fromJson(map);
+      NotificationModel(
+        id: map['id']?.toString() ?? '',
+        title: map['title'] as String? ?? '',
+        body: map['body'] as String? ?? '',
+        createdAt:
+            DateTime.tryParse(map['createdAt'] as String? ?? '') ??
+            DateTime.now(),
+      );
 
-  Map<String, dynamic> toMap() => toJson();
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'title': title,
+    'body': body,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }
