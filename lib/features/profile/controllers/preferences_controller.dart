@@ -54,10 +54,12 @@ class PreferencesController extends BaseController {
     _syncFromSystem();
     _hydrateFromUser(_profileController.user.value);
     trackWorker(ever<UserModel?>(_profileController.user, _hydrateFromUser));
-    trackWorker(ever<ThemeMode>(
-      _themeController.themeMode,
-      (mode) => themeMode.value = _themeModeToString(mode),
-    ));
+    trackWorker(
+      ever<ThemeMode>(
+        _themeController.themeMode,
+        (mode) => themeMode.value = _themeModeToString(mode),
+      ),
+    );
   }
 
   @override
@@ -84,7 +86,10 @@ class PreferencesController extends BaseController {
       language.value = prefLanguage;
     }
     autoLocation.value = parseBool(prefs['autoLocation'], fallback: false);
-    marketingEmails.value = parseBool(prefs['marketingEmails'], fallback: false);
+    marketingEmails.value = parseBool(
+      prefs['marketingEmails'],
+      fallback: false,
+    );
     travelAlerts.value = parseBool(prefs['travelAlerts'], fallback: true);
     currency.value = (prefs['currency'] ?? currency.value).toString();
   }
@@ -104,13 +109,10 @@ class PreferencesController extends BaseController {
       _profileController.updateUser(updatedUser);
       _profileController.updatePreferencesLocal(payload);
       return updatedUser;
-    });
+    }, swallowError: true);
     if (result != null) {
       feedbackMessage.value = 'Preferences updated';
-      AppSnackbar.success(
-        title: 'Preferences',
-        message: feedbackMessage.value,
-      );
+      AppSnackbar.success(title: 'Preferences', message: feedbackMessage.value);
     } else {
       AppSnackbar.error(
         title: 'Update failed',

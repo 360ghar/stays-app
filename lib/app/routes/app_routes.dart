@@ -31,6 +31,8 @@ abstract class Routes {
   static const profileHelp = '/profile/help';
   static const profileAbout = '/profile/about';
   static const profileLegal = '/profile/legal';
+  static const profileFeedbackBug = '/profile/feedback/bug';
+  static const profileFeedbackFeature = '/profile/feedback/feature';
 
   // Backwards compatibility aliases (will be removed once consumers migrate)
   static const enquiry = inquiry; // British spelling alias

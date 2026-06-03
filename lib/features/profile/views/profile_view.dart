@@ -96,6 +96,24 @@ class ProfileView extends GetView<ProfileController> {
                               onTap: controller.navigateToHelp,
                             ),
                             _MenuTile(
+                              icon: Icons.bug_report_outlined,
+                              title: 'Report a Bug',
+                              subtitle: 'Found something broken? Let us know',
+                              onTap: () => Get.toNamed(
+                                Routes.profileFeedbackBug,
+                                arguments: {'type': 'bug'},
+                              ),
+                            ),
+                            _MenuTile(
+                              icon: Icons.lightbulb_outline,
+                              title: 'Request a Feature',
+                              subtitle: 'Suggest improvements',
+                              onTap: () => Get.toNamed(
+                                Routes.profileFeedbackFeature,
+                                arguments: {'type': 'feature'},
+                              ),
+                            ),
+                            _MenuTile(
                               icon: Icons.article_outlined,
                               title: 'Legal',
                               subtitle: 'Terms, privacy, refunds',

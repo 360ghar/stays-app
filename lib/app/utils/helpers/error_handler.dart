@@ -55,7 +55,13 @@ class ErrorHandler {
   }
 
   static void _handleValidationException(ValidationException error) {
-    final firstError = error.errors.values.first.first;
+    final messages = error.errors.values
+        .expand((fieldErrors) => fieldErrors)
+        .where((message) => message.trim().isNotEmpty)
+        .toList();
+    final firstError = messages.isNotEmpty
+        ? messages.first
+        : 'Unknown validation error';
     AppSnackbar.warning(title: 'Validation Error', message: firstError);
   }
 

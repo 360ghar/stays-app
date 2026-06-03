@@ -87,18 +87,11 @@ class ConnectivityService extends GetxService {
 
   Future<bool> checkConnection() async {
     try {
-      final result = await Connectivity().checkConnectivity();
-      final hasTransport =
-          result.contains(ConnectivityResult.wifi) ||
-          result.contains(ConnectivityResult.mobile) ||
-          result.contains(ConnectivityResult.ethernet);
-      if (!hasTransport) {
-        return await _hasInternetAccess();
-      }
+      await Connectivity().checkConnectivity();
       return await _hasInternetAccess();
     } catch (e) {
       AppLogger.error('Failed to check connection', e);
-      return _hasInternetAccess();
+      return await _hasInternetAccess();
     }
   }
 
@@ -122,10 +115,7 @@ class ConnectivityService extends GetxService {
 
   Future<bool> _hasInternetAccess() async {
     final apiHost = _resolveApiHost();
-    final hosts = <String>{
-      if (apiHost.isNotEmpty) apiHost,
-      'google.com',
-    };
+    final hosts = <String>{if (apiHost.isNotEmpty) apiHost, 'google.com'};
 
     for (final host in hosts) {
       if (await _canReachHost(
@@ -159,10 +149,11 @@ class ConnectivityService extends GetxService {
 
   Future<bool> _canReachHost(String host, int port) async {
     try {
-      final result = await InternetAddress.lookup(host)
-          .timeout(const Duration(seconds: 3));
-      if (result.isNotEmpty && result.first.rawAddress.isNotEmpty) {
-        return true;
+      final result = await InternetAddress.lookup(
+        host,
+      ).timeout(const Duration(seconds: 3));
+      if (result.isEmpty || result.first.rawAddress.isEmpty) {
+        return false;
       }
     } catch (_) {}
     try {

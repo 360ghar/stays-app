@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/helpers/json_helpers.dart';
 import '../models/user_model.dart';
 import 'base_provider.dart';
 
@@ -40,7 +41,7 @@ class UsersProvider extends BaseProvider {
     if (bio != null) payload['bio'] = bio;
     if (phone != null) payload['phone'] = phone;
     if (dateOfBirth != null) {
-      payload['date_of_birth'] = dateOfBirth.toIso8601String();
+      payload['date_of_birth'] = JsonHelpers.toDateOnly(dateOfBirth);
     }
     if (avatarUrl != null) payload['profile_image_url'] = avatarUrl;
     if (agentId != null) payload['agent_id'] = agentId;

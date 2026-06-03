@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_map/flutter_map.dart' as flutter_map;
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
+import 'package:stays_app/app/core/map/map_controller.dart';
+import 'package:stays_app/app/core/map/safe_map.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 
@@ -34,29 +37,12 @@ class LocateView extends GetView<HotelsMapController> {
     return Scaffold(
       body: Stack(
         children: [
-          Obx(
-            () => flutter_map.FlutterMap(
-              mapController: controller.mapController,
-              options: flutter_map.MapOptions(
-                initialCenter: controller.currentLocation.value,
-                initialZoom: 12,
-                minZoom: 5,
-                maxZoom: 18,
-                onMapReady: controller.onMapReady,
-              ),
-              children: [
-                flutter_map.TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.example.stays_app',
-                  maxZoom: 18,
-                ),
-                // Rebuild only markers when the list changes
-                Obx(
-                  () => flutter_map.MarkerLayer(
-                    markers: controller.markers.toList(),
-                  ),
-                ),
-              ],
+          Positioned.fill(
+            child: SafeMap(
+              latitude: controller.currentLocation.value.latitude,
+              longitude: controller.currentLocation.value.longitude,
+              zoom: 12,
+              mapBuilder: (context) => _LocateMap(controller: controller),
             ),
           ),
 
@@ -285,6 +271,186 @@ class LocateView extends GetView<HotelsMapController> {
                 ),
               );
             }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The interactive MapLibre map for the Locate screen.
+///
+/// Markers are rendered as Flutter widget overlays (price bubble + dot) rather
+/// than native symbol layers, to preserve the exact custom design and tap UX.
+/// Each marker's geo point is projected to a screen pixel via the wrapper's
+/// `toScreenLocation` and positioned in a [Stack]; positions are recomputed on
+/// every camera move and finalized on `onCameraIdle`.
+class _LocateMap extends StatefulWidget {
+  const _LocateMap({required this.controller});
+
+  final HotelsMapController controller;
+
+  @override
+  State<_LocateMap> createState() => _LocateMapState();
+}
+
+class _LocateMapState extends State<_LocateMap> {
+  final Map<String, Offset> _positions = {};
+  MapLibreMapController? _rawController;
+
+  @override
+  void dispose() {
+    _rawController?.removeListener(_onCameraChanged);
+    super.dispose();
+  }
+
+  void _onMapCreated(MapLibreMapController controller) {
+    _rawController = controller;
+    widget.controller.attachMap(controller);
+    controller.addListener(_onCameraChanged);
+  }
+
+  void _onCameraChanged() {
+    if (!mounted) return;
+    unawaited(_updateOverlays());
+  }
+
+  void _onStyleLoaded() {
+    widget.controller.onMapReady();
+    unawaited(_updateOverlays());
+  }
+
+  Future<void> _updateOverlays() async {
+    final mapController = widget.controller.mapController;
+    if (!mounted || !mapController.isAttached) return;
+    final markers = widget.controller.markers.toList();
+    final positions = <String, Offset>{};
+    for (final marker in markers) {
+      final p = await mapController.toScreenLocation(marker.point);
+      if (p == null) continue;
+      positions[marker.hotel.id] = Offset(p.x.toDouble(), p.y.toDouble());
+    }
+    if (!mounted) return;
+    setState(() {
+      _positions
+        ..clear()
+        ..addAll(positions);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      final center = widget.controller.currentLocation.value;
+      final markers = widget.controller.markers.toList();
+      // Reproject after this frame whenever the marker set changes.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _updateOverlays());
+      return Stack(
+        children: [
+          MapLibreMap(
+            styleString: kLibertyStyle,
+            initialCameraPosition: CameraPosition(target: center, zoom: 12),
+            minMaxZoomPreference: const MinMaxZoomPreference(5, 18),
+            trackCameraPosition: true,
+            rotateGesturesEnabled: false,
+            tiltGesturesEnabled: false,
+            // Attribution (OSM/OpenFreeMap) stays visible at its default
+            // bottom-right position — required by the tile license.
+            onMapCreated: _onMapCreated,
+            onStyleLoadedCallback: _onStyleLoaded,
+            onCameraIdle: () => unawaited(_updateOverlays()),
+          ),
+          ...markers.map((marker) {
+            final pos = _positions[marker.hotel.id];
+            if (pos == null) return const SizedBox.shrink();
+            const width = 96.0;
+            final height = marker.isSelected ? 92.0 : 84.0;
+            return Positioned(
+              left: pos.dx - width / 2,
+              // Anchor the bottom-center (pin dot) on the geo point.
+              top: pos.dy - height,
+              width: width,
+              height: height,
+              child: _HotelMarkerOverlay(
+                marker: marker,
+                onTap: () => widget.controller.onMarkerTapped(marker.hotel),
+              ),
+            );
+          }),
+        ],
+      );
+    });
+  }
+}
+
+class _HotelMarkerOverlay extends StatelessWidget {
+  const _HotelMarkerOverlay({required this.marker, required this.onTap});
+
+  final HotelMarker marker;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isSelected = marker.isSelected;
+    final badgeColor = isSelected ? colorScheme.primary : colorScheme.surface;
+    final textColor = isSelected ? colorScheme.onPrimary : colorScheme.primary;
+    final borderColor = isSelected
+        ? colorScheme.primary
+        : colorScheme.primary.withValues(alpha: 0.5);
+    final shadowColor = Colors.black.withValues(
+      alpha: isSelected ? 0.28 : 0.14,
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: borderColor, width: 1.6),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: isSelected ? 14 : 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              CurrencyHelper.formatCompact(marker.hotel.price),
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: isSelected ? 16 : 14,
+            height: isSelected ? 16 : 14,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withValues(
+                    alpha: isSelected ? 0.45 : 0.25,
+                  ),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -1,3 +1,5 @@
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
+
 class UserModel {
   final String id;
   final String? supabaseId;
@@ -223,7 +225,7 @@ class UserModel {
     'profileImageUrl': profileImageUrl ?? avatarUrl,
     'profile_image_url': profileImageUrl ?? avatarUrl,
     'bio': bio,
-    'date_of_birth': dateOfBirth?.toIso8601String(),
+    'date_of_birth': JsonHelpers.toDateOnly(dateOfBirth),
     'preferences': preferences,
     'notification_settings': notificationSettings,
     'privacy_settings': privacySettings,
@@ -231,8 +233,8 @@ class UserModel {
     'current_longitude': currentLongitude,
     'is_active': isActive,
     'is_verified': isVerified,
-    'created_at': createdAt?.toIso8601String(),
-    'updated_at': updatedAt?.toIso8601String(),
+    'created_at': JsonHelpers.toUtcIso8601(createdAt),
+    'updated_at': JsonHelpers.toUtcIso8601(updatedAt),
     'isSuperHost': isSuperHost,
     'agent_id': agentId,
     'metadata': metadata,
@@ -248,12 +250,7 @@ class UserModel {
   }
 
   static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    if (value is String && value.isNotEmpty) {
-      return DateTime.tryParse(value);
-    }
-    return null;
+    return JsonHelpers.getDateTime(value);
   }
 
   static String? _asString(dynamic value) {

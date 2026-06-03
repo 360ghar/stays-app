@@ -1,3 +1,5 @@
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
+
 class TripModel {
   final String id;
   final String propertyName;
@@ -22,8 +24,10 @@ class TripModel {
   factory TripModel.fromMap(Map<String, dynamic> map) => TripModel(
     id: map['id']?.toString() ?? '',
     propertyName: map['propertyName'] as String? ?? '',
-    checkIn: DateTime.parse(map['checkIn'] as String),
-    checkOut: DateTime.parse(map['checkOut'] as String),
+    checkIn: JsonHelpers.getDateTime(map['checkIn']) ?? DateTime.now(),
+    checkOut:
+        JsonHelpers.getDateTime(map['checkOut']) ??
+        (JsonHelpers.getDateTime(map['checkIn']) ?? DateTime.now()),
     status: map['status'] as String? ?? 'pending',
     propertyImage: map['propertyImage'] as String?,
     totalCost: (map['totalCost'] as num?)?.toDouble(),
@@ -33,8 +37,8 @@ class TripModel {
   Map<String, dynamic> toMap() => {
     'id': id,
     'propertyName': propertyName,
-    'checkIn': checkIn.toIso8601String(),
-    'checkOut': checkOut.toIso8601String(),
+    'checkIn': JsonHelpers.toDateOnly(checkIn),
+    'checkOut': JsonHelpers.toDateOnly(checkOut),
     'status': status,
     'propertyImage': propertyImage,
     'totalCost': totalCost,

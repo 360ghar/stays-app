@@ -63,17 +63,21 @@ class EditProfileController extends BaseController {
     _initializeFields();
 
     // Listen for profile changes and update form fields accordingly
-    _profileChangeWorker = trackWorker(ever(_profileController.user, (UserModel? user) {
-      if (user != null) {
-        _updateFieldsFromUser(user);
-      }
-    }));
+    _profileChangeWorker = trackWorker(
+      ever(_profileController.user, (UserModel? user) {
+        if (user != null) {
+          _updateFieldsFromUser(user);
+        }
+      }),
+    );
 
-    _authChangeWorker = trackWorker(ever(_authController.currentUser, (UserModel? user) {
-      if (user != null) {
-        _updateFieldsFromUser(user);
-      }
-    }));
+    _authChangeWorker = trackWorker(
+      ever(_authController.currentUser, (UserModel? user) {
+        if (user != null) {
+          _updateFieldsFromUser(user);
+        }
+      }),
+    );
   }
 
   void _initializeFields() {
@@ -154,10 +158,6 @@ class EditProfileController extends BaseController {
       selectedImage.value = file;
     } catch (e) {
       handleError(e);
-      AppSnackbar.error(
-        title: 'Image picker',
-        message: 'Failed to pick image. Please try again.',
-      );
     }
   }
 

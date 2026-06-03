@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../data/interfaces/i_auth_repository.dart';
 import '../../data/services/storage_service.dart';
 import '../logger/app_logger.dart';
 
@@ -17,13 +16,18 @@ class TokenInfo {
   });
 
   factory TokenInfo.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = json['createdAt'];
+    final createdAt = createdAtRaw is String
+        ? DateTime.tryParse(createdAtRaw)
+        : null;
+
     return TokenInfo(
       accessToken: json['accessToken'] as String,
       refreshToken: json['refreshToken'] as String?,
       expiresAt: json['expiresAt'] != null
           ? DateTime.parse(json['expiresAt'] as String)
           : null,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt ?? DateTime.now(),
     );
   }
 
@@ -50,20 +54,16 @@ class TokenInfo {
       'createdAt': createdAt.toIso8601String(),
     };
   }
-
 }
 
 class TokenService extends GetxService {
   TokenService({
     StorageService? storageService,
-    IAuthRepository? authRepository,
-  }) : _storageService = storageService,
-       _authRepository = authRepository;
+  }) : _storageService = storageService;
 
   static TokenService get I => Get.find<TokenService>();
 
   StorageService? _storageService;
-  IAuthRepository? _authRepository;
 
   TokenInfo? _currentToken;
   Timer? _refreshTimer;
@@ -199,28 +199,17 @@ class TokenService extends GetxService {
   }
 
   Future<bool> refreshIfNeeded() async {
-    if (_supabaseSessionAvailable) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null) {
-        if (session.isExpired == false) {
-          return true;
-        }
-        final refreshed = await _refreshWithSupabase();
-        if (refreshed) {
-          return true;
-        }
-      }
-    }
-
-    if (_currentToken == null) {
-      return false;
-    }
-
-    if (!_currentToken!.shouldRefresh) {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null && session.isExpired == false) {
       return true;
     }
 
-    return await _refreshTokens();
+    if (await _refreshWithSupabase()) {
+      return true;
+    }
+
+    await clearTokens();
+    return false;
   }
 
   Future<void> clearTokens() async {
@@ -285,10 +274,6 @@ class TokenService extends GetxService {
       if (_storageService == null) {
         await StorageService.ready;
         _storageService = Get.find<StorageService>();
-      }
-
-      if (_authRepository == null && Get.isRegistered<IAuthRepository>()) {
-        _authRepository = Get.find<IAuthRepository>();
       }
 
       _checkSupabaseSession();
@@ -403,34 +388,9 @@ class TokenService extends GetxService {
 
     _isRefreshing = true;
     try {
-      if (_currentToken?.refreshToken == null) {
-        AppLogger.warning('No refresh token available');
-        await clearTokens();
-        return false;
-      }
-
-      if (_supabaseSessionAvailable) {
-        final success = await _refreshWithSupabase();
-        if (success) return true;
-      }
-
-      if (_authRepository != null) {
-        AppLogger.info('Refreshing tokens via auth repository');
-        final result = await _authRepository!.refreshTokens(
-          _currentToken!.refreshToken!,
-        );
-
-        if (result.isSuccess && result.accessToken != null) {
-          await storeTokens(
-            accessToken: result.accessToken!,
-            refreshToken: result.refreshToken,
-          );
-          AppLogger.info('Tokens refreshed successfully via repository');
-          return true;
-        }
-      }
-
-      AppLogger.warning('Token refresh failed - no valid auth provider');
+      final success = await _refreshWithSupabase();
+      if (success) return true;
+      AppLogger.warning('Token refresh failed - no Supabase session available');
       await clearTokens();
       return false;
     } catch (e) {

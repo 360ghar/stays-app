@@ -72,6 +72,7 @@ class InitialBinding extends Bindings {
     Get.put<PlacesService>(PlacesService());
     Get.put<AnalyticsService>(
       AnalyticsService(enabled: AppConfig.I.enableAnalytics),
+      permanent: true,
     );
 
     // Property cache service for offline support

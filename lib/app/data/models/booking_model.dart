@@ -1,4 +1,5 @@
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class Booking {
   final int id;
@@ -40,12 +41,11 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    final checkIn = json['check_in_date'] != null
-        ? DateTime.parse(json['check_in_date'] as String)
-        : DateTime.now();
-    final checkOut = json['check_out_date'] != null
-        ? DateTime.parse(json['check_out_date'] as String)
-        : checkIn.add(const Duration(days: 1));
+    final checkIn =
+        JsonHelpers.getDateTime(json['check_in_date']) ?? DateTime.now();
+    final checkOut =
+        JsonHelpers.getDateTime(json['check_out_date']) ??
+        checkIn.add(const Duration(days: 1));
     final propertyData = json['property'];
     Property? property;
     if (propertyData is Map) {
@@ -90,9 +90,7 @@ class Booking {
       totalAmount: _parseDouble(json['total_amount']),
       bookingStatus: json['booking_status']?.toString() ?? 'pending',
       paymentStatus: json['payment_status']?.toString() ?? 'pending',
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'] as String)
-          : DateTime.now(),
+      createdAt: JsonHelpers.getDateTime(json['created_at']) ?? DateTime.now(),
       property: property,
       propertyTitle: _stringOrNull(propertyTitleSource),
       propertyCity: _stringOrNull(propertyCitySource),
@@ -127,14 +125,14 @@ class Booking {
       'property_id': propertyId,
       'user_id': userId,
       'booking_reference': bookingReference,
-      'check_in_date': checkInDate.toIso8601String(),
-      'check_out_date': checkOutDate.toIso8601String(),
+      'check_in_date': JsonHelpers.toDateOnly(checkInDate),
+      'check_out_date': JsonHelpers.toDateOnly(checkOutDate),
       'guests': guests,
       'nights': nights,
       'total_amount': totalAmount,
       'booking_status': bookingStatus,
       'payment_status': paymentStatus,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': JsonHelpers.toUtcIso8601(createdAt),
       'property_title': propertyTitle,
       'property_city': propertyCity,
       'property_country': propertyCountry,

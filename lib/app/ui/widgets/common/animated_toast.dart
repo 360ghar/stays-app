@@ -62,7 +62,12 @@ class AnimatedToast extends StatefulWidget {
     String message, {
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, type: ToastType.success, duration: duration);
+    show(
+      context,
+      message: message,
+      type: ToastType.success,
+      duration: duration,
+    );
   }
 
   /// Convenience method for error toast
@@ -80,7 +85,12 @@ class AnimatedToast extends StatefulWidget {
     String message, {
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, type: ToastType.warning, duration: duration);
+    show(
+      context,
+      message: message,
+      type: ToastType.warning,
+      duration: duration,
+    );
   }
 
   /// Convenience method for info toast
@@ -102,6 +112,7 @@ class _AnimatedToastState extends State<AnimatedToast>
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  bool _isDismissed = false;
 
   @override
   void initState() {
@@ -117,10 +128,7 @@ class _AnimatedToastState extends State<AnimatedToast>
         : const Offset(0, 1);
 
     _slideAnimation = Tween<Offset>(begin: begin, end: Offset.zero).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutCubic),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -131,23 +139,22 @@ class _AnimatedToastState extends State<AnimatedToast>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutCubic),
     );
 
     _controller.forward();
 
     // Auto-dismiss after duration
     Future.delayed(widget.duration, () {
-      if (mounted) {
+      if (mounted && !_isDismissed) {
         _dismiss();
       }
     });
   }
 
   void _dismiss() {
+    if (_isDismissed) return;
+    _isDismissed = true;
     _controller.reverse().then((_) {
       widget.onDismiss?.call();
     });
@@ -235,11 +242,7 @@ class _ToastContent extends StatelessWidget {
                 color: config.iconColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                config.icon,
-                color: config.iconColor,
-                size: 18,
-              ),
+              child: Icon(config.icon, color: config.iconColor, size: 18),
             ),
             const SizedBox(width: 12),
 

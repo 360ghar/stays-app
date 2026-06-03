@@ -34,11 +34,10 @@ abstract class BaseProvider extends GetConnect {
     httpClient.timeout = const Duration(seconds: 30);
 
     httpClient.addRequestModifier<Object?>((request) async {
-      // Prefer Supabase session token; fallback to secure storage (async)
+      // Always use the active Supabase session as the source of truth.
       final supabaseToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
-      final legacyToken = await (await _getStorage()).getAccessToken();
-      final token = supabaseToken ?? legacyToken;
+      final token = supabaseToken;
       if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
       } else {
@@ -83,25 +82,15 @@ abstract class BaseProvider extends GetConnect {
       try {
         final session = client.auth.currentSession;
         if (session == null) {
-          // Try refresh with stored refresh token if available
-          final refreshToken = await (await _getStorage()).getRefreshToken();
-          if (refreshToken == null || refreshToken.isEmpty) {
-            throw ApiException(
-              message: 'No session to refresh',
-              statusCode: 401,
-            );
-          }
-          // Supabase Flutter SDK refreshes based on current session; signInWithIdToken
-          // not applicable here. Attempt to set session from refresh token.
-          final res = await client.auth.refreshSession();
-          if (res.session == null) {
-            throw ApiException(message: 'Unable to refresh', statusCode: 401);
-          }
-        } else {
-          final res = await client.auth.refreshSession();
-          if (res.session == null) {
-            throw ApiException(message: 'Unable to refresh', statusCode: 401);
-          }
+          throw ApiException(
+            message: 'No session to refresh',
+            statusCode: 401,
+          );
+        }
+
+        final res = await client.auth.refreshSession();
+        if (res.session == null) {
+          throw ApiException(message: 'Unable to refresh', statusCode: 401);
         }
         final newToken = client.auth.currentSession?.accessToken;
         final newRefresh = client.auth.currentSession?.refreshToken;

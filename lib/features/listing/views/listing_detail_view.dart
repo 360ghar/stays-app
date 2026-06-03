@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:stays_app/app/core/map/map_controller.dart';
+import 'package:stays_app/app/core/map/safe_map.dart';
 import 'package:stays_app/app/ui/theme/app_dimensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
@@ -682,49 +683,56 @@ class ListingDetailView extends GetView<ListingDetailController> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: flutter_map.FlutterMap(
-                  options: flutter_map.MapOptions(
-                    initialCenter: LatLng(lat, lng),
-                    initialZoom: 15.0,
-                    minZoom: 10.0,
-                    maxZoom: 18.0,
-                  ),
-                  children: [
-                    flutter_map.TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.stays_app',
-                      maxZoom: 18,
-                    ),
-                    flutter_map.MarkerLayer(
-                      markers: [
-                        flutter_map.Marker(
-                          point: LatLng(lat, lng),
-                          width: 35,
-                          height: 35,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.9),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.location_on,
-                              color: colors.onPrimary,
-                              size: 18,
-                            ),
+                child: SafeMap(
+                  latitude: lat,
+                  longitude: lng,
+                  mapBuilder: (context) => Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      MapLibreMap(
+                        styleString: kLibertyStyle,
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(lat, lng),
+                          zoom: 15,
+                        ),
+                        minMaxZoomPreference: const MinMaxZoomPreference(10, 18),
+                        // Fully non-interactive single-pin map: the camera can
+                        // never move, so the pin is a centered overlay.
+                        scrollGesturesEnabled: false,
+                        zoomGesturesEnabled: false,
+                        rotateGesturesEnabled: false,
+                        tiltGesturesEnabled: false,
+                        dragEnabled: false,
+                        doubleClickZoomEnabled: false,
+                        compassEnabled: false,
+                        // Attribution (OSM/OpenFreeMap) stays visible at its
+                        // default position — required by the tile license.
+                      ),
+                      // Pin anchored on the centre (== the listing coordinate).
+                      IgnorePointer(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.location_on,
+                            color: colors.onPrimary,
+                            size: 18,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

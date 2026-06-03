@@ -45,6 +45,7 @@ class AuthController extends BaseController {
   final RxBool isAuthenticated = false.obs;
   final RxBool isPasswordVisible = false.obs;
   final RxBool rememberMe = false.obs;
+  final RxBool isTermsAccepted = false.obs;
 
   // Local storage for remember-me preference
   late final GetStorage _authPrefs;
@@ -63,7 +64,7 @@ class AuthController extends BaseController {
     unawaited(_ensureRememberMePreferenceReady());
 
     // Defer initial auth status check until TokenService has loaded tokens
-    _initAuthStatus();
+    unawaited(_initAuthStatus());
     _bindAuthStateListener();
   }
 
@@ -71,11 +72,6 @@ class AuthController extends BaseController {
   void onReady() {
     super.onReady();
     unawaited(_loadSavedUser());
-    // Attempt to refresh profile details once ready
-    if (isAuthenticated.value) {
-      // fire-and-forget; UI will react when currentUser updates
-      unawaited(fetchAndCacheProfile());
-    }
   }
 
   @override
@@ -178,6 +174,7 @@ class AuthController extends BaseController {
               event == AuthChangeEvent.tokenRefreshed) {
             // Update TokenService with latest tokens so late-bound controllers see auth state
             await _updateTokenServiceFromSession(session);
+            await _ensureRememberMePreferenceReady();
             // Only persist to local remember-me storage if opted in
             if (rememberMe.value) {
               await _persistRememberedSession(session: session);

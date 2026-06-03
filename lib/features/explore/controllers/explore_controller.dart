@@ -251,7 +251,9 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     }
 
     // Authentication issues
-    if (errorStr.contains('401') || errorStr.contains('unauthorized') || errorStr.contains('token')) {
+    if (errorStr.contains('401') ||
+        errorStr.contains('unauthorized') ||
+        errorStr.contains('token')) {
       return 'Session expired. Please log in again.';
     }
     if (errorStr.contains('403') || errorStr.contains('forbidden')) {
@@ -259,7 +261,10 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     }
 
     // Server errors
-    if (errorStr.contains('500') || errorStr.contains('502') || errorStr.contains('503') || errorStr.contains('504')) {
+    if (errorStr.contains('500') ||
+        errorStr.contains('502') ||
+        errorStr.contains('503') ||
+        errorStr.contains('504')) {
       return 'Server is temporarily unavailable. Please try again later.';
     }
 
@@ -295,7 +300,9 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       );
 
       final props = resp.properties;
-      AppLogger.info('ExploreController: Received ${props.length} properties from API');
+      AppLogger.info(
+        'ExploreController: Received ${props.length} properties from API',
+      );
       _updatePropertiesFromResponse(props);
     } catch (e, s) {
       AppLogger.error('ExploreController: Error loading properties', e, s);
@@ -318,9 +325,11 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       }
 
       // No cached data available, show the error
-      isOffline.value = friendlyError.contains('internet') || friendlyError.contains('connection');
+      isOffline.value =
+          friendlyError.contains('internet') ||
+          friendlyError.contains('connection');
       errorMessage.value = friendlyError;
-      rethrow;
+      return;
     }
   }
 
@@ -368,7 +377,11 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       AppLogger.info('ExploreController: Reloading with filters');
       await loadProperties();
     } catch (e, s) {
-      AppLogger.error('ExploreController: Error applying explore filters', e, s);
+      AppLogger.error(
+        'ExploreController: Error applying explore filters',
+        e,
+        s,
+      );
       errorMessage.value = _getUserFriendlyErrorMessage(e);
     } finally {
       isLoading.value = false;
@@ -379,10 +392,10 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
   void _prefetchVisibleImages() {
     // Prefetch first batch of popular homes (usually displayed first)
     prefetchImages(popularHomes, limit: 6);
-    
+
     // Prefetch first batch of nearby hotels
     prefetchImages(nearbyHotels, limit: 4);
-    
+
     AppLogger.info(
       'Triggered image prefetch for ${popularHomes.length + nearbyHotels.length} properties',
     );
@@ -416,7 +429,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
 
   void navigateToPropertyDetail(Property property) {
     Get.toNamed('/listing/${property.id}', arguments: property);
-    
+
     // Prefetch all images for the property detail view
     prefetchDetailImages(property);
   }
@@ -442,7 +455,9 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
       }
       _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
       AppSnackbar.success(
-        title: isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
+        title: isCurrentlyFavorite
+            ? 'Removed from Wishlist'
+            : 'Added to Wishlist',
         message: '${property.name} updated.',
       );
     } catch (e) {
@@ -462,7 +477,12 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
         isFavorite: isFavorite,
       );
     }
-    // Repeat for other lists like nearbyHotels if you have them
+    index = nearbyHotels.indexWhere((p) => p.id == propertyId);
+    if (index != -1) {
+      nearbyHotels[index] = nearbyHotels[index].copyWith(
+        isFavorite: isFavorite,
+      );
+    }
   }
 
   bool isPropertyFavorite(int propertyId) {

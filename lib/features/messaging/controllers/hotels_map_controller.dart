@@ -1,18 +1,31 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:flutter_map/flutter_map.dart' as flutter_map;
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stays_app/app/core/map/map_controller.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/services/places_service.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
-import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+
+/// A map pin descriptor consumed by the view, which projects [point] to a
+/// screen pixel (via the MapLibre controller) and renders an overlay widget.
+class HotelMarker {
+  const HotelMarker({
+    required this.hotel,
+    required this.point,
+    required this.isSelected,
+  });
+
+  final HotelModel hotel;
+  final LatLng point;
+  final bool isSelected;
+}
 
 class HotelModel {
   final Property property;
@@ -37,9 +50,9 @@ class HotelModel {
 }
 
 class HotelsMapController extends GetxController {
-  late flutter_map.MapController mapController;
+  final StaysMapController mapController = StaysMapController();
   late final PageController cardsController;
-  final RxList<flutter_map.Marker> markers = <flutter_map.Marker>[].obs;
+  final RxList<HotelMarker> markers = <HotelMarker>[].obs;
   final RxList<HotelModel> hotels = <HotelModel>[].obs;
   final Rx<LatLng> currentLocation = const LatLng(
     28.6139,
@@ -64,7 +77,6 @@ class HotelsMapController extends GetxController {
   final List<HotelModel> _allHotels = [];
   double _lastRadius = 10;
   double _lastMapZoom = 12;
-  StreamSubscription<flutter_map.MapEvent>? _mapEventSub;
   bool _mapReady = false;
   LatLng? _pendingCameraCenter;
   double? _pendingCameraZoom;
@@ -72,14 +84,10 @@ class HotelsMapController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    mapController = flutter_map.MapController();
     cardsController = PageController(viewportFraction: 0.72);
     _mapReady = false;
     _pendingCameraCenter = null;
     _pendingCameraZoom = null;
-    _mapEventSub = mapController.mapEventStream.listen((event) {
-      _lastMapZoom = event.camera.zoom;
-    });
     try {
       _propertiesService = Get.find<PropertiesRepository>();
     } catch (_) {}
@@ -99,7 +107,7 @@ class HotelsMapController extends GetxController {
 
   @override
   void onClose() {
-    _mapEventSub?.cancel();
+    mapController.dispose();
     cardsController.dispose();
     searchController.dispose();
     _filterWorker?.dispose();
@@ -111,6 +119,13 @@ class HotelsMapController extends GetxController {
     super.onClose();
   }
 
+  /// Bind the live MapLibre controller. Called from the view's `onMapCreated`.
+  void attachMap(MapLibreMapController controller) {
+    mapController.attach(controller);
+  }
+
+  /// Called once the style has loaded (from the view's `onStyleLoadedCallback`),
+  /// at which point camera moves are safe to issue.
   void onMapReady() {
     if (_mapReady) return;
     _mapReady = true;
@@ -215,7 +230,8 @@ class HotelsMapController extends GetxController {
   }
 
   void _centerOnHotel(HotelModel hotel) {
-    _moveMapTo(hotel.position, _lastMapZoom);
+    final zoom = mapController.isAttached ? mapController.zoom : _lastMapZoom;
+    _moveMapTo(hotel.position, zoom);
   }
 
   void selectHotel(int index, {bool syncPage = true, bool syncMap = true}) {
@@ -259,15 +275,13 @@ class HotelsMapController extends GetxController {
   double get activeRadiusKm => _activeFilters.radiusKm ?? _lastRadius;
 
   void zoomIn() {
-    final camera = mapController.camera;
-    final zoom = (camera.zoom + 0.5).clamp(5.0, 18.0);
-    _moveMapTo(camera.center, zoom);
+    unawaited(mapController.zoomIn());
+    _lastMapZoom = (mapController.zoom + 0.5).clamp(5.0, 18.0);
   }
 
   void zoomOut() {
-    final camera = mapController.camera;
-    final zoom = (camera.zoom - 0.5).clamp(3.0, 18.0);
-    _moveMapTo(camera.center, zoom);
+    unawaited(mapController.zoomOut());
+    _lastMapZoom = (mapController.zoom - 0.5).clamp(3.0, 18.0);
   }
 
   Future<void> getCurrentLocation() async {
@@ -363,81 +377,17 @@ class HotelsMapController extends GetxController {
     }
 
     final selectedId = selectedHotelId.value;
-    final List<flutter_map.Marker> newMarkers = hotels.map((hotel) {
-      final isSelected = selectedId == hotel.id;
-      final theme = Get.theme;
-      final colorScheme = theme.colorScheme;
-      final badgeColor = isSelected ? colorScheme.primary : colorScheme.surface;
-      final textColor = isSelected
-          ? colorScheme.onPrimary
-          : colorScheme.primary;
-      final borderColor = isSelected
-          ? colorScheme.primary
-          : colorScheme.primary.withValues(alpha: 0.5);
-      final shadowColor = Colors.black.withValues(
-        alpha: isSelected ? 0.28 : 0.14,
-      );
-      return flutter_map.Marker(
-        width: 96.0,
-        height: isSelected ? 92.0 : 84.0,
-        point: hotel.position,
-        child: GestureDetector(
-          onTap: () => onMarkerTapped(hotel),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: borderColor, width: 1.6),
-                  boxShadow: [
-                    BoxShadow(
-                      color: shadowColor,
-                      blurRadius: isSelected ? 14 : 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  CurrencyHelper.formatCompact(hotel.price),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: textColor,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                width: isSelected ? 16 : 14,
-                height: isSelected ? 16 : 14,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(
-                        alpha: isSelected ? 0.45 : 0.25,
-                      ),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    // Markers are now plain data; the view projects [point] to a screen pixel
+    // and renders the price-bubble overlay widget (see locate_view.dart).
+    final List<HotelMarker> newMarkers = hotels
+        .map(
+          (hotel) => HotelMarker(
+            hotel: hotel,
+            point: hotel.position,
+            isSelected: selectedId == hotel.id,
           ),
-        ),
-      );
-    }).toList();
+        )
+        .toList();
 
     markers.assignAll(newMarkers);
   }
@@ -535,11 +485,11 @@ class HotelsMapController extends GetxController {
 
   void _moveMapTo(LatLng target, double zoom) {
     _lastMapZoom = zoom;
-    if (!_mapReady) {
+    if (!_mapReady || !mapController.isAttached) {
       _pendingCameraCenter = target;
       _pendingCameraZoom = zoom;
       return;
     }
-    mapController.move(target, zoom);
+    unawaited(mapController.animateTo(target, zoom: zoom));
   }
 }

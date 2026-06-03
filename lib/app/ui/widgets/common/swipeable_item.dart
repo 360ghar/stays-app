@@ -11,6 +11,7 @@ import '../../theme/app_animations.dart';
 class SwipeableItem extends StatefulWidget {
   const SwipeableItem({
     super.key,
+    required this.itemKey,
     required this.child,
     this.onDelete,
     this.onEdit,
@@ -20,6 +21,7 @@ class SwipeableItem extends StatefulWidget {
     this.backgroundColor,
   });
 
+  final Key itemKey;
   final Widget child;
   final VoidCallback? onDelete;
   final VoidCallback? onEdit;
@@ -51,17 +53,11 @@ class _SwipeableItemState extends State<SwipeableItem>
     );
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutCubic),
     );
 
     _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOut,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOut),
     );
   }
 
@@ -116,20 +112,15 @@ class _SwipeableItemState extends State<SwipeableItem>
       return SizeTransition(
         axis: Axis.vertical,
         sizeFactor: _scaleAnimation,
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: widget.child,
-        ),
+        child: FadeTransition(opacity: _fadeAnimation, child: widget.child),
       );
     }
 
     return ClipRect(
       child: Dismissible(
-        key: widget.key ?? UniqueKey(),
+        key: widget.itemKey,
         direction: DismissDirection.endToStart,
-        dismissThresholds: const {
-          DismissDirection.endToStart: 0.7,
-        },
+        dismissThresholds: const {DismissDirection.endToStart: 0.7},
         onDismissed: (_) {
           widget.onDelete?.call();
         },
@@ -203,10 +194,7 @@ class _SwipeableItemState extends State<SwipeableItem>
 
 /// Delete confirmation button group
 class _DeleteConfirmation extends StatelessWidget {
-  const _DeleteConfirmation({
-    required this.onCancel,
-    required this.onConfirm,
-  });
+  const _DeleteConfirmation({required this.onCancel, required this.onConfirm});
 
   final VoidCallback onCancel;
   final VoidCallback onConfirm;
@@ -216,11 +204,7 @@ class _DeleteConfirmation extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(
-          Icons.delete_rounded,
-          color: Colors.white,
-          size: 24,
-        ),
+        Icon(Icons.delete_rounded, color: Colors.white, size: 24),
         const SizedBox(width: 8),
         const Text(
           'Delete?',
@@ -261,10 +245,7 @@ class _DeleteConfirmation extends StatelessWidget {
             ),
             child: const Text(
               'Yes',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -281,6 +262,7 @@ class _DeleteConfirmation extends StatelessWidget {
 class SimpleSwipeable extends StatelessWidget {
   const SimpleSwipeable({
     super.key,
+    required this.itemKey,
     required this.child,
     required this.onDismissed,
     this.direction = DismissDirection.endToStart,
@@ -288,6 +270,7 @@ class SimpleSwipeable extends StatelessWidget {
     this.backgroundColor,
   });
 
+  final Key itemKey;
   final Widget child;
   final DismissDirectionCallback onDismissed;
   final DismissDirection direction;
@@ -300,7 +283,7 @@ class SimpleSwipeable extends StatelessWidget {
 
     return ClipRect(
       child: Dismissible(
-        key: key ?? UniqueKey(),
+        key: itemKey,
         direction: direction,
         onDismissed: onDismissed,
         background: Container(
@@ -312,11 +295,7 @@ class SimpleSwipeable extends StatelessWidget {
             color: backgroundColor ?? theme.colorScheme.error,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            backgroundIcon,
-            color: Colors.white,
-            size: 28,
-          ),
+          child: Icon(backgroundIcon, color: Colors.white, size: 28),
         ),
         child: child,
       ),

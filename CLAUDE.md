@@ -132,7 +132,7 @@ The app supports three environments with corresponding entry points:
 Required environment variables in `.env.*` files:
 - `API_BASE_URL`: Backend API endpoint
 - `SUPABASE_URL`: Supabase project URL
-- `SUPABASE_ANON_KEY`: Supabase anonymous key
+- `SUPABASE_PUBLISHABLE_KEY`: Supabase publishable key
 - `ENABLE_ANALYTICS`: Analytics toggle (true/false)
 
 ## Navigation Structure

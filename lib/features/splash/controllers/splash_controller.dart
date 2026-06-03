@@ -87,7 +87,8 @@ class SplashController extends BaseController {
       // If a critical service fails (like Storage), show error and fallback
       AppSnackbar.error(
         title: 'Initialization Failed',
-        message: 'Could not start the app. Please check your connection and restart.',
+        message:
+            'Could not start the app. Please check your connection and restart.',
       );
       await Future.delayed(const Duration(seconds: 2));
       unawaited(_navigateToNextScreen(forceLogin: true));
@@ -139,8 +140,7 @@ class SplashController extends BaseController {
       if (!hasActiveSession) {
         if (legacyRefresh != null && legacyRefresh.isNotEmpty) {
           session = await _restoreSessionFromRefreshToken(legacyRefresh);
-          hasActiveSession =
-              session != null && session.accessToken.isNotEmpty;
+          hasActiveSession = session != null && session.accessToken.isNotEmpty;
         }
         if (!hasActiveSession) {
           final secureRefresh = await storage.getRefreshToken();
@@ -227,7 +227,13 @@ class SplashController extends BaseController {
         );
         return;
       }
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.error(
+        'TokenService.storeTokens failed, falling back to StorageService.saveTokens',
+        e,
+        st,
+      );
+    }
     await storageService.saveTokens(
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -245,13 +251,27 @@ class SplashController extends BaseController {
   ) async {
     try {
       await Supabase.instance.client.auth.signOut();
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.error('Failed during signOut cleanup step: signOut', e, st);
+    }
     try {
       await tokenService?.clearTokens();
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed during signOut cleanup step: tokenService.clearTokens',
+        e,
+        st,
+      );
+    }
     try {
       await storageService.clearTokens();
       await storageService.clearUserData();
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed during signOut cleanup step: storageService.clearTokens/clearUserData',
+        e,
+        st,
+      );
+    }
   }
 }

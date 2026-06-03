@@ -65,7 +65,7 @@ Update your environment keys in:
 - `.env.dev`, `.env.staging`, `.env.prod` at repo root
   - `API_BASE_URL`
   - `SUPABASE_URL`
-  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_PUBLISHABLE_KEY`
   - `GOOGLE_MAPS_API_KEY` *(alias: `GOOGLE_PLACES_API_KEY`)* — required for Places autocomplete & map search
   - `ENABLE_ANALYTICS` (true/false)
   - Optional: `DEFAULT_COUNTRY` (ISO code) for phone helpers
@@ -164,7 +164,7 @@ Recommended local checks before you push:
 ## Notes & TODOs
 
 - API integration points (providers) are scaffolded; wire them to your real backend endpoints.
-- Token refresh flow is left as a TODO in `BaseProvider`.
+- Token/session refresh uses Supabase SDK session lifecycle; avoid custom refresh-token flows.
 - Supabase is initialized via `SupabaseService`; replace placeholders in `AppConfig`.
 - A 360° media viewer is not included; integrate your preferred viewer in listing detail.
 

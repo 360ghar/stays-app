@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/auth/controllers/otp_controller.dart';
@@ -93,13 +95,17 @@ class _SignupViewState extends State<SignupView> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
+              _buildTermsCheckbox(colors, textStyles),
+              const SizedBox(height: 24),
               Obx(
                 () => AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: controller.isLoading.value
+                    onPressed:
+                        (controller.isLoading.value ||
+                            !controller.isTermsAccepted.value)
                         ? null
                         : _handleSignup,
                     style: ElevatedButton.styleFrom(
@@ -132,42 +138,7 @@ class _SignupViewState extends State<SignupView> {
                   ),
                 ),
               ),
-              const SizedBox(height: 50),
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style:
-                      textStyles.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: colors.onSurface.withValues(alpha: 0.7),
-                        height: 1.3,
-                      ) ??
-                      TextStyle(
-                        fontSize: 11,
-                        color: colors.onSurface.withValues(alpha: 0.7),
-                        height: 1.3,
-                      ),
-                  children: [
-                    const TextSpan(text: 'By signing up, you agree to our '),
-                    TextSpan(
-                      text: 'Terms',
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const TextSpan(text: ' and '),
-                    TextSpan(
-                      text: 'Privacy Policy',
-                      style: TextStyle(
-                        color: colors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
@@ -403,7 +374,75 @@ class _SignupViewState extends State<SignupView> {
     });
   }
 
+  Widget _buildTermsCheckbox(ColorScheme colors, TextTheme textStyles) {
+    final linkStyle = textStyles.bodySmall?.copyWith(
+      color: colors.primary,
+      fontWeight: FontWeight.w600,
+      decoration: TextDecoration.underline,
+    );
+    return Obx(
+      () => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 24,
+            width: 24,
+            child: Checkbox(
+              value: controller.isTermsAccepted.value,
+              onChanged: (v) => controller.isTermsAccepted.value = v ?? false,
+              activeColor: colors.primary,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text.rich(
+              TextSpan(
+                style: textStyles.bodySmall?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
+                  height: 1.4,
+                ),
+                children: [
+                  const TextSpan(text: 'I agree to the '),
+                  TextSpan(
+                    text: 'Terms of Service',
+                    style: linkStyle,
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => _launchPolicy(
+                        'https://360ghar.com/policies/terms-of-service',
+                      ),
+                  ),
+                  const TextSpan(text: ' and '),
+                  TextSpan(
+                    text: 'Privacy Policy',
+                    style: linkStyle,
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () => _launchPolicy(
+                        'https://360ghar.com/policies/privacy-policy',
+                      ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _launchPolicy(String url) async {
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _handleSignup() async {
+    if (!controller.isTermsAccepted.value) {
+      Get.snackbar(
+        'Terms required',
+        'Please accept the Terms of Service and Privacy Policy to continue.',
+      );
+      return;
+    }
+
     final phone = _phoneController.text.trim();
     final password = _passwordController.text;
 

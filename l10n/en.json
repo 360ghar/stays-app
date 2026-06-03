@@ -65,7 +65,28 @@
     "terms_policies": "Terms and policies",
     "logout": "Log Out",
     "sign_out": "Sign out of your account",
-    "version_info": "Version 1.0.0 — Made with love"
+    "version_info": "Version 1.0.0 — Made with love",
+    "feedback": {
+      "report_bug": "Report a Bug",
+      "report_bug_subtitle": "Found something broken? Let us know",
+      "request_feature": "Request a Feature",
+      "request_feature_subtitle": "Suggest improvements",
+      "prompt": "What would you like to share?",
+      "title_label": "Title",
+      "title_hint": "Give it a short, descriptive title",
+      "description_label": "Description",
+      "description_hint": "Tell us what happened or what you would like to see",
+      "submit": "Submit",
+      "submitting": "Submitting...",
+      "missing_details_title": "Missing details",
+      "missing_details_message": "Please add a title and a description before submitting.",
+      "bug_success_title": "Bug reported",
+      "bug_success_message": "Thanks for the report. Our team will look into it shortly.",
+      "feature_success_title": "Feature requested",
+      "feature_success_message": "Thanks for the suggestion. Our team will review it shortly.",
+      "error_title": "Submission failed",
+      "error_message": "We could not send your feedback. Please try again."
+    }
   },
   "enquiries": {
     "title": "Inquiries",

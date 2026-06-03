@@ -74,8 +74,10 @@ class NotificationsController extends BaseController {
     if (cats is Map) {
       final parsed = <String, bool>{};
       for (final entry in cats.entries) {
-        parsed[entry.key.toString()] =
-            parseBool(entry.value, fallback: categories[entry.key.toString()] ?? false);
+        parsed[entry.key.toString()] = parseBool(
+          entry.value,
+          fallback: categories[entry.key.toString()] ?? false,
+        );
       }
       categories.assignAll(parsed);
     }
@@ -114,7 +116,7 @@ class NotificationsController extends BaseController {
       _profileController.updateUser(updated);
       _profileController.updateNotificationSettingsLocal(payload);
       return updated;
-    });
+    }, swallowError: true);
     if (result != null) {
       AppSnackbar.success(
         title: 'Notifications',
