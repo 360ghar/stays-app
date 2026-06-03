@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LocationService extends GetxService {
@@ -34,10 +37,10 @@ class LocationService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initLocationService();
+    unawaited(_initLocationService());
   }
 
-  void _initLocationService() async {
+  Future<void> _initLocationService() async {
     await checkLocationPermission();
     _isInitialized.value = true;
     AppLogger.info('LocationService initialization completed');
@@ -79,12 +82,11 @@ class LocationService extends GetxService {
     try {
       _isLoadingLocation.value = true;
 
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Get.snackbar(
-          'Location Services',
-          'Please enable location services to get better recommendations',
-          snackPosition: SnackPosition.TOP,
+        AppSnackbar.warning(
+          title: 'Location Services',
+          message: 'Please enable location services to get better recommendations',
         );
         return null;
       }
@@ -98,10 +100,9 @@ class LocationService extends GetxService {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        Get.snackbar(
-          'Location Permission',
-          'Location permissions are permanently denied, please enable from settings',
-          snackPosition: SnackPosition.TOP,
+        AppSnackbar.warning(
+          title: 'Location Permission',
+          message: 'Location permissions are permanently denied, please enable from settings',
         );
         return null;
       }
@@ -111,9 +112,7 @@ class LocationService extends GetxService {
       }
 
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-        ),
+        locationSettings: const LocationSettings(),
       );
 
       _currentPosition.value = position;
@@ -146,7 +145,7 @@ class LocationService extends GetxService {
 
   Future<void> _updateLocationNameFromPosition(Position position) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
+      final List<Placemark> placemarks = await placemarkFromCoordinates(
         position.latitude,
         position.longitude,
       );
@@ -196,7 +195,7 @@ class LocationService extends GetxService {
     _selectedLng.value = lng;
     _locationName.value = locationName;
     // Best-effort: resolve and update city in background
-    _updateCityFromCoordinates(lat, lng);
+    unawaited(_updateCityFromCoordinates(lat, lng));
   }
 
   // Clear manual selection so queries use current GPS location

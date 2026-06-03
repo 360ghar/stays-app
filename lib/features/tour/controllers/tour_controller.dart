@@ -1,13 +1,12 @@
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/webview_helper.dart';
 
-class TourController extends BaseController {
+class TourController extends GetxController {
   final RxnString tourUrl = RxnString();
-  // Note: isLoading is inherited from BaseController
+  final RxBool isLoading = true.obs;
   final RxBool hasError = false.obs;
   final RxInt progress = 0.obs;
 

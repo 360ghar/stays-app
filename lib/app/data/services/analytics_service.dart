@@ -6,7 +6,14 @@ import 'package:get/get.dart';
 import '../../utils/logger/app_logger.dart';
 
 class AnalyticsService extends GetxService {
-  static AnalyticsService get I => Get.find<AnalyticsService>();
+  AnalyticsService({required this.enabled}) {
+    _initializeFirebaseAnalytics();
+    if (enabled) {
+      AppLogger.info('AnalyticsService initialized with Firebase Analytics');
+    } else {
+      AppLogger.info('AnalyticsService initialized with analytics disabled');
+    }
+  }
 
   final bool enabled;
   final List<AnalyticsEvent> _eventQueue = [];
@@ -19,11 +26,18 @@ class AnalyticsService extends GetxService {
   /// Get the Firebase Analytics observer for navigation tracking
   FirebaseAnalyticsObserver? get observer => _observer;
 
-  AnalyticsService({required this.enabled}) {
-    if (enabled) {
-      _initializeFirebaseAnalytics();
-      AppLogger.info('AnalyticsService initialized with Firebase Analytics');
-    }
+  static AnalyticsService get I => Get.find<AnalyticsService>();
+
+  void _runUnawaited(Future<void> future, String operation) {
+    unawaited(
+      future.catchError((Object error, StackTrace stackTrace) {
+        AppLogger.error(
+          'Analytics operation failed: $operation',
+          error,
+          stackTrace,
+        );
+      }),
+    );
   }
 
   void _initializeFirebaseAnalytics() {
@@ -31,8 +45,11 @@ class AnalyticsService extends GetxService {
       _analytics = FirebaseAnalytics.instance;
       _observer = FirebaseAnalyticsObserver(analytics: _analytics!);
 
-      // Enable analytics collection
-      _analytics!.setAnalyticsCollectionEnabled(true);
+      // Respect runtime consent gate at SDK level.
+      _runUnawaited(
+        _analytics!.setAnalyticsCollectionEnabled(enabled),
+        'setAnalyticsCollectionEnabled',
+      );
     } catch (e) {
       AppLogger.warning('Failed to initialize Firebase Analytics: $e');
     }
@@ -40,7 +57,7 @@ class AnalyticsService extends GetxService {
 
   @override
   void onClose() {
-    _eventsController.close();
+    _runUnawaited(_eventsController.close(), 'close events controller');
     super.onClose();
   }
 
@@ -51,7 +68,7 @@ class AnalyticsService extends GetxService {
     _eventsController.add(event);
 
     // Send to Firebase Analytics
-    _sendToFirebase(event);
+    unawaited(_sendToFirebase(event));
 
     AppLogger.info('Analytics: ${event.name}', event.params);
   }
@@ -63,10 +80,7 @@ class AnalyticsService extends GetxService {
       // Convert params to ensure all values are valid types for Firebase
       final sanitizedParams = _sanitizeParams(event.params);
 
-      await _analytics!.logEvent(
-        name: event.name,
-        parameters: sanitizedParams,
-      );
+      await _analytics!.logEvent(name: event.name, parameters: sanitizedParams);
     } catch (e) {
       AppLogger.warning('Failed to send event to Firebase Analytics: $e');
     }
@@ -113,11 +127,14 @@ class AnalyticsService extends GetxService {
   }
 
   void logScreenView(String screenName, [Map<String, dynamic>? params]) {
-    if (_analytics != null) {
+    if (_analytics != null && enabled) {
       // Use Firebase's built-in screen view logging
-      _analytics!.logScreenView(
-        screenName: screenName,
-        screenClass: params?['screen_class'] ?? screenName,
+      _runUnawaited(
+        _analytics!.logScreenView(
+          screenName: screenName,
+          screenClass: params?['screen_class'] ?? screenName,
+        ),
+        'logScreenView',
       );
     }
 
@@ -130,8 +147,8 @@ class AnalyticsService extends GetxService {
   }
 
   void logSearch(String query, [Map<String, dynamic>? params]) {
-    if (_analytics != null) {
-      _analytics!.logSearch(searchTerm: query);
+    if (_analytics != null && enabled) {
+      _runUnawaited(_analytics!.logSearch(searchTerm: query), 'logSearch');
     }
 
     log(
@@ -147,15 +164,18 @@ class AnalyticsService extends GetxService {
   }
 
   void logPropertyView(String propertyId, String propertyName) {
-    if (_analytics != null) {
-      _analytics!.logViewItem(
-        items: [
-          AnalyticsEventItem(
-            itemId: propertyId,
-            itemName: propertyName,
-            itemCategory: 'property',
-          ),
-        ],
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logViewItem(
+          items: [
+            AnalyticsEventItem(
+              itemId: propertyId,
+              itemName: propertyName,
+              itemCategory: 'property',
+            ),
+          ],
+        ),
+        'logViewItem',
       );
     }
 
@@ -168,17 +188,20 @@ class AnalyticsService extends GetxService {
   }
 
   void logBookingStarted(String propertyId, double price) {
-    if (_analytics != null) {
-      _analytics!.logBeginCheckout(
-        value: price,
-        currency: 'INR',
-        items: [
-          AnalyticsEventItem(
-            itemId: propertyId,
-            itemCategory: 'property',
-            price: price,
-          ),
-        ],
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logBeginCheckout(
+          value: price,
+          currency: 'INR',
+          items: [
+            AnalyticsEventItem(
+              itemId: propertyId,
+              itemCategory: 'property',
+              price: price,
+            ),
+          ],
+        ),
+        'logBeginCheckout',
       );
     }
 
@@ -195,11 +218,14 @@ class AnalyticsService extends GetxService {
     double amount,
     String paymentMethod,
   ) {
-    if (_analytics != null) {
-      _analytics!.logPurchase(
-        transactionId: bookingId,
-        value: amount,
-        currency: 'INR',
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logPurchase(
+          transactionId: bookingId,
+          value: amount,
+          currency: 'INR',
+        ),
+        'logPurchase',
       );
     }
 
@@ -216,9 +242,10 @@ class AnalyticsService extends GetxService {
   }
 
   void logBookingCancelled(String bookingId, String reason) {
-    if (_analytics != null) {
-      _analytics!.logRefund(
-        transactionId: bookingId,
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logRefund(transactionId: bookingId),
+        'logRefund',
       );
     }
 
@@ -231,14 +258,14 @@ class AnalyticsService extends GetxService {
   }
 
   void logWishlistAdded(String propertyId) {
-    if (_analytics != null) {
-      _analytics!.logAddToWishlist(
-        items: [
-          AnalyticsEventItem(
-            itemId: propertyId,
-            itemCategory: 'property',
-          ),
-        ],
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logAddToWishlist(
+          items: [
+            AnalyticsEventItem(itemId: propertyId, itemCategory: 'property'),
+          ],
+        ),
+        'logAddToWishlist',
       );
     }
 
@@ -260,8 +287,8 @@ class AnalyticsService extends GetxService {
   }
 
   void logLogin(String method) {
-    if (_analytics != null) {
-      _analytics!.logLogin(loginMethod: method);
+    if (_analytics != null && enabled) {
+      _runUnawaited(_analytics!.logLogin(loginMethod: method), 'logLogin');
     }
 
     log(
@@ -273,8 +300,8 @@ class AnalyticsService extends GetxService {
   }
 
   void logSignup(String method) {
-    if (_analytics != null) {
-      _analytics!.logSignUp(signUpMethod: method);
+    if (_analytics != null && enabled) {
+      _runUnawaited(_analytics!.logSignUp(signUpMethod: method), 'logSignUp');
     }
 
     log(
@@ -287,7 +314,7 @@ class AnalyticsService extends GetxService {
 
   void logLogout() {
     // Clear user ID on logout
-    setUserId(null);
+    _runUnawaited(setUserId(null), 'setUserId(null)');
 
     log(AnalyticsEvent(name: AnalyticsEventNames.logout));
   }
@@ -334,11 +361,14 @@ class AnalyticsService extends GetxService {
   }
 
   void logShare(String contentType, String contentId) {
-    if (_analytics != null) {
-      _analytics!.logShare(
-        contentType: contentType,
-        itemId: contentId,
-        method: 'app',
+    if (_analytics != null && enabled) {
+      _runUnawaited(
+        _analytics!.logShare(
+          contentType: contentType,
+          itemId: contentId,
+          method: 'app',
+        ),
+        'logShare',
       );
     }
 
@@ -368,7 +398,7 @@ class AnalyticsService extends GetxService {
     );
   }
 
-  void flush() async {
+  void flush() {
     if (_eventQueue.isNotEmpty) {
       AppLogger.info('Flushing ${_eventQueue.length} analytics events');
       _eventQueue.clear();
@@ -377,15 +407,15 @@ class AnalyticsService extends GetxService {
 }
 
 class AnalyticsEvent {
-  final String name;
-  final Map<String, dynamic> params;
-  final DateTime timestamp;
-
   AnalyticsEvent({
     required this.name,
     this.params = const {},
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
+
+  final String name;
+  final Map<String, dynamic> params;
+  final DateTime timestamp;
 
   Map<String, dynamic> toJson() {
     return {

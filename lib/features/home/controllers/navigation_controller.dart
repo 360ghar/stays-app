@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 
-class NavigationController extends BaseController {
+class NavigationController extends GetxController {
   // Default to the Home/Explore tab (index 0)
   final RxInt currentIndex = 0.obs;
   final PageController pageController = PageController(initialPage: 0);

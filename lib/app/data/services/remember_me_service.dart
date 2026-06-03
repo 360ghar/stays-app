@@ -46,7 +46,7 @@ class RememberMeService extends GetxService {
   String? get storedRefreshToken => _storage.read<String>(_refreshTokenKey);
 
   /// Enable or disable remember-me
-  Future<void> setEnabled(bool value) async {
+  Future<void> setEnabled({required bool value}) async {
     isEnabled.value = value;
     await _storage.write(_rememberMeFlagKey, value);
     if (!value) {

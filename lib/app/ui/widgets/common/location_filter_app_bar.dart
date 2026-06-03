@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import '../../../controllers/filter_controller.dart';
 import '../../../data/services/location_service.dart';
 import '../../../routes/app_routes.dart';
+import '../../../utils/helpers/app_snackbar.dart';
+import '../../../utils/logger/app_logger.dart';
 import '../../theme/theme_extensions.dart';
 import 'filter_button.dart';
 import 'search_bar_widget.dart';
@@ -156,18 +158,16 @@ class LocationFilterAppBar extends StatelessWidget
     if (locationService == null) return;
     try {
       await locationService.updateLocation(ensurePrecise: true);
-      Get.snackbar(
-        'Location updated',
-        'Using your current location for nearby stays',
-        snackPosition: SnackPosition.TOP,
+      AppSnackbar.success(
+        title: 'Location updated',
+        message: 'Using your current location for nearby stays',
         duration: const Duration(seconds: 2),
       );
-    } catch (_) {
-      Get.snackbar(
-        'Location unavailable',
-        'Unable to fetch current location. Check permissions.',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+    } catch (error, stackTrace) {
+      AppLogger.error('Failed to get current location', error, stackTrace);
+      AppSnackbar.warning(
+        title: 'Location unavailable',
+        message: 'Unable to fetch current location. Check permissions.',
       );
     }
   }

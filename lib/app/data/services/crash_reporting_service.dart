@@ -78,7 +78,7 @@ class CrashReportingService extends GetxService {
 
     // Capture errors from the platform dispatcher
     PlatformDispatcher.instance.onError = (error, stack) {
-      recordError(error, stackTrace: stack, fatal: true);
+      unawaited(recordError(error, stackTrace: stack, fatal: true));
       return true;
     };
   }
@@ -91,7 +91,7 @@ class CrashReportingService extends GetxService {
     }
 
     // Record as fatal error
-    _crashlytics!.recordFlutterFatalError(details);
+    unawaited(_crashlytics!.recordFlutterFatalError(details));
     AppLogger.error('Flutter error recorded to Crashlytics', details.exception, details.stack);
   }
 
@@ -159,11 +159,13 @@ extension CrashReportingExtension on Object {
     bool fatal = false,
   }) {
     if (Get.isRegistered<CrashReportingService>()) {
-      Get.find<CrashReportingService>().recordError(
-        this,
-        stackTrace: stackTrace,
-        reason: reason,
-        fatal: fatal,
+      unawaited(
+        Get.find<CrashReportingService>().recordError(
+          this,
+          stackTrace: stackTrace,
+          reason: reason,
+          fatal: fatal,
+        ),
       );
     }
   }

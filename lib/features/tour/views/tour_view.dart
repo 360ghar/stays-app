@@ -6,6 +6,7 @@ import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import 'package:stays_app/app/utils/helpers/webview_helper.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/tour/controllers/tour_controller.dart';
 
 class TourView extends GetView<TourController> {
@@ -43,10 +44,9 @@ class TourView extends GetView<TourController> {
           IconButton(
             tooltip: 'Fullscreen hint',
             onPressed: () {
-              Get.snackbar(
-                'Fullscreen mode',
-                'Rotate your device for the best experience.',
-                snackPosition: SnackPosition.BOTTOM,
+              AppSnackbar.info(
+                title: 'Fullscreen mode',
+                message: 'Rotate your device for the best experience.',
               );
             },
             icon: const Icon(Icons.fullscreen),
@@ -56,16 +56,14 @@ class TourView extends GetView<TourController> {
             onPressed: () {
               final url = controller.tourUrl.value;
               if (url?.isNotEmpty == true) {
-                Get.snackbar(
-                  'Share tour',
-                  'Tour link copied to clipboard.',
-                  snackPosition: SnackPosition.BOTTOM,
+                AppSnackbar.success(
+                  title: 'Share tour',
+                  message: 'Tour link copied to clipboard.',
                 );
               } else {
-                Get.snackbar(
-                  'Share tour',
-                  'No tour link available.',
-                  snackPosition: SnackPosition.BOTTOM,
+                AppSnackbar.warning(
+                  title: 'Share tour',
+                  message: 'No tour link available.',
                 );
               }
             },

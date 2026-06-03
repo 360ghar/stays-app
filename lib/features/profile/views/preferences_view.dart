@@ -30,7 +30,7 @@ class PreferencesView extends GetView<PreferencesController> {
           () => ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             children: [
-              const _SectionHeader(
+              _SectionHeader(
                 title: 'Appearance',
                 subtitle: 'Choose how the app looks on your device.',
               ),
@@ -48,7 +48,7 @@ class PreferencesView extends GetView<PreferencesController> {
                     .toList(),
               ),
               const SizedBox(height: 24),
-              const _SectionHeader(
+              _SectionHeader(
                 title: 'Language',
                 subtitle: 'Switch the language used throughout the app.',
               ),
@@ -67,7 +67,7 @@ class PreferencesView extends GetView<PreferencesController> {
                     .toList(),
               ),
               const SizedBox(height: 24),
-              const _SectionHeader(
+              _SectionHeader(
                 title: 'Location',
                 subtitle:
                     'Enable automatic location to personalise stay suggestions.',
@@ -82,7 +82,7 @@ class PreferencesView extends GetView<PreferencesController> {
                 ),
               ),
               const SizedBox(height: 24),
-              const _SectionHeader(
+              _SectionHeader(
                 title: 'Notifications',
                 subtitle:
                     'Decide what kind of emails you would like to receive.',
@@ -105,7 +105,7 @@ class PreferencesView extends GetView<PreferencesController> {
                 ),
               ),
               const SizedBox(height: 24),
-              const _SectionHeader(
+              _SectionHeader(
                 title: 'Currency',
                 subtitle: 'Select your preferred currency for inquiries.',
               ),

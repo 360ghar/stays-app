@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/helpers/json_helpers.dart';
 import '../models/user_model.dart';
 import 'base_provider.dart';
 
 class UsersProvider extends BaseProvider {
   Future<UserModel> getProfile() async {
-    final response = await getWithRetry('/api/v1/users/profile/');
+    final response = await get('/api/v1/users/profile/');
     return handleResponse(response, _parseUser);
   }
 
@@ -40,7 +41,7 @@ class UsersProvider extends BaseProvider {
     if (bio != null) payload['bio'] = bio;
     if (phone != null) payload['phone'] = phone;
     if (dateOfBirth != null) {
-      payload['date_of_birth'] = dateOfBirth.toIso8601String();
+      payload['date_of_birth'] = JsonHelpers.toDateOnly(dateOfBirth);
     }
     if (avatarUrl != null) payload['profile_image_url'] = avatarUrl;
     if (agentId != null) payload['agent_id'] = agentId;
@@ -87,7 +88,7 @@ class UsersProvider extends BaseProvider {
     final bytes = await file.readAsBytes();
     final payload = {'filename': filename, 'file_base64': base64Encode(bytes)};
 
-    final response = await postWithRetry('/api/v1/users/profile/avatar/', payload);
+    final response = await post('/api/v1/users/profile/avatar/', payload);
     return handleResponse(response, (body) {
       if (body is Map<String, dynamic>) {
         if (body['url'] is String) return body['url'] as String;
@@ -104,7 +105,7 @@ class UsersProvider extends BaseProvider {
   }
 
   Future<void> requestDataExport() async {
-    final response = await postWithRetry('/api/v1/users/export/', {});
+    final response = await post('/api/v1/users/export/', {});
     if (!response.isOk) {
       throw ApiException(
         message: response.statusText ?? 'Failed to request data export',
@@ -135,7 +136,7 @@ class UsersProvider extends BaseProvider {
       if (appVersion != null) 'app_version': appVersion,
       if (locale != null) 'locale': locale,
     };
-    final response = await postWithRetry(
+    final response = await post(
       '/api/v1/notifications/devices/register',
       payload,
     );

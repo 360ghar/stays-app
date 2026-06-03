@@ -5,6 +5,7 @@ import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/models/unified_property_response.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 import 'package:stays_app/app/controllers/filter_controller.dart';
@@ -15,7 +16,6 @@ class WishlistController extends BaseController {
   FilterController? _filterController;
 
   final RxList<Property> wishlistItems = <Property>[].obs;
-  // Note: isLoading and errorMessage are inherited from BaseController
   final RxBool isRefreshing = false.obs;
   final RxInt currentPage = 1.obs;
   final RxInt totalPages = 1.obs;
@@ -23,7 +23,6 @@ class WishlistController extends BaseController {
   final RxInt totalCount = 0.obs;
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
-  Worker? _filterWorker;
   FavoritesController? _favoritesController;
 
   @override
@@ -61,7 +60,7 @@ class WishlistController extends BaseController {
     }
     _filterController = Get.find<FilterController>();
     _activeFilters = _filterController!.filterFor(FilterScope.wishlist);
-    _filterWorker = debounce<UnifiedFilterModel>(
+    trackWorker(debounce<UnifiedFilterModel>(
       _filterController!.rxFor(FilterScope.wishlist),
       (filters) async {
         if (_activeFilters == filters) return;
@@ -69,12 +68,12 @@ class WishlistController extends BaseController {
         await loadWishlist(pageOverride: 1);
       },
       time: const Duration(milliseconds: 160),
-    );
+    ));
   }
 
   @override
   void onClose() {
-    _filterWorker?.dispose();
+    // Worker is automatically disposed by BaseController via trackWorker
     super.onClose();
   }
 
@@ -167,11 +166,9 @@ class WishlistController extends BaseController {
       wishlistItems.insert(0, property);
       totalCount.value = wishlistItems.length;
       _favoritesController?.addFavorite(property.id);
-      Get.snackbar(
-        'Added to Wishlist',
-        '${property.name} has been added to your wishlist',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+      AppSnackbar.success(
+        title: 'Added to Wishlist',
+        message: '${property.name} has been added to your wishlist',
       );
       return;
     }
@@ -179,19 +176,15 @@ class WishlistController extends BaseController {
       await _wishlistRepository!.add(property.id);
       _favoritesController?.addFavorite(property.id);
       await loadWishlist(pageOverride: currentPage.value);
-      Get.snackbar(
-        'Added to Wishlist',
-        '${property.name} has been added to your wishlist',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+      AppSnackbar.success(
+        title: 'Added to Wishlist',
+        message: '${property.name} has been added to your wishlist',
       );
     } catch (e) {
       AppLogger.error('Error adding to wishlist', e);
-      Get.snackbar(
-        'Error',
-        'Failed to add to wishlist. Please try again.',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Failed to add to wishlist. Please try again.',
       );
     }
   }
@@ -203,13 +196,11 @@ class WishlistController extends BaseController {
     final property = propertyIndex != -1 ? wishlistItems[propertyIndex] : null;
 
     void showRemovalSnackbar() {
-      Get.snackbar(
-        'Removed from Wishlist',
-        property != null
+      AppSnackbar.success(
+        title: 'Removed from Wishlist',
+        message: property != null
             ? '${property.name} has been removed from your wishlist'
             : 'Item has been removed from your wishlist',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
       );
     }
 
@@ -250,11 +241,9 @@ class WishlistController extends BaseController {
         totalCount.value = totalCount.value + 1;
         _favoritesController?.addFavorite(propertyId);
       }
-      Get.snackbar(
-        'Error',
-        'Failed to remove from wishlist. Please try again.',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 2),
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Failed to remove from wishlist. Please try again.',
       );
     }
   }
@@ -290,30 +279,24 @@ class WishlistController extends BaseController {
                   }
                   _favoritesController?.clear();
                   await loadWishlist(pageOverride: 1);
-                  Get.snackbar(
-                    'Wishlist Cleared',
-                    'All items have been removed from your wishlist',
-                    snackPosition: SnackPosition.TOP,
-                    duration: const Duration(seconds: 2),
+                  AppSnackbar.success(
+                    title: 'Wishlist Cleared',
+                    message: 'All items have been removed from your wishlist',
                   );
                 } catch (e) {
                   AppLogger.error('Error clearing wishlist', e);
-                  Get.snackbar(
-                    'Error',
-                    'Failed to clear wishlist. Please try again.',
-                    snackPosition: SnackPosition.TOP,
-                    duration: const Duration(seconds: 2),
+                  AppSnackbar.error(
+                    title: 'Error',
+                    message: 'Failed to clear wishlist. Please try again.',
                   );
                 }
               } else {
                 wishlistItems.clear();
                 _favoritesController?.clear();
                 totalCount.value = 0;
-                Get.snackbar(
-                  'Wishlist Cleared',
-                  'All items have been removed from your wishlist',
-                  snackPosition: SnackPosition.TOP,
-                  duration: const Duration(seconds: 2),
+                AppSnackbar.success(
+                  title: 'Wishlist Cleared',
+                  message: 'All items have been removed from your wishlist',
                 );
               }
             },

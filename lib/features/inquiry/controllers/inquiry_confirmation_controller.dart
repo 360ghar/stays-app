@@ -2,11 +2,11 @@ import 'dart:math' as math;
 
 import 'package:get/get.dart';
 
-import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 
-class InquiryConfirmationController extends BaseController {
+class InquiryConfirmationController extends GetxController {
   InquiryConfirmationController();
 
   final Rxn<Property> property = Rxn<Property>();
@@ -36,10 +36,9 @@ class InquiryConfirmationController extends BaseController {
 
     if (property.value == null) {
       Future.microtask(() {
-        Get.snackbar(
-          'Inquiry unavailable',
-          'We could not load the property details. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
+        AppSnackbar.warning(
+          title: 'Inquiry unavailable',
+          message: 'We could not load the property details. Please try again.',
         );
       });
     }
@@ -64,10 +63,9 @@ class InquiryConfirmationController extends BaseController {
   Future<void> submitInquiry() async {
     final selectedProperty = property.value;
     if (selectedProperty == null) {
-      Get.snackbar(
-        'Inquiry unavailable',
-        'No property was provided for this inquiry.',
-        snackPosition: SnackPosition.BOTTOM,
+      AppSnackbar.warning(
+        title: 'Inquiry unavailable',
+        message: 'No property was provided for this inquiry.',
       );
       return;
     }

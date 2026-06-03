@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
-import 'package:stays_app/features/auth/controllers/session_controller.dart';
 import 'package:stays_app/features/settings/controllers/theme_controller.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
+import 'package:stays_app/app/data/providers/feedback_provider.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
+import 'package:stays_app/app/data/repositories/feedback_repository.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
@@ -12,6 +13,7 @@ import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/services/validation_service.dart';
 import 'package:stays_app/features/profile/controllers/about_controller.dart';
 import 'package:stays_app/features/profile/controllers/edit_profile_controller.dart';
+import 'package:stays_app/features/profile/controllers/feedback_controller.dart';
 import 'package:stays_app/features/profile/controllers/help_controller.dart';
 import 'package:stays_app/features/profile/controllers/notifications_controller.dart';
 import 'package:stays_app/features/profile/controllers/preferences_controller.dart';
@@ -40,17 +42,11 @@ class ProfileBinding extends Bindings {
       );
     }
     final authRepository = Get.find<AuthRepository>();
-    if (!Get.isRegistered<SessionController>()) {
-      Get.put<SessionController>(
-        SessionController(tokenService: Get.find<TokenService>()),
-        permanent: true,
-      );
-    }
     if (!Get.isRegistered<AuthController>()) {
       Get.put<AuthController>(
         AuthController(
           authRepository: Get.find<AuthRepository>(),
-          sessionController: Get.find<SessionController>(),
+          tokenService: Get.find<TokenService>(),
         ),
         permanent: true,
       );
@@ -121,6 +117,26 @@ class ProfileBinding extends Bindings {
           profileController: Get.find<ProfileController>(),
           authRepository: authRepository,
           authController: authController,
+        ),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<FeedbackProvider>()) {
+      Get.lazyPut<FeedbackProvider>(() => FeedbackProvider(), fenix: true);
+    }
+
+    if (!Get.isRegistered<FeedbackRepository>()) {
+      Get.lazyPut<FeedbackRepository>(
+        () => FeedbackRepository(provider: Get.find<FeedbackProvider>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<FeedbackController>()) {
+      Get.lazyPut<FeedbackController>(
+        () => FeedbackController(
+          feedbackRepository: Get.find<FeedbackRepository>(),
         ),
         fenix: true,
       );

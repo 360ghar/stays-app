@@ -2,10 +2,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/logger/app_logger.dart';
 
 class SupabaseService {
+  SupabaseService({required this.url, required this.anonKey});
+
   final String url;
   final String anonKey;
-
-  SupabaseService({required this.url, required this.anonKey});
 
   SupabaseClient get client => Supabase.instance.client;
 

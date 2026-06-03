@@ -67,6 +67,7 @@ import 'package:stays_app/features/profile/views/privacy_view.dart';
 import 'package:stays_app/features/profile/views/help_view.dart';
 import 'package:stays_app/features/profile/views/about_view.dart';
 import 'package:stays_app/features/profile/views/legal_view.dart';
+import 'package:stays_app/features/profile/views/feedback_view.dart';
 
 class AppPages {
   static const initial = Routes.initial;
@@ -229,6 +230,18 @@ class AppPages {
     GetPage(
       name: Routes.profileLegal,
       page: () => const LegalView(),
+      binding: ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileFeedbackBug,
+      page: () => const FeedbackView(),
+      binding: ProfileBinding(),
+      middlewares: [AuthMiddleware()],
+    ),
+    GetPage(
+      name: Routes.profileFeedbackFeature,
+      page: () => const FeedbackView(),
       binding: ProfileBinding(),
       middlewares: [AuthMiddleware()],
     ),

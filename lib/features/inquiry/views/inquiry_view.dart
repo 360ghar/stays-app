@@ -12,6 +12,7 @@ import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 
 class InquiryView extends StatefulWidget {
   const InquiryView({super.key});
@@ -259,42 +260,42 @@ class _InquiryViewState extends State<InquiryView> {
       return;
     }
     if (property == null) {
-      Get.snackbar('Missing property', 'Unable to identify this listing.');
+      AppSnackbar.warning(title: 'Missing property', message: 'Unable to identify this listing.');
       return;
     }
     if (checkInDate == null || checkOutDate == null || nights <= 0) {
-      Get.snackbar(
-        'Select dates',
-        'Please choose valid check-in and check-out dates.',
+      AppSnackbar.warning(
+        title: 'Select dates',
+        message: 'Please choose valid check-in and check-out dates.',
       );
       return;
     }
     if (guests <= 0) {
-      Get.snackbar('Guests', 'Please select at least one guest.');
+      AppSnackbar.warning(title: 'Guests', message: 'Please select at least one guest.');
       return;
     }
     if (nameController.text.trim().isEmpty) {
-      Get.snackbar('Guest name', 'Please provide the primary guest name.');
+      AppSnackbar.warning(title: 'Guest name', message: 'Please provide the primary guest name.');
       return;
     }
 
     final trimmedEmail = emailController.text.trim();
     if (trimmedEmail.isEmpty) {
-      Get.snackbar('Email', 'Please provide a valid email address.');
+      AppSnackbar.warning(title: 'Email', message: 'Please provide a valid email address.');
       return;
     }
     if (!GetUtils.isEmail(trimmedEmail)) {
-      Get.snackbar('Email', 'Please enter a valid email address.');
+      AppSnackbar.warning(title: 'Email', message: 'Please enter a valid email address.');
       return;
     }
     final trimmedPhone = phoneController.text.trim();
     if (trimmedPhone.isEmpty) {
-      Get.snackbar('Phone', 'Please provide a valid phone number.');
+      AppSnackbar.warning(title: 'Phone', message: 'Please provide a valid phone number.');
       return;
     }
     final digits = trimmedPhone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (digits.replaceAll('+', '').length != 10) {
-      Get.snackbar('Phone', 'Please enter a valid phone number.');
+      AppSnackbar.warning(title: 'Phone', message: 'Please enter a valid phone number.');
       return;
     }
     final sanitizedPhone = _normalizePhoneForDisplay(trimmedPhone);
@@ -342,12 +343,9 @@ class _InquiryViewState extends State<InquiryView> {
       if (tripsController != null) {
         await tripsController!.loadPastBookings(forceRefresh: true);
       }
-      Get.snackbar(
-        'Inquiry Sent Successfully',
-        'We have recorded your inquiry for ${property!.name}.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green[100],
-        colorText: Colors.green[800],
+      AppSnackbar.success(
+        title: 'Inquiry Sent Successfully',
+        message: 'We have recorded your inquiry for ${property!.name}.',
       );
       Get.offAllNamed(Routes.home, arguments: 0);
     } else {
@@ -358,12 +356,9 @@ class _InquiryViewState extends State<InquiryView> {
       final truncatedError = errorMessage.length > 100
           ? '${errorMessage.substring(0, 97)}...'
           : errorMessage;
-      Get.snackbar(
-        'Inquiry failed',
-        truncatedError,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      AppSnackbar.error(
+        title: 'Inquiry failed',
+        message: truncatedError,
       );
     }
   }

@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import 'package:get/get.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:stays_app/app/core/map/map_controller.dart';
+import 'package:stays_app/app/core/map/safe_map.dart';
+import 'package:stays_app/app/ui/theme/app_dimensions.dart';
+import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
@@ -22,7 +25,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
       extendBody: true,
       extendBodyBehindAppBar: false,
       body: Obx(() {
-        // Only rebuild this when loading/error states or listing null-check changes
         if (controller.isLoading.value && controller.listing.value == null) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -34,8 +36,68 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (listing == null) {
           return const Center(child: Text('Listing not found'));
         }
-        // Pass listing to a separate widget to avoid rebuilding
-        return _ListingContent(listing: listing, controller: controller);
+
+        final amenities = (listing.amenities ?? [])
+            .where((a) => a.trim().isNotEmpty)
+            .toList();
+
+        final features = (listing.features ?? [])
+            .where((f) => f.trim().isNotEmpty)
+            .toList();
+
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+
+          slivers: [
+            _buildHeroSliver(context, listing),
+
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+                AppDimensions.xl + 4,
+                AppDimensions.xxl + 8,
+              ),
+
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildPrimaryDetails(context, listing),
+
+                  if (amenities.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildAmenitiesSection(context, amenities),
+                    ),
+
+                  if (listing.hasVirtualTour)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildVirtualTourSection(context, listing),
+                    ),
+
+                  if (features.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildFeaturesSection(context, features),
+                    ),
+
+                  if (listing.ownerName?.isNotEmpty == true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      child: _buildHostSection(context, listing),
+                    ),
+
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                    child: _buildLocationSection(context, listing),
+                  ),
+
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 120),
+                ]),
+              ),
+            ),
+          ],
+        );
       }),
 
       bottomNavigationBar: Obx(() {
@@ -55,17 +117,11 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
     return SliverAppBar(
       backgroundColor: colors.surface,
-
-      expandedHeight: 360,
-
+      expandedHeight: context.responsiveHeroHeight,
       pinned: true,
-
       stretch: true,
-
       automaticallyImplyLeading: false,
-
       toolbarHeight: 64,
-
       titleSpacing: 0,
 
       flexibleSpace: LayoutBuilder(
@@ -614,7 +670,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
           if (lat != null && lng != null) ...[
             const SizedBox(height: 16),
             Container(
-              height: 150,
+              height: AppDimensions.mapHeight,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
@@ -627,49 +683,56 @@ class ListingDetailView extends GetView<ListingDetailController> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: flutter_map.FlutterMap(
-                  options: flutter_map.MapOptions(
-                    initialCenter: LatLng(lat, lng),
-                    initialZoom: 15.0,
-                    minZoom: 10.0,
-                    maxZoom: 18.0,
-                  ),
-                  children: [
-                    flutter_map.TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.stays_app',
-                      maxZoom: 18,
-                    ),
-                    flutter_map.MarkerLayer(
-                      markers: [
-                        flutter_map.Marker(
-                          point: LatLng(lat, lng),
-                          width: 35,
-                          height: 35,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: colors.primary.withValues(alpha: 0.9),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(
-                              Icons.location_on,
-                              color: colors.onPrimary,
-                              size: 18,
-                            ),
+                child: SafeMap(
+                  latitude: lat,
+                  longitude: lng,
+                  mapBuilder: (context) => Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      MapLibreMap(
+                        styleString: kLibertyStyle,
+                        initialCameraPosition: CameraPosition(
+                          target: LatLng(lat, lng),
+                          zoom: 15,
+                        ),
+                        minMaxZoomPreference: const MinMaxZoomPreference(10, 18),
+                        // Fully non-interactive single-pin map: the camera can
+                        // never move, so the pin is a centered overlay.
+                        scrollGesturesEnabled: false,
+                        zoomGesturesEnabled: false,
+                        rotateGesturesEnabled: false,
+                        tiltGesturesEnabled: false,
+                        dragEnabled: false,
+                        doubleClickZoomEnabled: false,
+                        compassEnabled: false,
+                        // Attribution (OSM/OpenFreeMap) stays visible at its
+                        // default position — required by the tile license.
+                      ),
+                      // Pin anchored on the centre (== the listing coordinate).
+                      IgnorePointer(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.location_on,
+                            color: colors.onPrimary,
+                            size: 18,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -887,7 +950,10 @@ class ListingDetailView extends GetView<ListingDetailController> {
     final lng = listing.longitude;
 
     if (lat == null || lng == null) {
-      Get.snackbar('Error', 'Location coordinates not available');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Location coordinates not available',
+      );
       return;
     }
 
@@ -903,11 +969,17 @@ class ListingDetailView extends GetView<ListingDetailController> {
         if (await canLaunchUrl(Uri.parse(webUrl))) {
           await launchUrl(Uri.parse(webUrl));
         } else {
-          Get.snackbar('Error', 'Could not open maps application');
+          AppSnackbar.error(
+            title: 'Error',
+            message: 'Could not open maps application',
+          );
         }
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not open maps application');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Could not open maps application',
+      );
     }
   }
 
@@ -1084,60 +1156,6 @@ class _AmenityTile extends StatelessWidget {
             style: textStyles.bodyMedium?.copyWith(color: colors.onSurface),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Extracted content widget to avoid rebuilding entire content on every Rx change.
-/// Only rebuilds when the listing data itself changes, not on loading/error state changes.
-class _ListingContent extends StatelessWidget {
-  const _ListingContent({
-    required this.listing,
-    required this.controller,
-  });
-
-  final Property listing;
-  final ListingDetailController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    const parentView = ListingDetailView();
-    final amenities = listing.amenities ?? const [];
-    final features = listing.features ?? const [];
-    final hasVirtualTour = listing.virtualTourUrl?.isNotEmpty == true;
-    final hasHost = listing.ownerName?.isNotEmpty == true;
-
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        parentView._buildHeroSliver(context, listing),
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-          sliver: SliverList(
-            delegate: SliverChildListDelegate([
-              parentView._buildPrimaryDetails(context, listing),
-              if (amenities.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                parentView._buildAmenitiesSection(context, amenities),
-              ],
-              if (hasVirtualTour) ...[
-                const SizedBox(height: 24),
-                parentView._buildVirtualTourSection(context, listing),
-              ],
-              if (features.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                parentView._buildFeaturesSection(context, features),
-              ],
-              if (hasHost) ...[
-                const SizedBox(height: 24),
-                parentView._buildHostSection(context, listing),
-              ],
-              const SizedBox(height: 24),
-              parentView._buildLocationSection(context, listing),
-            ]),
           ),
         ),
       ],

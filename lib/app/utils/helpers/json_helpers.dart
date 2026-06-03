@@ -6,6 +6,9 @@
 class JsonHelpers {
   JsonHelpers._();
 
+  static final RegExp _offsetOrZuluSuffix = RegExp(r'([zZ]|[+-]\d{2}:\d{2})$');
+  static final RegExp _dateOnlyPattern = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+
   // ===== String Helpers =====
 
   /// Safely extracts a String from a JSON value.
@@ -84,14 +87,28 @@ class JsonHelpers {
     if (value == null) return null;
     if (value is DateTime) return value;
     if (value is String) {
-      return DateTime.tryParse(value);
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      if (_dateOnlyPattern.hasMatch(trimmed)) {
+        final parts = trimmed.split('-');
+        return DateTime.utc(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+        );
+      }
+      final normalized =
+          trimmed.contains('T') && !_offsetOrZuluSuffix.hasMatch(trimmed)
+          ? '${trimmed}Z'
+          : trimmed;
+      return DateTime.tryParse(normalized);
     }
     if (value is int) {
       // Assume milliseconds if value is large, seconds otherwise
       if (value > 1e12) {
-        return DateTime.fromMillisecondsSinceEpoch(value);
+        return DateTime.fromMillisecondsSinceEpoch(value, isUtc: true);
       }
-      return DateTime.fromMillisecondsSinceEpoch(value * 1000);
+      return DateTime.fromMillisecondsSinceEpoch(value * 1000, isUtc: true);
     }
     return null;
   }
@@ -99,6 +116,18 @@ class JsonHelpers {
   /// Converts a DateTime to ISO 8601 string for JSON serialization.
   static String? toIso8601(DateTime? value) {
     return value?.toIso8601String();
+  }
+
+  static String? toUtcIso8601(DateTime? value) {
+    return value?.toUtc().toIso8601String();
+  }
+
+  static String? toDateOnly(DateTime? value) {
+    if (value == null) return null;
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   // ===== List Helpers =====
@@ -112,7 +141,11 @@ class JsonHelpers {
     }
     if (value is String && value.isNotEmpty) {
       if (value.contains(',')) {
-        return value.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+        return value
+            .split(',')
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
       }
       return [value];
     }
@@ -126,7 +159,11 @@ class JsonHelpers {
       return value.map((e) => getInt(e)).whereType<int>().toList();
     }
     if (value is String && value.isNotEmpty) {
-      return value.split(',').map((e) => int.tryParse(e.trim())).whereType<int>().toList();
+      return value
+          .split(',')
+          .map((e) => int.tryParse(e.trim()))
+          .whereType<int>()
+          .toList();
     }
     return null;
   }
@@ -213,7 +250,8 @@ class JsonHelpers {
     int totalPages,
     int totalCount,
     int pageSize,
-  }) unwrapPaginatedResponse(Map<String, dynamic>? response) {
+  })
+  unwrapPaginatedResponse(Map<String, dynamic>? response) {
     if (response == null) {
       return (
         items: <Map<String, dynamic>>[],
@@ -228,17 +266,32 @@ class JsonHelpers {
     final List<Map<String, dynamic>> items;
 
     if (data is List) {
-      items = data.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      items = data
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     } else {
       items = <Map<String, dynamic>>[];
     }
 
     return (
       items: items,
-      currentPage: getIntOrDefault(response['current_page'] ?? response['page'], 1),
-      totalPages: getIntOrDefault(response['total_pages'] ?? response['pages'], 1),
-      totalCount: getIntOrDefault(response['total_count'] ?? response['total'] ?? response['count'], items.length),
-      pageSize: getIntOrDefault(response['page_size'] ?? response['limit'] ?? response['per_page'], 20),
+      currentPage: getIntOrDefault(
+        response['current_page'] ?? response['page'],
+        1,
+      ),
+      totalPages: getIntOrDefault(
+        response['total_pages'] ?? response['pages'],
+        1,
+      ),
+      totalCount: getIntOrDefault(
+        response['total_count'] ?? response['total'] ?? response['count'],
+        items.length,
+      ),
+      pageSize: getIntOrDefault(
+        response['page_size'] ?? response['limit'] ?? response['per_page'],
+        20,
+      ),
     );
   }
 

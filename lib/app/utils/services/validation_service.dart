@@ -8,9 +8,9 @@ abstract class ValidationRule {
 
 /// Required field validation rule
 class RequiredRule extends ValidationRule {
-  final String? customMessage;
-
   const RequiredRule({this.customMessage});
+
+  final String? customMessage;
 
   @override
   String? validate(String? value) {
@@ -23,9 +23,9 @@ class RequiredRule extends ValidationRule {
 
 /// Email validation rule
 class EmailRule extends ValidationRule {
-  final String? customMessage;
-
   const EmailRule({this.customMessage});
+
+  final String? customMessage;
 
   @override
   String? validate(String? value) {
@@ -44,9 +44,9 @@ class EmailRule extends ValidationRule {
 
 /// Phone validation rule
 class PhoneRule extends ValidationRule {
-  final String? customMessage;
-
   const PhoneRule({this.customMessage});
+
+  final String? customMessage;
 
   @override
   String? validate(String? value) {
@@ -65,9 +65,9 @@ class PhoneRule extends ValidationRule {
 
 /// Email or phone validation rule
 class EmailOrPhoneRule extends ValidationRule {
-  final String? customMessage;
-
   const EmailOrPhoneRule({this.customMessage});
+
+  final String? customMessage;
 
   @override
   String? validate(String? value) {
@@ -75,8 +75,8 @@ class EmailOrPhoneRule extends ValidationRule {
       return customMessage ?? 'Email or phone number is required';
     }
 
-    final emailRule = EmailRule();
-    final phoneRule = PhoneRule();
+    const emailRule = EmailRule();
+    const phoneRule = PhoneRule();
 
     final emailError = emailRule.validate(value);
     final phoneError = phoneRule.validate(value);
@@ -91,13 +91,6 @@ class EmailOrPhoneRule extends ValidationRule {
 
 /// Password validation rule
 class PasswordRule extends ValidationRule {
-  final int minLength;
-  final bool requireUppercase;
-  final bool requireLowercase;
-  final bool requireNumbers;
-  final bool requireSpecialChars;
-  final String? customMessage;
-
   const PasswordRule({
     this.minLength = 6,
     this.requireUppercase = false,
@@ -106,6 +99,13 @@ class PasswordRule extends ValidationRule {
     this.requireSpecialChars = false,
     this.customMessage,
   });
+
+  final int minLength;
+  final bool requireUppercase;
+  final bool requireLowercase;
+  final bool requireNumbers;
+  final bool requireSpecialChars;
+  final String? customMessage;
 
   @override
   String? validate(String? value) {
@@ -140,10 +140,10 @@ class PasswordRule extends ValidationRule {
 
 /// Password confirmation validation rule
 class PasswordConfirmationRule extends ValidationRule {
+  const PasswordConfirmationRule(this.getPassword, {this.customMessage});
+
   final String Function() getPassword;
   final String? customMessage;
-
-  const PasswordConfirmationRule(this.getPassword, {this.customMessage});
 
   @override
   String? validate(String? value) {
@@ -160,10 +160,10 @@ class PasswordConfirmationRule extends ValidationRule {
 
 /// Field validator for form validation
 class FieldValidator {
+  FieldValidator(this.rules);
+
   final List<ValidationRule> rules;
   final RxString error = ''.obs;
-
-  FieldValidator(this.rules);
 
   /// Validate the field with the given value
   bool validate(String? value) {
@@ -186,15 +186,15 @@ class FieldValidator {
 
 /// Validation result for form submissions
 class ValidationResult {
-  final bool isValid;
-  final Map<String, String> errors;
-
   const ValidationResult({required this.isValid, required this.errors});
 
   factory ValidationResult.success() =>
       const ValidationResult(isValid: true, errors: {});
   factory ValidationResult.failure(Map<String, String> errors) =>
       ValidationResult(isValid: false, errors: errors);
+
+  final bool isValid;
+  final Map<String, String> errors;
 }
 
 /// Centralized validation service for all forms
@@ -274,7 +274,7 @@ class ValidationService extends GetxService {
   ];
 
   static List<ValidationRule> get passwordRequired => [
-    const PasswordRule(minLength: 6),
+    const PasswordRule(),
   ];
 
   static List<ValidationRule> get passwordStrong => [

@@ -65,7 +65,28 @@
     "terms_policies": "नियम और नीतियाँ",
     "logout": "लॉग आउट",
     "sign_out": "अपने खाते से साइन आउट करें",
-    "version_info": "संस्करण 1.0.0 — प्यार से बनाया गया"
+    "version_info": "संस्करण 1.0.0 — प्यार से बनाया गया",
+    "feedback": {
+      "report_bug": "बग रिपोर्ट करें",
+      "report_bug_subtitle": "कुछ खराब मिला? हमें बताएं",
+      "request_feature": "फ़ीचर का अनुरोध करें",
+      "request_feature_subtitle": "सुधार सुझाएं",
+      "prompt": "आप क्या साझा करना चाहेंगे?",
+      "title_label": "शीर्षक",
+      "title_hint": "एक छोटा, वर्णनात्मक शीर्षक दें",
+      "description_label": "विवरण",
+      "description_hint": "हमें बताएं कि क्या हुआ या आप क्या देखना चाहेंगे",
+      "submit": "सबमिट करें",
+      "submitting": "सबमिट हो रहा है...",
+      "missing_details_title": "विवरण अधूरा है",
+      "missing_details_message": "सबमिट करने से पहले कृपया शीर्षक और विवरण जोड़ें।",
+      "bug_success_title": "बग रिपोर्ट किया गया",
+      "bug_success_message": "रिपोर्ट के लिए धन्यवाद। हमारी टीम इसे जल्द ही देखेगी।",
+      "feature_success_title": "फ़ीचर का अनुरोध किया गया",
+      "feature_success_message": "सुझाव के लिए धन्यवाद। हमारी टीम इसकी जल्द ही समीक्षा करेगी।",
+      "error_title": "सबमिशन विफल",
+      "error_message": "हम आपकी प्रतिक्रिया नहीं भेज सके। कृपया पुनः प्रयास करें।"
+    }
   },
   "enquiries": {
     "title": "पूछताछ",

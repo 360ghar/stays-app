@@ -11,24 +11,46 @@ import 'package:stays_app/app/controllers/favorites_controller.dart';
 class ExploreBinding extends Bindings {
   @override
   void dependencies() {
+    // Register LocationService with fenix to persist across navigation
     if (!Get.isRegistered<LocationService>()) {
       Get.lazyPut<LocationService>(() => LocationService(), fenix: true);
     }
-    Get.lazyPut<PropertiesProvider>(() => PropertiesProvider());
-    Get.lazyPut<PropertiesRepository>(
-      () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
-    );
-    Get.lazyPut<SwipesProvider>(() => SwipesProvider());
-    Get.lazyPut<WishlistRepository>(
-      () => WishlistRepository(provider: Get.find<SwipesProvider>()),
-    );
+
+    // Register PropertiesProvider
+    if (!Get.isRegistered<PropertiesProvider>()) {
+      Get.lazyPut<PropertiesProvider>(() => PropertiesProvider());
+    }
+
+    // Register PropertiesRepository
+    if (!Get.isRegistered<PropertiesRepository>()) {
+      Get.lazyPut<PropertiesRepository>(
+        () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
+      );
+    }
+
+    // Register SwipesProvider
+    if (!Get.isRegistered<SwipesProvider>()) {
+      Get.lazyPut<SwipesProvider>(() => SwipesProvider());
+    }
+
+    // Register WishlistRepository
+    if (!Get.isRegistered<WishlistRepository>()) {
+      Get.lazyPut<WishlistRepository>(
+        () => WishlistRepository(provider: Get.find<SwipesProvider>()),
+      );
+    }
+
+    // Register FilterController as permanent singleton
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
     }
+
+    // Register FavoritesController as permanent singleton BEFORE ExploreController
     if (!Get.isRegistered<FavoritesController>()) {
       Get.put<FavoritesController>(FavoritesController(), permanent: true);
     }
 
+    // Register ExploreController AFTER all dependencies are registered
     Get.lazyPut<ExploreController>(
       () => ExploreController(
         locationService: Get.find<LocationService>(),

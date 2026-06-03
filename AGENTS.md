@@ -41,7 +41,8 @@ Use `flutter_test` and `mockito` for unit tests, `integration_test` for flows. M
 Write Conventional Commits: `feat(auth): add social login`, `fix(booking): resolve date selection bug`. PRs must include description, linked issues, testing instructions, screenshots for UI changes, and pass `flutter analyze`, `dart format .`, and `flutter test`. Branch naming: `feature/user-auth`, `fix/payment-validation`, `hotfix/crash-on-launch`.
 
 ## Security & Configuration
-Never commit secrets; use `.env.dev`, `.env.staging`, `.env.prod` with `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`. The `AppConfig` loader selects environment per entrypoint. Add new environment keys consistently across all `.env` files.
+Never commit secrets; use `.env.dev`, `.env.staging`, `.env.prod` with `API_BASE_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY`. The `AppConfig` loader selects environment per entrypoint. Add new environment keys consistently across all `.env` files.
+Use Supabase SDK as the session source of truth; do not add backend `/api/v1/auth/*` user-session dependencies.
 
 ## Code Generation
 After modifying annotated classes (e.g., `@JsonSerializable`), run: `dart run build_runner build --delete-conflicting-outputs`. Regenerate mocks after interface changes: `dart run build_runner build`.

@@ -58,15 +58,17 @@ class AppConfig {
     Map<String, String> env,
     String environment,
   ) {
-    final requiredVars = <String>[
-      'API_BASE_URL',
-      'SUPABASE_URL',
-      'SUPABASE_ANON_KEY',
-    ];
+    final requiredVars = <String>['API_BASE_URL', 'SUPABASE_URL'];
 
     final missingVars = requiredVars
         .where((key) => env[key] == null || env[key]!.isEmpty)
         .toList();
+
+    final publishableKey =
+        env['SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_ANON_KEY'];
+    if (publishableKey == null || publishableKey.isEmpty) {
+      missingVars.add('SUPABASE_PUBLISHABLE_KEY');
+    }
 
     if (missingVars.isNotEmpty) {
       throw MissingEnvironmentException(
@@ -105,7 +107,8 @@ class AppConfig {
       environment: environment,
       apiBaseUrl: env['API_BASE_URL']!,
       supabaseUrl: env['SUPABASE_URL']!,
-      supabaseAnonKey: env['SUPABASE_ANON_KEY']!,
+      supabaseAnonKey:
+          env['SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_ANON_KEY']!,
       enableAnalytics:
           (env['ENABLE_ANALYTICS'] ??
               (environment == 'prod' ? 'true' : 'false')) ==
