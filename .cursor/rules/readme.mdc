@@ -37,6 +37,22 @@ This directory contains comprehensive Cursor Rules that guide development practi
 - Mocking strategies with Mockito
 - Coverage requirements and testing best practices
 
+### 🌐 **Localization Guidelines** (`localization-guidelines.mdc`)
+**Applied to Dart files** - Internationalization and localization patterns
+- JSON-based translation file management
+- GetX localization service implementation
+- Translation usage patterns in widgets and controllers
+- Multi-language support (English, Spanish, French)
+- Dynamic content translation with parameters
+
+### 🔗 **API Patterns** (`api-patterns.mdc`)
+**Applied to Dart files** - HTTP client and API communication patterns
+- Dio HTTP client configuration and interceptors
+- Provider pattern for API endpoints
+- Error handling and response processing
+- Authentication and token management
+- Request/response logging and monitoring
+
 ### 📝 **Commit & PR Guidelines** (`commit-pr-guidelines.mdc`)
 **Manual Application** - Version control and collaboration
 - Conventional Commits format and examples
@@ -86,6 +102,8 @@ Rules with `globs` patterns are applied based on file types:
 - **File Organization** - Applied to all `.dart` files
 - **Error Handling** - Applied to all `.dart` files
 - **GetX Patterns** - Applied to all `.dart` files
+- **Localization Guidelines** - Applied to all `.dart` files
+- **API Patterns** - Applied to all `.dart` files
 
 ### Manual Application
 Rules with `alwaysApply: false` can be manually invoked by mentioning their description:

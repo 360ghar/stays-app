@@ -11,4 +11,3 @@ class ValidatorHelper {
     return null;
   }
 }
-

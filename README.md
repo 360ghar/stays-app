@@ -12,6 +12,8 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 - Payment methods screen (add/remove, UI only)
 - Messaging (Inbox + Chat UI) with basic local state
 - Bottom navigation shell (Explore, Trips, Inbox, Profile)
+- Location-aware explore + map view (Flutter Map markers, Google Places autocomplete)
+- **In-app update prompts** with optional and force update support ([docs](docs/app-updates.md))
 - Theming (Material 3), responsive helpers, reusable widgets
 - Localization scaffolding (EN/ES/FR) via GetX Translations
 - Clean, layered architecture (providers → repositories → controllers → views)
@@ -22,6 +24,14 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 - GetX (routing, DI, state) + GetConnect for APIs
 - Supabase (service scaffolded), GetStorage (tokens/cache)
 - Logger, intl, cached_network_image, shimmer
+
+## Getting Started
+
+1. Install dependencies: `flutter pub get`
+2. Generate JSON serializers (run after touching files under `lib/app/data/models/`):
+   `dart run build_runner build --delete-conflicting-outputs`
+   - Use `dart run build_runner watch --delete-conflicting-outputs` while developing models.
+3. Launch the dev flavor: `flutter run -t lib/main_dev.dart`
 
 ## Project Structure
 
@@ -55,10 +65,14 @@ Update your environment keys in:
 - `.env.dev`, `.env.staging`, `.env.prod` at repo root
   - `API_BASE_URL`
   - `SUPABASE_URL`
-  - `SUPABASE_ANON_KEY`
+  - `SUPABASE_PUBLISHABLE_KEY`
+  - `GOOGLE_MAPS_API_KEY` *(alias: `GOOGLE_PLACES_API_KEY`)* — required for Places autocomplete & map search
   - `ENABLE_ANALYTICS` (true/false)
+  - Optional: `DEFAULT_COUNTRY` (ISO code) for phone helpers
 
 App reads env files via `flutter_dotenv` in the entrypoints and builds `AppConfig` from them.
+
+Google Places autocomplete needs billing-enabled Places API access on the key above. Keep the value consistent across all environments.
 
 Switch environments by launching with the corresponding entrypoint:
 
@@ -109,6 +123,13 @@ flutter run --flavor prod -t lib/main_prod.dart
 
 Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET` by default.
 
+## Location & Maps
+
+- `LocateView` and explore map cards rely on `flutter_map`, `geolocator`, and the in-house `PlacesService` (Google Places REST).
+- Make sure `GOOGLE_MAPS_API_KEY`/`GOOGLE_PLACES_API_KEY` is set; the key needs the **Places API** (Autocomplete & Details) enabled.
+- Android location permissions are already declared in `android/app/src/main/AndroidManifest.xml`; update rationale strings if needed.
+- iOS usage descriptions live in `ios/Runner/Info.plist` (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `NSLocationTemporaryUsageDescriptionDictionary`). Adjust the copy to match your release build.
+
 ## Navigation
 
 - Initial route: `/` (Splash) → middleware redirects to `/login` or `/home`
@@ -125,9 +146,15 @@ Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET`
 
 ```
 flutter test
+flutter test --coverage
 ```
 
 Current widget tests validate root app bootstrapping. You can extend unit/widget/integration tests under `test/`.
+
+Recommended local checks before you push:
+
+- `flutter analyze`
+- `dart format .`
 
 ## Localization
 
@@ -137,7 +164,7 @@ Current widget tests validate root app bootstrapping. You can extend unit/widget
 ## Notes & TODOs
 
 - API integration points (providers) are scaffolded; wire them to your real backend endpoints.
-- Token refresh flow is left as a TODO in `BaseProvider`.
+- Token/session refresh uses Supabase SDK session lifecycle; avoid custom refresh-token flows.
 - Supabase is initialized via `SupabaseService`; replace placeholders in `AppConfig`.
 - A 360° media viewer is not included; integrate your preferred viewer in listing detail.
 

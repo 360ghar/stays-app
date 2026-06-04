@@ -5,4 +5,3 @@ class ImagePickerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Placeholder();
 }
-

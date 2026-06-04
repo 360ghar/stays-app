@@ -12,75 +12,83 @@ Controllers should be organized by domain/feature in separate directories:
 lib/app/controllers/
 ├── auth/
 │   ├── auth_controller.dart
-│   ├── login_controller.dart
-│   └── register_controller.dart
+│   ├── otp_controller.dart
+│   ├── profile_controller.dart
+│   └── verification_controller.dart
+├── booking/
+│   ├── availability_controller.dart
+│   ├── booking_controller.dart
+│   └── booking_detail_controller.dart
 ├── listing/
 │   ├── listing_controller.dart
-│   ├── listing_details_controller.dart
-│   └── create_listing_controller.dart
-├── booking/
-│   ├── booking_controller.dart
-│   ├── booking_details_controller.dart
-│   └── booking_history_controller.dart
+│   ├── listing_create_controller.dart
+│   ├── listing_detail_controller.dart
+│   ├── location_search_controller.dart
+│   └── search_controller.dart
+├── messaging/
+│   ├── chat_controller.dart
+│   ├── conversation_list_controller.dart
+│   └── hotels_map_controller.dart
+├── notification/
+│   └── notification_controller.dart
 ├── payment/
 │   ├── payment_controller.dart
 │   └── payment_method_controller.dart
-├── messaging/
-│   ├── messaging_controller.dart
-│   └── chat_controller.dart
 ├── review/
-│   ├── review_controller.dart
-│   └── review_list_controller.dart
-└── notification/
-    ├── notification_controller.dart
-    └── push_notification_controller.dart
+│   └── review_controller.dart
+├── explore_controller.dart
+├── map_controller.dart
+├── navigation_controller.dart
+├── profile_controller.dart (standalone)
+├── splash_controller.dart
+├── trips_controller.dart
+└── wishlist_controller.dart
 ```
 
 ## Model Organization
-Data models should follow a clear structure:
+Data models should follow a clear structure with JSON serialization:
 
 ```
 lib/app/data/models/
-├── auth/
-│   ├── user.dart
-│   ├── login_request.dart
-│   └── login_response.dart
-├── listing/
-│   ├── listing.dart
-│   ├── listing_category.dart
-│   └── listing_image.dart
-├── booking/
-│   ├── booking.dart
-│   ├── booking_status.dart
-│   └── booking_request.dart
-├── payment/
-│   ├── payment.dart
-│   ├── payment_method.dart
-│   └── transaction.dart
-├── messaging/
-│   ├── message.dart
-│   ├── conversation.dart
-│   └── message_type.dart
-├── review/
-│   ├── review.dart
-│   └── rating.dart
-└── notification/
-    ├── notification.dart
-    └── notification_type.dart
+├── amenity_model.dart
+├── api_response_models.dart
+├── booking_model.dart
+├── hotel_model.dart (with .g.dart)
+├── hotel_model.g.dart
+├── location_model.dart
+├── message_model.dart
+├── notification_model.dart
+├── payment_model.dart
+├── property_image_model.dart (with .g.dart)
+├── property_image_model.g.dart
+├── property_model.dart (with .g.dart)
+├── property_model.g.dart
+├── review_model.dart
+├── trip_model.dart
+├── unified_filter_model.dart
+├── unified_property_response.dart
+├── user_model.dart
+├── wishlist_model.dart (with .g.dart)
+└── wishlist_model.g.dart
 ```
 
 ## Provider Organization
-API providers should mirror the model structure:
+API providers should mirror the model structure using Dio:
 
 ```
 lib/app/data/providers/
 ├── auth_provider.dart
-├── listing_provider.dart
+├── base_provider.dart
 ├── booking_provider.dart
+├── bookings_provider.dart
+├── message_provider.dart
+├── notification_provider.dart
 ├── payment_provider.dart
-├── messaging_provider.dart
+├── properties_provider.dart
 ├── review_provider.dart
-└── notification_provider.dart
+├── swipes_provider.dart
+├── users_provider.dart
+└── wishlist_provider.dart (implied)
 ```
 
 ## Repository Organization
@@ -89,12 +97,12 @@ Repositories provide a clean abstraction layer:
 ```
 lib/app/data/repositories/
 ├── auth_repository.dart
-├── listing_repository.dart
 ├── booking_repository.dart
+├── message_repository.dart
 ├── payment_repository.dart
-├── messaging_repository.dart
-├── review_repository.dart
-└── notification_repository.dart
+├── profile_repository.dart
+├── properties_repository.dart
+└── wishlist_repository.dart
 ```
 
 ## Service Organization
@@ -102,12 +110,12 @@ External services and integrations:
 
 ```
 lib/app/data/services/
-├── supabase_service.dart
-├── storage_service.dart
-├── location_service.dart
-├── push_notification_service.dart
 ├── analytics_service.dart
-└── payment_service.dart
+├── location_service.dart
+├── places_service.dart
+├── push_notification_service.dart
+├── storage_service.dart
+└── supabase_service.dart
 ```
 
 ## View Organization
@@ -117,34 +125,47 @@ UI views organized by feature:
 lib/app/ui/views/
 ├── auth/
 │   ├── login_view.dart
+│   ├── otp_verification_view.dart
+│   ├── phone_login_view.dart
 │   ├── register_view.dart
+│   ├── reset_password_view.dart
+│   ├── email_verification_view.dart
 │   ├── forgot_password_view.dart
-│   └── profile_view.dart
+│   └── profile_setup_view.dart
+├── booking/
+│   ├── booking_view.dart
+│   ├── booking_detail_view.dart
+│   └── booking_confirmation_view.dart
+├── explore_view.dart
 ├── home/
 │   ├── home_view.dart
-│   └── search_view.dart
+│   ├── search_view.dart
+│   └── filter_view.dart
 ├── listing/
-│   ├── listing_list_view.dart
-│   ├── listing_details_view.dart
+│   ├── listing_detail_view.dart
 │   ├── create_listing_view.dart
-│   └── edit_listing_view.dart
-├── booking/
-│   ├── booking_list_view.dart
-│   ├── booking_details_view.dart
-│   └── create_booking_view.dart
+│   ├── listing_photos_view.dart
+│   └── listing_amenities_view.dart
+├── messaging/
+│   ├── chat_view.dart
+│   └── locate_view.dart
 ├── payment/
 │   ├── payment_view.dart
-│   ├── payment_method_view.dart
-│   └── payment_history_view.dart
-├── messaging/
-│   ├── chat_list_view.dart
-│   └── chat_view.dart
-├── review/
-│   ├── review_list_view.dart
-│   └── create_review_view.dart
-└── settings/
-    ├── settings_view.dart
-    └── notification_settings_view.dart
+│   └── payment_method_view.dart
+├── profile/
+│   ├── profile_view.dart
+│   ├── edit_profile_view.dart
+│   └── account_settings_view.dart
+├── settings/
+│   ├── settings_view.dart
+│   ├── privacy_view.dart
+│   └── help_view.dart
+├── splash/
+│   └── splash_view.dart
+├── trips/
+│   └── trips_view.dart
+└── wishlist/
+    └── wishlist_view.dart
 ```
 
 ## Widget Organization
@@ -152,32 +173,31 @@ Reusable UI components:
 
 ```
 lib/app/ui/widgets/
-├── common/
-│   ├── app_bar.dart
-│   ├── bottom_nav_bar.dart
-│   ├── drawer.dart
-│   └── loading_indicator.dart
 ├── cards/
-│   ├── listing_card.dart
 │   ├── booking_card.dart
-│   ├── review_card.dart
-│   └── notification_card.dart
+│   ├── hotel_card.dart
+│   ├── property_card.dart
+│   └── review_card.dart
+├── common/
+│   ├── app_bar_widget.dart
+│   ├── bottom_nav_bar.dart
+│   ├── custom_button.dart
+│   ├── loading_indicator.dart
+│   ├── error_widget.dart
+│   └── empty_state_widget.dart
+├── dialogs/
+│   ├── confirm_dialog.dart
+│   ├── error_dialog.dart
+│   └── success_dialog.dart
 ├── forms/
 │   ├── login_form.dart
 │   ├── register_form.dart
 │   ├── booking_form.dart
-│   ├── payment_form.dart
-│   └── review_form.dart
-├── dialogs/
-│   ├── confirm_dialog.dart
-│   ├── error_dialog.dart
-│   ├── success_dialog.dart
-│   └── loading_dialog.dart
-└── inputs/
-    ├── text_field.dart
-    ├── dropdown_field.dart
-    ├── date_picker_field.dart
-    └── image_picker_field.dart
+│   └── payment_form.dart
+└── profile/
+    ├── profile_header.dart
+    ├── profile_menu_item.dart
+    └── profile_stats.dart
 ```
 
 ## Utility Organization
@@ -186,28 +206,26 @@ Helper classes and utilities:
 ```
 lib/app/utils/
 ├── constants/
-│   ├── app_constants.dart
 │   ├── api_constants.dart
-│   ├── ui_constants.dart
-│   └── color_constants.dart
+│   ├── app_constants.dart
+│   └── storage_keys.dart
+├── debug_logger.dart
+├── exceptions/
+│   ├── app_exceptions.dart
+│   ├── auth_exceptions.dart
+│   └── network_exceptions.dart
+├── extensions/
+│   ├── context_extensions.dart
+│   ├── date_extensions.dart
+│   ├── string_extensions.dart
+│   └── widget_extensions.dart
 ├── helpers/
 │   ├── date_helper.dart
-│   ├── validation_helper.dart
 │   ├── formatting_helper.dart
+│   ├── validation_helper.dart
 │   └── image_helper.dart
-├── extensions/
-│   ├── string_extensions.dart
-│   ├── date_extensions.dart
-│   ├── context_extensions.dart
-│   └── widget_extensions.dart
-├── exceptions/
-│   ├── app_exception.dart
-│   ├── api_exception.dart
-│   ├── auth_exception.dart
-│   └── validation_exception.dart
 └── logger/
-    ├── logger.dart
-    └── log_levels.dart
+    └── app_logger.dart
 ```
 
 ## Binding Organization
@@ -217,12 +235,17 @@ Dependency injection bindings:
 lib/app/bindings/
 ├── initial_binding.dart
 ├── auth_binding.dart
-├── listing_binding.dart
 ├── booking_binding.dart
+├── explore_binding.dart
+├── home_binding.dart
+├── listing_binding.dart
+├── message_binding.dart
+├── navigation_binding.dart
 ├── payment_binding.dart
-├── messaging_binding.dart
-├── review_binding.dart
-└── notification_binding.dart
+├── profile_binding.dart
+├── splash_binding.dart
+├── trips_binding.dart
+└── wishlist_binding.dart
 ```
 
 ## Route Organization
@@ -231,8 +254,36 @@ Route definitions:
 ```
 lib/app/routes/
 ├── app_pages.dart
-├── app_routes.dart
-└── auth_routes.dart
+└── app_routes.dart
+```
+
+### Route Constants (from app_routes.dart)
+```dart
+abstract class Routes {
+  static const initial = '/';
+  static const login = '/login';
+  static const register = '/register';
+  static const forgotPassword = '/forgot-password';
+  static const verification = '/verification';
+  static const resetPassword = '/reset-password';
+  static const home = '/home';
+  static const search = '/search';
+  static const searchResults = '/search-results';
+  static const listingDetail = '/listing/:id';
+  static const booking = '/booking';
+  static const payment = '/payment';
+  static const paymentMethods = '/payment-methods';
+  static const profile = '/profile';
+  static const inbox = '/inbox';
+  static const chat = '/chat/:conversationId';
+  static const wishlist = '/wishlist';
+  static const trips = '/trips';
+  static const accountSettings = '/account-settings';
+  static const help = '/help';
+  static const profileView = '/profile-view';
+  static const privacy = '/privacy';
+  static const legal = '/legal';
+}
 ```
 
 ## Theme Organization
@@ -240,23 +291,30 @@ App theming and styling:
 
 ```
 lib/app/ui/theme/
+├── app_colors.dart
+├── app_dimensions.dart
+├── app_text_styles.dart
 ├── app_theme.dart
-├── colors.dart
-├── text_styles.dart
-├── app_bar_theme.dart
-├── button_themes.dart
-└── input_decoration_themes.dart
+├── input_theme.dart
+└── text_field_theme.dart
+```
+
+### Additional Theme Files
+```
+lib/app/utils/theme.dart (legacy theme utilities)
 ```
 
 ## File Naming Conventions
-- **Controllers**: `{feature}_controller.dart`
-- **Models**: `{entity}.dart`
-- **Views**: `{feature}_{action}_view.dart`
-- **Widgets**: `{component}_{type}.dart`
-- **Services**: `{service}_service.dart`
-- **Providers**: `{feature}_provider.dart`
-- **Repositories**: `{feature}_repository.dart`
-- **Bindings**: `{feature}_binding.dart`
+- **Controllers**: `{feature}_controller.dart` (e.g., `auth_controller.dart`, `booking_controller.dart`)
+- **Models**: `{entity}_model.dart` (e.g., `user_model.dart`, `booking_model.dart`)
+- **Views**: `{feature}_{action}_view.dart` (e.g., `login_view.dart`, `booking_detail_view.dart`)
+- **Widgets**: `{component}_{type}.dart` (e.g., `hotel_card.dart`, `custom_button.dart`)
+- **Services**: `{service}_service.dart` (e.g., `supabase_service.dart`, `location_service.dart`)
+- **Providers**: `{feature}_provider.dart` (e.g., `auth_provider.dart`, `booking_provider.dart`)
+- **Repositories**: `{feature}_repository.dart` (e.g., `auth_repository.dart`, `booking_repository.dart`)
+- **Bindings**: `{feature}_binding.dart` (e.g., `auth_binding.dart`, `booking_binding.dart`)
+- **Exceptions**: `{type}_exceptions.dart` (e.g., `auth_exceptions.dart`, `network_exceptions.dart`)
+- **Extensions**: `{type}_extensions.dart` (e.g., `string_extensions.dart`, `context_extensions.dart`)
 
 ## Import Organization
 Organize imports in this order:
@@ -273,7 +331,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../data/models/user.dart';
+import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../theme/app_theme.dart';
 ```

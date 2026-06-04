@@ -1,12 +1,32 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
-import '../services/storage_service.dart';
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/services/connectivity_service.dart';
+import '../../utils/services/error_service.dart';
+import '../../utils/services/token_service.dart';
+import '../services/storage_service.dart';
+
+/// Retry configuration for transient failures
+const int _maxRetries = 3;
+const Duration _initialRetryDelay = Duration(milliseconds: 500);
+
+/// Status codes that are safe to retry
+const Set<int> _retryableStatusCodes = {408, 429, 500, 502, 503, 504};
 
 abstract class BaseProvider extends GetConnect {
-  final StorageService _storage = Get.find<StorageService>();
+  StorageService? _storage;
+
+  Future<StorageService> _getStorage() async {
+    if (_storage != null) return _storage!;
+    await StorageService.ready;
+    _storage = Get.find<StorageService>();
+    return _storage!;
+  }
 
   @override
   void onInit() {
@@ -14,35 +34,378 @@ abstract class BaseProvider extends GetConnect {
     httpClient.timeout = const Duration(seconds: 30);
 
     httpClient.addRequestModifier<Object?>((request) async {
-      final token = await _storage.getAccessToken();
-      if (token != null) {
+      // Always use the active Supabase session as the source of truth.
+      final supabaseToken =
+          Supabase.instance.client.auth.currentSession?.accessToken;
+      final token = supabaseToken;
+      if (token != null && token.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $token';
+      } else {
+        request.headers.remove('Authorization');
       }
       request.headers['Content-Type'] = 'application/json';
-      AppLogger.logRequest({'method': request.method, 'url': request.url.toString()});
+      request.headers['Accept'] = 'application/json';
+      // Lightweight request timing for performance monitoring
+      request.headers['x-start-ms'] = DateTime.now().millisecondsSinceEpoch
+          .toString();
+      AppLogger.logRequest({
+        'method': request.method,
+        'url': request.url.toString(),
+      });
       return request;
     });
 
     httpClient.addResponseModifier<Object?>((request, response) async {
-      AppLogger.logResponse({'status': response.statusCode, 'url': request.url.toString()});
-      if (response.statusCode == 401) {
-        // TODO: refresh token
+      final startHeader = request.headers['x-start-ms'];
+      int? elapsedMs;
+      if (startHeader != null) {
+        final startMs = int.tryParse(startHeader);
+        if (startMs != null) {
+          elapsedMs = DateTime.now().millisecondsSinceEpoch - startMs;
+        }
       }
+      AppLogger.logResponse({
+        'status': response.statusCode,
+        'url': request.url.toString(),
+        if (elapsedMs != null) 'elapsed_ms': elapsedMs,
+      });
+      // Passive handler: authenticator below will retry.
       return response;
+    });
+    // Retry once on 401 by attempting token refresh via Supabase.
+    httpClient.maxAuthRetries = 1;
+    httpClient.addAuthenticator<Object?>((request) async {
+      // Skip auth endpoints to avoid loops
+      if (_isAuthEndpoint(request.url)) return request;
+      AppLogger.info('Authenticator triggered for ${request.url}');
+      final client = Supabase.instance.client;
+      try {
+        final session = client.auth.currentSession;
+        if (session == null) {
+          throw ApiException(
+            message: 'No session to refresh',
+            statusCode: 401,
+          );
+        }
+
+        final res = await client.auth.refreshSession();
+        if (res.session == null) {
+          throw ApiException(message: 'Unable to refresh', statusCode: 401);
+        }
+        final newToken = client.auth.currentSession?.accessToken;
+        final newRefresh = client.auth.currentSession?.refreshToken;
+        if (newToken != null) {
+          // Keep TokenService + storage in sync via service layer
+          try {
+            final tokenService = Get.find<TokenService>();
+            await tokenService.storeTokens(
+              accessToken: newToken,
+              refreshToken: newRefresh,
+            );
+          } catch (_) {
+            // Fallback to direct storage if TokenService not available
+            final storage = await _getStorage();
+            await storage.saveTokens(
+              accessToken: newToken,
+              refreshToken: newRefresh,
+            );
+          }
+          request.headers['Authorization'] = 'Bearer $newToken';
+          AppLogger.info('Auth token refreshed; retrying ${request.url}');
+          return request;
+        }
+        throw ApiException(
+          message: 'Missing access token after refresh',
+          statusCode: 401,
+        );
+      } catch (e, s) {
+        AppLogger.error('Token refresh failed', e, s);
+        final storage = await _getStorage();
+        await storage.clearTokens();
+        await storage.clearUserData();
+        if (Get.currentRoute != '/login') {
+          unawaited(Get.offAllNamed('/login'));
+        }
+        return request; // Let original request fail; no infinite retry
+      }
     });
     super.onInit();
   }
 
   T handleResponse<T>(Response response, T Function(dynamic) parser) {
-    if (response.hasError) {
-      throw ApiException(
-        message: response.body is Map && response.body['message'] != null
-            ? response.body['message'] as String
-            : 'Unknown error',
-        statusCode: response.statusCode,
+    final int statusCode = response.statusCode ?? 500;
+
+    // Only log response body in dev to prevent leaking sensitive data
+    if (AppConfig.isDev) {
+      AppLogger.info(
+        'API Response [${response.request?.url}] - Status: $statusCode, Body: ${response.bodyString}',
+      );
+    } else {
+      AppLogger.info(
+        'API Response [${response.request?.url}] - Status: $statusCode',
       );
     }
-    return parser(response.body);
+
+    if (response.isOk) {
+      // SUCCESS CASE (Status codes 200-299)
+      if (response.body == null) {
+        // This can happen on successful logout or delete requests
+        return parser(null);
+      }
+      return parser(response.body);
+    } else {
+      // Delegate to central error service
+      throw ErrorService.I.toApiException(response);
+    }
+  }
+
+  /// Check if the current request is for auth endpoints
+  bool _isAuthEndpoint(Uri url) {
+    return url.path.contains('/auth/') ||
+        url.path.contains('/login') ||
+        url.path.contains('/register');
+  }
+
+  /// Execute a GET request with automatic retry for transient failures
+  Future<Response<T>> getWithRetry<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) async {
+    return _executeWithRetry(
+      () => super.get<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      ),
+    );
+  }
+
+  /// Execute a POST request with automatic retry for transient failures
+  Future<Response<T>> postWithRetry<T>(
+    String? url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) async {
+    return _executeWithRetry(
+      () => super.post<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      ),
+    );
+  }
+
+  /// Execute a PUT request with automatic retry for transient failures
+  Future<Response<T>> putWithRetry<T>(
+    String url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) async {
+    return _executeWithRetry(
+      () => super.put<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      ),
+    );
+  }
+
+  /// Execute a DELETE request with automatic retry for transient failures
+  Future<Response<T>> deleteWithRetry<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) async {
+    return _executeWithRetry(
+      () => super.delete<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      ),
+    );
+  }
+
+  @override
+  Future<Response<T>> get<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) =>
+      getWithRetry<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      );
+
+  @override
+  Future<Response<T>> post<T>(
+    String? url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) =>
+      postWithRetry<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      );
+
+  @override
+  Future<Response<T>> put<T>(
+    String url,
+    dynamic body, {
+    String? contentType,
+    Map<String, String>? headers,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+    Progress? uploadProgress,
+  }) =>
+      putWithRetry<T>(
+        url,
+        body,
+        contentType: contentType,
+        headers: headers,
+        query: query,
+        decoder: decoder,
+        uploadProgress: uploadProgress,
+      );
+
+  @override
+  Future<Response<T>> delete<T>(
+    String url, {
+    Map<String, String>? headers,
+    String? contentType,
+    Map<String, dynamic>? query,
+    Decoder<T>? decoder,
+  }) =>
+      deleteWithRetry<T>(
+        url,
+        headers: headers,
+        contentType: contentType,
+        query: query,
+        decoder: decoder,
+      );
+
+  /// Internal retry logic with exponential backoff
+  Future<Response<T>> _executeWithRetry<T>(
+    Future<Response<T>> Function() operation,
+  ) async {
+    int attempt = 0;
+    Duration delay = _initialRetryDelay;
+
+    while (true) {
+      if (!await _hasNetworkConnection()) {
+        throw ApiException(
+          message: 'No internet connection. Please check your network and try again.',
+          statusCode: 0,
+        );
+      }
+      try {
+        final response = await operation();
+
+        // Check if response is retryable
+        final statusCode = response.statusCode ?? 0;
+        if (_retryableStatusCodes.contains(statusCode) &&
+            attempt < _maxRetries) {
+          attempt++;
+          AppLogger.warning(
+            'Request failed with status $statusCode. Retry attempt $attempt/$_maxRetries after ${delay.inMilliseconds}ms',
+          );
+          await Future<void>.delayed(delay);
+          delay *= 2; // Exponential backoff
+          continue;
+        }
+
+        return response;
+      } catch (e) {
+        // Retry on network errors (timeout, connection refused, etc.)
+        if (_isRetryableError(e) && attempt < _maxRetries) {
+          attempt++;
+          AppLogger.warning(
+            'Request failed with error: $e. Retry attempt $attempt/$_maxRetries after ${delay.inMilliseconds}ms',
+          );
+          await Future<void>.delayed(delay);
+          delay *= 2;
+          continue;
+        }
+        if (_isRetryableError(e)) {
+          AppLogger.warning('Network request failed after $attempt retries: $e');
+          throw ApiException(
+            message: _networkErrorMessage(e),
+            statusCode: 408,
+          );
+        }
+        rethrow;
+      }
+    }
+  }
+
+  /// Check if an error is retryable (network-related)
+  bool _isRetryableError(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    return errorStr.contains('timeout') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('socket') ||
+        errorStr.contains('network');
+  }
+
+  Future<bool> _hasNetworkConnection() async {
+    if (!Get.isRegistered<ConnectivityService>()) {
+      return true;
+    }
+    final service = Get.find<ConnectivityService>();
+    if (service.isCurrentlyOnline) {
+      return true;
+    }
+    return service.checkConnection();
+  }
+
+  String _networkErrorMessage(dynamic error) {
+    final errorStr = error.toString().toLowerCase();
+    if (errorStr.contains('timeout')) {
+      return 'Request timed out. Please try again.';
+    }
+    if (errorStr.contains('socket') ||
+        errorStr.contains('connection') ||
+        errorStr.contains('network')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    return 'Network request failed. Please try again.';
   }
 }
-

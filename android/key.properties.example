@@ -1,0 +1,18 @@
+# Key Properties Template for Android Release Signing
+# Copy this file to key.properties and fill in your actual values
+# NEVER commit key.properties to version control!
+
+# Path to your keystore file (relative to android directory or absolute)
+storeFile=../keystores/release.keystore
+
+# Keystore password
+storePassword=YOUR_KEYSTORE_PASSWORD
+
+# Key alias in the keystore
+keyAlias=release
+
+# Key password (often same as storePassword)
+keyPassword=YOUR_KEY_PASSWORD
+
+# To generate a new keystore:
+# keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000

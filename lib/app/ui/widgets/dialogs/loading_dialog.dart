@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 void showLoadingDialog(BuildContext context, {String? message}) {
   showDialog(
@@ -11,7 +12,7 @@ void showLoadingDialog(BuildContext context, {String? message}) {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
-            Text(message ?? 'Loading...'),
+            Text(message ?? 'common.loading'.tr),
           ],
         ),
       ),

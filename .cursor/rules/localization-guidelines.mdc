@@ -1,0 +1,334 @@
+---
+globs: *.dart
+description: Localization and internationalization patterns for Flutter app
+---
+
+# Localization & Internationalization Guidelines
+
+## Overview
+The app supports multiple languages using GetX localization with JSON-based translation files. Currently supports English, Spanish, and French.
+
+## File Structure
+```
+l10n/
+├── en.json              # English translations (primary)
+├── es.json              # Spanish translations
+├── fr.json              # French translations
+└── localization_service.dart  # GetX localization service
+```
+
+## Translation File Format
+Use JSON format for translations with nested objects for organization:
+
+```json
+// l10n/en.json
+{
+  "app_name": "360ghar stays",
+  "tagline": "Check in before you book in.",
+  "auth": {
+    "login": "Log In",
+    "signup": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "forgot_password": "Forgot Password?",
+    "logout": "Log Out",
+    "email_required": "Email or phone is required",
+    "password_required": "Password is required",
+    "password_too_short": "Password must be at least 6 characters"
+  },
+  "home": {
+    "explore_nearby": "Explore Nearby",
+    "search_placeholder": "Where are you going?"
+  },
+  "errors": {
+    "network_error": "Network error. Please check your connection.",
+    "server_error": "Server error. Please try again later.",
+    "validation_error": "Please check your input and try again."
+  }
+}
+```
+
+## Localization Service Implementation
+Use GetX Translations for localization:
+
+```dart
+// lib/l10n/localization_service.dart
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+class LocalizationService extends Translations {
+  static const locale = Locale('en', 'US');
+  static const fallbackLocale = Locale('en', 'US');
+
+  static final langs = ['English', 'Spanish', 'French'];
+  static final locales = [
+    const Locale('en', 'US'),
+    const Locale('es', 'ES'),
+    const Locale('fr', 'FR'),
+  ];
+
+  @override
+  Map<String, Map<String, String>> get keys => {
+    'en_US': enUS,
+    'es_ES': esES,
+    'fr_FR': frFR,
+  };
+
+  static void changeLocale(String lang) {
+    final locale = _getLocaleFromLanguage(lang);
+    Get.updateLocale(locale);
+  }
+
+  static Locale _getLocaleFromLanguage(String lang) {
+    for (int i = 0; i < langs.length; i++) {
+      if (lang == langs[i]) return locales[i];
+    }
+    return Get.locale ?? locale;
+  }
+}
+
+// Define translation maps
+const Map<String, String> enUS = {
+  'app_name': '360ghar stays',
+  'auth.login': 'Log In',
+  'auth.signup': 'Sign Up',
+  'auth.email_required': 'Email or phone is required',
+  'auth.password_required': 'Password is required',
+  'errors.network_error': 'Network error. Please check your connection.',
+};
+
+const Map<String, String> esES = {
+  'app_name': '360ghar stays',
+  'auth.login': 'Iniciar sesión',
+  'auth.signup': 'Regístrate',
+  'auth.email_required': 'Correo electrónico o teléfono requerido',
+  'auth.password_required': 'Contraseña requerida',
+  'errors.network_error': 'Error de red. Verifique su conexión.',
+};
+
+const Map<String, String> frFR = {
+  'app_name': '360ghar stays',
+  'auth.login': 'Se connecter',
+  'auth.signup': "S'inscrire",
+  'auth.email_required': 'Email ou téléphone requis',
+  'auth.password_required': 'Mot de passe requis',
+  'errors.network_error': 'Erreur réseau. Vérifiez votre connexion.',
+};
+```
+
+## Usage in Widgets
+Use GetX translation methods in widgets:
+
+```dart
+class LoginView extends GetView<AuthController> {
+  const LoginView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('auth.login'.tr), // Use .tr for translation
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'auth.email'.tr,
+                hintText: 'auth.email_hint'.tr,
+              ),
+              // Show validation error from controller
+              errorText: controller.emailError.value.isEmpty
+                  ? null
+                  : controller.emailError.value,
+            ),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'auth.password'.tr,
+                hintText: 'auth.password_hint'.tr,
+              ),
+              obscureText: true,
+              errorText: controller.passwordError.value.isEmpty
+                  ? null
+                  : controller.passwordError.value,
+            ),
+            ElevatedButton(
+              onPressed: controller.isLoading.value
+                  ? null
+                  : () => controller.login(
+                      email: controller.email.value,
+                      password: controller.password.value,
+                    ),
+              child: controller.isLoading.value
+                  ? const CircularProgressIndicator()
+                  : Text('auth.login'.tr),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+## Usage in Controllers
+Use translations in controllers for error messages:
+
+```dart
+class AuthController extends GetxController {
+  final RxString emailError = ''.obs;
+  final RxString passwordError = ''.obs;
+
+  Future<void> login({required String email, required String password}) async {
+    // Clear previous errors
+    emailError.value = '';
+    passwordError.value = '';
+
+    // Validation with localized messages
+    if (email.trim().isEmpty) {
+      emailError.value = 'auth.email_required'.tr;
+      return;
+    }
+
+    if (password.isEmpty) {
+      passwordError.value = 'auth.password_required'.tr;
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      final user = await _authRepository.loginWithEmail(
+        email: email,
+        password: password,
+      );
+
+      currentUser.value = user;
+      isAuthenticated.value = true;
+
+      // Success message
+      Get.snackbar(
+        'success'.tr,
+        'auth.login_success'.tr,
+        snackPosition: SnackPosition.TOP,
+      );
+
+      Get.offAllNamed(Routes.home);
+
+    } on ApiException catch (e) {
+      _handleApiError('auth.login_failed'.tr, e);
+    } catch (e) {
+      AppLogger.error('Login error', e);
+      Get.snackbar(
+        'error'.tr,
+        'errors.unexpected_error'.tr,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  void _handleApiError(String title, ApiException e) {
+    String message;
+    switch (e.statusCode) {
+      case 401:
+        message = 'auth.invalid_credentials'.tr;
+        break;
+      case 404:
+        message = 'auth.account_not_found'.tr;
+        break;
+      default:
+        message = e.message.isNotEmpty ? e.message : 'errors.server_error'.tr;
+    }
+
+    Get.snackbar(title, message, snackPosition: SnackPosition.TOP);
+  }
+}
+```
+
+## Main App Integration
+Initialize localization in main files:
+
+```dart
+// lib/main_dev.dart (similar for main_staging.dart and main_prod.dart)
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env.dev');
+  AppConfig.setConfig(AppConfig.dev());
+
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GetMaterialApp(
+      title: 'app_name'.tr, // Localized app title
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+
+      // Localization configuration
+      translations: LocalizationService(),
+      locale: LocalizationService.locale,
+      fallbackLocale: LocalizationService.fallbackLocale,
+
+      // Other configurations...
+      initialBinding: InitialBinding(),
+      initialRoute: AppPages.initial,
+      getPages: AppPages.routes,
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+```
+
+## Best Practices
+
+### Translation Keys
+- Use dot notation for grouping: `auth.login`, `errors.network_error`
+- Keep keys descriptive but concise
+- Use consistent naming patterns across languages
+- Avoid hardcoding text strings in code
+
+### Error Messages
+- Provide localized error messages for all validation errors
+- Include user-friendly messages for API errors
+- Use appropriate HTTP status codes for error handling
+
+### Language Support
+- Always provide translations for all supported languages
+- Test UI with different languages to ensure proper layout
+- Consider text expansion/contraction when designing layouts
+
+### Dynamic Content
+- For dynamic content, use parameterized translations:
+```dart
+// In translation files
+'welcome_message': 'Welcome, {{name}}!'
+'items_found': 'Found {{count}} items'
+
+// In code
+'welcome_message'.trParams({'name': user.name});
+'items_found'.trParams({'count': items.length.toString()});
+```
+
+### RTL Support
+- Consider RTL languages when designing layouts
+- Use `Directionality` widget for RTL text
+- Test with RTL languages like Arabic or Hebrew
+
+## Adding New Languages
+1. Create new JSON file: `l10n/ar.json` for Arabic
+2. Add locale to `LocalizationService`: `const Locale('ar', 'SA')`
+3. Add language name: `'Arabic'`
+4. Implement translation map: `arSA`
+5. Test UI layout with new language
+
+## Maintenance
+- Regularly audit for missing translations
+- Keep translation files in sync across languages
+- Use tools like translation management services for larger projects
+- Document new translation keys for translators

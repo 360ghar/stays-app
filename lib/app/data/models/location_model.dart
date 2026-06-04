@@ -12,17 +12,16 @@ class LocationModel {
   });
 
   factory LocationModel.fromMap(Map<String, dynamic> map) => LocationModel(
-        city: map['city'] as String? ?? '',
-        country: map['country'] as String? ?? '',
-        lat: (map['lat'] as num?)?.toDouble() ?? 0,
-        lng: (map['lng'] as num?)?.toDouble() ?? 0,
-      );
+    city: map['city'] as String? ?? '',
+    country: map['country'] as String? ?? '',
+    lat: (map['lat'] as num?)?.toDouble() ?? 0,
+    lng: (map['lng'] as num?)?.toDouble() ?? 0,
+  );
 
   Map<String, dynamic> toMap() => {
-        'city': city,
-        'country': country,
-        'lat': lat,
-        'lng': lng,
-      };
+    'city': city,
+    'country': country,
+    'lat': lat,
+    'lng': lng,
+  };
 }
-

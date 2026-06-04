@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.9.0
@@ -30,23 +30,45 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   get: ^4.6.6
   get_storage: ^2.1.1
   supabase_flutter: ^2.6.0
   json_annotation: ^4.9.0
   logger: ^2.0.2+1
   cached_network_image: ^3.3.1
+  flutter_cache_manager: ^3.3.1
+  image_picker: ^1.0.7
+  package_info_plus: ^8.0.0
   shimmer: ^3.0.0
-  intl: ^0.19.0
-  connectivity_plus: ^6.0.3
+  intl: ^0.20.2
+  connectivity_plus: ^7.0.0
   url_launcher: ^6.3.1
   flutter_svg: ^2.0.10+1
   equatable: ^2.0.5
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.0
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  permission_handler: ^12.0.1
+  webview_flutter: ^4.8.0
+  webview_flutter_android: ^4.10.2
+  webview_flutter_wkwebview: ^3.23.0
+  webview_flutter_platform_interface: ^2.14.0
+  crypto: ^3.0.3
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  maplibre_gl: 0.26.1
+  flutter_secure_storage: ^10.0.0
+  firebase_core: ^4.1.1
+  firebase_messaging: ^16.0.2
+  firebase_crashlytics: ^5.0.6
+  firebase_analytics: ^12.1.0
+  flutter_local_notifications: ^19.0.0
+  google_fonts: ^6.2.1
+  upgrader: ^12.3.0
 
 dev_dependencies:
   flutter_test:
@@ -54,15 +76,20 @@ dev_dependencies:
   build_runner: ^2.4.11
   json_serializable: ^6.7.1
   mockito: ^5.4.4
+  flutter_launcher_icons: ^0.14.4
   integration_test:
     sdk: flutter
-
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/360Stays_logo_icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,10 +102,13 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - l10n/
+    - l10n/en.json
+    - l10n/hi.json
     - .env.dev
     - .env.staging
     - .env.prod
+    - assets/images/360Stays_logo.png
+    - assets/images/360Stays_logo_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

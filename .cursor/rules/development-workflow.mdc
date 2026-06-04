@@ -35,33 +35,41 @@ dart run build_runner build --delete-conflicting-outputs
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
-## Development Environment
+## Environment-Specific Entry Points
+The app uses different entry points for each environment:
+
 ```bash
-# Run in development mode
+# Development environment (loads .env.dev)
 flutter run -t lib/main_dev.dart
 
-# Or with flavor
+# Staging environment (loads .env.staging)
+flutter run -t lib/main_staging.dart
+
+# Production environment (loads .env.prod)
+flutter run -t lib/main_prod.dart
+
+# With flavor (alternative syntax)
 flutter run --flavor dev -t lib/main_dev.dart
+flutter run --flavor staging -t lib/main_staging.dart
+flutter run --flavor prod -t lib/main_prod.dart
 
 # Run with specific device
 flutter run -d <device_id> -t lib/main_dev.dart
 ```
 
-## Staging Environment
-```bash
-# Run in staging mode
-flutter run -t lib/main_staging.dart
+## Environment Configuration
+Each environment loads specific configuration:
 
-# Or with flavor
-flutter run --flavor staging -t lib/main_staging.dart
-```
+- **Development**: `lib/main_dev.dart` → `.env.dev`
+- **Staging**: `lib/main_staging.dart` → `.env.staging`
+- **Production**: `lib/main_prod.dart` → `.env.prod`
 
-## Testing
+## Testing (Actual Structure)
 ```bash
 # Run all tests
 flutter test
 
-# Run with coverage
+# Run with coverage (generates lcov.info in coverage/)
 flutter test --coverage
 
 # Run specific test file
@@ -72,39 +80,82 @@ flutter test test/widget/
 
 # Run integration tests
 flutter test integration_test/
+
+# Run tests with specific reporter
+flutter test --machine
 ```
 
-## Build Commands
+## Build Commands (Actual Implementation)
 ```bash
-# Development build
-flutter build apk --flavor dev -t lib/main_dev.dart
-flutter build ios --flavor dev -t lib/main_dev.dart
+# Development builds
+flutter build apk -t lib/main_dev.dart
+flutter build ios -t lib/main_dev.dart
 
-# Staging build
-flutter build apk --flavor staging -t lib/main_staging.dart
-flutter build ios --flavor staging -t lib/main_staging.dart
+# Staging builds
+flutter build apk -t lib/main_staging.dart
+flutter build ios -t lib/main_staging.dart
 
-# Production build
-flutter build apk --flavor prod -t lib/main_prod.dart
-flutter build ios --flavor prod -t lib/main_prod.dart
+# Production builds
+flutter build apk -t lib/main_prod.dart
+flutter build ios -t lib/main_prod.dart
 
-# App Bundle for Play Store
-flutter build appbundle --flavor prod -t lib/main_prod.dart
+# App Bundle for Play Store (production only)
+flutter build appbundle -t lib/main_prod.dart
+
+# Web builds (if needed)
+flutter build web -t lib/main_prod.dart
+```
+
+## Environment Setup
+```bash
+# Install dependencies
+flutter pub get
+
+# Generate code (models, localization)
+dart run build_runner build --delete-conflicting-outputs
+
+# Clean and regenerate
+flutter clean && flutter pub get
+dart run build_runner build --delete-conflicting-outputs
+
+# Check environment variables are loaded
+# Each .env.* file should contain:
+# API_BASE_URL=your-api-url
+# SUPABASE_URL=your-supabase-url
+# SUPABASE_ANON_KEY=your-anon-key
+# ENABLE_ANALYTICS=true/false
+# GOOGLE_MAPS_API_KEY=your-maps-key (optional)
 ```
 
 ## Debug Commands
 ```bash
-# Clean build
+# Clean build and reinstall
 flutter clean && flutter pub get
+flutter run -t lib/main_dev.dart
 
 # Clear app data and reinstall
-flutter clean && flutter pub get && flutter run
+flutter clean && flutter pub get && flutter run -t lib/main_dev.dart
 
 # Check connected devices
 flutter devices
 
-# Doctor check
+# Doctor check (verify Flutter installation)
 flutter doctor
+
+# Check pub dependencies for outdated packages
+flutter pub outdated
+
+# Upgrade dependencies
+flutter pub upgrade
+
+# Analyze code for issues
+flutter analyze
+
+# Format code
+dart format .
+
+# Combined quality check
+flutter analyze && dart format . --set-exit-if-changed && flutter test
 ```
 
 ## Environment Setup

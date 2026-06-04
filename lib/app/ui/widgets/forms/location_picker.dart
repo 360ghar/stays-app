@@ -5,4 +5,3 @@ class LocationPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Placeholder();
 }
-
