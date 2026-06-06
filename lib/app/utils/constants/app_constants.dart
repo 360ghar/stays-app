@@ -18,4 +18,8 @@ class AppConstants {
   // These are intentionally centralized to avoid scattering magic numbers.
   static const double defaultLatitude = 19.0760; // Mumbai
   static const double defaultLongitude = 72.8777; // Mumbai
+
+  // Legal document URLs
+  static const String privacyPolicyUrl = 'https://360ghar.com/policies/privacy-policy';
+  static const String termsOfServiceUrl = 'https://360ghar.com/policies/terms-of-service';
 }

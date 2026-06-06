@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:stays_app/app/ui/theme/app_animations.dart';
@@ -20,6 +21,7 @@ class SimpleHomeView extends StatefulWidget {
 
 class _SimpleHomeViewState extends State<SimpleHomeView> {
   late final NavigationController controller;
+  DateTime? _lastBackPress;
 
   @override
   void initState() {
@@ -33,32 +35,52 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      extendBody: true,
-      body: PageView.builder(
-        controller: controller.pageController,
-        itemCount: 5,
-        onPageChanged: (index) {
-          controller.currentIndex.value = index;
-          if (index == 3 && Get.isRegistered<HotelsMapController>()) {
-            Get.find<HotelsMapController>().getCurrentLocation();
-          }
-        },
-        itemBuilder: (context, index) {
-          return switch (index) {
-            0 => const ExploreView(),
-            1 => const WishlistView(),
-            2 => InquiriesPage(),
-            3 => const LocateView(),
-            4 => const ProfileView(),
-            _ => const SizedBox.shrink(),
-          };
-        },
-      ),
-      bottomNavigationBar: _PremiumBottomNav(
-        controller: controller,
-        isDark: isDark,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        final now = DateTime.now();
+        if (_lastBackPress != null &&
+            now.difference(_lastBackPress!) < const Duration(seconds: 3)) {
+          SystemNavigator.pop();
+        } else {
+          _lastBackPress = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Press back again to exit'),
+              duration: Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: colorScheme.surface,
+        extendBody: true,
+        body: PageView.builder(
+          controller: controller.pageController,
+          itemCount: 5,
+          onPageChanged: (index) {
+            controller.currentIndex.value = index;
+            if (index == 3 && Get.isRegistered<HotelsMapController>()) {
+              Get.find<HotelsMapController>().getCurrentLocation();
+            }
+          },
+          itemBuilder: (context, index) {
+            return switch (index) {
+              0 => const ExploreView(),
+              1 => const WishlistView(),
+              2 => InquiriesPage(),
+              3 => const LocateView(),
+              4 => const ProfileView(),
+              _ => const SizedBox.shrink(),
+            };
+          },
+        ),
+        bottomNavigationBar: _PremiumBottomNav(
+          controller: controller,
+          isDark: isDark,
+        ),
       ),
     );
   }
@@ -361,7 +383,7 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
                   ),
                 ],
               );
-            },
+},
           ),
         ),
       ),

@@ -11,11 +11,7 @@ class AboutController extends GetxController {
 
   final List<Map<String, String>> complianceItems = const [
     {'title': 'Terms & Conditions', 'route': Routes.legal, 'slug': 'terms'},
-    {
-      'title': 'Privacy Policy',
-      'route': Routes.profilePrivacy,
-      'slug': 'privacy-policy',
-    },
+    {'title': 'Privacy Policy', 'route': Routes.legal, 'slug': 'privacy'},
     {
       'title': 'Refund & Cancellation Policy',
       'route': Routes.profileHelp,

@@ -59,6 +59,4 @@ class ProfileRepository {
   Future<String> uploadAvatar(File file) => _provider.uploadAvatar(file);
 
   Future<void> requestDataExport() => _provider.requestDataExport();
-
-  Future<void> deleteAccount() => _provider.deleteAccount();
 }

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../config/app_config.dart';
 import 'package:stays_app/app/controllers/notification/notification_controller.dart';
+import '../data/services/deep_link_service.dart';
 import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
 import '../data/services/places_service.dart';
@@ -74,6 +75,9 @@ class InitialBinding extends Bindings {
       AnalyticsService(enabled: AppConfig.I.enableAnalytics),
       permanent: true,
     );
+
+    // Deep link service (receives initial link + live stream)
+    Get.put<DeepLinkService>(DeepLinkService(), permanent: true);
 
     // Property cache service for offline support
     Get.putAsync<PropertyCacheService>(() async {

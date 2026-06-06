@@ -34,6 +34,10 @@ abstract class Routes {
   static const profileFeedbackBug = '/profile/feedback/bug';
   static const profileFeedbackFeature = '/profile/feedback/feature';
 
+  // Deep link routes (no auth middleware for shared/public access)
+  static const listingDeepLink = '/listing/:id';
+  static const chatDeepLink = '/chat/:conversationId';
+
   // Backwards compatibility aliases (will be removed once consumers migrate)
   static const enquiry = inquiry; // British spelling alias
   static const enquiryConfirmation = inquiryConfirmation;

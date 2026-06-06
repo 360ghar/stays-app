@@ -258,5 +258,18 @@ class AppPages {
       binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),
+    // Deep link routes - no AuthMiddleware for public access from shared links
+    GetPage(
+      name: Routes.listingDeepLink,
+      page: () => const ListingDetailView(),
+      binding: ListingBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.chatDeepLink,
+      page: () => const ChatView(),
+      binding: MessageBinding(),
+      transition: Transition.rightToLeft,
+    ),
   ];
 }

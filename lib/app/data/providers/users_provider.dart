@@ -114,16 +114,6 @@ class UsersProvider extends BaseProvider {
     }
   }
 
-  Future<void> deleteAccount() async {
-    final response = await delete('/api/v1/users/account/');
-    if (!response.isOk) {
-      throw ApiException(
-        message: response.statusText ?? 'Failed to delete account',
-        statusCode: response.statusCode ?? 500,
-      );
-    }
-  }
-
   Future<void> registerDeviceToken({
     required String token,
     required String platform,

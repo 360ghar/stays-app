@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
+import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
@@ -8,18 +9,20 @@ import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PrivacyController extends BaseController {
-  PrivacyController({
-    required ProfileRepository profileRepository,
-    required ProfileController profileController,
-    required AuthRepository authRepository,
-    required AuthController authController,
-  }) : _profileRepository = profileRepository,
-       _profileController = profileController,
-       _authRepository = authRepository,
-       _authController = authController;
+PrivacyController({
+     required ProfileRepository profileRepository,
+     required ProfileController profileController,
+     required AuthRepository authRepository,
+     required AuthController authController,
+   }) : _profileRepository = profileRepository,
+        _profileController = profileController,
+        _authRepository = authRepository,
+        _authController = authController;
 
   final ProfileRepository _profileRepository;
   final ProfileController _profileController;
@@ -174,7 +177,8 @@ class PrivacyController extends BaseController {
           AlertDialog(
             title: const Text('Delete account'),
             content: const Text(
-              'This action cannot be undone. Do you really want to delete your account?',
+              'This action cannot be undone. All your data will be permanently deleted. '
+              'Are you sure you want to delete your account?',
             ),
             actions: [
               TextButton(
@@ -193,23 +197,50 @@ class PrivacyController extends BaseController {
     if (!confirmDeletion) return;
 
     accountDeletionInFlight.value = true;
-    final result = await executeWithErrorHandling(() async {
-      await _profileRepository.deleteAccount();
-      await _authController.logout();
-      return true;
-    }, showLoading: false);
-    accountDeletionInFlight.value = false;
-    if (result == true) {
-      Get.offAllNamed(Routes.login);
-      AppSnackbar.success(
-        title: 'Account deleted',
-        message: 'Your account has been removed successfully.',
-      );
-    } else {
+
+    const supportEmail = 'info@360ghar.com';
+    const subject = 'Account Deletion Request';
+    final userEmail = _profileController.user.value?.email;
+    final body = StringBuffer()
+      ..writeln('Hello 360 Ghar Support,')
+      ..writeln()
+      ..writeln('I would like to request the deletion of my account.')
+      ..writeln()
+      ..writeln('Registered email: ${userEmail ?? 'Not available'}')
+      ..writeln()
+      ..writeln('Thank you.');
+    final uri = Uri(
+      scheme: 'mailto',
+      path: supportEmail,
+      queryParameters: <String, String>{
+        'subject': subject,
+        'body': body.toString(),
+      },
+    );
+
+    try {
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (launched) {
+        AppSnackbar.success(
+          title: 'Request initiated',
+          message:
+              'Your mail app is opening. Please send the pre-filled email to complete your request.',
+        );
+      } else {
+        AppSnackbar.error(
+          title: 'Could not open mail app',
+          message:
+              'Please email $supportEmail with subject "$subject" from your registered address.',
+        );
+      }
+    } catch (e) {
       AppSnackbar.error(
-        title: 'Deletion failed',
-        message: 'We could not delete your account. Please contact support.',
+        title: 'Could not open mail app',
+        message:
+            'Please email $supportEmail with subject "$subject" from your registered address.',
       );
+    } finally {
+      accountDeletionInFlight.value = false;
     }
   }
 }
