@@ -1,0 +1,30 @@
+{
+  "_comment": "TEMPLATE ONLY — not read by Gradle. Register the DEV Android app in the NON-PROD Firebase project, download its google-services.json, and save it next to this file as 'google-services.json' (without .example). See android/app/FIREBASE_SETUP.md.",
+  "project_info": {
+    "project_number": "REPLACE_FROM_FIREBASE_CONSOLE",
+    "project_id": "stays-360-nonprod",
+    "storage_bucket": "stays-360-nonprod.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_FROM_FIREBASE_CONSOLE",
+        "android_client_info": {
+          "package_name": "com.the360ghar.stays_app.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_FROM_FIREBASE_CONSOLE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
