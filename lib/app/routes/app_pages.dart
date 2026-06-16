@@ -258,7 +258,9 @@ class AppPages {
       binding: TripsBinding(),
       middlewares: [AuthMiddleware()],
     ),
-    // Deep link routes - no AuthMiddleware for public access from shared links
+    // Deep link routes. Listing links are public (shareable), but chat is
+    // private and must stay behind auth — DeepLinkService preserves the
+    // pending link and replays it after login.
     GetPage(
       name: Routes.listingDeepLink,
       page: () => const ListingDetailView(),
@@ -269,6 +271,7 @@ class AppPages {
       name: Routes.chatDeepLink,
       page: () => const ChatView(),
       binding: MessageBinding(),
+      middlewares: [AuthMiddleware()],
       transition: Transition.rightToLeft,
     ),
   ];

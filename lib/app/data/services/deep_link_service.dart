@@ -9,9 +9,10 @@ import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class DeepLinkService extends GetxService {
-  StreamSubscription? _sub;
+  StreamSubscription<Uri?>? _sub;
   final AppLinks _appLinks = AppLinks();
   final Rxn<String> pendingDeepLink = Rxn<String>();
+  String? _lastHandledUri;
 
   static const String _baseUrl = 'https://the360ghar.com';
 
@@ -54,6 +55,13 @@ class DeepLinkService extends GetxService {
   }
 
   void _handleDeepLink(Uri uri) {
+    // app_links may surface the cold-start link via both getInitialLink() and
+    // the uriLinkStream depending on platform/version. Dedupe so a single
+    // launch link is never navigated twice.
+    final uriString = uri.toString();
+    if (uriString == _lastHandledUri) return;
+    _lastHandledUri = uriString;
+
     AppLogger.info('🔗 Received Deep Link: $uri');
 
     final internalPath = _mapToInternalPath(uri);
@@ -67,39 +75,24 @@ class DeepLinkService extends GetxService {
   }
 
   String? _mapToInternalPath(Uri uri) {
-    final segments = uri.pathSegments;
+    var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     if (segments.isEmpty) return null;
 
-    final firstSegment = segments[0];
-
-    if (firstSegment == 'stays' && segments.length >= 2) {
-      return _mapStaysPrefix(segments.sublist(1));
+    // Links may be namespaced under a leading "stays" prefix
+    // (e.g. /stays/listing/42) or come through bare (e.g. /listing/42).
+    if (segments.first == 'stays') {
+      segments = segments.sublist(1);
     }
+    if (segments.length < 2) return null;
 
-    if (firstSegment == 'listing' && segments.length >= 2) {
-      return _buildListingPath(segments[1]);
+    final entity = segments[0];
+    final id = segments[1];
+    switch (entity) {
+      case 'listing':
+        return _buildListingPath(id);
+      case 'chat':
+        return _buildChatPath(id);
     }
-
-    if (firstSegment == 'chat' && segments.length >= 2) {
-      return _buildChatPath(segments[1]);
-    }
-
-    return null;
-  }
-
-  String? _mapStaysPrefix(List<String> segments) {
-    if (segments.isEmpty) return null;
-
-    final subPath = segments[0];
-
-    if (subPath == 'listing' && segments.length >= 2) {
-      return _buildListingPath(segments[1]);
-    }
-
-    if (subPath == 'chat' && segments.length >= 2) {
-      return _buildChatPath(segments[1]);
-    }
-
     return null;
   }
 

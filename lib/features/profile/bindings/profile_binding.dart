@@ -117,7 +117,6 @@ class ProfileBinding extends Bindings {
           profileController: Get.find<ProfileController>(),
           authRepository: authRepository,
           authController: authController,
-          usersProvider: Get.find<UsersProvider>(),
         ),
         fenix: true,
       );

@@ -37,27 +37,21 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs location access to show nearby hotels and provide better search results.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs microphone access if you choose to record video tours for your listing.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.a360ghar.stays</string>
+			<string>com.the360ghar.stays_app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>stays360</string>
 			</array>
 		</dict>
 	</array>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app needs permission to save photos to your library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to select images for property listings and your profile.</string>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>We use tracking to provide personalized stay recommendations and measure ad effectiveness.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
