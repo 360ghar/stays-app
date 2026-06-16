@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Result of the update dialog
-enum UpdateDialogResult {
-  update,
-  later,
-}
+enum UpdateDialogResult { update, later }
 
 /// Shows an update available dialog for optional updates.
 ///
@@ -34,8 +31,8 @@ Future<UpdateDialogResult?> showUpdateDialog(
           Text(
             'update.current_version'.trParams({'version': currentVersion}),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           if (releaseNotes != null && releaseNotes.isNotEmpty) ...[
             const SizedBox(height: 16),

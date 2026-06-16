@@ -74,8 +74,7 @@ class FeedbackView extends GetView<FeedbackController> {
             const SizedBox(height: 8),
             CustomTextField(
               controller: controller.descriptionController,
-              hintText:
-                  'Tell us what happened or what you would like to see',
+              hintText: 'Tell us what happened or what you would like to see',
               maxLines: 6,
               keyboardType: TextInputType.multiline,
             ),

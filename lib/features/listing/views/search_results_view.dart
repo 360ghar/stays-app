@@ -41,10 +41,7 @@ class SearchResultsView extends GetView<ListingController> {
             tooltip: 'Map',
             icon: Icon(Icons.map_outlined, color: colors.onSurface),
             onPressed: () {
-              AppSnackbar.info(
-                title: 'Map',
-                message: 'Map view coming soon',
-              );
+              AppSnackbar.info(title: 'Map', message: 'Map view coming soon');
             },
           ),
         ],

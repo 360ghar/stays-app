@@ -41,16 +41,19 @@ abstract class BaseCard extends StatelessWidget {
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(borderRadiusValue);
     final effectiveElevation = elevation ?? (isDark ? 2.0 : 6.0);
-    final effectiveBackgroundColor = backgroundColor ??
+    final effectiveBackgroundColor =
+        backgroundColor ??
         colors.surface.withValues(alpha: isDark ? 0.97 : 0.995);
 
-    final effectiveMargin = margin ??
+    final effectiveMargin =
+        margin ??
         const EdgeInsets.symmetric(
           horizontal: AppDimensions.sm,
           vertical: AppDimensions.xs,
         );
 
-    final effectivePadding = padding ??
+    final effectivePadding =
+        padding ??
         const EdgeInsets.symmetric(
           horizontal: AppDimensions.cardPaddingMd,
           vertical: AppDimensions.cardPaddingSm,
@@ -143,7 +146,8 @@ abstract class BaseImageCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(18);
-    final effectiveInset = overlayInset ?? AppDimensions.cardPaddingLg.toDouble();
+    final effectiveInset =
+        overlayInset ?? AppDimensions.cardPaddingLg.toDouble();
 
     final imageWidget = imageUrl != null && imageUrl!.isNotEmpty
         ? _buildCachedImage(context)
@@ -214,7 +218,7 @@ abstract class BaseImageCard extends StatelessWidget {
           child: CircularProgressIndicator(
             value: loadingProgress.expectedTotalBytes != null
                 ? loadingProgress.cumulativeBytesLoaded /
-                    loadingProgress.expectedTotalBytes!
+                      loadingProgress.expectedTotalBytes!
                 : null,
           ),
         );

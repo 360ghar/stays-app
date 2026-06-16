@@ -96,7 +96,8 @@ class PropertyHorizontalSection extends StatelessWidget {
                         property: property,
                         isCompact: true,
                         heroPrefix: '${sectionPrefix}_$index',
-                        isFavorite: isPropertyFavorite?.call(property.id) ?? false,
+                        isFavorite:
+                            isPropertyFavorite?.call(property.id) ?? false,
                         onTap: () => onPropertyTap?.call(property),
                         onFavoriteToggle: onFavoriteToggle != null
                             ? () => onFavoriteToggle!(property)
@@ -157,9 +158,7 @@ class PropertyHorizontalSection extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colors.outline.withValues(alpha: 0.1),
-          ),
+          border: Border.all(color: colors.outline.withValues(alpha: 0.1)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -84,15 +84,17 @@ class ListingController extends BaseController {
     } else {
       _activeFilters = _filterController!.filterFor(FilterScope.explore);
     }
-    _filterWorker = trackWorker(debounce<UnifiedFilterModel>(
-      _filterController!.rxFor(FilterScope.locate),
-      (filters) async {
-        if (_activeFilters == filters) return;
-        _activeFilters = filters;
-        await fetch(pageOverride: 1, jumpToTop: true);
-      },
-      time: const Duration(milliseconds: 150),
-    ));
+    _filterWorker = trackWorker(
+      debounce<UnifiedFilterModel>(
+        _filterController!.rxFor(FilterScope.locate),
+        (filters) async {
+          if (_activeFilters == filters) return;
+          _activeFilters = filters;
+          await fetch(pageOverride: 1, jumpToTop: true);
+        },
+        time: const Duration(milliseconds: 150),
+      ),
+    );
   }
 
   Map<String, dynamic>? _buildFilters() {

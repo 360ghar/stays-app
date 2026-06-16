@@ -18,12 +18,12 @@ class FavoriteToggleResult {
   });
 
   const FavoriteToggleResult.success({required this.newFavoriteState})
-      : success = true,
-        errorMessage = null;
+    : success = true,
+      errorMessage = null;
 
   const FavoriteToggleResult.failure(this.errorMessage)
-      : success = false,
-        newFavoriteState = false;
+    : success = false,
+      newFavoriteState = false;
 
   final bool success;
   final bool newFavoriteState;

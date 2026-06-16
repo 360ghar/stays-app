@@ -70,9 +70,11 @@ extension ResponsiveDimensions on BuildContext {
   double get screenHeight => MediaQuery.of(this).size.height;
 
   /// Calculates responsive card width (75% of screen width by default).
-  double responsiveCardWidth([double fraction = AppDimensions.cardWidthFraction]) =>
-      screenWidth * fraction;
+  double responsiveCardWidth([
+    double fraction = AppDimensions.cardWidthFraction,
+  ]) => screenWidth * fraction;
 
   /// Calculates responsive hero image height (40% of screen height).
-  double get responsiveHeroHeight => screenHeight * AppDimensions.heroImageHeightFraction;
+  double get responsiveHeroHeight =>
+      screenHeight * AppDimensions.heroImageHeightFraction;
 }

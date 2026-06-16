@@ -59,7 +59,7 @@ android {
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationId = "com.the360ghar.stays_app.dev"
+            applicationIdSuffix = ".dev"
             resValue("string", "app_name", "360ghar stays (Dev)")
         }
         create("staging") {

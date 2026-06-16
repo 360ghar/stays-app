@@ -6,7 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
+import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
@@ -16,12 +18,18 @@ import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/services/analytics_service.dart';
+import 'package:stays_app/app/data/services/apple_sign_in_service.dart';
+import 'package:stays_app/app/data/services/remember_me_service.dart';
 import 'form_validation_controller.dart';
+import 'otp_controller.dart';
 
 class AuthController extends BaseController {
   // Storage keys dedicated to the remember-me preference and cached tokens.
   static const String _rememberMeBox = 'auth_preferences';
   static const String _rememberMeFlagKey = 'remember_me';
+  // Last-used auth method memory (mirrors RememberMeService keys; same box).
+  static const String _lastMethodKey = 'last_auth_method';
+  static const String _lastIdentifierMaskedKey = 'last_identifier_masked';
   // Legacy keys from older builds (plaintext tokens). Kept for one-time cleanup.
   static const String _rememberedAccessTokenKey = 'remembered_access_token';
   static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
@@ -47,6 +55,28 @@ class AuthController extends BaseController {
   final RxBool rememberMe = false.obs;
   final RxBool isTermsAccepted = false.obs;
 
+  // Last-used auth method memory, surfaced for the login screen to pre-select.
+  final RxnString lastMethod = RxnString();
+  final RxnString lastIdentifierMasked = RxnString();
+
+  // True while a Google Sign-In round-trip is in flight.
+  final RxBool isGoogleLoading = false.obs;
+
+  // True between launching the Google OAuth redirect and the deep-link callback
+  // delivering a session (so the post-sign-in routing runs once, from the
+  // auth-state listener).
+  bool _pendingGoogleRedirect = false;
+
+  // True while a native Sign in with Apple round-trip is in flight.
+  final RxBool isAppleLoading = false.obs;
+
+  // Whether Apple Sign-In is available on this device (iOS 13+); resolved
+  // asynchronously on init so the login/signup screens can show the button.
+  final RxBool isAppleSignInAvailable = false.obs;
+
+  /// Whether native Google Sign-In is configured for this build.
+  bool get isGoogleSignInConfigured => AppConfig.I.isGoogleSignInConfigured;
+
   // Local storage for remember-me preference
   late final GetStorage _authPrefs;
   Future<void>? _rememberMeReady;
@@ -66,6 +96,21 @@ class AuthController extends BaseController {
     // Defer initial auth status check until TokenService has loaded tokens
     unawaited(_initAuthStatus());
     _bindAuthStateListener();
+
+    // Resolve Apple Sign-In availability (iOS 13+) for the login UI.
+    unawaited(_resolveAppleAvailability());
+  }
+
+  Future<void> _resolveAppleAvailability() async {
+    try {
+      final service = Get.isRegistered<AppleSignInService>()
+          ? Get.find<AppleSignInService>()
+          : Get.put<AppleSignInService>(AppleSignInService());
+      isAppleSignInAvailable.value = await service.isAvailable();
+    } catch (e) {
+      AppLogger.warning('Apple availability resolve failed: $e');
+      isAppleSignInAvailable.value = false;
+    }
   }
 
   @override
@@ -146,7 +191,27 @@ class AuthController extends BaseController {
     _authPrefs = GetStorage(_rememberMeBox);
     final storedPreference = _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
     rememberMe.value = storedPreference;
+    // Surface the last-used method so the login screen can pre-select it.
+    lastMethod.value = _authPrefs.read<String>(_lastMethodKey);
+    lastIdentifierMasked.value = _authPrefs.read<String>(
+      _lastIdentifierMaskedKey,
+    );
     await _migrateLegacyRememberedTokens();
+  }
+
+  // Persist the last-used auth method + masked identifier (see AuthMethods).
+  Future<void> _saveLastMethod(String method, {String? identifier}) async {
+    if (!AuthMethods.isValid(method)) return;
+    await _ensureRememberMePreferenceReady();
+    lastMethod.value = method;
+    await _authPrefs.write(_lastMethodKey, method);
+    if (identifier != null && identifier.trim().isNotEmpty) {
+      final masked = RememberMeService.maskIdentifier(identifier.trim());
+      lastIdentifierMasked.value = masked;
+      await _authPrefs.write(_lastIdentifierMaskedKey, masked);
+    }
+    // Mirror to the backend (best-effort, never blocks the UX).
+    unawaited(_authRepository.recordLastMethod(method));
   }
 
   Future<void> _ensureRememberMePreferenceReady() async {
@@ -178,6 +243,14 @@ class AuthController extends BaseController {
             // Only persist to local remember-me storage if opted in
             if (rememberMe.value) {
               await _persistRememberedSession(session: session);
+            }
+
+            // Complete a pending Google OAuth-redirect sign-in: the session has
+            // just arrived via the deep-link callback.
+            if (_pendingGoogleRedirect && event == AuthChangeEvent.signedIn) {
+              _pendingGoogleRedirect = false;
+              isGoogleLoading.value = false;
+              await _completeGoogleSignIn(_userFromSession(session));
             }
           }
         },
@@ -296,6 +369,7 @@ class AuthController extends BaseController {
         if (Get.isRegistered<AnalyticsService>()) {
           Get.find<AnalyticsService>().logLogin('email');
         }
+        await _saveLastMethod(AuthMethods.emailPassword, identifier: email);
       } else {
         user = await _authRepository.loginWithPhone(
           phone: email,
@@ -304,6 +378,7 @@ class AuthController extends BaseController {
         if (Get.isRegistered<AnalyticsService>()) {
           Get.find<AnalyticsService>().logLogin('phone');
         }
+        await _saveLastMethod(AuthMethods.phonePassword, identifier: email);
       }
 
       currentUser.value = user;
@@ -323,8 +398,8 @@ class AuthController extends BaseController {
       // Refresh full profile and cache for later prefilling
       unawaited(fetchAndCacheProfile());
 
-      // Navigate to home
-      await Get.offAllNamed(Routes.home);
+      // Navigate based on backend gate evaluation
+      await _navigatePostAuth();
     } on ApiException catch (e) {
       AppLogger.error('Login failed: ${e.message}', e);
       _handleApiError('Login Failed', e);
@@ -348,6 +423,349 @@ class AuthController extends BaseController {
     return login(email: phone, password: password);
   }
 
+  // ---------------------------------------------------------------------------
+  // Login state-machine: identifier -> status -> password | OTP-first
+  // ---------------------------------------------------------------------------
+
+  /// Resolves the next login step for [identifier] via the backend.
+  /// Returns null on failure (caller should surface a snackbar / fall back).
+  Future<IdentifierStatus?> checkIdentifierStatus(String identifier) async {
+    try {
+      isLoading.value = true;
+      _validation.clearErrors();
+      final validation = _validation.validateEmailOrPhone(identifier);
+      if (validation != null) {
+        emailOrPhoneError.value = validation;
+        return null;
+      }
+      return await _authRepository.checkIdentifierStatus(identifier.trim());
+    } on ApiException catch (e) {
+      AppLogger.error('identifier-status failed: ${e.message}', e);
+      _handleApiError('Sign In', e);
+      return null;
+    } catch (e) {
+      AppLogger.error('identifier-status error', e);
+      _showErrorSnackbar(
+        title: 'Sign In',
+        message: 'Unable to continue right now. Please try again.',
+      );
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Google Sign-In (native ID-token flow OR Supabase OAuth redirect flow)
+  // ---------------------------------------------------------------------------
+
+  /// Google login. Uses the native ID-token flow when configured, otherwise the
+  /// Supabase OAuth redirect flow (session arrives via onAuthStateChange).
+  /// On success records last_auth_method=google and (when the account lacks a
+  /// phone) routes to the skippable add-phone screen.
+  Future<void> loginWithGoogle() async {
+    try {
+      isGoogleLoading.value = true;
+      _pendingGoogleRedirect = false;
+      final outcome = await _authRepository.signInWithGoogle();
+
+      if (outcome.isCanceled) {
+        // User canceled the picker, or the browser failed to launch.
+        return;
+      }
+
+      if (outcome.isRedirect) {
+        // Browser launched; the session will arrive via the deep-link callback
+        // and onAuthStateChange. Keep the spinner running until then.
+        _pendingGoogleRedirect = true;
+        return;
+      }
+
+      // Native ID-token flow returned a session synchronously.
+      await _completeGoogleSignIn(outcome.user!);
+    } on ApiException catch (e) {
+      AppLogger.error('Google login failed: ${e.message}', e);
+      _handleApiError('Google Sign-In Failed', e);
+    } catch (e) {
+      AppLogger.error('Google login error', e);
+      _showErrorSnackbar(
+        title: 'Google Sign-In Failed',
+        message: 'An unexpected error occurred. Please try again.',
+      );
+    } finally {
+      // For the redirect flow, the spinner is cleared once the callback lands.
+      if (!_pendingGoogleRedirect) {
+        isGoogleLoading.value = false;
+      }
+    }
+  }
+
+  /// Shared post-Google routing for both the native and redirect flows:
+  /// records last_auth_method=google, then routes to the skippable add-phone
+  /// step (passwordless) or home.
+  Future<void> _completeGoogleSignIn(UserModel user) async {
+    currentUser.value = user;
+    isAuthenticated.value = true;
+    if (Get.isRegistered<AnalyticsService>()) {
+      Get.find<AnalyticsService>().logLogin('google');
+    }
+    await _saveLastMethod(AuthMethods.google, identifier: user.email);
+    await _syncRememberMeStateAfterLogin();
+    unawaited(fetchAndCacheProfile());
+
+    final displayName = user.name ?? user.firstName ?? user.email ?? 'there';
+    _showSuccessSnackbar(
+      title: 'Welcome!',
+      message: 'Signed in as $displayName',
+    );
+
+    // Passwordless Google accounts: prompt (skippable) to add a phone.
+    final hasPhone = (user.phone ?? '').trim().isNotEmpty;
+    if (!hasPhone) {
+      final otpController = Get.find<OTPController>();
+      otpController.initializeOTP(type: OTPType.addPhone, phone: '');
+      await Get.toNamed(Routes.verification);
+      return;
+    }
+
+    await _navigatePostAuth();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sign in with Apple (native ID-token flow, iOS)
+  // ---------------------------------------------------------------------------
+
+  /// Native Apple login. On success records last_auth_method=apple and (when
+  /// the account lacks a phone) routes to the skippable add-phone screen.
+  Future<void> loginWithApple() async {
+    try {
+      isAppleLoading.value = true;
+      final user = await _authRepository.signInWithApple();
+      if (user == null) {
+        // User canceled the Apple credential sheet.
+        return;
+      }
+
+      currentUser.value = user;
+      isAuthenticated.value = true;
+      if (Get.isRegistered<AnalyticsService>()) {
+        Get.find<AnalyticsService>().logLogin('apple');
+      }
+      await _saveLastMethod(AuthMethods.apple, identifier: user.email);
+      await _syncRememberMeStateAfterLogin();
+      unawaited(fetchAndCacheProfile());
+
+      final displayName = user.name ?? user.firstName ?? user.email ?? 'there';
+      _showSuccessSnackbar(
+        title: 'Welcome!',
+        message: 'Signed in as $displayName',
+      );
+
+      // Passwordless Apple accounts: prompt (skippable) to add a phone.
+      final hasPhone = (user.phone ?? '').trim().isNotEmpty;
+      if (!hasPhone) {
+        final otpController = Get.find<OTPController>();
+        otpController.initializeOTP(type: OTPType.addPhone, phone: '');
+        await Get.toNamed(Routes.verification);
+        return;
+      }
+
+      await _navigatePostAuth();
+    } on ApiException catch (e) {
+      AppLogger.error('Apple login failed: ${e.message}', e);
+      _handleApiError('Apple Sign-In Failed', e);
+    } catch (e) {
+      AppLogger.error('Apple login error', e);
+      _showErrorSnackbar(
+        title: 'Apple Sign-In Failed',
+        message: 'An unexpected error occurred. Please try again.',
+      );
+    } finally {
+      isAppleLoading.value = false;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Email OTP (6-digit, type: email)
+  // ---------------------------------------------------------------------------
+
+  /// Sends a 6-digit email OTP. Returns true if the request succeeded.
+  ///
+  /// [shouldCreateUser] must be `false` for the login OTP-first path and for
+  /// password reset (so an unknown/mistyped email is not silently registered);
+  /// only the signup path passes `true`.
+  Future<bool> sendEmailOtp(
+    String email, {
+    bool shouldCreateUser = false,
+  }) async {
+    try {
+      isLoading.value = true;
+      await _authRepository.sendEmailOtp(
+        email: email.trim(),
+        shouldCreateUser: shouldCreateUser,
+      );
+      _showSuccessSnackbar(
+        title: 'Code Sent',
+        message: 'We sent a 6-digit code to $email',
+      );
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Could Not Send Code', e);
+      return false;
+    } catch (e) {
+      _showErrorSnackbar(
+        title: 'Could Not Send Code',
+        message: 'Unable to send the code right now.',
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Verifies an email OTP and establishes a session. Returns the user or null.
+  Future<UserModel?> verifyEmailOtp({
+    required String email,
+    required String token,
+  }) async {
+    final user = await _authRepository.verifyEmailOtp(
+      email: email.trim(),
+      token: token,
+    );
+    currentUser.value = user;
+    isAuthenticated.value = true;
+    if (Get.isRegistered<AnalyticsService>()) {
+      Get.find<AnalyticsService>().logLogin('email_otp');
+    }
+    await _saveLastMethod(AuthMethods.emailOtp, identifier: email);
+    await _syncRememberMeStateAfterLogin();
+    unawaited(fetchAndCacheProfile());
+    return user;
+  }
+
+  Future<void> resendEmailOtp(String email, {bool shouldCreateUser = false}) =>
+      _authRepository.resendEmailOtp(
+        email: email.trim(),
+        shouldCreateUser: shouldCreateUser,
+      );
+
+  // ---------------------------------------------------------------------------
+  // Add + verify phone (for Google / passwordless accounts)
+  // ---------------------------------------------------------------------------
+
+  /// Attaches a phone to the current account and triggers a verification SMS.
+  Future<bool> addPhone(String phone) async {
+    try {
+      await _authRepository.addPhone(phone: phone.trim());
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Could Not Add Phone', e);
+      return false;
+    } catch (e) {
+      _showErrorSnackbar(
+        title: 'Could Not Add Phone',
+        message: 'Unable to add this phone number right now.',
+      );
+      return false;
+    }
+  }
+
+  /// Verifies the phone-change OTP, completing the add-phone flow.
+  Future<UserModel?> verifyAddPhoneOtp({
+    required String phone,
+    required String token,
+  }) async {
+    final user = await _authRepository.verifyPhoneChangeOtp(
+      phone: phone.trim(),
+      token: token,
+    );
+    currentUser.value = user;
+    unawaited(fetchAndCacheProfile());
+    return user;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mandatory set-password after OTP (requirement 6)
+  // ---------------------------------------------------------------------------
+
+  /// The method to record once the mandatory password is set
+  /// (email_password / phone_password).
+  String _pendingSetPasswordMethod = AuthMethods.emailPassword;
+  String? _pendingSetPasswordIdentifier;
+
+  /// Masked form of the identifier the mandatory set-password step is for
+  /// (e.g. `j***@gmail.com`, `+91 98****10`), for display on that screen.
+  /// Null when no identifier was captured.
+  String? get pendingSetPasswordMaskedIdentifier {
+    final id = _pendingSetPasswordIdentifier;
+    if (id == null || id.trim().isEmpty) return null;
+    return RememberMeService.maskIdentifier(id.trim());
+  }
+
+  /// Routes to the non-skippable set-password screen after a passwordless OTP
+  /// verify. [method] is the final last_auth_method to record on success.
+  void startMandatorySetPassword({required String method, String? identifier}) {
+    _pendingSetPasswordMethod = method;
+    _pendingSetPasswordIdentifier = identifier;
+    // offNamed so the user can't navigate back to the OTP screen.
+    unawaited(Get.offNamed(Routes.setPassword));
+  }
+
+  /// Completes the mandatory set-password step: validates, calls
+  /// updatePassword, records the password-based last_auth_method, then enters
+  /// the app. Returns true on success.
+  Future<bool> setPasswordAfterOtp({
+    required String password,
+    required String confirmPassword,
+  }) async {
+    try {
+      isLoading.value = true;
+      _validation.clearErrors();
+
+      final passwordValidation = _validation.validatePassword(password);
+      final confirmValidation = _validation.validateConfirmPassword(
+        password,
+        confirmPassword,
+      );
+      if (passwordValidation != null) {
+        passwordError.value = passwordValidation;
+        return false;
+      }
+      if (confirmValidation != null) {
+        confirmPasswordError.value = confirmValidation;
+        return false;
+      }
+
+      await _authRepository.updatePassword(newPassword: password);
+
+      await _saveLastMethod(
+        _pendingSetPasswordMethod,
+        identifier: _pendingSetPasswordIdentifier,
+      );
+      await _syncRememberMeStateAfterLogin();
+      unawaited(fetchAndCacheProfile());
+
+      _showSuccessSnackbar(
+        title: 'All Set!',
+        message: 'Your password has been set.',
+      );
+      await _navigatePostAuth();
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Could Not Set Password', e);
+      return false;
+    } catch (e) {
+      AppLogger.error('Set password failed', e);
+      _showErrorSnackbar(
+        title: 'Could Not Set Password',
+        message: 'Unable to set your password right now. Please try again.',
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // Fetch latest profile from API, update observable and cache for fast prefill
   Future<UserModel?> fetchAndCacheProfile() async {
     try {
@@ -366,10 +784,61 @@ class AuthController extends BaseController {
     }
   }
 
+  // ── Post-auth gate evaluation ──────────────────────────────────────────
+  // Calls GET /users/me/auth-state?app=stays and routes to the appropriate
+  // screen.  This is the single source of truth for gate evaluation.
+
+  /// Fetch the auth gate state from the backend.
+  Future<Map<String, dynamic>?> _fetchAuthGateState() async {
+    try {
+      return await _authRepository.getAuthGateState(app: 'stays');
+    } catch (e) {
+      AppLogger.warning('Failed to fetch auth gate state: $e');
+      return null;
+    }
+  }
+
+  /// Navigate to the appropriate screen based on the backend gate state.
+  /// Falls back to home if the gate endpoint fails.
+  Future<void> _navigatePostAuth() async {
+    final gateState = await _fetchAuthGateState();
+    if (gateState == null) {
+      // Fallback: go to home if gate endpoint fails.
+      await Get.offAllNamed(Routes.home);
+      return;
+    }
+
+    final stage = gateState['stage'] as String? ?? 'active';
+    AppLogger.info('Auth gate stage: $stage');
+
+    switch (stage) {
+      case 'identifier_verification':
+        // Shouldn't happen post-login.
+        await Get.offAllNamed(Routes.home);
+        break;
+      case 'password_setup':
+        await Get.offAllNamed(Routes.setPassword);
+        break;
+      case 'profile_completion':
+        await Get.offAllNamed(Routes.profileCompletion);
+        break;
+      case 'app_onboarding':
+        await Get.offAllNamed(Routes.onboarding);
+        break;
+      case 'active':
+        await Get.offAllNamed(Routes.home);
+        break;
+      default:
+        await Get.offAllNamed(Routes.home);
+    }
+  }
+
   // Phone signup via Supabase: sends OTP for first-time validation
   Future<bool> registerWithPhone({
     required String phone,
     required String password,
+    String? fullName,
+    String? email,
   }) async {
     try {
       isLoading.value = true;
@@ -384,9 +853,22 @@ class AuthController extends BaseController {
         return false;
       }
 
+      // Build optional user metadata map
+      final Map<String, String>? data = () {
+        final map = <String, String>{};
+        if (fullName != null && fullName.trim().isNotEmpty) {
+          map['full_name'] = fullName.trim();
+        }
+        if (email != null && email.trim().isNotEmpty) {
+          map['email'] = email.trim();
+        }
+        return map.isNotEmpty ? map : null;
+      }();
+
       final sent = await _authRepository.signUpWithPhone(
         phone: phone,
         password: password,
+        data: data,
       );
       if (sent) {
         _showSuccessSnackbar(
@@ -409,22 +891,108 @@ class AuthController extends BaseController {
     }
   }
 
-  // Backwards-compat: the current UI triggers an OTP flow for forgot password.
-  // Provide a graceful error until a backend endpoint is available.
+  /// Sends a phone OTP for the forgot-password flow via Supabase.
+  /// Uses `signInWithOtp` with `shouldCreateUser: false` so only existing
+  /// accounts can receive a code.
   Future<bool> sendForgotPasswordOTP(String phone) async {
     final validation = _validation.validateEmailOrPhone(phone);
     if (validation != null) {
       emailOrPhoneError.value = validation;
       return false;
     }
-    _showErrorSnackbar(
-      title: 'Not Supported',
-      message: 'Forgot password via phone OTP is not supported.',
-    );
-    return false;
+    try {
+      isLoading.value = true;
+      final formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
+      await Supabase.instance.client.auth.signInWithOtp(
+        phone: formattedPhone,
+        shouldCreateUser: false,
+      );
+      _showSuccessSnackbar(
+        title: 'OTP Sent',
+        message: 'We have sent a verification code to +91 $phone',
+      );
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Forgot Password', e);
+      return false;
+    } catch (e) {
+      AppLogger.error('Forgot password OTP failed', e);
+      _showErrorSnackbar(
+        title: 'Failed to Send OTP',
+        message: 'Unable to send verification code. Please try again.',
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
-  // Backwards-compat stub, replace with real backend call when available
+  /// Sends an email OTP for the forgot-password flow via Supabase.
+  /// Uses `shouldCreateUser: false` so only existing accounts can receive a
+  /// code (mirrors the phone reset channel — decision 1: OTP for both).
+  Future<bool> sendForgotPasswordEmailOtp(String email) async {
+    final trimmed = email.trim();
+    if (!GetUtils.isEmail(trimmed)) {
+      emailOrPhoneError.value = 'Please enter a valid email address';
+      return false;
+    }
+    try {
+      isLoading.value = true;
+      await _authRepository.sendEmailOtp(
+        email: trimmed,
+        shouldCreateUser: false,
+      );
+      _showSuccessSnackbar(
+        title: 'Code Sent',
+        message: 'We sent a 6-digit code to $trimmed',
+      );
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Forgot Password', e);
+      return false;
+    } catch (e) {
+      AppLogger.error('Forgot password email OTP failed', e);
+      _showErrorSnackbar(
+        title: 'Failed to Send Code',
+        message: 'Unable to send verification code. Please try again.',
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Verifies the phone OTP for the forgot-password flow. After successful
+  /// verification the user has a valid Supabase session, allowing an immediate
+  /// call to [resetPassword].
+  Future<bool> verifyForgotPasswordOtp({
+    required String phone,
+    required String otp,
+  }) async {
+    try {
+      isLoading.value = true;
+      final formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
+      await Supabase.instance.client.auth.verifyOTP(
+        phone: formattedPhone,
+        token: otp,
+        type: OtpType.sms,
+      );
+      return true;
+    } catch (e) {
+      AppLogger.error('Forgot password OTP verification failed', e);
+      _showErrorSnackbar(
+        title: 'Verification Failed',
+        message: 'Invalid or expired OTP. Please try again.',
+      );
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Resets the user's password after a successful forgot-password OTP
+  /// verification. Requires an active Supabase session (established by the
+  /// OTP verify step).
   Future<void> resetPassword({
     required String newPassword,
     required String confirmPassword,
@@ -442,10 +1010,25 @@ class AuthController extends BaseController {
       confirmPasswordError.value = confirmValidation;
       return;
     }
-    _showErrorSnackbar(
-      title: 'Not Supported',
-      message: 'Password reset via OTP is not supported.',
-    );
+    try {
+      isLoading.value = true;
+      await _authRepository.updatePassword(newPassword: newPassword);
+      _showSuccessSnackbar(
+        title: 'Password Reset',
+        message: 'Your password has been reset successfully.',
+      );
+      await Get.offAllNamed(Routes.login);
+    } on ApiException catch (e) {
+      _handleApiError('Reset Password', e);
+    } catch (e) {
+      AppLogger.error('Reset password failed', e);
+      _showErrorSnackbar(
+        title: 'Reset Failed',
+        message: 'Unable to reset your password. Please try again.',
+      );
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> logout() async {
@@ -552,7 +1135,7 @@ class AuthController extends BaseController {
         message:
             'Account created, logged in as ${user.firstName ?? user.email}',
       );
-      unawaited(Get.offAllNamed(Routes.home));
+      unawaited(_navigatePostAuth());
     } on ApiException catch (e) {
       _showErrorSnackbar(title: 'Registration Failed', message: e.message);
     } catch (e) {
@@ -585,6 +1168,22 @@ class AuthController extends BaseController {
     if (session != null) {
       await _updateTokenServiceFromSession(session);
     }
+  }
+
+  // Map a Supabase session user to a UserModel (used by the OAuth redirect
+  // flow, where no provider result is returned synchronously). The full
+  // profile is refreshed from the backend right after via fetchAndCacheProfile.
+  UserModel _userFromSession(Session session) {
+    final user = session.user;
+    final meta = user.userMetadata ?? const <String, dynamic>{};
+    return UserModel(
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      firstName: meta['first_name'] as String?,
+      lastName: meta['last_name'] as String?,
+      name: (meta['full_name'] as String?) ?? (meta['name'] as String?),
+    );
   }
 
   ProfileRepository _ensureProfileRepository() {

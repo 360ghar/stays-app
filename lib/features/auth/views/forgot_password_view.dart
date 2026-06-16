@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
@@ -15,7 +14,7 @@ class ForgotPasswordView extends StatefulWidget {
 }
 
 class _ForgotPasswordViewState extends State<ForgotPasswordView> {
-  final _phoneController = TextEditingController();
+  final _identifierController = TextEditingController();
   late final AuthController controller;
 
   @override
@@ -26,7 +25,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _identifierController.dispose();
     super.dispose();
   }
 
@@ -78,7 +77,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
               ),
               const SizedBox(height: 12),
               Text(
-                'No worries! Enter your phone number and we\'ll send a code to reset your password.',
+                'No worries! Enter your email or phone number and we\'ll send a code to reset your password.',
                 style: textStyles.bodyMedium?.copyWith(
                   color: colors.onSurface.withValues(alpha: 0.7),
                   height: 1.4,
@@ -86,7 +85,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 48),
-              _buildPhoneField(colors, textStyles),
+              _buildIdentifierField(colors, textStyles),
               const SizedBox(height: 48),
               Obx(
                 () => AnimatedContainer(
@@ -157,21 +156,21 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
     );
   }
 
-  Widget _buildPhoneField(ColorScheme colors, TextTheme textStyles) {
+  Widget _buildIdentifierField(ColorScheme colors, TextTheme textStyles) {
     return Obx(() {
       final hasError = controller.phoneError.value.isNotEmpty;
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Phone Number',
+            'Email or Phone',
             style: textStyles.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 8),
-          Container(
+          DecoratedBox(
             decoration: BoxDecoration(
               color: context.elevatedSurface(0.08),
               borderRadius: BorderRadius.circular(12),
@@ -180,70 +179,36 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 width: hasError ? 1.5 : 1,
               ),
             ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 18,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.elevatedSurface(0.04),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                    ),
-                    border: Border(
-                      right: BorderSide(color: colors.outlineVariant),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.phone_outlined,
-                        color: colors.onSurface.withValues(alpha: 0.6),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '+91',
-                        style: textStyles.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.onSurface,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(10),
-                    ],
-                    onChanged: (_) => controller.phoneError.value = '',
-                    decoration: InputDecoration(
-                      hintText: '9876543210',
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 18,
-                      ),
-                      hintStyle: textStyles.bodyMedium?.copyWith(
-                        color: colors.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    style: textStyles.bodyMedium?.copyWith(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ),
+            child: TextFormField(
+              controller: _identifierController,
+              keyboardType: TextInputType.emailAddress,
+              autofillHints: const [
+                AutofillHints.email,
+                AutofillHints.telephoneNumber,
+                AutofillHints.username,
               ],
+              onChanged: (_) => controller.phoneError.value = '',
+              decoration: InputDecoration(
+                hintText: 'you@example.com or 9876543210',
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 18,
+                ),
+                prefixIcon: Icon(
+                  Icons.alternate_email,
+                  color: colors.onSurface.withValues(alpha: 0.6),
+                ),
+                hintStyle: textStyles.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              style: textStyles.bodyMedium?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: colors.onSurface,
+              ),
+              onFieldSubmitted: (_) => _handleSendOTP(),
             ),
           ),
           if (hasError)
@@ -264,23 +229,40 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   }
 
   Future<void> _handleSendOTP() async {
-    final phone = _phoneController.text.trim();
+    final identifier = _identifierController.text.trim();
 
-    if (phone.isEmpty) {
-      controller.phoneError.value = 'Phone number is required';
+    if (identifier.isEmpty) {
+      controller.phoneError.value = 'Email or phone number is required';
       return;
-    } else if (phone.length != 10) {
+    }
+
+    // Email channel: OTP via email (decision 1 — OTP for both channels).
+    if (GetUtils.isEmail(identifier)) {
+      final success = await controller.sendForgotPasswordEmailOtp(identifier);
+      if (success) {
+        final otpController = Get.find<OTPController>();
+        otpController.initializeOTP(
+          type: OTPType.forgotPassword,
+          email: identifier,
+        );
+        await Get.toNamed(Routes.verification);
+      }
+      return;
+    }
+
+    // Phone channel.
+    final phone = identifier.replaceAll(RegExp(r'[^0-9]'), '');
+    if (phone.length != 10) {
       controller.phoneError.value =
           'Please enter a valid 10-digit phone number';
       return;
     }
 
     final success = await controller.sendForgotPasswordOTP(phone);
-
     if (success) {
       final otpController = Get.find<OTPController>();
       otpController.initializeOTP(type: OTPType.forgotPassword, phone: phone);
-      Get.toNamed(Routes.verification);
+      await Get.toNamed(Routes.verification);
     }
   }
 }

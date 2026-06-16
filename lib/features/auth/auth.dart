@@ -1,9 +1,9 @@
- /// Auth feature barrel export
- library auth;
- 
- // Bindings
- export 'bindings/auth_binding.dart';
- 
+/// Auth feature barrel export
+library auth;
+
+// Bindings
+export 'bindings/auth_binding.dart';
+
 // Controllers
 export 'controllers/auth_controller.dart';
 export 'controllers/form_validation_controller.dart';

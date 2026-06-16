@@ -35,7 +35,47 @@ migrate_working_dir/
 /ios/build/
 /macos/Flutter/ephemeral/
 /linux/flutter/ephemeral/
+/windows/flutter/ephemeral/
 /coverage/
+.flutter-version
+
+# Generated code (build_runner)
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Podfile.lock
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.xcworkspace/xcuserdata/
+
+# Android
+/android/.gradle
+/android/captures
+/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+
+# macOS
+macos/Pods/
+macos/Podfile.lock
+**/macos/**/*.xcworkspace/xcuserdata/
+
+# Web
+/web/favicon.png
+
+# FVM (Flutter Version Manager)
+.fvm/
+.fvmrc
+
+# Miscellaneous build/tool artifacts
+.metadata
+.packages
+plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols
@@ -58,9 +98,6 @@ android/keystores/
 .env
 .env.*
 !.env.example
-.env.dev
-.env.staging
-.env.prod
 
 # Local developer tools/config that should not be committed
 .claude/

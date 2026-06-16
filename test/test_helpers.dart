@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-
 /// Test helper utilities for the application
 class TestHelpers {
   /// Initialize GetX for testing
@@ -13,11 +12,7 @@ class TestHelpers {
 
   /// Create a test widget wrapped with MaterialApp and GetMaterialApp
   static Widget createTestWidget(Widget child) {
-    return GetMaterialApp(
-      home: Scaffold(
-        body: child,
-      ),
-    );
+    return GetMaterialApp(home: Scaffold(body: child));
   }
 
   /// Create a test widget with custom app
@@ -26,10 +21,14 @@ class TestHelpers {
     String? initialRoute,
     Map<String, Widget Function(BuildContext)> routes = const {},
   }) {
-    assert(home != null || initialRoute != null,
-        'Either home or initialRoute must be provided');
-    assert(!(home != null && initialRoute != null),
-        'Cannot provide both home and initialRoute');
+    assert(
+      home != null || initialRoute != null,
+      'Either home or initialRoute must be provided',
+    );
+    assert(
+      !(home != null && initialRoute != null),
+      'Cannot provide both home and initialRoute',
+    );
     return GetMaterialApp(
       home: initialRoute == null ? home : null,
       initialRoute: initialRoute,
@@ -58,13 +57,21 @@ class TestHelpers {
   }
 
   /// Tap widget and wait for navigation or loading
-  static Future<void> tapAndWait(Finder finder, WidgetTester tester, {Duration? delay}) async {
+  static Future<void> tapAndWait(
+    Finder finder,
+    WidgetTester tester, {
+    Duration? delay,
+  }) async {
     await tester.tap(finder);
     await tester.pumpAndSettle(delay ?? const Duration(milliseconds: 500));
   }
 
   /// Enter text into text field
-  static Future<void> enterText(Finder finder, String text, WidgetTester tester) async {
+  static Future<void> enterText(
+    Finder finder,
+    String text,
+    WidgetTester tester,
+  ) async {
     await tester.tap(finder);
     await tester.pumpAndSettle();
     await tester.enterText(finder, text);
@@ -158,12 +165,7 @@ class MockDataFactory {
     String fullName = 'Test User',
     String? phone = '+1234567890',
   }) {
-    return {
-      'id': id,
-      'email': email,
-      'full_name': fullName,
-      'phone': phone,
-    };
+    return {'id': id, 'email': email, 'full_name': fullName, 'phone': phone};
   }
 }
 
@@ -177,7 +179,10 @@ abstract class TestConfig {
 /// Performance testing utilities
 class PerformanceTestHelpers {
   /// Measure widget build time
-  static Future<Duration> measureBuildTime(Widget widget, WidgetTester tester) async {
+  static Future<Duration> measureBuildTime(
+    Widget widget,
+    WidgetTester tester,
+  ) async {
     final stopwatch = Stopwatch()..start();
 
     await tester.pumpWidget(TestHelpers.createTestWidget(widget));

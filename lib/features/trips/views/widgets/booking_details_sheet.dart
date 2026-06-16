@@ -48,8 +48,14 @@ class BookingDetailsSheet extends StatelessWidget {
           _buildDetailRow('Inquiry ID', booking['id']?.toString() ?? ''),
           _buildDetailRow('Hotel', booking['hotelName']?.toString() ?? ''),
           _buildDetailRow('Location', booking['location']?.toString() ?? ''),
-          _buildDetailRow('Check-in', _formatDate(booking['checkIn']?.toString() ?? '')),
-          _buildDetailRow('Check-out', _formatDate(booking['checkOut']?.toString() ?? '')),
+          _buildDetailRow(
+            'Check-in',
+            _formatDate(booking['checkIn']?.toString() ?? ''),
+          ),
+          _buildDetailRow(
+            'Check-out',
+            _formatDate(booking['checkOut']?.toString() ?? ''),
+          ),
           _buildDetailRow('Guests', '${booking['guests'] ?? 0} guests'),
           _buildDetailRow('Rooms', '${booking['rooms'] ?? 1} room(s)'),
           _buildDetailRow(

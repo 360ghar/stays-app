@@ -450,19 +450,19 @@ class WishlistView extends GetView<WishlistController> {
     final textStyles = context.textStyles;
     final widgets = <Widget>[];
 
-        if (hasRating && ratingLabel != null) {
-          widgets.addAll([
-            Icon(Icons.star_rounded, size: 14, color: Colors.amber),
-            const SizedBox(width: 4),
-            Text(
-              ratingLabel,
-              style: textStyles.bodySmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: colors.onSurface.withValues(alpha: 0.8),
-                fontSize: 11,
-              ),
-            ),
-          ]);
+    if (hasRating && ratingLabel != null) {
+      widgets.addAll([
+        Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+        const SizedBox(width: 4),
+        Text(
+          ratingLabel,
+          style: textStyles.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: colors.onSurface.withValues(alpha: 0.8),
+            fontSize: 11,
+          ),
+        ),
+      ]);
 
       if (reviewsLabel != null) {
         widgets.addAll([

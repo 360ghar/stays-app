@@ -25,6 +25,8 @@ class AppConfig {
     required this.supabaseAnonKey,
     this.enableAnalytics = false,
     this.googleMapsApiKey,
+    this.googleWebClientId,
+    this.googleIosClientId,
   });
 
   final String environment;
@@ -33,6 +35,14 @@ class AppConfig {
   final String supabaseAnonKey;
   final bool enableAnalytics;
   final String? googleMapsApiKey;
+
+  /// Google OAuth Web client ID. On Android this is used as the
+  /// `serverClientId` for the native Google Sign-In ID-token flow.
+  final String? googleWebClientId;
+
+  /// Google OAuth iOS client ID. On iOS this is used as the `clientId`
+  /// for the native Google Sign-In ID-token flow.
+  final String? googleIosClientId;
 
   static late AppConfig _instance;
 
@@ -116,6 +126,21 @@ class AppConfig {
       // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY
       googleMapsApiKey:
           env['GOOGLE_MAPS_API_KEY'] ?? env['GOOGLE_PLACES_API_KEY'],
+      // Optional Google Sign-In client IDs (empty/missing => Google disabled).
+      googleWebClientId: _nullIfEmpty(env['GOOGLE_WEB_CLIENT_ID']),
+      googleIosClientId: _nullIfEmpty(env['GOOGLE_IOS_CLIENT_ID']),
     );
   }
+
+  static String? _nullIfEmpty(String? value) {
+    if (value == null) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  /// Whether native Google Sign-In is configured (at least the web client ID
+  /// for the Android serverClientId / Supabase audience).
+  bool get isGoogleSignInConfigured =>
+      (googleWebClientId != null && googleWebClientId!.isNotEmpty) ||
+      (googleIosClientId != null && googleIosClientId!.isNotEmpty);
 }

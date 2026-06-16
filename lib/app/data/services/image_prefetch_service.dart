@@ -141,8 +141,9 @@ class ImagePrefetchService extends GetxService {
     int batchSize = 5,
   }) async {
     final startIndex = currentVisibleIndex + 1;
-    final endIndex =
-        (startIndex + batchSize).clamp(0, allProperties.length).toInt();
+    final endIndex = (startIndex + batchSize)
+        .clamp(0, allProperties.length)
+        .toInt();
 
     if (startIndex >= allProperties.length) return;
 
@@ -151,14 +152,14 @@ class ImagePrefetchService extends GetxService {
   }
 
   /// Precache an image into Flutter's image cache (for immediate display)
-  Future<void> precacheForDisplay(BuildContext context, String? imageUrl) async {
+  Future<void> precacheForDisplay(
+    BuildContext context,
+    String? imageUrl,
+  ) async {
     if (imageUrl == null || imageUrl.isEmpty) return;
 
     try {
-      await precacheImage(
-        CachedNetworkImageProvider(imageUrl),
-        context,
-      );
+      await precacheImage(CachedNetworkImageProvider(imageUrl), context);
     } catch (_) {
       // Silently fail
     }

@@ -60,15 +60,17 @@ class WishlistController extends BaseController {
     }
     _filterController = Get.find<FilterController>();
     _activeFilters = _filterController!.filterFor(FilterScope.wishlist);
-    trackWorker(debounce<UnifiedFilterModel>(
-      _filterController!.rxFor(FilterScope.wishlist),
-      (filters) async {
-        if (_activeFilters == filters) return;
-        _activeFilters = filters;
-        await loadWishlist(pageOverride: 1);
-      },
-      time: const Duration(milliseconds: 160),
-    ));
+    trackWorker(
+      debounce<UnifiedFilterModel>(
+        _filterController!.rxFor(FilterScope.wishlist),
+        (filters) async {
+          if (_activeFilters == filters) return;
+          _activeFilters = filters;
+          await loadWishlist(pageOverride: 1);
+        },
+        time: const Duration(milliseconds: 160),
+      ),
+    );
   }
 
   @override

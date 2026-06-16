@@ -68,7 +68,9 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
+      scaffoldBackgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.background,
       canvasColor: colorScheme.surface,
       splashFactory: InkRipple.splashFactory,
       splashColor: colorScheme.primary.withValues(alpha: 0.12),
@@ -133,9 +135,7 @@ class AppTheme {
           color: colorScheme.onSurface,
           height: 1.5,
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         alignment: Alignment.center,
       ),
       // Premium bottom sheet
@@ -167,9 +167,7 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actionBackgroundColor: colorScheme.primary,
         actionTextColor: colorScheme.onPrimary,
         insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -218,13 +216,8 @@ class AppTheme {
           return Colors.transparent;
         }),
         checkColor: WidgetStateProperty.all(colorScheme.onPrimary),
-        side: BorderSide(
-          color: colorScheme.outlineVariant,
-          width: 2,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
+        side: BorderSide(color: colorScheme.outlineVariant, width: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
       ),
       // Premium radio
       radioTheme: RadioThemeData(
@@ -273,10 +266,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(0, 52),
-          side: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: 1.5,
-          ),
+          side: BorderSide(color: colorScheme.outlineVariant, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -323,9 +313,7 @@ class AppTheme {
         elevation: isDark ? 2 : 4,
         backgroundColor: colorScheme.primary,
         foregroundColor: colorScheme.onPrimary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         splashColor: colorScheme.onPrimary.withValues(alpha: 0.3),
         iconSize: 24,
       ),
@@ -333,19 +321,15 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colorScheme.surfaceContainerHighest,
         brightness: colorScheme.brightness,
-        labelStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
+        labelStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w500, fontSize: 14),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         side: BorderSide.none,
-        secondaryLabelStyle: baseTextStyle(colorScheme.onPrimary).copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
+        secondaryLabelStyle: baseTextStyle(
+          colorScheme.onPrimary,
+        ).copyWith(fontWeight: FontWeight.w500, fontSize: 14),
         selectedColor: colorScheme.primaryContainer,
         checkmarkColor: colorScheme.primary,
       ),
@@ -397,12 +381,8 @@ class AppTheme {
           color: colorScheme.primary,
           fontWeight: FontWeight.w600,
         ),
-        prefixStyle: TextStyle(
-          color: colorScheme.onSurface,
-        ),
-        suffixStyle: TextStyle(
-          color: colorScheme.onSurface,
-        ),
+        prefixStyle: TextStyle(color: colorScheme.onSurface),
+        suffixStyle: TextStyle(color: colorScheme.onSurface),
         counterStyle: TextStyle(
           color: colorScheme.onSurface.withValues(alpha: 0.6),
         ),
@@ -452,10 +432,9 @@ class AppTheme {
           color: isDark ? Colors.grey.shade800 : Colors.grey.shade900,
           borderRadius: BorderRadius.circular(10),
         ),
-        textStyle: baseTextStyle(Colors.white).copyWith(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
+        textStyle: baseTextStyle(
+          Colors.white,
+        ).copyWith(fontSize: 13, fontWeight: FontWeight.w500),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         waitDuration: const Duration(milliseconds: 500),
         showDuration: const Duration(seconds: 3),
@@ -466,31 +445,26 @@ class AppTheme {
         textColor: colorScheme.onError,
         smallSize: 8,
         largeSize: 20,
-        textStyle: baseTextStyle(colorScheme.onError).copyWith(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
+        textStyle: baseTextStyle(
+          colorScheme.onError,
+        ).copyWith(fontSize: 11, fontWeight: FontWeight.w600),
         padding: const EdgeInsets.symmetric(horizontal: 6),
         alignment: Alignment.topRight,
       ),
       // Premium list tile
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         tileColor: Colors.transparent,
         selectedTileColor: colorScheme.primaryContainer.withValues(alpha: 0.5),
         iconColor: colorScheme.onSurface.withValues(alpha: 0.6),
         selectedColor: colorScheme.primary,
-        titleTextStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 16,
-        ),
-        subtitleTextStyle: baseTextStyle(colorScheme.onSurfaceVariant).copyWith(
-          fontWeight: FontWeight.w400,
-          fontSize: 14,
-        ),
+        titleTextStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w600, fontSize: 16),
+        subtitleTextStyle: baseTextStyle(
+          colorScheme.onSurfaceVariant,
+        ).copyWith(fontWeight: FontWeight.w400, fontSize: 14),
       ),
       // Premium navigation rail
       navigationRailTheme: NavigationRailThemeData(
@@ -501,16 +475,12 @@ class AppTheme {
           color: colorScheme.onSurface.withValues(alpha: 0.6),
           size: 24,
         ),
-        selectedLabelTextStyle: baseTextStyle(colorScheme.primary).copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
+        selectedLabelTextStyle: baseTextStyle(
+          colorScheme.primary,
+        ).copyWith(fontWeight: FontWeight.w600, fontSize: 12),
         unselectedLabelTextStyle: baseTextStyle(
           colorScheme.onSurface.withValues(alpha: 0.6),
-        ).copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
+        ).copyWith(fontWeight: FontWeight.w500, fontSize: 12),
         labelType: NavigationRailLabelType.all,
       ),
       // Premium tab bar
@@ -529,10 +499,7 @@ class AppTheme {
         ),
         indicator: BoxDecoration(
           border: Border(
-            bottom: BorderSide(
-              color: colorScheme.primary,
-              width: 2,
-            ),
+            bottom: BorderSide(color: colorScheme.primary, width: 2),
           ),
         ),
         indicatorSize: TabBarIndicatorSize.label,
@@ -584,27 +551,22 @@ class AppTheme {
           baseTextStyle(colorScheme.onSurface).copyWith(fontSize: 16),
         ),
         hintStyle: WidgetStateProperty.all(
-          baseTextStyle(colorScheme.onSurface.withValues(alpha: 0.5))
-              .copyWith(fontSize: 16),
+          baseTextStyle(
+            colorScheme.onSurface.withValues(alpha: 0.5),
+          ).copyWith(fontSize: 16),
         ),
       ),
       // Premium search view
       searchViewTheme: SearchViewThemeData(
         backgroundColor: colorScheme.surface,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        headerTextStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 20,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        headerTextStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w600, fontSize: 20),
         headerHintStyle: baseTextStyle(
           colorScheme.onSurface.withValues(alpha: 0.5),
-        ).copyWith(
-          fontWeight: FontWeight.w400,
-          fontSize: 20,
-        ),
+        ).copyWith(fontWeight: FontWeight.w400, fontSize: 20),
       ),
       // Premium menu
       menuTheme: MenuThemeData(
@@ -612,9 +574,7 @@ class AppTheme {
           backgroundColor: WidgetStateProperty.all(colorScheme.surface),
           elevation: WidgetStateProperty.all(8),
           shape: WidgetStateProperty.all(
-            RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
           shadowColor: WidgetStateProperty.all(
             isDark
@@ -627,24 +587,19 @@ class AppTheme {
       popupMenuTheme: PopupMenuThemeData(
         color: colorScheme.surface,
         elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        textStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w500,
-          fontSize: 14,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w500, fontSize: 14),
       ),
       // Premium DataTable
       dataTableTheme: DataTableThemeData(
-        headingTextStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
-        ),
-        dataTextStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w400,
-          fontSize: 14,
-        ),
+        headingTextStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+        dataTextStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w400, fontSize: 14),
         headingRowColor: WidgetStateProperty.all(
           colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         ),
@@ -664,29 +619,31 @@ class AppTheme {
         hourMinuteColor: colorScheme.onSurface.withValues(alpha: 0.9),
         hourMinuteTextColor: colorScheme.primary,
         dialHandColor: colorScheme.primary,
-        dialBackgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+        dialBackgroundColor: colorScheme.primaryContainer.withValues(
+          alpha: 0.3,
+        ),
         entryModeIconColor: colorScheme.primary,
       ),
       // Premium date picker
       datePickerTheme: DatePickerThemeData(
         backgroundColor: colorScheme.surface,
-        headerBackgroundColor: colorScheme.primaryContainer.withValues(alpha: 0.3),
+        headerBackgroundColor: colorScheme.primaryContainer.withValues(
+          alpha: 0.3,
+        ),
         headerForegroundColor: colorScheme.primary,
         todayForegroundColor: WidgetStateProperty.all(colorScheme.primary),
         todayBackgroundColor: WidgetStateProperty.all(
           colorScheme.primaryContainer.withValues(alpha: 0.5),
         ),
         dayForegroundColor: WidgetStateProperty.all(colorScheme.onSurface),
-        dayStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w500,
-        ),
+        dayStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w500),
         yearForegroundColor: WidgetStateProperty.all(colorScheme.onSurface),
-        yearStyle: baseTextStyle(colorScheme.onSurface).copyWith(
-          fontWeight: FontWeight.w500,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        yearStyle: baseTextStyle(
+          colorScheme.onSurface,
+        ).copyWith(fontWeight: FontWeight.w500),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
     );
   }

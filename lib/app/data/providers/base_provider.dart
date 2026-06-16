@@ -82,10 +82,7 @@ abstract class BaseProvider extends GetConnect {
       try {
         final session = client.auth.currentSession;
         if (session == null) {
-          throw ApiException(
-            message: 'No session to refresh',
-            statusCode: 401,
-          );
+          throw ApiException(message: 'No session to refresh', statusCode: 401);
         }
 
         final res = await client.auth.refreshSession();
@@ -257,14 +254,13 @@ abstract class BaseProvider extends GetConnect {
     String? contentType,
     Map<String, dynamic>? query,
     Decoder<T>? decoder,
-  }) =>
-      getWithRetry<T>(
-        url,
-        headers: headers,
-        contentType: contentType,
-        query: query,
-        decoder: decoder,
-      );
+  }) => getWithRetry<T>(
+    url,
+    headers: headers,
+    contentType: contentType,
+    query: query,
+    decoder: decoder,
+  );
 
   @override
   Future<Response<T>> post<T>(
@@ -275,16 +271,15 @@ abstract class BaseProvider extends GetConnect {
     Map<String, dynamic>? query,
     Decoder<T>? decoder,
     Progress? uploadProgress,
-  }) =>
-      postWithRetry<T>(
-        url,
-        body,
-        contentType: contentType,
-        headers: headers,
-        query: query,
-        decoder: decoder,
-        uploadProgress: uploadProgress,
-      );
+  }) => postWithRetry<T>(
+    url,
+    body,
+    contentType: contentType,
+    headers: headers,
+    query: query,
+    decoder: decoder,
+    uploadProgress: uploadProgress,
+  );
 
   @override
   Future<Response<T>> put<T>(
@@ -295,16 +290,15 @@ abstract class BaseProvider extends GetConnect {
     Map<String, dynamic>? query,
     Decoder<T>? decoder,
     Progress? uploadProgress,
-  }) =>
-      putWithRetry<T>(
-        url,
-        body,
-        contentType: contentType,
-        headers: headers,
-        query: query,
-        decoder: decoder,
-        uploadProgress: uploadProgress,
-      );
+  }) => putWithRetry<T>(
+    url,
+    body,
+    contentType: contentType,
+    headers: headers,
+    query: query,
+    decoder: decoder,
+    uploadProgress: uploadProgress,
+  );
 
   @override
   Future<Response<T>> delete<T>(
@@ -313,14 +307,13 @@ abstract class BaseProvider extends GetConnect {
     String? contentType,
     Map<String, dynamic>? query,
     Decoder<T>? decoder,
-  }) =>
-      deleteWithRetry<T>(
-        url,
-        headers: headers,
-        contentType: contentType,
-        query: query,
-        decoder: decoder,
-      );
+  }) => deleteWithRetry<T>(
+    url,
+    headers: headers,
+    contentType: contentType,
+    query: query,
+    decoder: decoder,
+  );
 
   /// Internal retry logic with exponential backoff
   Future<Response<T>> _executeWithRetry<T>(
@@ -332,7 +325,8 @@ abstract class BaseProvider extends GetConnect {
     while (true) {
       if (!await _hasNetworkConnection()) {
         throw ApiException(
-          message: 'No internet connection. Please check your network and try again.',
+          message:
+              'No internet connection. Please check your network and try again.',
           statusCode: 0,
         );
       }
@@ -365,11 +359,10 @@ abstract class BaseProvider extends GetConnect {
           continue;
         }
         if (_isRetryableError(e)) {
-          AppLogger.warning('Network request failed after $attempt retries: $e');
-          throw ApiException(
-            message: _networkErrorMessage(e),
-            statusCode: 408,
+          AppLogger.warning(
+            'Network request failed after $attempt retries: $e',
           );
+          throw ApiException(message: _networkErrorMessage(e), statusCode: 408);
         }
         rethrow;
       }

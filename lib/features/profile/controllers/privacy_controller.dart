@@ -8,7 +8,6 @@ import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PrivacyController extends BaseController {
   PrivacyController({
@@ -60,9 +59,18 @@ class PrivacyController extends BaseController {
   void _hydrate(UserModel? user) {
     if (user == null) return;
     final settings = user.privacySettings ?? {};
-    twoFactorEnabled.value = parseBool(settings['twoFactorEnabled'], fallback: false);
-    profileVisible.value = parseBool(settings['profileVisible'], fallback: true);
-    locationSharing.value = parseBool(settings['locationSharing'], fallback: false);
+    twoFactorEnabled.value = parseBool(
+      settings['twoFactorEnabled'],
+      fallback: false,
+    );
+    profileVisible.value = parseBool(
+      settings['profileVisible'],
+      fallback: true,
+    );
+    locationSharing.value = parseBool(
+      settings['locationSharing'],
+      fallback: false,
+    );
   }
 
   void setTwoFactorEnabled(bool value) {
@@ -141,7 +149,8 @@ class PrivacyController extends BaseController {
     } else {
       AppSnackbar.error(
         title: 'Password update failed',
-        message: 'We were unable to change your password. Please verify and retry.',
+        message:
+            'We were unable to change your password. Please verify and retry.',
       );
     }
   }
@@ -195,46 +204,20 @@ class PrivacyController extends BaseController {
 
     accountDeletionInFlight.value = true;
 
-    const supportEmail = 'info@360ghar.com';
-    const subject = 'Account Deletion Request';
-    final userEmail = _profileController.user.value?.email;
-    final body = StringBuffer()
-      ..writeln('Hello 360 Ghar Support,')
-      ..writeln()
-      ..writeln('I would like to request the deletion of my account.')
-      ..writeln()
-      ..writeln('Registered email: ${userEmail ?? 'Not available'}')
-      ..writeln()
-      ..writeln('Thank you.');
-    final uri = Uri(
-      scheme: 'mailto',
-      path: supportEmail,
-      queryParameters: <String, String>{
-        'subject': subject,
-        'body': body.toString(),
-      },
-    );
-
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (launched) {
-        AppSnackbar.success(
-          title: 'Request initiated',
-          message:
-              'Your mail app is opening. Please send the pre-filled email to complete your request.',
-        );
-      } else {
-        AppSnackbar.error(
-          title: 'Could not open mail app',
-          message:
-              'Please email $supportEmail with subject "$subject" from your registered address.',
-        );
-      }
+      await _authRepository.deleteAccount();
+      // Clear local session and navigate to login after successful deletion.
+      await _authController.logout();
+      AppSnackbar.success(
+        title: 'Account deleted',
+        message: 'Your account has been permanently deleted.',
+      );
     } catch (e) {
+      AppLogger.error('Account deletion failed: $e');
       AppSnackbar.error(
-        title: 'Could not open mail app',
+        title: 'Deletion failed',
         message:
-            'Please email $supportEmail with subject "$subject" from your registered address.',
+            'Unable to delete your account. Please try again later.',
       );
     } finally {
       accountDeletionInFlight.value = false;

@@ -91,10 +91,7 @@ class _PremiumBottomNav extends StatelessWidget {
   final NavigationController controller;
   final bool isDark;
 
-  const _PremiumBottomNav({
-    required this.controller,
-    required this.isDark,
-  });
+  const _PremiumBottomNav({required this.controller, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +123,9 @@ class _PremiumBottomNav extends StatelessWidget {
             color: colorScheme.surface.withValues(alpha: isDark ? 0.92 : 0.96),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: isDark ? 0.35 : 0.5),
+              color: colorScheme.outlineVariant.withValues(
+                alpha: isDark ? 0.35 : 0.5,
+              ),
               width: 1.0,
             ),
             boxShadow: [
@@ -214,23 +213,22 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
     );
 
     // Premium icon bounce with overshoot
-    _iconScaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.85),
-        weight: 25,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.85, end: 1.08),
-        weight: 35,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.08, end: 1.0),
-        weight: 40,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutCubic,
-    ));
+    _iconScaleAnimation = TweenSequence<double>(
+      [
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 1.0, end: 0.85),
+          weight: 25,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 0.85, end: 1.08),
+          weight: 35,
+        ),
+        TweenSequenceItem(
+          tween: Tween<double>(begin: 1.08, end: 1.0),
+          weight: 40,
+        ),
+      ],
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     // Text fade in with delay
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -299,13 +297,11 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
           child: AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              final iconColor = Color.lerp(
-                    inactiveColor,
-                    activeColor,
-                    _controller.value,
-                  ) ??
+              final iconColor =
+                  Color.lerp(inactiveColor, activeColor, _controller.value) ??
                   activeColor;
-              final labelColor = Color.lerp(
+              final labelColor =
+                  Color.lerp(
                     inactiveColor,
                     activeColor,
                     _textFadeAnimation.value,
@@ -334,16 +330,19 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    activeColor
-                                        .withValues(alpha: 0.15 * _glowAnimation.value),
-                                    activeColor
-                                        .withValues(alpha: 0.08 * _glowAnimation.value),
+                                    activeColor.withValues(
+                                      alpha: 0.15 * _glowAnimation.value,
+                                    ),
+                                    activeColor.withValues(
+                                      alpha: 0.08 * _glowAnimation.value,
+                                    ),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: activeColor
-                                      .withValues(alpha: 0.1 * _glowAnimation.value),
+                                  color: activeColor.withValues(
+                                    alpha: 0.1 * _glowAnimation.value,
+                                  ),
                                   width: 1,
                                 ),
                               ),
@@ -371,8 +370,9 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
                         widget.labelKey.tr,
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight:
-                              widget.isActive ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: widget.isActive
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                           color: labelColor,
                           letterSpacing: 0.3,
                         ),
@@ -383,7 +383,7 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
                   ),
                 ],
               );
-},
+            },
           ),
         ),
       ),

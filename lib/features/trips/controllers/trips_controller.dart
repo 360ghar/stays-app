@@ -42,15 +42,17 @@ class TripsController extends BaseController {
     if (!Get.isRegistered<FilterController>()) return;
     _filterController = Get.find<FilterController>();
     _activeFilters = _filterController!.filterFor(FilterScope.booking);
-    trackWorker(debounce<UnifiedFilterModel>(
-      _filterController!.rxFor(FilterScope.booking),
-      (filters) {
-        if (_activeFilters == filters) return;
-        _activeFilters = filters;
-        _applyFilters();
-      },
-      time: const Duration(milliseconds: 120),
-    ));
+    trackWorker(
+      debounce<UnifiedFilterModel>(
+        _filterController!.rxFor(FilterScope.booking),
+        (filters) {
+          if (_activeFilters == filters) return;
+          _activeFilters = filters;
+          _applyFilters();
+        },
+        time: const Duration(milliseconds: 120),
+      ),
+    );
   }
 
   @override
@@ -96,7 +98,8 @@ class TripsController extends BaseController {
         pastBookings.clear();
         AppSnackbar.error(
           title: 'Inquiries unavailable',
-          message: 'We could not load your inquiries right now. Please try again.',
+          message:
+              'We could not load your inquiries right now. Please try again.',
         );
       }
     } finally {
@@ -276,10 +279,7 @@ class TripsController extends BaseController {
       );
     } on ApiException catch (error) {
       _restoreBookingSnapshot(snapshot);
-      AppSnackbar.error(
-        title: 'Unable to cancel',
-        message: error.message,
-      );
+      AppSnackbar.error(title: 'Unable to cancel', message: error.message);
     } catch (_) {
       _restoreBookingSnapshot(snapshot);
       AppSnackbar.error(
@@ -328,7 +328,8 @@ class TripsController extends BaseController {
                     Get.back();
                     AppSnackbar.success(
                       title: 'Thank You!',
-                      message: 'Your ${index + 1} star review has been submitted',
+                      message:
+                          'Your ${index + 1} star review has been submitted',
                     );
                   },
                   icon: const Icon(

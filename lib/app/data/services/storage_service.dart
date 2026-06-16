@@ -17,7 +17,6 @@ class StorageService extends GetxService {
   late final GetStorage _box;
   late FlutterSecureStorage _secureStorage;
 
-
   Future<StorageService> initialize() async {
     try {
       await GetStorage.init(_boxName);
@@ -39,7 +38,9 @@ class StorageService extends GetxService {
   // DEPRECATED: Prefer using TokenService for token operations
   static const _tokenExpiresAtKey = 'token_expires_at';
 
-  @Deprecated('Use TokenService.storeTokens() instead for centralized token management')
+  @Deprecated(
+    'Use TokenService.storeTokens() instead for centralized token management',
+  )
   Future<void> saveTokens({
     required String accessToken,
     String? refreshToken,

@@ -45,47 +45,50 @@ class ListingModel {
   });
 
   factory ListingModel.fromMap(Map<String, dynamic> map) => ListingModel(
-        id: map['id']?.toString() ?? '',
-        title: map['title'] as String? ?? '',
-        description: map['description'] as String? ?? '',
-        propertyType: _parsePropertyType(map['propertyType'] as String?),
-        location: LocationModel.fromMap(map['location'] as Map<String, dynamic>? ?? const {}),
-        pricePerNight: (map['pricePerNight'] as num?)?.toDouble() ?? 0,
-        images: (map['images'] as List? ?? []).cast<String>(),
-        amenities: ((map['amenities'] as List? ?? [])
-                .cast<Map<String, dynamic>>())
-            .map(AmenityModel.fromMap)
-            .toList(),
-        host: UserModel.fromMap(map['host'] as Map<String, dynamic>? ?? const {}),
-        maxGuests: map['maxGuests'] as int? ?? 1,
-        bedrooms: map['bedrooms'] as int? ?? 1,
-        bathrooms: map['bathrooms'] as int? ?? 1,
-        rating: (map['rating'] as num?)?.toDouble() ?? 0,
-        reviewCount: map['reviewCount'] as int? ?? 0,
-        houseRules: (map['houseRules'] as List? ?? []).cast<String>(),
-        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-        updatedAt: DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
-      );
+    id: map['id']?.toString() ?? '',
+    title: map['title'] as String? ?? '',
+    description: map['description'] as String? ?? '',
+    propertyType: _parsePropertyType(map['propertyType'] as String?),
+    location: LocationModel.fromMap(
+      map['location'] as Map<String, dynamic>? ?? const {},
+    ),
+    pricePerNight: (map['pricePerNight'] as num?)?.toDouble() ?? 0,
+    images: (map['images'] as List? ?? []).cast<String>(),
+    amenities: ((map['amenities'] as List? ?? []).cast<Map<String, dynamic>>())
+        .map(AmenityModel.fromMap)
+        .toList(),
+    host: UserModel.fromMap(map['host'] as Map<String, dynamic>? ?? const {}),
+    maxGuests: map['maxGuests'] as int? ?? 1,
+    bedrooms: map['bedrooms'] as int? ?? 1,
+    bathrooms: map['bathrooms'] as int? ?? 1,
+    rating: (map['rating'] as num?)?.toDouble() ?? 0,
+    reviewCount: map['reviewCount'] as int? ?? 0,
+    houseRules: (map['houseRules'] as List? ?? []).cast<String>(),
+    createdAt:
+        DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+    updatedAt:
+        DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
+  );
 
   Map<String, dynamic> toMap() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'propertyType': propertyType.name,
-        'location': location.toMap(),
-        'pricePerNight': pricePerNight,
-        'images': images,
-        'amenities': amenities.map((e) => e.toMap()).toList(),
-        'host': host.toMap(),
-        'maxGuests': maxGuests,
-        'bedrooms': bedrooms,
-        'bathrooms': bathrooms,
-        'rating': rating,
-        'reviewCount': reviewCount,
-        'houseRules': houseRules,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'propertyType': propertyType.name,
+    'location': location.toMap(),
+    'pricePerNight': pricePerNight,
+    'images': images,
+    'amenities': amenities.map((e) => e.toMap()).toList(),
+    'host': host.toMap(),
+    'maxGuests': maxGuests,
+    'bedrooms': bedrooms,
+    'bathrooms': bathrooms,
+    'rating': rating,
+    'reviewCount': reviewCount,
+    'houseRules': houseRules,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   String get primaryImage => images.isNotEmpty ? images.first : '';
   String get formattedPrice => CurrencyHelper.format(pricePerNight);
@@ -105,4 +108,3 @@ class ListingModel {
     }
   }
 }
-

@@ -1,9 +1,9 @@
- /// Explore feature barrel export
- library explore;
- 
- // Bindings
- export 'bindings/explore_binding.dart';
- 
+/// Explore feature barrel export
+library explore;
+
+// Bindings
+export 'bindings/explore_binding.dart';
+
 // Controllers
 export 'controllers/explore_controller.dart';
 
