@@ -7,6 +7,7 @@ import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/features/profile/controllers/profile_controller.dart';
 
 class PrivacyController extends BaseController {

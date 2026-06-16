@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:stays_app/app/utils/constants/app_constants.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LegalView extends StatefulWidget {
   const LegalView({super.key});
@@ -29,7 +30,10 @@ class _LegalViewState extends State<LegalView> {
     super.initState();
     _doc = _resolveDocument();
     // Launch once after the first frame, not on every build().
-    WidgetsBinding.instance.addPostFrameCallback((_) => _openUrl(_doc.url));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _openUrl(_doc.url);
+    });
   }
 
   _LegalDocument _resolveDocument() {
@@ -57,7 +61,8 @@ class _LegalViewState extends State<LegalView> {
     var launched = false;
     try {
       launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
+    } catch (e) {
+      AppLogger.error('Failed to launch legal URL: $e');
       launched = false;
     }
     if (!mounted) return;
