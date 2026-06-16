@@ -110,7 +110,10 @@ class _InquiryViewState extends State<InquiryView> {
 
     // Reactively prefill if profile loads/updates later
     if (authController != null) {
-      _userWorker = ever<UserModel?>(authController!.currentUser, _prefillFromUser);
+      _userWorker = ever<UserModel?>(
+        authController!.currentUser,
+        _prefillFromUser,
+      );
     }
     // Fallback: try cached storage if fields are empty
     _tryPrefillFromStorage();
@@ -260,7 +263,10 @@ class _InquiryViewState extends State<InquiryView> {
       return;
     }
     if (property == null) {
-      AppSnackbar.warning(title: 'Missing property', message: 'Unable to identify this listing.');
+      AppSnackbar.warning(
+        title: 'Missing property',
+        message: 'Unable to identify this listing.',
+      );
       return;
     }
     if (checkInDate == null || checkOutDate == null || nights <= 0) {
@@ -271,31 +277,49 @@ class _InquiryViewState extends State<InquiryView> {
       return;
     }
     if (guests <= 0) {
-      AppSnackbar.warning(title: 'Guests', message: 'Please select at least one guest.');
+      AppSnackbar.warning(
+        title: 'Guests',
+        message: 'Please select at least one guest.',
+      );
       return;
     }
     if (nameController.text.trim().isEmpty) {
-      AppSnackbar.warning(title: 'Guest name', message: 'Please provide the primary guest name.');
+      AppSnackbar.warning(
+        title: 'Guest name',
+        message: 'Please provide the primary guest name.',
+      );
       return;
     }
 
     final trimmedEmail = emailController.text.trim();
     if (trimmedEmail.isEmpty) {
-      AppSnackbar.warning(title: 'Email', message: 'Please provide a valid email address.');
+      AppSnackbar.warning(
+        title: 'Email',
+        message: 'Please provide a valid email address.',
+      );
       return;
     }
     if (!GetUtils.isEmail(trimmedEmail)) {
-      AppSnackbar.warning(title: 'Email', message: 'Please enter a valid email address.');
+      AppSnackbar.warning(
+        title: 'Email',
+        message: 'Please enter a valid email address.',
+      );
       return;
     }
     final trimmedPhone = phoneController.text.trim();
     if (trimmedPhone.isEmpty) {
-      AppSnackbar.warning(title: 'Phone', message: 'Please provide a valid phone number.');
+      AppSnackbar.warning(
+        title: 'Phone',
+        message: 'Please provide a valid phone number.',
+      );
       return;
     }
     final digits = trimmedPhone.replaceAll(RegExp(r'[^0-9+]'), '');
     if (digits.replaceAll('+', '').length != 10) {
-      AppSnackbar.warning(title: 'Phone', message: 'Please enter a valid phone number.');
+      AppSnackbar.warning(
+        title: 'Phone',
+        message: 'Please enter a valid phone number.',
+      );
       return;
     }
     final sanitizedPhone = _normalizePhoneForDisplay(trimmedPhone);
@@ -356,10 +380,7 @@ class _InquiryViewState extends State<InquiryView> {
       final truncatedError = errorMessage.length > 100
           ? '${errorMessage.substring(0, 97)}...'
           : errorMessage;
-      AppSnackbar.error(
-        title: 'Inquiry failed',
-        message: truncatedError,
-      );
+      AppSnackbar.error(title: 'Inquiry failed', message: truncatedError);
     }
   }
 

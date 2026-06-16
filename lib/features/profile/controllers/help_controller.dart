@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
@@ -87,7 +87,8 @@ class HelpController extends GetxController {
       feedbackController.clear();
       AppSnackbar.success(
         title: 'Feedback received',
-        message: 'Thanks for sharing your experience. Our team will review it shortly.',
+        message:
+            'Thanks for sharing your experience. Our team will review it shortly.',
       );
     } catch (e, stack) {
       AppLogger.error('Feedback submission failed', e, stack);
@@ -104,7 +105,8 @@ class HelpController extends GetxController {
     if (!await canLaunchUrl(uri)) {
       AppSnackbar.warning(
         title: 'Unavailable',
-        message: 'Unable to launch ${uri.scheme} contact method on this device.',
+        message:
+            'Unable to launch ${uri.scheme} contact method on this device.',
       );
       return;
     }

@@ -66,13 +66,17 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
           borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+              color: Colors.black.withValues(
+                alpha: context.isDark ? 0.4 : 0.12,
+              ),
               blurRadius: 32,
               offset: const Offset(0, 16),
               spreadRadius: -4,
             ),
             BoxShadow(
-              color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
+              color: colors.primary.withValues(
+                alpha: context.isDark ? 0.15 : 0.08,
+              ),
               blurRadius: 24,
               offset: const Offset(0, 8),
             ),
@@ -221,7 +225,10 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: colors.primary.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(8),
@@ -286,8 +293,13 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    if (widget.property.rating != null && widget.property.rating! > 0) ...[
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                    if (widget.property.rating != null &&
+                        widget.property.rating! > 0) ...[
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 18,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         widget.property.ratingText,
@@ -435,7 +447,9 @@ class FeaturedPropertyStrip extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: context.isDark ? 0.25 : 0.08),
+              color: Colors.black.withValues(
+                alpha: context.isDark ? 0.25 : 0.08,
+              ),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -502,9 +516,8 @@ class _FeaturedStripImage extends StatelessWidget {
         ? CachedNetworkImage(
             imageUrl: imageUrl,
             fit: BoxFit.cover,
-            placeholder: (_, __) => Container(
-              color: colors.surfaceContainerHighest,
-            ),
+            placeholder: (_, __) =>
+                Container(color: colors.surfaceContainerHighest),
             errorWidget: (_, __, ___) => placeholder(),
           )
         : placeholder();
@@ -588,9 +601,7 @@ class FeaturedPropertyStripShimmer extends StatelessWidget {
       height: 108,
       decoration: BoxDecoration(
         borderRadius: borderRadius,
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.4)),
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
@@ -626,7 +637,9 @@ class FeaturedPropertyCardShimmer extends StatelessWidget {
             spreadRadius: -4,
           ),
           BoxShadow(
-            color: colors.primary.withValues(alpha: context.isDark ? 0.15 : 0.08),
+            color: colors.primary.withValues(
+              alpha: context.isDark ? 0.15 : 0.08,
+            ),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -646,18 +659,12 @@ class FeaturedPropertyCardShimmer extends StatelessWidget {
 
 /// Gradient transform for sliding shimmer effect.
 class _SlidingGradientTransform extends GradientTransform {
-  const _SlidingGradientTransform({
-    required this.slidePercent,
-  });
+  const _SlidingGradientTransform({required this.slidePercent});
 
   final double slidePercent;
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(
-      bounds.width * slidePercent,
-      0.0,
-      0.0,
-    );
+    return Matrix4.translationValues(bounds.width * slidePercent, 0.0, 0.0);
   }
 }

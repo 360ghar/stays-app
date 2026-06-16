@@ -47,22 +47,10 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
 
     // Scale animation with bounce effect
     _scaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.0, end: 0.3),
-        weight: 20,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 0.3, end: 1.4),
-        weight: 40,
-      ),
-      TweenSequenceItem(
-        tween: Tween<double>(begin: 1.4, end: 1.0),
-        weight: 40,
-      ),
-    ]).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
+      TweenSequenceItem(tween: Tween<double>(begin: 1.0, end: 0.3), weight: 20),
+      TweenSequenceItem(tween: Tween<double>(begin: 0.3, end: 1.4), weight: 40),
+      TweenSequenceItem(tween: Tween<double>(begin: 1.4, end: 1.0), weight: 40),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
     // Particle explosion animation
     _particleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -73,12 +61,10 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
     );
 
     // Subtle rotation for added flair
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 0.15).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _rotationAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -149,10 +135,12 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
                 return Transform.scale(
                   scale: _scaleAnimation.value,
                   child: Transform.rotate(
-                    angle: _rotationAnimation.value *
-                        (widget.isFavorite ? 1 : -1),
+                    angle:
+                        _rotationAnimation.value * (widget.isFavorite ? 1 : -1),
                     child: Icon(
-                      widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      widget.isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border,
                       color: widget.isFavorite
                           ? widget.favoriteColor
                           : widget.normalColor,
@@ -226,10 +214,7 @@ class _Particle extends StatelessWidget {
     final scale = (1 - progress * 0.5).clamp(0.5, 1.0);
 
     return Transform.translate(
-      offset: Offset(
-        distance * math.cos(angle),
-        distance * math.sin(angle),
-      ),
+      offset: Offset(distance * math.cos(angle), distance * math.sin(angle)),
       child: Opacity(
         opacity: opacity,
         child: Transform.scale(
@@ -237,10 +222,7 @@ class _Particle extends StatelessWidget {
           child: Container(
             width: size,
             height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
         ),
       ),

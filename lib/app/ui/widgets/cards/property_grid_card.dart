@@ -44,7 +44,9 @@ class PropertyGridCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         elevation: elevation,
-        shadowColor: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.12),
+        shadowColor: Colors.black.withValues(
+          alpha: context.isDark ? 0.4 : 0.12,
+        ),
         borderRadius: borderRadius,
         clipBehavior: Clip.antiAlias,
         child: Ink(
@@ -56,15 +58,20 @@ class PropertyGridCard extends StatelessWidget {
               colors: [
                 colors.surface.withValues(alpha: context.isDark ? 0.97 : 0.995),
                 Color.alphaBlend(
-                  colors.primary.withValues(alpha: context.isDark ? 0.08 : 0.04),
-                  colors.surface.withValues(alpha: context.isDark ? 0.95 : 0.985),
+                  colors.primary.withValues(
+                    alpha: context.isDark ? 0.08 : 0.04,
+                  ),
+                  colors.surface.withValues(
+                    alpha: context.isDark ? 0.95 : 0.985,
+                  ),
                 ),
               ],
             ),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final hasBoundedHeight = constraints.hasBoundedHeight &&
+              final hasBoundedHeight =
+                  constraints.hasBoundedHeight &&
                   constraints.maxHeight.isFinite;
               if (!hasBoundedHeight) {
                 return Column(
@@ -314,5 +321,4 @@ class PropertyGridCard extends StatelessWidget {
       ),
     );
   }
-
 }

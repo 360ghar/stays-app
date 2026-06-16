@@ -46,7 +46,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.a360ghar.stays"
+        applicationId = "com.the360ghar.stays"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -59,7 +59,7 @@ android {
     productFlavors {
         create("dev") {
             dimension = "env"
-            applicationId = "com.example.stays_app.dev"
+            applicationIdSuffix = ".dev"
             resValue("string", "app_name", "360ghar stays (Dev)")
         }
         create("staging") {

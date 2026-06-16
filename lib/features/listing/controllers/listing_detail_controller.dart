@@ -67,17 +67,14 @@ class ListingDetailController extends BaseController {
   Future<void> load(int id, {bool showLoader = true}) async {
     final idStr = id.toString();
     if (_lastLoadedId == idStr && listing.value != null) return;
-    await executeWithErrorHandling(
-      () async {
-        final property = await _repository.getDetails(id);
-        setListing(property);
-        _lastLoadedId = idStr;
+    await executeWithErrorHandling(() async {
+      final property = await _repository.getDetails(id);
+      setListing(property);
+      _lastLoadedId = idStr;
 
-        // Prefetch all gallery images
-        _prefetchGalleryImages(property);
-      },
-      showLoading: showLoader,
-    );
+      // Prefetch all gallery images
+      _prefetchGalleryImages(property);
+    }, showLoading: showLoader);
   }
 
   void setListing(Property property) {
@@ -98,7 +95,7 @@ class ListingDetailController extends BaseController {
 
   void updateImageIndex(int index) {
     currentImageIndex.value = index;
-    
+
     // Prefetch adjacent images when user swipes
     _prefetchAdjacentImages(index);
   }
@@ -106,7 +103,7 @@ class ListingDetailController extends BaseController {
   /// Prefetch all gallery images for the property
   void _prefetchGalleryImages(Property property) {
     if (!Get.isRegistered<ImagePrefetchService>()) return;
-    
+
     try {
       Get.find<ImagePrefetchService>().prefetchPropertyDetailImages(property);
     } catch (e) {
@@ -117,15 +114,15 @@ class ListingDetailController extends BaseController {
   /// Prefetch images adjacent to the current index
   void _prefetchAdjacentImages(int currentIndex) {
     if (!Get.isRegistered<ImagePrefetchService>()) return;
-    
+
     final property = listing.value;
     if (property == null) return;
-    
+
     final images = property.images ?? [];
     if (images.isEmpty) return;
-    
+
     final prefetchService = Get.find<ImagePrefetchService>();
-    
+
     // Prefetch next 2 images
     for (int i = 1; i <= 2; i++) {
       final nextIndex = currentIndex + i;
@@ -178,7 +175,9 @@ class ListingDetailController extends BaseController {
       }
 
       AppSnackbar.success(
-        title: isCurrentlyFavorite ? 'Removed from Wishlist' : 'Added to Wishlist',
+        title: isCurrentlyFavorite
+            ? 'Removed from Wishlist'
+            : 'Added to Wishlist',
         message: '${property.name} updated.',
       );
     } catch (e) {

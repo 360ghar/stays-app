@@ -20,6 +20,8 @@ class AppConstants {
   static const double defaultLongitude = 72.8777; // Mumbai
 
   // Legal document URLs
-  static const String privacyPolicyUrl = 'https://360ghar.com/policies/privacy-policy';
-  static const String termsOfServiceUrl = 'https://360ghar.com/policies/terms-of-service';
+  static const String privacyPolicyUrl =
+      'https://360ghar.com/policies/privacy-policy';
+  static const String termsOfServiceUrl =
+      'https://360ghar.com/policies/terms-of-service';
 }

@@ -335,34 +335,26 @@ class AppGradients {
   static const LinearGradient subtleOverlay = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [
-      Color(0x00000000),
-      Color(0x40000000),
-      Color(0x80000000),
-    ],
+    colors: [Color(0x00000000), Color(0x40000000), Color(0x80000000)],
   );
 
   /// Glassmorphism gradient
   static LinearGradient glass({bool isDark = false}) => LinearGradient(
-        colors: [
-          isDark
-              ? AppColors.glassDark(opacity: 0.3)
-              : AppColors.glassLight(opacity: 0.5),
-          isDark
-              ? AppColors.glassDark(opacity: 0.1)
-              : AppColors.glassLight(opacity: 0.2),
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
+    colors: [
+      isDark
+          ? AppColors.glassDark(opacity: 0.3)
+          : AppColors.glassLight(opacity: 0.5),
+      isDark
+          ? AppColors.glassDark(opacity: 0.1)
+          : AppColors.glassLight(opacity: 0.2),
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   /// Shimmer loading gradient
   static const LinearGradient shimmer = LinearGradient(
-    colors: [
-      Color(0xFFE5E7EB),
-      Color(0xFFF3F4F6),
-      Color(0xFFE5E7EB),
-    ],
+    colors: [Color(0xFFE5E7EB), Color(0xFFF3F4F6), Color(0xFFE5E7EB)],
     stops: [0.0, 0.5, 1.0],
     begin: Alignment(-1.0, -0.5),
     end: Alignment(1.0, 0.5),
@@ -370,10 +362,7 @@ class AppGradients {
 
   /// Card hover gradient
   static const LinearGradient cardHover = LinearGradient(
-    colors: [
-      Color(0x00FFFFFF),
-      Color(0x10FFFFFF),
-    ],
+    colors: [Color(0x00FFFFFF), Color(0x10FFFFFF)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );

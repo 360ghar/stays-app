@@ -59,10 +59,7 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
   void initState() {
     super.initState();
 
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _focusNode.addListener(() {
       setState(() {
@@ -119,21 +116,19 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    final backgroundColor = widget.backgroundColor ??
+    final backgroundColor =
+        widget.backgroundColor ??
         (isDark
             ? colorScheme.surfaceContainerHigh
             : colorScheme.surfaceContainerHighest);
 
-    final expandedWidth = widget.expandedWidth ??
-        (MediaQuery.of(context).size.width - 32);
+    final expandedWidth =
+        widget.expandedWidth ?? (MediaQuery.of(context).size.width - 32);
 
     _widthAnimation = Tween<double>(
       begin: widget.collapsedWidth,
       end: expandedWidth,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: widget.curve,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
@@ -142,12 +137,10 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
       ),
     );
 
-    _iconSlideAnimation = Tween<double>(begin: 0.0, end: -8.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: widget.curve,
-      ),
-    );
+    _iconSlideAnimation = Tween<double>(
+      begin: 0.0,
+      end: -8.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     return AnimatedBuilder(
       animation: _controller,
@@ -215,9 +208,7 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
                         vertical: 12,
                       ),
                       suffixIcon: _hasText && isFullyExpanded
-                          ? _AnimatedClearButton(
-                              onPressed: _handleClear,
-                            )
+                          ? _AnimatedClearButton(onPressed: _handleClear)
                           : null,
                     ),
                   ),
@@ -268,17 +259,11 @@ class _AnimatedClearButtonState extends State<_AnimatedClearButton>
     );
 
     _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOutBack,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutBack),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOut,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOut),
     );
 
     _controller.forward();
@@ -306,10 +291,7 @@ class _AnimatedClearButtonState extends State<_AnimatedClearButton>
           },
           iconSize: 20,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(
-            minWidth: 32,
-            minHeight: 32,
-          ),
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
         ),
       ),
     );

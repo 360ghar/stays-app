@@ -201,9 +201,7 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   Widget _buildHeroGreeting(BuildContext context) {
-    return const SliverToBoxAdapter(
-      child: ExploreHeroHeader(),
-    );
+    return const SliverToBoxAdapter(child: ExploreHeroHeader());
   }
 
   Widget _buildFeaturedSection(BuildContext context) {
@@ -220,7 +218,9 @@ class ExploreView extends GetView<ExploreController> {
         }
 
         return Padding(
-          padding: const EdgeInsets.only(top: AppDimensions.exploreSectionSpacing),
+          padding: const EdgeInsets.only(
+            top: AppDimensions.exploreSectionSpacing,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -241,7 +241,12 @@ class ExploreView extends GetView<ExploreController> {
                   onFavoriteToggle: () => controller.toggleFavorite(nearest),
                 )
               else if (errorMsg.isEmpty)
-                _buildEmptyState(context, 'No featured stays found nearby', Icons.near_me_rounded, colors),
+                _buildEmptyState(
+                  context,
+                  'No featured stays found nearby',
+                  Icons.near_me_rounded,
+                  colors,
+                ),
             ],
           ),
         );
@@ -251,9 +256,7 @@ class ExploreView extends GetView<ExploreController> {
 
   Widget _buildPopularInSection(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.only(
-        top: AppDimensions.exploreSectionSpacing,
-      ),
+      padding: const EdgeInsets.only(top: AppDimensions.exploreSectionSpacing),
       sliver: SliverToBoxAdapter(
         child: Obx(() {
           final city = controller.locationName;
@@ -282,7 +285,8 @@ class ExploreView extends GetView<ExploreController> {
             cardHeight: 230,
             cardWidth: 220,
             onViewAll: () => controller.navigateToAllProperties(city),
-            onPropertyTap: (property) => controller.navigateToPropertyDetail(property),
+            onPropertyTap: (property) =>
+                controller.navigateToPropertyDetail(property),
             onFavoriteToggle: (property) => controller.toggleFavorite(property),
             isPropertyFavorite: (id) => controller.isPropertyFavorite(id),
             emptyMessage: 'No popular stays found in $city',
@@ -294,9 +298,7 @@ class ExploreView extends GetView<ExploreController> {
 
   Widget _buildNearbySection(BuildContext context) {
     return SliverPadding(
-      padding: const EdgeInsets.only(
-        top: AppDimensions.exploreSectionSpacing,
-      ),
+      padding: const EdgeInsets.only(top: AppDimensions.exploreSectionSpacing),
       sliver: SliverToBoxAdapter(
         child: Obx(() {
           final isLoading = controller.isLoading.value;
@@ -329,7 +331,8 @@ class ExploreView extends GetView<ExploreController> {
             sectionPrefix: 'nearby',
             cardHeight: 230,
             cardWidth: 220,
-            onPropertyTap: (property) => controller.navigateToPropertyDetail(property),
+            onPropertyTap: (property) =>
+                controller.navigateToPropertyDetail(property),
             onFavoriteToggle: (property) => controller.toggleFavorite(property),
             isPropertyFavorite: (id) => controller.isPropertyFavorite(id),
             emptyMessage: 'No nearby stays found',
@@ -340,7 +343,11 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   /// Builds an error section with retry button
-  Widget _buildErrorSection(BuildContext context, String errorMsg, ColorScheme colors) {
+  Widget _buildErrorSection(
+    BuildContext context,
+    String errorMsg,
+    ColorScheme colors,
+  ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
       child: Container(
@@ -348,17 +355,11 @@ class ExploreView extends GetView<ExploreController> {
         decoration: BoxDecoration(
           color: colors.errorContainer.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: colors.error.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: colors.error.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: colors.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 48, color: colors.error),
             const SizedBox(height: 12),
             Text(
               'Unable to load properties',
@@ -392,16 +393,17 @@ class ExploreView extends GetView<ExploreController> {
   }
 
   /// Builds an empty state when no properties are found
-  Widget _buildEmptyState(BuildContext context, String message, IconData icon, ColorScheme colors) {
+  Widget _buildEmptyState(
+    BuildContext context,
+    String message,
+    IconData icon,
+    ColorScheme colors,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          Icon(
-            icon,
-            size: 56,
-            color: colors.onSurface.withValues(alpha: 0.3),
-          ),
+          Icon(icon, size: 56, color: colors.onSurface.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
           Text(
             message,

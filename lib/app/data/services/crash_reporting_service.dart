@@ -41,12 +41,14 @@ class CrashReportingService extends GetxService {
       AppLogger.warning('Failed to initialize crash reporting: $e');
       // Don't let crash reporting initialization crash the app
       if (kDebugMode) {
-        FlutterError.reportError(FlutterErrorDetails(
-          exception: e,
-          stack: stack,
-          library: 'CrashReportingService',
-          context: ErrorDescription('Failed to initialize Crashlytics'),
-        ));
+        FlutterError.reportError(
+          FlutterErrorDetails(
+            exception: e,
+            stack: stack,
+            library: 'CrashReportingService',
+            context: ErrorDescription('Failed to initialize Crashlytics'),
+          ),
+        );
       }
     }
 
@@ -92,7 +94,11 @@ class CrashReportingService extends GetxService {
 
     // Record as fatal error
     unawaited(_crashlytics!.recordFlutterFatalError(details));
-    AppLogger.error('Flutter error recorded to Crashlytics', details.exception, details.stack);
+    AppLogger.error(
+      'Flutter error recorded to Crashlytics',
+      details.exception,
+      details.stack,
+    );
   }
 
   /// Record a non-fatal error
@@ -114,7 +120,11 @@ class CrashReportingService extends GetxService {
       fatal: fatal,
     );
 
-    AppLogger.error(reason ?? 'Error recorded to Crashlytics', error, stackTrace);
+    AppLogger.error(
+      reason ?? 'Error recorded to Crashlytics',
+      error,
+      stackTrace,
+    );
   }
 
   /// Set a custom key-value pair for crash reports

@@ -28,7 +28,8 @@ class HotelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '${hotel.name}, ${hotel.rating} stars, ${hotel.currency}${hotel.pricePerNight.toStringAsFixed(0)} per night',
+      label:
+          '${hotel.name}, ${hotel.rating} stars, ${hotel.currency}${hotel.pricePerNight.toStringAsFixed(0)} per night',
       button: true,
       child: GestureDetector(
         onTap: onTap,

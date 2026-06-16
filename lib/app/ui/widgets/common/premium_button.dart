@@ -88,7 +88,8 @@ class _PremiumButtonState extends State<PremiumButton>
     final colorScheme = Theme.of(context).colorScheme;
     final backgroundColor = widget.backgroundColor ?? colorScheme.primary;
     final foregroundColor = widget.foregroundColor ?? colorScheme.onPrimary;
-    final isEnabled = !widget.isLoading && !widget.isDisabled && widget.onPressed != null;
+    final isEnabled =
+        !widget.isLoading && !widget.isDisabled && widget.onPressed != null;
 
     return GestureDetector(
       onTapDown: isEnabled ? _handleTapDown : null,
@@ -103,26 +104,33 @@ class _PremiumButtonState extends State<PremiumButton>
           child: SizedBox(
             width: widget.width,
             height: widget.height,
-            child: _buildButtonContent(context, backgroundColor, foregroundColor),
+            child: _buildButtonContent(
+              context,
+              backgroundColor,
+              foregroundColor,
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildButtonContent(BuildContext context, Color bgColor, Color fgColor) {
+  Widget _buildButtonContent(
+    BuildContext context,
+    Color bgColor,
+    Color fgColor,
+  ) {
     final borderRadius = widget.borderRadius ?? BorderRadius.circular(18);
 
     return Container(
-      padding: widget.padding ?? const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding:
+          widget.padding ??
+          const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            bgColor,
-            bgColor.withValues(alpha: 0.85),
-          ],
+          colors: [bgColor, bgColor.withValues(alpha: 0.85)],
         ),
         borderRadius: borderRadius,
         boxShadow: [
@@ -237,10 +245,7 @@ class _PremiumOutlinedButtonState extends State<PremiumOutlinedButton>
     );
 
     _borderAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: AppAnimations.easeOutCubic,
-      ),
+      CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutCubic),
     );
   }
 
@@ -255,7 +260,8 @@ class _PremiumOutlinedButtonState extends State<PremiumOutlinedButton>
     final colorScheme = Theme.of(context).colorScheme;
     final borderColor = widget.borderColor ?? colorScheme.outline;
     final textColor = widget.textColor ?? colorScheme.onSurface;
-    final isEnabled = !widget.isLoading && !widget.isDisabled && widget.onPressed != null;
+    final isEnabled =
+        !widget.isLoading && !widget.isDisabled && widget.onPressed != null;
 
     return GestureDetector(
       onTapDown: isEnabled ? (_) => _controller.forward() : null,
@@ -274,9 +280,13 @@ class _PremiumOutlinedButtonState extends State<PremiumOutlinedButton>
               animation: _borderAnimation,
               builder: (context, child) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   decoration: BoxDecoration(
-                    borderRadius: widget.borderRadius ?? BorderRadius.circular(16),
+                    borderRadius:
+                        widget.borderRadius ?? BorderRadius.circular(16),
                     border: Border.all(
                       color: borderColor.withValues(
                         alpha: 0.5 + (_borderAnimation.value * 0.5),
@@ -291,7 +301,9 @@ class _PremiumOutlinedButtonState extends State<PremiumOutlinedButton>
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(textColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                textColor,
+                              ),
                             ),
                           )
                         : _buildContent(textColor),
@@ -383,12 +395,10 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
       ),
     );
 
-    _rippleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeOut,
-      ),
-    );
+    _rippleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override
@@ -400,7 +410,8 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final backgroundColor = widget.backgroundColor ?? colorScheme.surfaceContainerHighest;
+    final backgroundColor =
+        widget.backgroundColor ?? colorScheme.surfaceContainerHighest;
     final iconColor = widget.iconColor ?? colorScheme.onSurface;
 
     final button = GestureDetector(

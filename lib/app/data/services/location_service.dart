@@ -86,7 +86,8 @@ class LocationService extends GetxService {
       if (!serviceEnabled) {
         AppSnackbar.warning(
           title: 'Location Services',
-          message: 'Please enable location services to get better recommendations',
+          message:
+              'Please enable location services to get better recommendations',
         );
         return null;
       }
@@ -102,7 +103,8 @@ class LocationService extends GetxService {
       if (permission == LocationPermission.deniedForever) {
         AppSnackbar.warning(
           title: 'Location Permission',
-          message: 'Location permissions are permanently denied, please enable from settings',
+          message:
+              'Location permissions are permanently denied, please enable from settings',
         );
         return null;
       }

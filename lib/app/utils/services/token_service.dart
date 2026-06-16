@@ -57,9 +57,8 @@ class TokenInfo {
 }
 
 class TokenService extends GetxService {
-  TokenService({
-    StorageService? storageService,
-  }) : _storageService = storageService;
+  TokenService({StorageService? storageService})
+    : _storageService = storageService;
 
   static TokenService get I => Get.find<TokenService>();
 

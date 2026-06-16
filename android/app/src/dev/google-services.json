@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:866676409773:android:e7434edd703cfea8e14d24",
         "android_client_info": {
-          "package_name": "com.example.stays_app"
+          "package_name": "com.the360ghar.stays"
         }
       },
       "oauth_client": [],
@@ -28,7 +28,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:866676409773:android:14b96bc01de5ab69e14d24",
         "android_client_info": {
-          "package_name": "com.example.stays_app.dev"
+          "package_name": "com.the360ghar.stays.dev"
         }
       },
       "oauth_client": [],

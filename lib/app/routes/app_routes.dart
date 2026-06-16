@@ -6,6 +6,9 @@ abstract class Routes {
   static const forgotPassword = '/forgot-password';
   static const verification = '/verification';
   static const resetPassword = '/reset-password';
+  static const setPassword = '/set-password';
+  static const profileCompletion = '/profile-completion';
+  static const onboarding = '/onboarding';
   static const home = '/home';
   static const search = '/search';
   static const searchResults = '/search-results';

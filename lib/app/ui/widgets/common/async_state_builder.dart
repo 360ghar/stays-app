@@ -70,10 +70,7 @@ class AsyncStateBuilder<T> extends StatelessWidget {
         if (errorBuilder != null) {
           return errorBuilder!(context, error.value);
         }
-        return _DefaultErrorWidget(
-          error: error.value,
-          onRetry: onRetry,
-        );
+        return _DefaultErrorWidget(error: error.value, onRetry: onRetry);
       }
 
       // No data available
@@ -156,10 +153,7 @@ class AsyncListBuilder<T> extends StatelessWidget {
         if (errorBuilder != null) {
           return errorBuilder!(context, error.value);
         }
-        return _DefaultErrorWidget(
-          error: error.value,
-          onRetry: onRetry,
-        );
+        return _DefaultErrorWidget(error: error.value, onRetry: onRetry);
       }
 
       // Show empty state
@@ -183,17 +177,12 @@ class _DefaultLoadingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
 class _DefaultErrorWidget extends StatelessWidget {
-  const _DefaultErrorWidget({
-    required this.error,
-    this.onRetry,
-  });
+  const _DefaultErrorWidget({required this.error, this.onRetry});
 
   final String error;
   final VoidCallback? onRetry;
@@ -209,11 +198,7 @@ class _DefaultErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: colors.error,
-            ),
+            Icon(Icons.error_outline_rounded, size: 48, color: colors.error),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',
@@ -246,11 +231,7 @@ class _DefaultErrorWidget extends StatelessWidget {
 }
 
 class _DefaultEmptyWidget extends StatelessWidget {
-  const _DefaultEmptyWidget({
-    this.title,
-    this.subtitle,
-    this.icon,
-  });
+  const _DefaultEmptyWidget({this.title, this.subtitle, this.icon});
 
   final String? title;
   final String? subtitle;

@@ -7,13 +7,34 @@ import 'package:stays_app/features/auth/controllers/user_profile_controller.dart
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 import 'package:stays_app/app/data/providers/supabase_auth_provider.dart';
+import 'package:stays_app/app/data/providers/auth_api_provider.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
+import 'package:stays_app/app/data/services/google_sign_in_service.dart';
+import 'package:stays_app/app/data/services/apple_sign_in_service.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 
 class AuthBinding extends Bindings {
   @override
   void dependencies() {
+    // Native Google Sign-In wrapper (initialized lazily on first use).
+    if (!Get.isRegistered<GoogleSignInService>()) {
+      Get.lazyPut<GoogleSignInService>(
+        () => GoogleSignInService(),
+        fenix: true,
+      );
+    }
+
+    // Native Sign in with Apple wrapper (iOS).
+    if (!Get.isRegistered<AppleSignInService>()) {
+      Get.lazyPut<AppleSignInService>(() => AppleSignInService(), fenix: true);
+    }
+
+    // Backend auth state-machine client (identifier-status / last-method).
+    if (!Get.isRegistered<AuthApiProvider>()) {
+      Get.lazyPut<AuthApiProvider>(() => AuthApiProvider(), fenix: true);
+    }
+
     // Choose auth provider. Default to Supabase; allow future override via config.
     Get.lazyPut<IAuthProvider>(() {
       // Placeholder for switching provider via environment/config
@@ -22,7 +43,10 @@ class AuthBinding extends Bindings {
     });
 
     Get.lazyPut<AuthRepository>(
-      () => AuthRepository(provider: Get.find<IAuthProvider>()),
+      () => AuthRepository(
+        provider: Get.find<IAuthProvider>(),
+        authApi: Get.find<AuthApiProvider>(),
+      ),
     );
 
     if (!Get.isRegistered<UsersProvider>()) {

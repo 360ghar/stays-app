@@ -273,9 +273,7 @@ class ValidationService extends GetxService {
     const EmailOrPhoneRule(),
   ];
 
-  static List<ValidationRule> get passwordRequired => [
-    const PasswordRule(),
-  ];
+  static List<ValidationRule> get passwordRequired => [const PasswordRule()];
 
   static List<ValidationRule> get passwordStrong => [
     const PasswordRule(

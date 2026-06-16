@@ -143,6 +143,5 @@ class DeepLinkService extends GetxService {
   static String listingUrl(String listingId) =>
       '$_baseUrl/stays/listing/$listingId';
 
-  static String chatUrl(String chatId) =>
-      '$_baseUrl/stays/chat/$chatId';
+  static String chatUrl(String chatId) => '$_baseUrl/stays/chat/$chatId';
 }

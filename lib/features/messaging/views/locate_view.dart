@@ -610,7 +610,10 @@ class LocatePropertyCard extends StatelessWidget {
                   color: colorScheme.onPrimaryContainer,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.3,
-                  fontSize: _shrinkFont(theme.textTheme.labelSmall?.fontSize, 1.5),
+                  fontSize: _shrinkFont(
+                    theme.textTheme.labelSmall?.fontSize,
+                    1.5,
+                  ),
                 ),
               ),
             ),

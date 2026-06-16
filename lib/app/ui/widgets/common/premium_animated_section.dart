@@ -39,10 +39,7 @@ class _PremiumAnimatedSectionState extends State<PremiumAnimatedSection>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     // Opacity animation
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -53,15 +50,13 @@ class _PremiumAnimatedSectionState extends State<PremiumAnimatedSection>
     );
 
     // Slide animation
-    _slideAnimation = Tween<Offset>(
-      begin: widget.slideOffset,
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Interval(0.0, 1.0, curve: widget.curve),
-      ),
-    );
+    _slideAnimation = Tween<Offset>(begin: widget.slideOffset, end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: Interval(0.0, 1.0, curve: widget.curve),
+          ),
+        );
 
     // Subtle scale animation
     _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
@@ -113,10 +108,7 @@ class _PremiumAnimatedSectionState extends State<PremiumAnimatedSection>
               _slideAnimation.value.dx * MediaQuery.of(context).size.width,
               _slideAnimation.value.dy * MediaQuery.of(context).size.height,
             ),
-            child: Transform.scale(
-              scale: _scaleAnimation.value,
-              child: child,
-            ),
+            child: Transform.scale(scale: _scaleAnimation.value, child: child),
           ),
         );
       },
@@ -184,7 +176,8 @@ class PremiumAnimatedContainer extends StatefulWidget {
   });
 
   @override
-  State<PremiumAnimatedContainer> createState() => _PremiumAnimatedContainerState();
+  State<PremiumAnimatedContainer> createState() =>
+      _PremiumAnimatedContainerState();
 }
 
 class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
@@ -196,20 +189,12 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
+    _controller = AnimationController(duration: widget.duration, vsync: this);
 
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: widget.scaleOnPress,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: widget.curve,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     // Start entrance animation
     _controller.forward();
@@ -243,10 +228,7 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
       onTapDown: widget.onTap != null ? _handleTapDown : null,
       onTapUp: widget.onTap != null ? _handleTapUp : null,
       onTapCancel: widget.onTap != null ? _handleTapCancel : null,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
@@ -303,22 +285,32 @@ class GlassContainer extends StatelessWidget {
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
-              gradient: gradient ??
+              gradient:
+                  gradient ??
                   LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: isDark
                         ? [
-                            const Color(0xFFFFFFFF).withValues(alpha: opacity * 0.3),
-                            const Color(0xFFFFFFFF).withValues(alpha: opacity * 0.1),
+                            const Color(
+                              0xFFFFFFFF,
+                            ).withValues(alpha: opacity * 0.3),
+                            const Color(
+                              0xFFFFFFFF,
+                            ).withValues(alpha: opacity * 0.1),
                           ]
                         : [
-                            const Color(0xFFFFFFFF).withValues(alpha: opacity * 0.7),
-                            const Color(0xFFFFFFFF).withValues(alpha: opacity * 0.3),
+                            const Color(
+                              0xFFFFFFFF,
+                            ).withValues(alpha: opacity * 0.7),
+                            const Color(
+                              0xFFFFFFFF,
+                            ).withValues(alpha: opacity * 0.3),
                           ],
                   ),
               borderRadius: BorderRadius.circular(borderRadius),
-              border: border ??
+              border:
+                  border ??
                   Border.all(
                     color: isDark
                         ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)

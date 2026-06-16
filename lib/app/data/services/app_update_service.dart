@@ -11,13 +11,7 @@ import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/config/app_config.dart';
 
 /// Status of the update check process
-enum UpdateStatus {
-  unknown,
-  checking,
-  available,
-  notAvailable,
-  error,
-}
+enum UpdateStatus { unknown, checking, available, notAvailable, error }
 
 /// Service for checking app updates using the upgrader package.
 ///
@@ -103,18 +97,17 @@ class AppUpdateService extends GetxService {
 
       final state = _upgrader.state;
       final appStoreVersion = state.versionInfo?.appStoreVersion;
-      final updateAvailable = appStoreVersion != null &&
-          _isNewerVersion(
-            appStoreVersion.toString(),
-            _currentVersion,
-          );
+      final updateAvailable =
+          appStoreVersion != null &&
+          _isNewerVersion(appStoreVersion.toString(), _currentVersion);
 
       if (updateAvailable) {
         status.value = UpdateStatus.available;
         isUpdateAvailable.value = true;
         storeVersion.value = appStoreVersion.toString();
         releaseNotes.value = state.versionInfo?.releaseNotes ?? '';
-        minAppVersion.value = state.versionInfo?.minAppVersion?.toString() ?? '';
+        minAppVersion.value =
+            state.versionInfo?.minAppVersion?.toString() ?? '';
 
         // Check if this is a force update
         isForceUpdate.value = _checkIsForceUpdate();
@@ -171,7 +164,9 @@ class AppUpdateService extends GetxService {
       DateTime.now().millisecondsSinceEpoch,
     );
     await _storage.write(_dismissedVersionKey, storeVersion.value);
-    AppLogger.info('Update prompt dismissed for version: ${storeVersion.value}');
+    AppLogger.info(
+      'Update prompt dismissed for version: ${storeVersion.value}',
+    );
   }
 
   /// Get the store URL for the current platform
@@ -217,8 +212,14 @@ class AppUpdateService extends GetxService {
   /// Returns true if [version1] is newer than [version2]
   bool _isNewerVersion(String version1, String version2) {
     try {
-      final v1Parts = version1.split('.').map((e) => int.tryParse(e) ?? 0).toList();
-      final v2Parts = version2.split('.').map((e) => int.tryParse(e) ?? 0).toList();
+      final v1Parts = version1
+          .split('.')
+          .map((e) => int.tryParse(e) ?? 0)
+          .toList();
+      final v2Parts = version2
+          .split('.')
+          .map((e) => int.tryParse(e) ?? 0)
+          .toList();
 
       // Pad with zeros if needed
       while (v1Parts.length < 3) {

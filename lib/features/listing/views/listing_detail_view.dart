@@ -65,30 +65,40 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
                   if (amenities.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      padding: const EdgeInsets.only(
+                        top: AppDimensions.sectionSpacingMd,
+                      ),
                       child: _buildAmenitiesSection(context, amenities),
                     ),
 
                   if (listing.hasVirtualTour)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      padding: const EdgeInsets.only(
+                        top: AppDimensions.sectionSpacingMd,
+                      ),
                       child: _buildVirtualTourSection(context, listing),
                     ),
 
                   if (features.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      padding: const EdgeInsets.only(
+                        top: AppDimensions.sectionSpacingMd,
+                      ),
                       child: _buildFeaturesSection(context, features),
                     ),
 
                   if (listing.ownerName?.isNotEmpty == true)
                     Padding(
-                      padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                      padding: const EdgeInsets.only(
+                        top: AppDimensions.sectionSpacingMd,
+                      ),
                       child: _buildHostSection(context, listing),
                     ),
 
                   Padding(
-                    padding: const EdgeInsets.only(top: AppDimensions.sectionSpacingMd),
+                    padding: const EdgeInsets.only(
+                      top: AppDimensions.sectionSpacingMd,
+                    ),
                     child: _buildLocationSection(context, listing),
                   ),
 
@@ -695,7 +705,10 @@ class ListingDetailView extends GetView<ListingDetailController> {
                           target: LatLng(lat, lng),
                           zoom: 15,
                         ),
-                        minMaxZoomPreference: const MinMaxZoomPreference(10, 18),
+                        minMaxZoomPreference: const MinMaxZoomPreference(
+                          10,
+                          18,
+                        ),
                         // Fully non-interactive single-pin map: the camera can
                         // never move, so the pin is a centered overlay.
                         scrollGesturesEnabled: false,

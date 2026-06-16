@@ -27,9 +27,10 @@ class _AnimatedRefreshIconState extends State<AnimatedRefreshIcon>
       vsync: this,
     );
 
-    _rotationAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.linear),
-    );
+    _rotationAnimation = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
 
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
@@ -40,9 +41,7 @@ class _AnimatedRefreshIconState extends State<AnimatedRefreshIcon>
         tween: Tween<double>(begin: 1.15, end: 1.0),
         weight: 50,
       ),
-    ]).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.repeat();
   }
@@ -128,8 +127,8 @@ class _SmartRefreshState extends State<SmartRefresh> {
     return RefreshIndicator(
       onRefresh: _handleRefresh,
       color: widget.color ?? Theme.of(context).colorScheme.primary,
-      backgroundColor: widget.backgroundColor ??
-          Theme.of(context).colorScheme.surface,
+      backgroundColor:
+          widget.backgroundColor ?? Theme.of(context).colorScheme.surface,
       displacement: 60.0,
       strokeWidth: 3,
       child: widget.child,

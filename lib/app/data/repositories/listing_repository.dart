@@ -5,21 +5,31 @@ import '../models/listing_model.dart';
 class ListingRepository {
   final ListingProvider _provider;
   final StorageService _storage;
-  ListingRepository({required ListingProvider provider, required StorageService storage})
-      : _provider = provider,
-        _storage = storage;
+  ListingRepository({
+    required ListingProvider provider,
+    required StorageService storage,
+  }) : _provider = provider,
+       _storage = storage;
 
   static const String _cacheKeyPrefix = 'listing_cache_';
   static const Duration _cacheExpiry = Duration(minutes: 5);
 
-  Future<List<ListingModel>> getListings({Map<String, dynamic>? filters, int page = 1, int limit = 20}) async {
+  Future<List<ListingModel>> getListings({
+    Map<String, dynamic>? filters,
+    int page = 1,
+    int limit = 20,
+  }) async {
     final cacheKey = _generateCacheKey(filters ?? {}, page);
     final cached = await _storage.getCached(cacheKey);
     if (cached != null && !_isCacheExpired(cached['timestamp'] as String)) {
       final list = (cached['data'] as List).cast<Map<String, dynamic>>();
       return list.map(ListingModel.fromMap).toList();
     }
-    final listings = await _provider.getListings(filters: filters, page: page, limit: limit);
+    final listings = await _provider.getListings(
+      filters: filters,
+      page: page,
+      limit: limit,
+    );
     await _storage.cache(cacheKey, {
       'data': listings.map((e) => e.toMap()).toList(),
       'timestamp': DateTime.now().toIso8601String(),

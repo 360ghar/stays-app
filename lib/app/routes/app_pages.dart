@@ -5,6 +5,7 @@ import 'package:stays_app/features/auth/bindings/auth_binding.dart';
 import 'package:stays_app/features/auth/views/forgot_password_view.dart';
 import 'package:stays_app/features/auth/views/phone_login_view.dart';
 import 'package:stays_app/features/auth/views/reset_password_view.dart';
+import 'package:stays_app/features/auth/views/set_password_view.dart';
 import 'package:stays_app/features/auth/views/signup_view.dart';
 import 'package:stays_app/features/auth/views/verification_view.dart';
 
@@ -68,6 +69,8 @@ import 'package:stays_app/features/profile/views/help_view.dart';
 import 'package:stays_app/features/profile/views/about_view.dart';
 import 'package:stays_app/features/profile/views/legal_view.dart';
 import 'package:stays_app/features/profile/views/feedback_view.dart';
+import 'package:stays_app/features/auth/views/profile_completion_view.dart';
+import 'package:stays_app/features/auth/views/onboarding_view.dart';
 
 class AppPages {
   static const initial = Routes.initial;
@@ -112,6 +115,24 @@ class AppPages {
     GetPage(
       name: Routes.resetPassword,
       page: () => const ResetPasswordView(),
+      binding: AuthBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.setPassword,
+      page: () => const SetPasswordView(),
+      binding: AuthBinding(),
+      transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: Routes.profileCompletion,
+      page: () => const ProfileCompletionView(),
+      binding: AuthBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: Routes.onboarding,
+      page: () => const OnboardingView(),
       binding: AuthBinding(),
       transition: Transition.rightToLeft,
     ),

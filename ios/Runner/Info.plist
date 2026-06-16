@@ -51,6 +51,21 @@
 				<string>stays360</string>
 			</array>
 		</dict>
+		<!-- Google Sign-In: reversed iOS client ID URL scheme.
+		     Replace REVERSED_CLIENT_ID below with the reversed form of
+		     GOOGLE_IOS_CLIENT_ID, e.g.
+		     com.googleusercontent.apps.1234567890-abcdefg
+		     (this is also present as REVERSED_CLIENT_ID in GoogleService-Info.plist). -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
 	</array>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>This app needs permission to save photos to your library.</string>

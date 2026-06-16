@@ -34,10 +34,7 @@ class StaggeredListItem extends StatelessWidget {
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(offset.dx, offset.dy * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: child,
@@ -84,18 +81,15 @@ class _AnimatedScaleWrapperState extends State<AnimatedScaleWrapper>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: widget.scaleFactor,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: widget.curve,
-      reverseCurve: widget.curve.flipped,
-    ));
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor)
+        .animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: widget.curve,
+            reverseCurve: widget.curve.flipped,
+          ),
+        );
   }
 
   @override
@@ -137,10 +131,7 @@ class _AnimatedScaleWrapperState extends State<AnimatedScaleWrapper>
       onTap: widget.onTap != null ? _handleTap : null,
       onLongPress: widget.onLongPress,
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
@@ -174,10 +165,7 @@ class AnimatedFadeIn extends StatelessWidget {
       duration: delay + duration,
       curve: curve,
       builder: (context, value, child) {
-        final animatedChild = Opacity(
-          opacity: value,
-          child: child,
-        );
+        final animatedChild = Opacity(opacity: value, child: child);
 
         if (slideOffset != null) {
           return Transform.translate(
@@ -225,10 +213,7 @@ class AnimatedSizeWrapper extends StatelessWidget {
       curve: curve,
       alignment: alignment,
       child: isExpanded
-          ? SizedBox(
-              width: double.infinity,
-              child: child,
-            )
+          ? SizedBox(width: double.infinity, child: child)
           : const SizedBox.shrink(),
     );
   }
@@ -306,18 +291,13 @@ class _AnimatedPulseState extends State<AnimatedPulse>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: widget.duration,
-      vsync: this,
-    )..repeat(reverse: true);
+    _controller = AnimationController(duration: widget.duration, vsync: this)
+      ..repeat(reverse: true);
 
     _scaleAnimation = Tween<double>(
       begin: widget.minScale,
       end: widget.maxScale,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: widget.curve,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
   }
 
   @override
@@ -328,10 +308,7 @@ class _AnimatedPulseState extends State<AnimatedPulse>
 
   @override
   Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scaleAnimation,
-      child: widget.child,
-    );
+    return ScaleTransition(scale: _scaleAnimation, child: widget.child);
   }
 }
 
@@ -388,12 +365,14 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     return ShaderMask(
       blendMode: BlendMode.srcATop,
       shaderCallback: (bounds) {
-        final begin = widget.direction == ShimmerDirection.ltr ||
+        final begin =
+            widget.direction == ShimmerDirection.ltr ||
                 widget.direction == ShimmerDirection.rtl
             ? Alignment.centerLeft
             : Alignment.topCenter;
 
-        final end = widget.direction == ShimmerDirection.ltr ||
+        final end =
+            widget.direction == ShimmerDirection.ltr ||
                 widget.direction == ShimmerDirection.rtl
             ? Alignment.centerRight
             : Alignment.bottomCenter;
@@ -401,11 +380,7 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
         return LinearGradient(
           begin: begin,
           end: end,
-          colors: [
-            widget.baseColor,
-            widget.highlightColor,
-            widget.baseColor,
-          ],
+          colors: [widget.baseColor, widget.highlightColor, widget.baseColor],
           stops: const [0.0, 0.5, 1.0],
           transform: _SlidingGradientTransform(
             slidePercent: _animation.value,

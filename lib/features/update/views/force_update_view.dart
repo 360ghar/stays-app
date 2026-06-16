@@ -34,11 +34,7 @@ class ForceUpdateView extends GetView<ForceUpdateController> {
                 const SizedBox(height: 32),
 
                 // Update icon
-                Icon(
-                  Icons.system_update,
-                  size: 64,
-                  color: colorScheme.primary,
-                ),
+                Icon(Icons.system_update, size: 64, color: colorScheme.primary),
 
                 const SizedBox(height: 24),
 

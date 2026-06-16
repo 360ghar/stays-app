@@ -18,7 +18,10 @@ class ListingCard extends StatelessWidget {
             aspectRatio: 16 / 9,
             child: listing.primaryImage.isNotEmpty
                 ? Image.network(listing.primaryImage, fit: BoxFit.cover)
-                : Container(color: Colors.grey.shade300, child: const Icon(Icons.home, size: 48)),
+                : Container(
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.home, size: 48),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -32,7 +35,10 @@ class ListingCard extends StatelessWidget {
                         listing.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const Icon(Icons.star_rate_rounded, size: 18),
@@ -45,10 +51,12 @@ class ListingCard extends StatelessWidget {
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 8),
-                Text('${CurrencyHelper.format(listing.pricePerNight)} · per night'),
+                Text(
+                  '${CurrencyHelper.format(listing.pricePerNight)} · per night',
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

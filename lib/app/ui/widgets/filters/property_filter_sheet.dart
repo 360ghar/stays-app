@@ -48,8 +48,11 @@ class _FilterSheetRoute extends PopupRoute<_FilterSheetRouteResult> {
   Duration get transitionDuration => duration;
 
   @override
-  Widget buildPage(BuildContext context, Animation<double> animation,
-      Animation<double> secondaryAnimation) {
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) {
     return _PropertyFilterSheet(
       initial: initial,
       animation: animation,
@@ -228,7 +231,9 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
                 decoration: BoxDecoration(
                   color: _colorScheme.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color: _colorScheme.shadow.withValues(

@@ -33,16 +33,17 @@ class LegalView extends StatelessWidget {
     _openUrl(doc.url);
     return Scaffold(
       appBar: AppBar(title: Text(doc.title)),
-      body: const Center(
-        child: Text('Opening...'),
-      ),
+      body: const Center(child: Text('Opening...')),
     );
   }
 
   Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
     try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
       if (!launched) {
         _showError();
       }
@@ -54,7 +55,9 @@ class LegalView extends StatelessWidget {
   void _showError() {
     if (Get.context != null) {
       ScaffoldMessenger.of(Get.context!).showSnackBar(
-        const SnackBar(content: Text('Could not open this link. Please try again.')),
+        const SnackBar(
+          content: Text('Could not open this link. Please try again.'),
+        ),
       );
     }
   }

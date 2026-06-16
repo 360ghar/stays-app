@@ -59,7 +59,9 @@ class PlacesService extends GetConnect {
   }) async {
     if (input.trim().isEmpty) return [];
     if (!_hasValidKey) {
-      AppLogger.warning('Places API key not configured. Skipping autocomplete.');
+      AppLogger.warning(
+        'Places API key not configured. Skipping autocomplete.',
+      );
       return [];
     }
     try {
