@@ -49,7 +49,10 @@ abstract class PaginatedController<T> extends BaseController {
   Future<void> loadMore() async {
     if (_isLoading.value || !hasMore.value) return;
     final cursor = nextCursor.value;
-    if (cursor == null) return;
+    if (cursor == null) {
+      hasMore.value = false;
+      return;
+    }
     try {
       _isLoading.value = true;
       final result = await fetchPage(cursor: cursor, limit: pageSize);

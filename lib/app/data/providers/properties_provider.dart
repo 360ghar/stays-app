@@ -12,10 +12,12 @@ class PropertiesProvider extends BaseProvider {
     double radiusKm = 10,
     Map<String, dynamic>? filters,
   }) async {
+    final effectiveCursor =
+        (cursor != null && cursor.trim().isEmpty) ? null : cursor;
     final query = <String, dynamic>{
       'lat': lat,
       'lng': lng,
-      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      if (effectiveCursor != null) 'cursor': effectiveCursor,
       'limit': limit,
       if (radiusKm > 0 && !(filters?.containsKey('radius') ?? false))
         'radius': radiusKm,

@@ -15,6 +15,7 @@ class ReviewProvider extends BaseProvider {
         'guest_review': comment.trim(),
     });
     return handleResponse(response, (json) {
+      if (json == null) return <String, dynamic>{};
       final map = json as Map<String, dynamic>;
       return Map<String, dynamic>.from((map['data'] as Map?) ?? map);
     });

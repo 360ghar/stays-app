@@ -1,4 +1,5 @@
 {
+  "_comment": "TEMPLATE ONLY — replace with the real prod google-services.json from the Firebase Console. Do NOT commit the real file with API keys. See android/app/FIREBASE_SETUP.md.",
   "project_info": {
     "project_number": "700553967131",
     "project_id": "stays-360",
@@ -7,7 +8,7 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:700553967131:android:7e1e04afbdb2ac95efaabe",
+        "mobilesdk_app_id": "REPLACE_FROM_FIREBASE_CONSOLE",
         "android_client_info": {
           "package_name": "com.the360ghar.stays_app"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDWpWwaEE2CBpEOfBZpD7okG-xUNxMrXXY"
+          "current_key": "REPLACE_FROM_FIREBASE_CONSOLE"
         }
       ],
       "services": {

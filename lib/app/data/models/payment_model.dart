@@ -47,16 +47,20 @@ class PaymentMethodModel {
   });
 
   factory PaymentMethodModel.fromMap(Map<String, dynamic> map) {
+    final rawId = map['id'];
+    final parsedId = rawId is num
+        ? rawId.toInt()
+        : rawId is String
+            ? int.tryParse(rawId) ?? 0
+            : 0;
     return PaymentMethodModel(
-      id: (map['id'] as num?)?.toInt() ?? 0,
+      id: parsedId,
       methodType: map['method_type'] as String? ?? 'card',
       brand: map['brand'] as String?,
       last4: map['last4'] as String?,
       nickname: map['nickname'] as String?,
       isDefault: map['is_default'] == true || map['is_default'] == 1,
-      createdAt:
-          DateTime.tryParse(map['created_at'] as String? ?? '') ??
-          DateTime.now(),
+      createdAt: _parseDateTime(map['created_at']),
     );
   }
 
@@ -69,6 +73,16 @@ class PaymentMethodModel {
     'is_default': isDefault,
     'created_at': createdAt.toIso8601String(),
   };
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(
+        value > 1e12 ? value : value * 1000,
+      );
+    }
+    return DateTime.now();
+  }
 
   String get displayName {
     final parts = <String>[];
@@ -101,7 +115,9 @@ class RazorpayOrderModel {
     final rawNotes = map['notes'];
     final notes = <String, String>{};
     if (rawNotes is Map) {
-      rawNotes.forEach((k, v) => notes[k.toString()] = v.toString());
+      rawNotes.forEach((k, v) {
+        if (v != null) notes[k.toString()] = v.toString();
+      });
     }
     return RazorpayOrderModel(
       orderId: map['order_id'] as String? ?? '',

@@ -48,35 +48,39 @@ Future<bool> showReviewDialog({
             ),
           ),
           const SizedBox(height: 8),
-          TextField(
-            controller: controller.commentController,
-            maxLines: 3,
-            enabled: !controller.isSubmitting.value,
-            decoration: const InputDecoration(
-              hintText: 'Share your experience (optional)',
-              border: OutlineInputBorder(),
+          Obx(
+            () => TextField(
+              controller: controller.commentController,
+              maxLines: 3,
+              enabled: !controller.isSubmitting.value,
+              decoration: const InputDecoration(
+                hintText: 'Share your experience (optional)',
+                border: OutlineInputBorder(),
+              ),
             ),
           ),
         ],
       ),
       actions: [
-        TextButton(
-          onPressed: controller.isSubmitting.value
-              ? null
-              : () => Get.back(result: false),
-          child: const Text('Cancel'),
+        Obx(
+          () => TextButton(
+            onPressed: controller.isSubmitting.value
+                ? null
+                : () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
         ),
-        FilledButton(
-          onPressed: controller.isSubmitting.value
-              ? null
-              : () async {
-                  final ok = await controller.submit(bookingId);
-                  if (ok) {
-                    Get.back(result: true);
-                  }
-                },
-          child: Obx(
-            () => controller.isSubmitting.value
+        Obx(
+          () => FilledButton(
+            onPressed: controller.isSubmitting.value
+                ? null
+                : () async {
+                    final ok = await controller.submit(bookingId);
+                    if (ok) {
+                      Get.back(result: true);
+                    }
+                  },
+            child: controller.isSubmitting.value
                 ? const SizedBox(
                     height: 18,
                     width: 18,

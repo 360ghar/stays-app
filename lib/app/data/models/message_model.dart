@@ -24,7 +24,10 @@ class MessageModel {
     senderId: map['sender_id']?.toString() ?? map['senderId']?.toString() ?? '',
     content: map['content'] as String? ?? '',
     createdAt:
-        DateTime.tryParse(map['created_at'] as String? ?? '') ?? DateTime.now(),
+        DateTime.tryParse(
+          (map['created_at'] ?? map['createdAt']) as String? ?? '',
+        ) ??
+        DateTime.now(),
     readAt: (map['read_at'] == null || map['read_at'] == '')
         ? null
         : DateTime.tryParse(map['read_at'].toString()),

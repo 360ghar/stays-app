@@ -39,14 +39,13 @@ jobs:
         run: flutter pub get
 
       - name: Verify formatting
-        run: dart format --output=none --set-exit-if-changed lib/ test/
+        run: dart format --output=none --set-exit-if-changed .
 
       - name: Lint (analyze)
         run: flutter analyze --fatal-infos
 
       - name: Run tests (dev flavor)
         run: flutter test --flavor dev -t lib/main_dev.dart --coverage
-        continue-on-error: true
 
       - name: Upload coverage to Codecov
         if: always()

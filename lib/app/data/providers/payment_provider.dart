@@ -53,6 +53,7 @@ class PaymentProvider extends BaseProvider {
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
       }
+      if (json is! Map) return <Map<String, dynamic>>[];
       final map = json as Map<String, dynamic>;
       final list = map['data'] ?? map['methods'] ?? const <dynamic>[];
       if (list is! List) return <Map<String, dynamic>>[];

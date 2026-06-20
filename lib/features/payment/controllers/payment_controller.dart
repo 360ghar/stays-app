@@ -73,10 +73,20 @@ class PaymentController extends BaseController {
       activeOrder.value = order;
       AppLogger.info('Razorpay order created: ${order.orderId}');
 
+      if (order.keyId == null || order.keyId!.isEmpty) {
+        AppSnackbar.error(
+          title: 'Payment Failed',
+          message: 'Payment configuration error. Please contact support.',
+        );
+        isProcessing.value = false;
+        return;
+      }
+
       final options = <String, dynamic>{
         'key': order.keyId,
         'order_id': order.orderId,
-        'amount': (order.amount * 100).round(), // paise
+        // Backend returns amount in rupees; Razorpay expects paise.
+        'amount': (order.amount * 100).round(),
         'currency': order.currency,
         'name': name ?? '360ghar Stays',
         'prefill': <String, dynamic>{

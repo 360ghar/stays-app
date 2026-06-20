@@ -16,9 +16,14 @@ class ReviewRepository {
       rating: rating,
       comment: comment,
     );
+    // Prefer explicit status fields over free-form message parsing.
+    if (data['success'] == true) return true;
+    if (data['success'] == false) return false;
+    final status = (data['status'] ?? '').toString().toLowerCase();
+    if (status == 'success' || status == 'added') return true;
+    if (status == 'failed' || status == 'error') return false;
+    // Last resort: substring match on message with word boundaries.
     final message = (data['message'] ?? '').toString().toLowerCase();
-    return message.contains('success') ||
-        message.contains('added') ||
-        data['success'] == true;
+    return RegExp(r'\bsuccess\b|\badded\b').hasMatch(message);
   }
 }

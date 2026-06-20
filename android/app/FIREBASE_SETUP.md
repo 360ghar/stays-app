@@ -8,9 +8,9 @@ or staging.**
 
 | Flavor | `applicationId` | Firebase project | Config file (Gradle reads this) | Status |
 |--------|-----------------|------------------|----------------------------------|--------|
-| `prod` | `com.the360ghar.stays_app` | `stays-360` (prod, isolated) | `android/app/src/prod/google-services.json` | ✅ real config in place |
-| `dev` | `com.the360ghar.stays_app.dev` | `stays-360-nonprod` (shared non-prod) | `android/app/src/dev/google-services.json` | ⛔ to be added (template provided) |
-| `staging` | `com.the360ghar.stays_app.staging` | `stays-360-nonprod` (shared non-prod) | `android/app/src/staging/google-services.json` | ⛔ to be added (template provided) |
+| `prod` | `com.the360ghar.stays_app` | `stays-360` (prod, isolated) | `android/app/src/prod/google-services.json` | ⛔ template only — add real config locally (do not commit) |
+| `dev` | `com.the360ghar.stays_app.dev` | `stays-360-nonprod` (shared non-prod) | `android/app/src/dev/google-services.json` | ⛔ template only — add real config locally (do not commit) |
+| `staging` | `com.the360ghar.stays_app.staging` | `stays-360-nonprod` (shared non-prod) | `android/app/src/staging/google-services.json` | ⛔ template only — add real config locally (do not commit) |
 
 - The package ids come from `android/app/build.gradle.kts` (`prod` uses the base
   `applicationId`; `staging` appends `.staging`; `dev` sets its own).
@@ -58,8 +58,10 @@ absent, instead of silently falling back to the wrong (e.g. prod) project.
 4. Download each app's `google-services.json` and save (replacing the templates):
    - dev → `android/app/src/dev/google-services.json`
    - staging → `android/app/src/staging/google-services.json`
-5. Commit the real files (this repo tracks `google-services.json`; only
-   `android/key.properties` is gitignored).
+5. **Do NOT commit the real files with API keys.** The template placeholders
+   (`REPLACE_FROM_FIREBASE_CONSOLE`) are committed as documentation. Add the
+   real `google-services.json` files locally only. Consider adding them to
+   `.gitignore` if not already excluded.
 
 ## 4. Build / verify each flavor
 
@@ -75,9 +77,11 @@ Confirm the built artifact's package matches the table in §1 (e.g. via
 
 | Path | Purpose |
 |------|---------|
-| `src/prod/google-services.json` | ✅ real production config (`stays-360`) |
+| `src/prod/google-services.json` | template — replace with the real prod config (do not commit) |
 | `src/prod/google-services.json.example` | template documenting the prod shape |
+| `src/dev/google-services.json` | template — replace with the real dev config (do not commit) |
 | `src/dev/google-services.json.example` | template — replace with the real dev config |
+| `src/staging/google-services.json` | template — replace with the real staging config (do not commit) |
 | `src/staging/google-services.json.example` | template — replace with the real staging config |
 
 ## 6. History (why this exists)
