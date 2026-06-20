@@ -28,7 +28,7 @@ class PropertiesRepository {
   Future<UnifiedPropertyResponse> explore({
     double? lat,
     double? lng,
-    int page = 1,
+    String? cursor,
     int limit = 20,
     double radiusKm = 10,
     Map<String, dynamic>? filters,
@@ -57,16 +57,18 @@ class PropertiesRepository {
       final cached = _cacheService!.getCachedExploreResults(
         lat: la,
         lng: ln,
-        page: page,
+        cursor: cursor,
       );
       if (cached != null) {
-        AppLogger.info('Returning cached explore results for page $page');
+        AppLogger.info(
+          'Returning cached explore results for cursor ${cursor ?? 'first'}',
+        );
         // Fetch fresh data in background (stale-while-revalidate)
         unawaited(
           _refreshExploreInBackground(
             la,
             ln,
-            page,
+            cursor,
             limit,
             radiusKm,
             queryFilters,
@@ -79,7 +81,7 @@ class PropertiesRepository {
     final response = await _provider.explore(
       lat: la,
       lng: ln,
-      page: page,
+      cursor: cursor,
       limit: limit,
       radiusKm: radiusKm,
       filters: queryFilters,
@@ -91,7 +93,7 @@ class PropertiesRepository {
         response,
         lat: la,
         lng: ln,
-        page: page,
+        cursor: cursor,
       ),
     );
 
@@ -102,7 +104,7 @@ class PropertiesRepository {
   Future<void> _refreshExploreInBackground(
     double lat,
     double lng,
-    int page,
+    String? cursor,
     int limit,
     double radiusKm,
     Map<String, dynamic> filters,
@@ -115,7 +117,7 @@ class PropertiesRepository {
       final response = await _provider.explore(
         lat: lat,
         lng: lng,
-        page: page,
+        cursor: cursor,
         limit: limit,
         radiusKm: radiusKm,
         filters: filters,
@@ -124,7 +126,7 @@ class PropertiesRepository {
         response,
         lat: lat,
         lng: lng,
-        page: page,
+        cursor: cursor,
       );
     } catch (e) {
       AppLogger.warning('Background refresh failed: $e');
@@ -197,12 +199,12 @@ class PropertiesRepository {
   UnifiedPropertyResponse? getOfflineExploreResults({
     double? lat,
     double? lng,
-    int page = 1,
+    String? cursor,
   }) {
     return _cacheService?.getCachedExploreResults(
       lat: lat,
       lng: lng,
-      page: page,
+      cursor: cursor,
       ignoreExpiry: true,
     );
   }

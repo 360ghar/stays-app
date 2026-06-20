@@ -41,14 +41,14 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
         if (didPop) return;
         final now = DateTime.now();
         if (_lastBackPress != null &&
-            now.difference(_lastBackPress!) < const Duration(seconds: 3)) {
+            now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
           SystemNavigator.pop();
         } else {
           _lastBackPress = now;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Press back again to exit'),
-              duration: Duration(seconds: 3),
+              duration: Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -294,8 +294,8 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
         color: Colors.transparent,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-          child: AnimatedBuilder(
-            animation: _controller,
+          child: ListenableBuilder(
+            listenable: _controller,
             builder: (context, child) {
               final iconColor =
                   Color.lerp(inactiveColor, activeColor, _controller.value) ??

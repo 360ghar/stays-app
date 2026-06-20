@@ -7,6 +7,7 @@ import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/trip_model.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
+import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
@@ -45,6 +46,8 @@ class ProfileController extends BaseController {
   final RxMap<String, dynamic> preferences = <String, dynamic>{}.obs;
   final RxMap<String, dynamic> notificationSettings = <String, dynamic>{}.obs;
   final RxMap<String, dynamic> privacySettings = <String, dynamic>{}.obs;
+
+  Worker? _tripsWorker;
 
   @override
   void onInit() {
@@ -109,8 +112,7 @@ class ProfileController extends BaseController {
       (preferences['theme'] ?? '').toString().isNotEmpty,
       (notificationSettings['push'] ?? false) ||
           (notificationSettings['email'] ?? false),
-      (privacySettings['twoFactorEnabled'] ?? false) ||
-          (privacySettings['profileVisible'] ?? true),
+      (privacySettings['profileVisible'] ?? true),
     ];
     final completed = checks.where((value) => value).length;
     return checks.isEmpty ? 0 : completed / checks.length;
@@ -118,24 +120,40 @@ class ProfileController extends BaseController {
 
   Future<void> _loadPastTrips() async {
     try {
-      if (Get.isRegistered<TripsController>()) {
-        final tripsController = Get.find<TripsController>();
-        await tripsController.loadPastBookings();
-        if (tripsController.pastBookings.isNotEmpty) {
-          pastTrips.assignAll(
-            tripsController.pastBookings.map(_mapBookingToTrip),
-          );
-        } else {
-          pastTrips.clear();
+      // Ensure TripsController is registered (audit UX #7): the home shell
+      // registers it via HomeBinding, but the profile screen can be reached
+      // before that completes. Register on demand if missing.
+      if (!Get.isRegistered<TripsController>()) {
+        if (!Get.isRegistered<BookingRepository>()) {
+          return; // Can't construct TripsController without its repo; bail gracefully.
         }
-      } else {
-        pastTrips.clear();
+        Get.put<TripsController>(TripsController(), permanent: true);
       }
+      final tripsController = Get.find<TripsController>();
+      await tripsController.loadPastBookings();
+      _syncTripsFromController(tripsController);
+      // React to future trips changes (e.g. new booking, cancellation).
+      _tripsWorker ??= trackWorker(
+        ever<dynamic>(
+          tripsController.pastBookings,
+          (_) => _syncTripsFromController(tripsController),
+        ),
+      );
     } catch (e) {
       AppLogger.warning('Unable to load past trips from TripsController', e);
+      pastTrips.clear();
     } finally {
       _recalculateTripStats();
     }
+  }
+
+  void _syncTripsFromController(TripsController tripsController) {
+    if (tripsController.pastBookings.isNotEmpty) {
+      pastTrips.assignAll(tripsController.pastBookings.map(_mapBookingToTrip));
+    } else {
+      pastTrips.clear();
+    }
+    _recalculateTripStats();
   }
 
   TripModel _mapBookingToTrip(Map<String, dynamic> booking) {

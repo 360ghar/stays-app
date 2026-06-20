@@ -163,10 +163,7 @@ class ListingDetailController extends BaseController {
 
       try {
         final wishlistController = Get.find<WishlistController>();
-        await wishlistController.loadWishlist(
-          pageOverride: 1,
-          showLoader: false,
-        );
+        await wishlistController.loadWishlist(showLoader: false);
         AppLogger.info('Wishlist refreshed after toggle favorite');
       } catch (e) {
         AppLogger.info(

@@ -16,17 +16,16 @@ class PrivacyController extends BaseController {
     required ProfileController profileController,
     required AuthRepository authRepository,
     required AuthController authController,
-  })  : _profileRepository = profileRepository,
-        _profileController = profileController,
-        _authRepository = authRepository,
-        _authController = authController;
+  }) : _profileRepository = profileRepository,
+       _profileController = profileController,
+       _authRepository = authRepository,
+       _authController = authController;
 
   final ProfileRepository _profileRepository;
   final ProfileController _profileController;
   final AuthRepository _authRepository;
   final AuthController _authController;
 
-  final RxBool twoFactorEnabled = false.obs;
   final RxBool profileVisible = true.obs;
   final RxBool locationSharing = false.obs;
   final RxBool dataExportInFlight = false.obs;
@@ -60,10 +59,6 @@ class PrivacyController extends BaseController {
   void _hydrate(UserModel? user) {
     if (user == null) return;
     final settings = user.privacySettings ?? {};
-    twoFactorEnabled.value = parseBool(
-      settings['twoFactorEnabled'],
-      fallback: false,
-    );
     profileVisible.value = parseBool(
       settings['profileVisible'],
       fallback: true,
@@ -72,10 +67,6 @@ class PrivacyController extends BaseController {
       settings['locationSharing'],
       fallback: false,
     );
-  }
-
-  void setTwoFactorEnabled(bool value) {
-    twoFactorEnabled.value = value;
   }
 
   void setProfileVisible(bool value) {
@@ -89,7 +80,6 @@ class PrivacyController extends BaseController {
   Future<void> savePrivacySettings() async {
     if (isLoading.value) return;
     final payload = {
-      'twoFactorEnabled': twoFactorEnabled.value,
       'profileVisible': profileVisible.value,
       'locationSharing': locationSharing.value,
     };
@@ -217,8 +207,7 @@ class PrivacyController extends BaseController {
       AppLogger.error('Account deletion failed: $e');
       AppSnackbar.error(
         title: 'Deletion failed',
-        message:
-            'Unable to delete your account. Please try again later.',
+        message: 'Unable to delete your account. Please try again later.',
       );
     } finally {
       accountDeletionInFlight.value = false;

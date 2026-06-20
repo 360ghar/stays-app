@@ -1,6 +1,12 @@
 import 'base_provider.dart';
 import '../models/listing_model.dart';
 
+// NOTE: This provider targets the `/listings` endpoint, which appears to be
+// dead code. There are no callers of `ListingProvider` or `ListingRepository`
+// anywhere in `lib/` (no Get registration, no instantiation). The cursor
+// pagination migration is therefore intentionally skipped here. If this
+// endpoint is reactivated, switch `page` -> `cursor` and parse `items` /
+// `next_cursor` / `has_more` from the response envelope.
 class ListingProvider extends BaseProvider {
   Future<List<ListingModel>> getListings({
     Map<String, dynamic>? filters,

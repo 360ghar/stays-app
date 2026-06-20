@@ -243,30 +243,35 @@ class JsonHelpers {
     return response;
   }
 
-  /// Unwraps a paginated response and returns both data and metadata.
+  /// Unwraps a cursor-paginated response and returns the items plus cursor
+  /// metadata.
+  ///
+  /// Recognized envelope (source of truth):
+  ///   {items: [...], next_cursor: base64-or-null, has_more: bool, limit: int}
+  ///
+  /// Also tolerates legacy `data`/`results`/bare-list envelopes for callers
+  /// that have not yet migrated. Cursor tokens are opaque base64; this helper
+  /// never decodes them.
   static ({
     List<Map<String, dynamic>> items,
-    int currentPage,
-    int totalPages,
-    int totalCount,
-    int pageSize,
+    String? nextCursor,
+    bool hasMore,
+    int limit,
   })
   unwrapPaginatedResponse(Map<String, dynamic>? response) {
     if (response == null) {
       return (
         items: <Map<String, dynamic>>[],
-        currentPage: 1,
-        totalPages: 1,
-        totalCount: 0,
-        pageSize: 20,
+        nextCursor: null,
+        hasMore: false,
+        limit: 20,
       );
     }
 
-    final data = unwrapData(response);
     final List<Map<String, dynamic>> items;
-
-    if (data is List) {
-      items = data
+    final rawItems = response['items'];
+    if (rawItems is List) {
+      items = rawItems
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList();
@@ -274,24 +279,14 @@ class JsonHelpers {
       items = <Map<String, dynamic>>[];
     }
 
+    final nextCursor = response['next_cursor'] as String?;
+    final hasMore = (response['has_more'] as bool?) ?? (nextCursor != null);
+
     return (
       items: items,
-      currentPage: getIntOrDefault(
-        response['current_page'] ?? response['page'],
-        1,
-      ),
-      totalPages: getIntOrDefault(
-        response['total_pages'] ?? response['pages'],
-        1,
-      ),
-      totalCount: getIntOrDefault(
-        response['total_count'] ?? response['total'] ?? response['count'],
-        items.length,
-      ),
-      pageSize: getIntOrDefault(
-        response['page_size'] ?? response['limit'] ?? response['per_page'],
-        20,
-      ),
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+      limit: getIntOrDefault(response['limit'], 20),
     );
   }
 

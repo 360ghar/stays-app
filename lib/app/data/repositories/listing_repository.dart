@@ -2,6 +2,10 @@ import '../providers/listing_provider.dart';
 import '../services/storage_service.dart';
 import '../models/listing_model.dart';
 
+// NOTE: `ListingRepository` and its `/listings` endpoint appear to be dead
+// code (no callers/registration in `lib/`). The cursor pagination migration is
+// skipped here. If reactivated, rework the cache key to be cursor-keyed and
+// parse `items` / `next_cursor` / `has_more` instead of bare `listings`.
 class ListingRepository {
   final ListingProvider _provider;
   final StorageService _storage;

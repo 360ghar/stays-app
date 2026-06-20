@@ -48,13 +48,14 @@ class BookingsProvider extends BaseProvider {
   }
 
   Future<Map<String, dynamic>> listBookings({
-    int page = 1,
+    String? cursor,
     int limit = 20,
   }) async {
-    final res = await get(
-      '/api/v1/bookings/',
-      query: {'page': '$page', 'limit': '$limit'},
-    );
+    final query = <String, dynamic>{
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      'limit': '$limit',
+    };
+    final res = await get('/api/v1/bookings/', query: query);
     return handleResponse(res, (json) {
       final map = json as Map<String, dynamic>;
       return Map<String, dynamic>.from((map['data'] as Map?) ?? map);

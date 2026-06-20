@@ -4,7 +4,12 @@ import 'package:get/get.dart';
 
 import 'base_controller.dart';
 
-/// Generic pagination controller for list-based views.
+/// Generic cursor-based pagination controller for list-based views.
+///
+/// Subclasses implement [fetchPage] which receives an opaque cursor (null on
+/// the first page) and returns the page of items plus the server-provided
+/// `nextCursor` and `hasMore` flag. Page-index arithmetic is intentionally
+/// avoided: the cursor is the only pagination token.
 abstract class PaginatedController<T> extends BaseController {
   final RxList<T> items = <T>[].obs;
   final RxBool _isLoading = false.obs;
@@ -13,21 +18,29 @@ abstract class PaginatedController<T> extends BaseController {
   @override
   RxBool get isLoading => _isLoading;
   final RxBool hasMore = true.obs;
-  final RxInt currentPage = 1.obs;
+  final RxnString nextCursor = RxnString(null);
   final int pageSize;
 
   PaginatedController({this.pageSize = 20});
 
-  Future<List<T>> fetchPage({required int page, required int limit});
+  /// Fetches a single page of items.
+  ///
+  /// [cursor] is null on the first page and an opaque base64 token on
+  /// subsequent pages. Returns a record containing the page items, the next
+  /// cursor (null on the terminal page) and whether more pages exist.
+  Future<({List<T> items, String? nextCursor, bool hasMore})> fetchPage({
+    required String? cursor,
+    required int limit,
+  });
 
   Future<void> refreshList() async {
     if (isRefreshing.value) return;
     try {
       isRefreshing.value = true;
-      currentPage.value = 1;
-      final data = await fetchPage(page: 1, limit: pageSize);
-      items.assignAll(data);
-      hasMore.value = data.length == pageSize;
+      final result = await fetchPage(cursor: null, limit: pageSize);
+      items.assignAll(result.items);
+      nextCursor.value = result.nextCursor;
+      hasMore.value = result.hasMore;
     } finally {
       isRefreshing.value = false;
     }
@@ -35,17 +48,19 @@ abstract class PaginatedController<T> extends BaseController {
 
   Future<void> loadMore() async {
     if (_isLoading.value || !hasMore.value) return;
+    final cursor = nextCursor.value;
+    if (cursor == null) return;
     try {
       _isLoading.value = true;
-      final next = currentPage.value + 1;
-      final data = await fetchPage(page: next, limit: pageSize);
-      if (data.isEmpty) {
+      final result = await fetchPage(cursor: cursor, limit: pageSize);
+      if (result.items.isEmpty) {
         hasMore.value = false;
+        nextCursor.value = null;
         return;
       }
-      items.addAll(data);
-      currentPage.value = next;
-      hasMore.value = data.length == pageSize;
+      items.addAll(result.items);
+      nextCursor.value = result.nextCursor;
+      hasMore.value = result.hasMore;
     } finally {
       _isLoading.value = false;
     }

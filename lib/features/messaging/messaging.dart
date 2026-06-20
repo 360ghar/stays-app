@@ -7,6 +7,7 @@ export 'bindings/message_binding.dart';
 // Controllers
 export 'controllers/hotels_map_controller.dart';
 export 'controllers/chat_controller.dart';
+export 'controllers/inbox_controller.dart';
 
 // Views
 export 'views/chat_view.dart';

@@ -31,7 +31,11 @@ class OnboardingView extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+              const Icon(
+                Icons.check_circle_outline,
+                size: 64,
+                color: Colors.green,
+              ),
               const SizedBox(height: 24),
               Text(
                 'Welcome to Stays',
@@ -42,9 +46,9 @@ class OnboardingView extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'You\'re all set!',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),

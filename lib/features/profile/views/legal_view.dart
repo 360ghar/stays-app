@@ -50,9 +50,7 @@ class _LegalViewState extends State<LegalView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(_doc.title)),
-      body: const Center(
-        child: Text('Opening…'),
-      ),
+      body: const Center(child: Text('Opening…')),
     );
   }
 

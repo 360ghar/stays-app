@@ -18,6 +18,7 @@ class LocationService extends GetxService {
   final _isLoadingLocation = false.obs;
   final RxBool _isInitialized =
       false.obs; // Track if location has been initialized
+  Completer<void>? _readyCompleter;
 
   Position? get currentPosition => _currentPosition.value;
   // UI-friendly name of location to display
@@ -37,13 +38,22 @@ class LocationService extends GetxService {
   @override
   void onInit() {
     super.onInit();
+    _readyCompleter = Completer<void>();
     unawaited(_initLocationService());
   }
 
+  /// Completes when the location service has finished its initial setup.
+  /// Callers can `await locationService.ready` instead of busy-wait polling.
+  Future<void> get ready => _readyCompleter?.future ?? Future.value();
+
   Future<void> _initLocationService() async {
-    await checkLocationPermission();
-    _isInitialized.value = true;
-    AppLogger.info('LocationService initialization completed');
+    try {
+      await checkLocationPermission();
+    } finally {
+      _isInitialized.value = true;
+      _readyCompleter?.complete();
+      AppLogger.info('LocationService initialization completed');
+    }
   }
 
   Future<bool> checkLocationPermission() async {

@@ -19,10 +19,9 @@ class ListingController extends BaseController {
 
   final RxList<Property> listings = <Property>[].obs;
   final RxBool isRefreshing = false.obs;
-  final RxInt currentPage = 1.obs;
-  final RxInt totalPages = 1.obs;
-  final RxInt pageSize = 20.obs;
-  final RxInt totalCount = 0.obs;
+  final RxnString nextCursor = RxnString(null);
+  final RxBool hasMore = false.obs;
+  final int pageSize = 20;
 
   double? _queryLat;
   double? _queryLng;
@@ -61,6 +60,7 @@ class ListingController extends BaseController {
           ..removeWhere((_, value) => value == null)
           ..remove('page')
           ..remove('limit')
+          ..remove('cursor')
           ..remove('lat')
           ..remove('lng');
       }
@@ -90,7 +90,7 @@ class ListingController extends BaseController {
         (filters) async {
           if (_activeFilters == filters) return;
           _activeFilters = filters;
-          await fetch(pageOverride: 1, jumpToTop: true);
+          await fetch(jumpToTop: true);
         },
         time: const Duration(milliseconds: 150),
       ),
@@ -107,20 +107,9 @@ class ListingController extends BaseController {
     return combined.isEmpty ? null : combined;
   }
 
-  Future<void> fetch({
-    int? pageOverride,
-    bool showLoader = true,
-    bool jumpToTop = false,
-  }) async {
-    final targetPage = pageOverride ?? currentPage.value;
-    if (targetPage < 1) {
-      await fetch(
-        pageOverride: 1,
-        showLoader: showLoader,
-        jumpToTop: jumpToTop,
-      );
-      return;
-    }
+  /// Fresh fetch from the first page (cursor null). Replaces the current list
+  /// and resets cursor pagination state.
+  Future<void> fetch({bool showLoader = true, bool jumpToTop = false}) async {
     if (showLoader) {
       isLoading.value = true;
     } else {
@@ -131,19 +120,19 @@ class ListingController extends BaseController {
       final response = await _repository.explore(
         lat: _queryLat,
         lng: _queryLng,
-        page: targetPage,
-        limit: pageSize.value,
+        cursor: null,
+        limit: pageSize,
         radiusKm: _radiusKm,
         filters: _buildFilters(),
       );
-      currentPage.value = response.currentPage;
-      totalPages.value = response.totalPages;
-      totalCount.value = response.totalCount;
-      pageSize.value = response.pageSize;
-      listings.assignAll(response.properties);
+      nextCursor.value = response.nextCursor;
+      hasMore.value = response.hasMore;
+      listings.assignAll(response.items);
     } catch (e) {
       errorMessage.value = 'Failed to load properties';
       listings.clear();
+      hasMore.value = false;
+      nextCursor.value = null;
     } finally {
       if (showLoader) {
         isLoading.value = false;
@@ -156,31 +145,41 @@ class ListingController extends BaseController {
     }
   }
 
+  /// Loads the next page using the server-provided cursor. Appends to the
+  /// current list. No-op when there is no more data or no cursor available.
+  Future<void> loadMore() async {
+    if (isLoading.value || isRefreshing.value) return;
+    if (!hasMore.value) return;
+    final cursor = nextCursor.value;
+    if (cursor == null) return;
+    try {
+      isLoading.value = true;
+      final response = await _repository.explore(
+        lat: _queryLat,
+        lng: _queryLng,
+        cursor: cursor,
+        limit: pageSize,
+        radiusKm: _radiusKm,
+        filters: _buildFilters(),
+      );
+      if (response.items.isEmpty) {
+        hasMore.value = false;
+        nextCursor.value = null;
+        return;
+      }
+      listings.addAll(response.items);
+      nextCursor.value = response.nextCursor;
+      hasMore.value = response.hasMore;
+    } catch (e) {
+      errorMessage.value = 'Failed to load more properties';
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   @override
   Future<void> refresh() async {
     await fetch(showLoader: false);
-  }
-
-  Future<void> goToPage(int page) async {
-    if (page == currentPage.value) return;
-    if (page < 1 || page > totalPages.value) return;
-    await fetch(pageOverride: page, jumpToTop: true);
-  }
-
-  Future<void> nextPage() async {
-    if (currentPage.value >= totalPages.value) return;
-    await goToPage(currentPage.value + 1);
-  }
-
-  Future<void> previousPage() async {
-    if (currentPage.value <= 1) return;
-    await goToPage(currentPage.value - 1);
-  }
-
-  Future<void> changePageSize(int newSize) async {
-    if (newSize == pageSize.value) return;
-    pageSize.value = newSize;
-    await fetch(pageOverride: 1, jumpToTop: true);
   }
 
   Future<void> setQueryLocation({
@@ -196,7 +195,7 @@ class ListingController extends BaseController {
       _filtersFromArgs = Map<String, dynamic>.from(filters)
         ..removeWhere((_, value) => value == null);
     }
-    await fetch(pageOverride: 1, jumpToTop: true);
+    await fetch(jumpToTop: true);
   }
 
   void _scrollToTop() {

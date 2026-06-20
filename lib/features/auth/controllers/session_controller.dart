@@ -147,7 +147,9 @@ class SessionController extends BaseController {
     }
   }
 
-  /// Persist the latest Supabase session when the user opts in
+  /// Persist the remember-me flag only. Tokens are stored securely via
+  /// [TokenService] / [StorageService] (flutter_secure_storage) — never in
+  /// plaintext GetStorage (Critical audit #5).
   Future<void> _persistRememberedSession({Session? session}) async {
     await _rememberMeInit;
     if (!_isRememberMeStorageReady) return;
@@ -159,15 +161,13 @@ class SessionController extends BaseController {
       );
       return;
     }
+    // Sync tokens to secure storage via TokenService.
+    await _updateTokenServiceFromSession(activeSession);
+    // Only persist the boolean flag to GetStorage (not the tokens).
     await _authPrefs.write(_rememberMeFlagKey, true);
-    await _authPrefs.write(
-      _rememberedAccessTokenKey,
-      activeSession.accessToken,
-    );
-    final refreshToken = activeSession.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _authPrefs.write(_rememberedRefreshTokenKey, refreshToken);
-    }
+    // Clean up any legacy plaintext tokens left by older builds.
+    await _authPrefs.remove(_rememberedAccessTokenKey);
+    await _authPrefs.remove(_rememberedRefreshTokenKey);
   }
 
   /// Drop cached credentials when the user opts out or signs out

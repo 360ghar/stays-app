@@ -7,6 +7,7 @@ class SplashView extends GetView<SplashController> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       body: Center(
         child: Column(
@@ -16,6 +17,15 @@ class SplashView extends GetView<SplashController> {
               'assets/images/360Stays_logo.png',
               width: 200,
               fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              height: 28,
+              width: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: colors.primary,
+              ),
             ),
           ],
         ),

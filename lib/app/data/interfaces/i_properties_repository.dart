@@ -1,6 +1,15 @@
 import '../models/property_model.dart';
 import '../models/unified_filter_model.dart';
 
+// NOTE: `IPropertiesRepository`, `PaginatedProperties`, and
+// `PropertySearchParams` below appear to be dead code: there are no
+// implementers or callers anywhere in `lib/` (only referenced in
+// `.cursor/rules` documentation). The cursor pagination migration is therefore
+// intentionally skipped here. If this interface is revived, rework
+// `PaginatedProperties` to expose `items`/`nextCursor`/`hasMore`/`limit`,
+// replace `PropertySearchParams.page` with an opaque `cursor`, and update
+// `searchProperties` accordingly.
+
 /// Property review information
 class PropertyReview {
   final int id;

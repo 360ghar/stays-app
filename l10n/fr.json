@@ -7,5 +7,8 @@
   },
   "home": {
     "explore_nearby": "Explorer à proximité"
+  },
+  "nav": {
+    "map": "Carte"
   }
 }

@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
-import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/features/listing/controllers/listing_controller.dart';
 import 'package:stays_app/app/ui/widgets/cards/property_grid_card.dart';
 import 'package:stays_app/app/ui/widgets/common/location_filter_app_bar.dart';
@@ -30,19 +28,12 @@ class SearchResultsView extends GetView<ListingController> {
           IconButton(
             tooltip: 'Sort',
             icon: Icon(Icons.sort_rounded, color: colors.onSurface),
-            onPressed: () {
-              AppSnackbar.info(
-                title: 'Sort',
-                message: 'Sorting options coming soon',
-              );
-            },
+            onPressed: () => _showSortSheet(context, filterController),
           ),
           IconButton(
             tooltip: 'Map',
             icon: Icon(Icons.map_outlined, color: colors.onSurface),
-            onPressed: () {
-              AppSnackbar.info(title: 'Map', message: 'Map view coming soon');
-            },
+            onPressed: () => Get.toNamed(Routes.inbox),
           ),
         ],
       ),
@@ -67,6 +58,68 @@ class SearchResultsView extends GetView<ListingController> {
           ),
         );
       }),
+    );
+  }
+
+  void _showSortSheet(BuildContext context, FilterController filterController) {
+    const options = <(String, String)>[
+      ('distance', 'Distance: nearest first'),
+      ('price_low', 'Price: low to high'),
+      ('price_high', 'Price: high to low'),
+      ('newest', 'Newest'),
+      ('popular', 'Most popular'),
+      ('relevance', 'Relevance'),
+    ];
+    final current = filterController.filterFor(FilterScope.locate).sortBy;
+    Get.bottomSheet(
+      SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'Sort by',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            ...options.map((opt) {
+              final (value, label) = opt;
+              return RadioListTile<String>(
+                value: value,
+                groupValue: current,
+                title: Text(label),
+                onChanged: (selected) {
+                  if (selected == null) return;
+                  final base = filterController.filterFor(FilterScope.locate);
+                  filterController.setFilters(
+                    FilterScope.locate,
+                    base.copyWith(sortBy: selected),
+                  );
+                  Get.back();
+                },
+              );
+            }),
+            ListTile(
+              leading: const Icon(Icons.clear),
+              title: const Text('Clear sort'),
+              onTap: () {
+                final base = filterController.filterFor(FilterScope.locate);
+                filterController.setFilters(
+                  FilterScope.locate,
+                  base.copyWith(sortBy: null),
+                );
+                Get.back();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
     );
   }
 
@@ -99,14 +152,7 @@ class SearchResultsView extends GetView<ListingController> {
 
     final slivers = <Widget>[];
     final items = controller.listings;
-    final total = controller.totalCount.value;
-    final currentPage = controller.currentPage.value;
-    final totalPages = controller.totalPages.value;
-    final pageSize = controller.pageSize.value;
-    final startIndex = total == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
-    final endIndex = total == 0
-        ? 0
-        : math.min(startIndex + items.length - 1, total);
+    final loadedCount = items.length;
     final tags = filters.activeTags();
 
     slivers.add(
@@ -117,22 +163,14 @@ class SearchResultsView extends GetView<ListingController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                total > 0
-                    ? 'Found $total stays • Page $currentPage of $totalPages • $pageSize per page'
+                loadedCount > 0
+                    ? 'Showing $loadedCount ${loadedCount == 1 ? 'stay' : 'stays'}'
                     : 'No stays found',
                 style: textStyles.bodyMedium?.copyWith(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              if (total > 0)
-                Text(
-                  'Showing $startIndex–$endIndex of $total properties',
-                  style: textStyles.bodySmall?.copyWith(
-                    fontSize: 12,
-                    color: colors.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
               if (controller.errorMessage.value.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),
@@ -250,7 +288,7 @@ class SearchResultsView extends GetView<ListingController> {
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          child: _PaginationBar(controller: controller),
+          child: _LoadMoreBar(controller: controller),
         ),
       ),
     );
@@ -297,79 +335,34 @@ class SearchResultsView extends GetView<ListingController> {
   }
 }
 
-class _PaginationBar extends StatelessWidget {
-  const _PaginationBar({required this.controller});
+class _LoadMoreBar extends StatelessWidget {
+  const _LoadMoreBar({required this.controller});
 
   final ListingController controller;
 
   @override
   Widget build(BuildContext context) {
-    final isBusy = controller.isLoading.value || controller.isRefreshing.value;
-    final canGoPrev = controller.currentPage.value > 1 && !isBusy;
-    final canGoNext =
-        controller.currentPage.value < controller.totalPages.value && !isBusy;
-    final pageSize = controller.pageSize.value;
-
-    final summary = Text(
-      'Page ${controller.currentPage.value} of ${controller.totalPages.value}',
-      style: const TextStyle(fontWeight: FontWeight.w600),
-      overflow: TextOverflow.ellipsis,
-    );
-
-    final controls = Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        DropdownButton<int>(
-          value: pageSize,
-          onChanged: isBusy
-              ? null
-              : (value) {
-                  if (value != null) {
-                    controller.changePageSize(value);
-                  }
-                },
-          items: const [10, 20, 30, 50]
-              .map(
-                (value) => DropdownMenuItem<int>(
-                  value: value,
-                  child: Text('Limit $value'),
-                ),
-              )
-              .toList(),
+    return Obx(() {
+      final isBusy =
+          controller.isLoading.value || controller.isRefreshing.value;
+      final canLoadMore = controller.hasMore.value && !isBusy;
+      if (!controller.hasMore.value && !isBusy) {
+        // Terminal page reached: no button to show.
+        return const SizedBox.shrink();
+      }
+      return Center(
+        child: FilledButton.icon(
+          onPressed: canLoadMore ? () => controller.loadMore() : null,
+          icon: isBusy
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.expand_more),
+          label: Text(isBusy ? 'Loading...' : 'Load more'),
         ),
-        OutlinedButton.icon(
-          onPressed: canGoPrev ? () => controller.previousPage() : null,
-          icon: const Icon(Icons.chevron_left),
-          label: const Text('Previous'),
-        ),
-        FilledButton.icon(
-          onPressed: canGoNext ? () => controller.nextPage() : null,
-          icon: const Icon(Icons.chevron_right),
-          label: const Text('Next'),
-        ),
-      ],
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 420;
-        if (isCompact) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [summary, const SizedBox(height: 8), controls],
-          );
-        }
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(child: summary),
-            const SizedBox(width: 12),
-            controls,
-          ],
-        );
-      },
-    );
+      );
+    });
   }
 }

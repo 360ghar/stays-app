@@ -54,7 +54,10 @@ class _ProfileCompletionViewState extends State<ProfileCompletionView> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateOfBirth == null) {
-      AppSnackbar.error(title: 'Required', message: 'Please select your date of birth');
+      AppSnackbar.error(
+        title: 'Required',
+        message: 'Please select your date of birth',
+      );
       return;
     }
 
@@ -92,7 +95,10 @@ class _ProfileCompletionViewState extends State<ProfileCompletionView> {
         Get.offAllNamed(Routes.home);
       }
     } catch (e) {
-      AppSnackbar.error(title: 'Error', message: 'Failed to update profile: $e');
+      AppSnackbar.error(
+        title: 'Error',
+        message: 'Failed to update profile: $e',
+      );
     } finally {
       if (mounted) {
         setState(() => _isSubmitting = false);
@@ -124,9 +130,9 @@ class _ProfileCompletionViewState extends State<ProfileCompletionView> {
                 const SizedBox(height: 8),
                 Text(
                   'Please provide your full name and date of birth to continue.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 32),
 

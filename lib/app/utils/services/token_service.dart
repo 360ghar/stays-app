@@ -424,4 +424,9 @@ class TokenService extends GetxService {
   Future<bool> performTokenRefresh() async {
     return await _refreshTokens();
   }
+
+  /// Public alias for [performTokenRefresh]. Callers (e.g. BaseProvider's
+  /// authenticator, the splash restore flow) should use this to force a
+  /// Supabase session refresh and keep secure storage in sync.
+  Future<bool> refresh() => performTokenRefresh();
 }

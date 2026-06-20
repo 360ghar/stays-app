@@ -12,17 +12,26 @@ class SwipesProvider extends BaseProvider {
 
   Future<Map<String, dynamic>> list({
     bool? isLiked,
-    int page = 1,
+    String? cursor,
     int limit = 20,
     Map<String, dynamic>? filters,
   }) async {
     final query = <String, dynamic>{
-      'page': page,
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       'limit': limit,
       if (isLiked != null) 'is_liked': isLiked,
       ...?filters,
     };
     final res = await get('/api/v1/swipes/', query: query.asQueryParams());
     return handleResponse(res, (json) => Map<String, dynamic>.from(json));
+  }
+
+  /// Remove many liked properties in a single backend call (audit UX #9).
+  Future<void> batchRemove(List<int> propertyIds) async {
+    if (propertyIds.isEmpty) return;
+    final res = await post('/api/v1/swipes/batch-remove', {
+      'property_ids': propertyIds,
+    });
+    handleResponse(res, (json) => json);
   }
 }

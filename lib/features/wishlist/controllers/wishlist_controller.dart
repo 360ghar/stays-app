@@ -17,9 +17,11 @@ class WishlistController extends BaseController {
 
   final RxList<Property> wishlistItems = <Property>[].obs;
   final RxBool isRefreshing = false.obs;
-  final RxInt currentPage = 1.obs;
-  final RxInt totalPages = 1.obs;
-  final RxInt pageSize = 20.obs;
+  final RxnString nextCursor = RxnString(null);
+  final RxBool hasMore = false.obs;
+  final int pageSize = 20;
+  // Local count of currently-loaded wishlist items. Not read from the backend;
+  // maintained locally for the empty-state UX check in the view.
   final RxInt totalCount = 0.obs;
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
@@ -37,7 +39,7 @@ class WishlistController extends BaseController {
   void onReady() {
     super.onReady();
     // Ensure wishlist is refreshed when controller becomes active
-    loadWishlist(pageOverride: 1, showLoader: false);
+    loadWishlist(showLoader: false);
   }
 
   void _initializeServices() {
@@ -66,7 +68,7 @@ class WishlistController extends BaseController {
         (filters) async {
           if (_activeFilters == filters) return;
           _activeFilters = filters;
-          await loadWishlist(pageOverride: 1);
+          await loadWishlist();
         },
         time: const Duration(milliseconds: 160),
       ),
@@ -84,15 +86,13 @@ class WishlistController extends BaseController {
     return query.isEmpty ? null : query;
   }
 
-  Future<void> loadWishlist({int? pageOverride, bool showLoader = true}) async {
+  /// Fresh fetch from the first page (cursor null). Replaces the current list
+  /// and resets cursor pagination state.
+  Future<void> loadWishlist({bool showLoader = true}) async {
     if (_wishlistRepository == null) {
       errorMessage.value = 'Wishlist service unavailable';
       wishlistItems.clear();
-      return;
-    }
-    final targetPage = pageOverride ?? currentPage.value;
-    if (targetPage < 1) {
-      await loadWishlist(pageOverride: 1, showLoader: showLoader);
+      totalCount.value = 0;
       return;
     }
     if (showLoader) {
@@ -104,34 +104,27 @@ class WishlistController extends BaseController {
     try {
       final UnifiedPropertyResponse response = await _wishlistRepository!
           .listFavorites(
-            page: targetPage,
-            limit: pageSize.value,
+            cursor: null,
+            limit: pageSize,
             filters: _buildFilterQuery(),
           );
-      currentPage.value = response.currentPage;
-      totalPages.value = response.totalPages;
-      totalCount.value = response.totalCount;
-      pageSize.value = response.pageSize;
+      nextCursor.value = response.nextCursor;
+      hasMore.value = response.hasMore;
       final List<Property> fetchedProperties = List<Property>.from(
-        response.properties,
+        response.items,
       );
       wishlistItems.assignAll(fetchedProperties);
-      if (targetPage == 1) {
-        _favoritesController?.replaceAll(
-          fetchedProperties.map((property) => property.id),
-        );
-      } else {
-        _favoritesController?.addAll(
-          fetchedProperties.map((property) => property.id),
-        );
-      }
+      totalCount.value = fetchedProperties.length;
+      _favoritesController?.replaceAll(
+        fetchedProperties.map((property) => property.id),
+      );
     } catch (e) {
       errorMessage.value = 'Failed to load wishlist';
       AppLogger.error('Error loading wishlist', e);
-      if (pageOverride != null && pageOverride > 1) {
-        currentPage.value = pageOverride - 1;
-      }
       wishlistItems.clear();
+      totalCount.value = 0;
+      hasMore.value = false;
+      nextCursor.value = null;
     } finally {
       if (showLoader) {
         isLoading.value = false;
@@ -141,25 +134,48 @@ class WishlistController extends BaseController {
     }
   }
 
+  /// Loads the next page using the server-provided cursor. Appends to the
+  /// current list. No-op when there is no more data or no cursor available.
+  Future<void> loadMore() async {
+    if (_wishlistRepository == null) return;
+    if (isLoading.value || isRefreshing.value) return;
+    if (!hasMore.value) return;
+    final cursor = nextCursor.value;
+    if (cursor == null) return;
+    try {
+      isLoading.value = true;
+      final UnifiedPropertyResponse response = await _wishlistRepository!
+          .listFavorites(
+            cursor: cursor,
+            limit: pageSize,
+            filters: _buildFilterQuery(),
+          );
+      if (response.items.isEmpty) {
+        hasMore.value = false;
+        nextCursor.value = null;
+        return;
+      }
+      final List<Property> fetchedProperties = List<Property>.from(
+        response.items,
+      );
+      wishlistItems.addAll(fetchedProperties);
+      totalCount.value = wishlistItems.length;
+      nextCursor.value = response.nextCursor;
+      hasMore.value = response.hasMore;
+      _favoritesController?.addAll(
+        fetchedProperties.map((property) => property.id),
+      );
+    } catch (e) {
+      errorMessage.value = 'Failed to load more wishlist items';
+      AppLogger.error('Error loading more wishlist', e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   @override
   Future<void> refresh() async {
     await loadWishlist(showLoader: false);
-  }
-
-  Future<void> goToPage(int page) async {
-    if (page == currentPage.value) return;
-    if (page < 1 || page > totalPages.value) return;
-    await loadWishlist(pageOverride: page);
-  }
-
-  Future<void> nextPage() async {
-    if (currentPage.value >= totalPages.value) return;
-    await goToPage(currentPage.value + 1);
-  }
-
-  Future<void> previousPage() async {
-    if (currentPage.value <= 1) return;
-    await goToPage(currentPage.value - 1);
   }
 
   Future<void> addToWishlist(Property property) async {
@@ -177,7 +193,7 @@ class WishlistController extends BaseController {
     try {
       await _wishlistRepository!.add(property.id);
       _favoritesController?.addFavorite(property.id);
-      await loadWishlist(pageOverride: currentPage.value);
+      await loadWishlist(showLoader: false);
       AppSnackbar.success(
         title: 'Added to Wishlist',
         message: '${property.name} has been added to your wishlist',
@@ -230,7 +246,7 @@ class WishlistController extends BaseController {
 
     try {
       await _wishlistRepository!.remove(propertyId);
-      await loadWishlist(pageOverride: currentPage.value, showLoader: false);
+      await loadWishlist(showLoader: false);
       showRemovalSnackbar();
     } catch (e) {
       AppLogger.error('Error removing from wishlist', e);
@@ -276,11 +292,13 @@ class WishlistController extends BaseController {
               Get.back();
               if (_wishlistRepository != null) {
                 try {
-                  for (final item in wishlistItems.toList()) {
-                    await _wishlistRepository!.remove(item.id);
+                  final ids = wishlistItems.map((p) => p.id).toList();
+                  // Single batch call instead of N sequential removes (audit UX #9).
+                  if (ids.isNotEmpty) {
+                    await _wishlistRepository!.clearAll(ids);
                   }
                   _favoritesController?.clear();
-                  await loadWishlist(pageOverride: 1);
+                  await loadWishlist();
                   AppSnackbar.success(
                     title: 'Wishlist Cleared',
                     message: 'All items have been removed from your wishlist',

@@ -51,17 +51,16 @@ class PropertyCacheService {
     UnifiedPropertyResponse response, {
     double? lat,
     double? lng,
-    int page = 1,
+    String? cursor,
   }) async {
     _ensureInitialized();
     try {
-      final key = _buildExploreKey(lat, lng, page);
+      final key = _buildExploreKey(lat, lng, cursor);
       final data = {
-        'properties': response.properties.map((p) => p.toJson()).toList(),
-        'totalCount': response.totalCount,
-        'currentPage': response.currentPage,
-        'totalPages': response.totalPages,
-        'pageSize': response.pageSize,
+        'items': response.items.map((p) => p.toJson()).toList(),
+        'nextCursor': response.nextCursor,
+        'hasMore': response.hasMore,
+        'limit': response.limit,
       };
       await _storage.write(key, jsonEncode(data));
       await _storage.write(
@@ -69,7 +68,7 @@ class PropertyCacheService {
         DateTime.now().toIso8601String(),
       );
       AppLogger.info(
-        'Cached ${response.properties.length} properties for page $page',
+        'Cached ${response.items.length} properties for cursor ${cursor ?? 'first'}',
       );
     } catch (e) {
       AppLogger.warning('Failed to cache explore results: $e');
@@ -80,12 +79,12 @@ class PropertyCacheService {
   UnifiedPropertyResponse? getCachedExploreResults({
     double? lat,
     double? lng,
-    int page = 1,
+    String? cursor,
     bool ignoreExpiry = false,
   }) {
     _ensureInitialized();
     try {
-      final key = _buildExploreKey(lat, lng, page);
+      final key = _buildExploreKey(lat, lng, cursor);
 
       if (!ignoreExpiry && _isCacheExpired(key)) {
         return null;
@@ -95,16 +94,15 @@ class PropertyCacheService {
       if (jsonStr == null) return null;
 
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      final properties = (data['properties'] as List)
+      final items = (data['items'] as List)
           .map((json) => Property.fromJson(json as Map<String, dynamic>))
           .toList();
 
       return UnifiedPropertyResponse(
-        properties: properties,
-        totalCount: data['totalCount'] as int? ?? properties.length,
-        currentPage: data['currentPage'] as int? ?? page,
-        totalPages: data['totalPages'] as int? ?? 1,
-        pageSize: data['pageSize'] as int? ?? 20,
+        items: items,
+        nextCursor: data['nextCursor'] as String?,
+        hasMore: (data['hasMore'] as bool?) ?? false,
+        limit: (data['limit'] as num?)?.toInt() ?? items.length,
       );
     } catch (e) {
       AppLogger.warning('Failed to read cached explore results: $e');
@@ -289,10 +287,15 @@ class PropertyCacheService {
     };
   }
 
-  String _buildExploreKey(double? lat, double? lng, int page) {
+  String _buildExploreKey(double? lat, double? lng, String? cursor) {
     final roundedLat = lat != null ? (lat * 100).round() / 100 : 'null';
     final roundedLng = lng != null ? (lng * 100).round() / 100 : 'null';
-    return '${_exploreKey}_${roundedLat}_${roundedLng}_p$page';
+    // Cursor tokens are opaque base64; hash them so the cache key stays short
+    // and stable. A null cursor represents the first page.
+    final cursorKey = (cursor == null || cursor.isEmpty)
+        ? 'first'
+        : 'c${cursor.hashCode}';
+    return '${_exploreKey}_${roundedLat}_${roundedLng}_$cursorKey';
   }
 
   bool _isCacheExpired(String key) {

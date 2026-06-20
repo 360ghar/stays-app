@@ -12,6 +12,7 @@ import 'package:stays_app/features/listing/controllers/listing_detail_controller
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/ui/widgets/listing/interactive_virtual_tour.dart';
+import 'package:stays_app/app/ui/widgets/common/image_gallery_view.dart';
 
 class ListingDetailView extends GetView<ListingDetailController> {
   const ListingDetailView({super.key});
@@ -166,60 +167,71 @@ class ListingDetailView extends GetView<ListingDetailController> {
             fit: StackFit.expand,
 
             children: [
-              PageView.builder(
-                controller: controller.galleryController,
-
-                itemCount: itemCount,
-
-                physics: const BouncingScrollPhysics(),
-
-                onPageChanged: controller.updateImageIndex,
-
-                itemBuilder: (context, index) {
-                  final url = images.isNotEmpty ? images[index] : null;
-
-                  if (url == null || url.isEmpty) {
-                    return Container(
-                      color: colors.surfaceContainerHighest,
-
-                      alignment: Alignment.center,
-
-                      child: Icon(
-                        Icons.photo_outlined,
-
-                        size: 48,
-
-                        color: colors.onSurface.withValues(alpha: 0.45),
-                      ),
+              GestureDetector(
+                onTap: () {
+                  if (images.isNotEmpty) {
+                    showImageGallery(
+                      context,
+                      imageUrls: images,
+                      initialIndex: controller.currentImageIndex.value,
                     );
                   }
-
-                  return CachedNetworkImage(
-                    imageUrl: url,
-                    fit: BoxFit.cover,
-                    filterQuality: FilterQuality.medium,
-                    placeholder: (context, url) => Container(
-                      color: colors.surfaceContainerHighest,
-                      alignment: Alignment.center,
-                      child: const SizedBox(
-                        height: 28,
-                        width: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2.5),
-                      ),
-                    ),
-                    errorWidget: (context, url, error) => Container(
-                      color: colors.surfaceContainerHighest,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.broken_image_outlined,
-                        size: 48,
-                        color: colors.onSurface.withValues(alpha: 0.45),
-                      ),
-                    ),
-                    maxWidthDiskCache: 800,
-                    memCacheWidth: 400,
-                  );
                 },
+                child: PageView.builder(
+                  controller: controller.galleryController,
+
+                  itemCount: itemCount,
+
+                  physics: const BouncingScrollPhysics(),
+
+                  onPageChanged: controller.updateImageIndex,
+
+                  itemBuilder: (context, index) {
+                    final url = images.isNotEmpty ? images[index] : null;
+
+                    if (url == null || url.isEmpty) {
+                      return Container(
+                        color: colors.surfaceContainerHighest,
+
+                        alignment: Alignment.center,
+
+                        child: Icon(
+                          Icons.photo_outlined,
+
+                          size: 48,
+
+                          color: colors.onSurface.withValues(alpha: 0.45),
+                        ),
+                      );
+                    }
+
+                    return CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.medium,
+                      placeholder: (context, url) => Container(
+                        color: colors.surfaceContainerHighest,
+                        alignment: Alignment.center,
+                        child: const SizedBox(
+                          height: 28,
+                          width: 28,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: colors.surfaceContainerHighest,
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.broken_image_outlined,
+                          size: 48,
+                          color: colors.onSurface.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      maxWidthDiskCache: 800,
+                      memCacheWidth: 400,
+                    );
+                  },
+                ),
               ),
 
               Positioned.fill(
