@@ -38,25 +38,25 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate code (json_serializable & mocks)
+        # *.g.dart and *.mocks.dart are gitignored, so a fresh checkout ships
+        # none of them. Generate before analyze/test or the build fails on
+        # missing part files and undefined _<$Foo>{From,To}Json methods.
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Lint (analyze)
-        continue-on-error: true
-        # Informational, non-blocking. Local analysis on the pinned Flutter
-        # (3.44.2) reports 0 analyzer errors, but this step has failed
-        # unreproducibly in CI on the same version (likely flaky / ubuntu-only),
-        # so a broken run must not block the PR. The full analyzer output is
-        # still printed for review. dart format and flutter test remain hard
-        # gates. Re-enable a blocking analyze once CI reliability is confirmed
-        # and the ~590 legacy info/warning lints are cleaned up.
+        # Error-only gate: the codebase carries ~590 pre-existing info/warning
+        # lints (legacy debt) which are logged but non-fatal; only analyzer
+        # errors fail CI. Re-enable --fatal-infos after a lint-cleanup PR.
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
-        # Plain 'flutter test' runs the Dart unit/widget suite in test/.
-        # --flavor was dropped: it is a build/integration flag that on headless
-        # Linux CI triggers Android flavor/Gradle resolution (which fails
-        # without the mobile build context) and is unnecessary for unit tests.
+        # Plain 'flutter test' runs the Dart unit/widget suite in test/; no
+        # --flavor (that is a build/integration flag, unnecessary for unit
+        # tests and it triggers Gradle flavor resolution on headless runners).
         run: flutter test --coverage
 
       - name: Upload coverage to Codecov

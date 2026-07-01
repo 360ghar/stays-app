@@ -35,13 +35,16 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate code (json_serializable & mocks)
+        # *.g.dart / *.mocks.dart are gitignored; generate before analyze/test.
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Lint (analyze)
-        continue-on-error: true
-        # Non-blocking (see ci.yml): local analysis shows 0 errors but CI's run
-        # is unreliable. Format + test still gate the release build.
+        # Error-only gate (see ci.yml): only analyzer errors fail; ~590 legacy
+        # info/warning lints are logged but non-fatal.
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
@@ -91,6 +94,11 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Generate code (json_serializable & mocks)
+        # *.g.dart are gitignored; generate before building or the app fails to
+        # compile on missing part files.
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build IPA (prod)
         run: flutter build ipa --release --flavor prod -t lib/main_prod.dart --export-options-plist=ios/ExportOptions.plist
