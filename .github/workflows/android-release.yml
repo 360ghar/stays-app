@@ -45,7 +45,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
-        run: flutter test --flavor dev
+        run: flutter test
 
   build_and_publish_android:
     name: Build & Publish Android (prod)

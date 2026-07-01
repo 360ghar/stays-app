@@ -45,7 +45,7 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Run tests
-        run: flutter test --flavor dev
+        run: flutter test
 
   build_ios_release:
     name: Build iOS IPA (prod)

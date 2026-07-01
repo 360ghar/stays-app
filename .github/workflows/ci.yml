@@ -52,8 +52,12 @@ jobs:
         # and the ~590 legacy info/warning lints are cleaned up.
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
-      - name: Run tests (dev flavor)
-        run: flutter test --flavor dev --coverage
+      - name: Run tests
+        # Plain 'flutter test' runs the Dart unit/widget suite in test/.
+        # --flavor was dropped: it is a build/integration flag that on headless
+        # Linux CI triggers Android flavor/Gradle resolution (which fails
+        # without the mobile build context) and is unnecessary for unit tests.
+        run: flutter test --coverage
 
       - name: Upload coverage to Codecov
         if: always()
