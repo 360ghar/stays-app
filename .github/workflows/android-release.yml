@@ -42,7 +42,7 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Run tests
-        run: flutter test --flavor dev -t lib/main_dev.dart
+        run: flutter test --flavor dev
 
   build_and_publish_android:
     name: Build & Publish Android (prod)

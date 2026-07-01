@@ -10,6 +10,7 @@ import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
+import 'package:stays_app/app/data/services/deep_link_service.dart';
 import 'storage_service.dart';
 
 /// Background handler must be a top-level function.
@@ -212,11 +213,23 @@ class PushNotificationService extends GetxService {
 
   /// Routes the user to a specific screen based on FCM `data`.
   /// Supported keys: `type` (booking|message|listing) + `id`, or `deep_link`.
+  /// `deep_link` payloads are validated against the same allowlist used by
+  /// [DeepLinkService.mapToInternalPath] so an attacker-controlled FCM message
+  /// cannot navigate the user to an arbitrary in-app route.
   void _routeFromNotificationData(Map<String, dynamic> data) {
     try {
       final deepLink = data['deep_link']?.toString();
       if (deepLink != null && deepLink.isNotEmpty) {
-        unawaited(Get.toNamed(deepLink));
+        // Ponytail: only allow the same listing/chat paths the deep-link
+        // service permits. Anything else is dropped and logged.
+        final allowlisted = _resolveAllowlistedDeepLink(deepLink);
+        if (allowlisted == null) {
+          AppLogger.warning(
+            'Dropped FCM deep_link outside allowlist: ${_redact(deepLink)}',
+          );
+          return;
+        }
+        unawaited(Get.toNamed(allowlisted));
         return;
       }
       final type = data['type']?.toString().toLowerCase();
@@ -248,6 +261,29 @@ class PushNotificationService extends GetxService {
     } catch (e) {
       AppLogger.warning('Failed to route from notification data: $e');
     }
+  }
+
+  /// Returns the allowlisted internal path for a server-pushed deep link, or
+  /// null if the link targets anything outside the allowlist (listing/chat).
+  String? _resolveAllowlistedDeepLink(String deepLink) {
+    // Accept both bare paths ("/listing/42") and absolute URLs
+    // ("https://the360ghar.com/stays/listing/42"). Anything else is rejected.
+    final Uri uri;
+    try {
+      uri = deepLink.startsWith('http')
+          ? Uri.parse(deepLink)
+          : Uri.parse('https://the360ghar.com$deepLink');
+    } catch (_) {
+      return null;
+    }
+    return Get.isRegistered<DeepLinkService>()
+        ? Get.find<DeepLinkService>().mapToInternalPath(uri)
+        : null;
+  }
+
+  static String _redact(String input) {
+    if (input.length <= 8) return '****';
+    return '${input.substring(0, 4)}****${input.substring(input.length - 4)}';
   }
 
   void _routeFromPayloadString(String payload) {

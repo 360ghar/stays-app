@@ -91,6 +91,8 @@ class DeepLinkService extends GetxService {
   /// tokens or other sensitive data that should never be written to the logs.
   static Uri _redact(Uri uri) => uri.replace(query: '', fragment: '');
 
+  String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
+
   String? _mapToInternalPath(Uri uri) {
     var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     if (segments.isEmpty) return null;

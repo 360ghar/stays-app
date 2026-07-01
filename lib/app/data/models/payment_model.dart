@@ -51,8 +51,8 @@ class PaymentMethodModel {
     final parsedId = rawId is num
         ? rawId.toInt()
         : rawId is String
-            ? int.tryParse(rawId) ?? 0
-            : 0;
+        ? int.tryParse(rawId) ?? 0
+        : 0;
     return PaymentMethodModel(
       id: parsedId,
       methodType: map['method_type'] as String? ?? 'card',
@@ -76,9 +76,10 @@ class PaymentMethodModel {
 
   static DateTime _parseDateTime(dynamic value) {
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
-    if (value is int) {
+    if (value is num) {
+      final timestamp = value.toInt();
       return DateTime.fromMillisecondsSinceEpoch(
-        value > 1e12 ? value : value * 1000,
+        timestamp > 1e12 ? timestamp : timestamp * 1000,
       );
     }
     return DateTime.now();

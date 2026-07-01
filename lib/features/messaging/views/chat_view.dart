@@ -133,7 +133,7 @@ class _ChatViewState extends State<ChatView> {
                   Obx(
                     () => IconButton.filled(
                       onPressed:
-                          (_showSend.value || _controller.isSending.value)
+                          (_showSend.value && !_controller.isSending.value)
                           ? _onSend
                           : null,
                       icon: _controller.isSending.value

@@ -8,7 +8,10 @@ class SecurityService extends GetxService {
 
   void validateApiKeys() {
     _validateKey('SUPABASE_URL', AppConfig.I.supabaseUrl);
-    _validateKey('SUPABASE_PUBLISHABLE_KEY', AppConfig.I.supabasePublishableKey);
+    _validateKey(
+      'SUPABASE_PUBLISHABLE_KEY',
+      AppConfig.I.supabasePublishableKey,
+    );
   }
 
   void _validateKey(String name, String value) {

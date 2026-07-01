@@ -12,8 +12,9 @@ class PropertiesProvider extends BaseProvider {
     double radiusKm = 10,
     Map<String, dynamic>? filters,
   }) async {
-    final effectiveCursor =
-        (cursor != null && cursor.trim().isEmpty) ? null : cursor;
+    final effectiveCursor = (cursor != null && cursor.trim().isEmpty)
+        ? null
+        : cursor;
     final query = <String, dynamic>{
       'lat': lat,
       'lng': lng,
@@ -77,9 +78,8 @@ class PropertiesProvider extends BaseProvider {
       if (json is List) {
         rawList = json;
       } else if (json is Map<String, dynamic>) {
-        rawList = (json['items'] as List?) ??
-            (json['data'] as List?) ??
-            <dynamic>[];
+        rawList =
+            (json['items'] as List?) ?? (json['data'] as List?) ?? <dynamic>[];
       } else {
         rawList = <dynamic>[];
       }

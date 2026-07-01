@@ -45,7 +45,7 @@ jobs:
         run: flutter analyze --fatal-infos
 
       - name: Run tests (dev flavor)
-        run: flutter test --flavor dev -t lib/main_dev.dart --coverage
+        run: flutter test --flavor dev --coverage
 
       - name: Upload coverage to Codecov
         if: always()

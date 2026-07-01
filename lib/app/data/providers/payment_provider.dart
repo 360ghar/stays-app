@@ -7,7 +7,7 @@ class PaymentProvider extends BaseProvider {
     num amount,
   ) async {
     final response = await post('/api/v1/payments/intent', {
-      'bookingId': bookingId,
+      'booking_id': bookingId,
       'amount': amount,
     });
     return handleResponse(response, (json) => json as Map<String, dynamic>);
