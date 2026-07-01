@@ -20,7 +20,7 @@ API_BASE_URL=https://api.dev.360ghar.com
 
 # Supabase Configuration (main backend)
 SUPABASE_URL=https://dev-project.supabase.co
-SUPABASE_ANON_KEY=your-dev-anon-key-here
+SUPABASE_PUBLISHABLE_KEY=your-dev-anon-key-here
 
 # Analytics Configuration
 ENABLE_ANALYTICS=false
@@ -61,7 +61,7 @@ class AppConfig {
   final String environment;
   final String apiBaseUrl;
   final String supabaseUrl;
-  final String supabaseAnonKey;
+  final String supabasePublishableKey;
   final bool enableAnalytics;
   final String? googleMapsApiKey;
 
@@ -73,7 +73,7 @@ class AppConfig {
     required this.environment,
     required this.apiBaseUrl,
     required this.supabaseUrl,
-    required this.supabaseAnonKey,
+    required this.supabasePublishableKey,
     this.enableAnalytics = false,
     this.googleMapsApiKey,
   });
@@ -96,7 +96,7 @@ class AppConfig {
       environment: environment,
       apiBaseUrl: env['API_BASE_URL'] ?? 'https://api.dev.360ghar.com',
       supabaseUrl: env['SUPABASE_URL'] ?? 'https://YOUR_DEV_SUPABASE_URL',
-      supabaseAnonKey: env['SUPABASE_ANON_KEY'] ?? 'YOUR_DEV_SUPABASE_ANON_KEY',
+      supabasePublishableKey: env['SUPABASE_PUBLISHABLE_KEY'] ?? 'YOUR_DEV_SUPABASE_PUBLISHABLE_KEY',
       enableAnalytics: (env['ENABLE_ANALYTICS'] ?? (environment == 'prod' ? 'true' : 'false')) == 'true',
       // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY
       googleMapsApiKey: env['GOOGLE_MAPS_API_KEY'] ?? env['GOOGLE_PLACES_API_KEY'],
@@ -118,7 +118,7 @@ class DevConfig extends AppConfig {
           environment: 'dev',
           apiBaseUrl: 'https://api.dev.360ghar.com',
           supabaseUrl: 'https://dev-project.supabase.co',
-          supabaseAnonKey: 'your-dev-anon-key',
+          supabasePublishableKey: 'your-dev-anon-key',
           enableAnalytics: false,
         );
 }
@@ -132,7 +132,7 @@ class StagingConfig extends AppConfig {
           environment: 'staging',
           apiBaseUrl: 'https://api.staging.360ghar.com',
           supabaseUrl: 'https://staging-project.supabase.co',
-          supabaseAnonKey: 'your-staging-anon-key',
+          supabasePublishableKey: 'your-staging-anon-key',
           enableAnalytics: true,
         );
 }
@@ -146,7 +146,7 @@ class ProdConfig extends AppConfig {
           environment: 'prod',
           apiBaseUrl: 'https://api.360ghar.com',
           supabaseUrl: 'https://prod-project.supabase.co',
-          supabaseAnonKey: 'your-prod-anon-key',
+          supabasePublishableKey: 'your-prod-anon-key',
           enableAnalytics: true,
         );
 }
@@ -197,7 +197,7 @@ Provide a template for environment variables:
 # .env.example
 API_BASE_URL=your-api-url-here
 SUPABASE_URL=your-supabase-url-here
-SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_PUBLISHABLE_KEY=your-anon-key-here
 STRIPE_PUBLISHABLE_KEY=your-stripe-key-here
 ANALYTICS_KEY=your-analytics-key-here
 ```

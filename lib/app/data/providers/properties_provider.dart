@@ -39,12 +39,14 @@ class PropertiesProvider extends BaseProvider {
       final nextCursor = map['next_cursor'] as String?;
       final hasMore = (map['has_more'] as bool?) ?? (nextCursor != null);
       final resolvedLimit = (map['limit'] as num?)?.toInt() ?? limit;
+      final resolvedTotal = map['total'] as int?;
       final filtersApplied = map['filters_applied'] ?? map['filters'];
       return UnifiedPropertyResponse(
         items: props,
         nextCursor: nextCursor,
         hasMore: hasMore,
         limit: resolvedLimit,
+        total: resolvedTotal,
         filters: filtersApplied is Map
             ? Map<String, dynamic>.from(filtersApplied)
             : null,

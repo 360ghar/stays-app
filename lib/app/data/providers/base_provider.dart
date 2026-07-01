@@ -145,8 +145,9 @@ abstract class BaseProvider extends GetConnect {
 
     if (response.isOk) {
       // SUCCESS CASE (Status codes 200-299)
-      if (response.body == null) {
-        // This can happen on successful logout or delete requests
+      if (_isEmptyBody(response.body)) {
+        // This can happen on successful logout, 204 No Content responses,
+        // or 200 OK with an empty body. Treat all three as "no payload".
         return parser(null);
       }
       return parser(response.body);
@@ -161,6 +162,17 @@ abstract class BaseProvider extends GetConnect {
     return url.path.contains('/auth/') ||
         url.path.contains('/login') ||
         url.path.contains('/register');
+  }
+
+  /// True when [body] is missing or an empty string. A 200 OK with a blank
+  /// payload (common when an endpoint transitions from 204 to 200) should be
+  /// treated the same as 204.
+  bool _isEmptyBody(dynamic body) {
+    if (body == null) return true;
+    if (body is String && body.isEmpty) return true;
+    if (body is List && body.isEmpty) return true;
+    if (body is Map && body.isEmpty) return true;
+    return false;
   }
 
   /// Execute a GET request with automatic retry for transient failures

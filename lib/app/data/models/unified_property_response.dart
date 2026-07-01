@@ -12,9 +12,14 @@ class UnifiedPropertyResponse {
   final String? nextCursor;
   final bool hasMore;
   final int limit;
+  final int? total;
   final Map<String, dynamic>? filters;
 
-  /// True when the server indicates more pages exist and a cursor is available.
+  /// True when the server indicates more pages exist and a cursor is
+  /// available. Both flags must agree before paging: [hasMore] is the
+  /// authoritative "are there more" signal, and [nextCursor] is the token
+  /// the server expects on the next call. If they disagree, treat it as
+  /// "end of list" rather than risk an infinite loop or a missed page.
   bool get hasNextPage => hasMore && nextCursor != null;
 
   UnifiedPropertyResponse({
@@ -22,6 +27,7 @@ class UnifiedPropertyResponse {
     required this.nextCursor,
     required this.hasMore,
     required this.limit,
+    this.total,
     this.filters,
   });
 
@@ -35,12 +41,14 @@ class UnifiedPropertyResponse {
     final nextCursor = json['next_cursor'] as String?;
     final hasMore = (json['has_more'] as bool?) ?? (nextCursor != null);
     final resolvedLimit = (json['limit'] as num?)?.toInt() ?? 20;
+    final resolvedTotal = json['total'] as int?;
     final filtersApplied = json['filters_applied'] ?? json['filters'];
     return UnifiedPropertyResponse(
       items: props,
       nextCursor: nextCursor,
       hasMore: hasMore,
       limit: resolvedLimit,
+      total: resolvedTotal,
       filters: filtersApplied is Map
           ? Map<String, dynamic>.from(filtersApplied)
           : null,
@@ -52,6 +60,7 @@ class UnifiedPropertyResponse {
     'next_cursor': nextCursor,
     'has_more': hasMore,
     'limit': limit,
+    if (total != null) 'total': total,
     if (filters != null) 'filters': filters,
   };
 }

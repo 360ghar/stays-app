@@ -244,51 +244,10 @@ class JsonHelpers {
   }
 
   /// Unwraps a cursor-paginated response and returns the items plus cursor
-  /// metadata.
-  ///
-  /// Recognized envelope (source of truth):
-  ///   {items: [...], next_cursor: base64-or-null, has_more: bool, limit: int}
-  ///
-  /// Also tolerates legacy `data`/`results`/bare-list envelopes for callers
-  /// that have not yet migrated. Cursor tokens are opaque base64; this helper
-  /// never decodes them.
-  static ({
-    List<Map<String, dynamic>> items,
-    String? nextCursor,
-    bool hasMore,
-    int limit,
-  })
-  unwrapPaginatedResponse(Map<String, dynamic>? response) {
-    if (response == null) {
-      return (
-        items: <Map<String, dynamic>>[],
-        nextCursor: null,
-        hasMore: false,
-        limit: 20,
-      );
-    }
-
-    final List<Map<String, dynamic>> items;
-    final rawItems = response['items'];
-    if (rawItems is List) {
-      items = rawItems
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } else {
-      items = <Map<String, dynamic>>[];
-    }
-
-    final nextCursor = response['next_cursor'] as String?;
-    final hasMore = (response['has_more'] as bool?) ?? (nextCursor != null);
-
-    return (
-      items: items,
-      nextCursor: nextCursor,
-      hasMore: hasMore,
-      limit: getIntOrDefault(response['limit'], 20),
-    );
-  }
+  /// metadata. (Helper removed — was added in the diff with no callers. Use
+  /// `UnifiedPropertyResponse.fromJson` directly when the migration lands.)
+  // ponytail: helper intentionally deleted; revive only when the first caller
+  // arrives, and model the result as a class so the contract is self-describing.
 
   // ===== ID Helpers =====
 

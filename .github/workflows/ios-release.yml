@@ -29,7 +29,7 @@ jobs:
       - name: Create environment files
         run: |-
           for ENV_FILE in ".env.dev" ".env.staging" ".env.prod"; do
-          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
+          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
           done
 
       - name: Install dependencies
@@ -83,7 +83,7 @@ jobs:
       - name: Create environment files
         run: |-
           for ENV_FILE in ".env.dev" ".env.staging" ".env.prod"; do
-          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
+          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
           done
 
       - name: Install dependencies

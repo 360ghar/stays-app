@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/listing_model.dart';
 import '../../../data/models/unified_filter_model.dart';
 import '../../theme/app_animations.dart';
 
@@ -79,11 +80,10 @@ class _PropertyFilterSheet extends StatefulWidget {
 class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   static const double _priceFloor = 0;
   static const double _priceCeil = 200000;
-  static const List<String> _propertyTypeOptions = <String>[
-    'apartment',
-    'house',
-    'builder_floor',
-    'room',
+  // Single source of truth for the property-type filter strings, driven by
+  // the [PropertyType] enum's canonical wire encoding.
+  static final List<String> _propertyTypeOptions = <String>[
+    for (final t in PropertyType.values) t.wireName,
   ];
 
   late ThemeData _theme;

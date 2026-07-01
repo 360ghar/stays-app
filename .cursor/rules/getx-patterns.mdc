@@ -337,7 +337,7 @@ class InitialBinding extends Bindings {
     Get.putAsync<SupabaseService>(() async {
       final s = SupabaseService(
         url: AppConfig.I.supabaseUrl,
-        anonKey: AppConfig.I.supabaseAnonKey,
+        publishableKey: AppConfig.I.supabasePublishableKey,
       );
       await s.initialize();
       return s;

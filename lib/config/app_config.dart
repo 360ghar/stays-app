@@ -22,7 +22,7 @@ class AppConfig {
     required this.environment,
     required this.apiBaseUrl,
     required this.supabaseUrl,
-    required this.supabaseAnonKey,
+    required this.supabasePublishableKey,
     this.enableAnalytics = false,
     this.googleMapsApiKey,
     this.googleWebClientId,
@@ -32,7 +32,7 @@ class AppConfig {
   final String environment;
   final String apiBaseUrl;
   final String supabaseUrl;
-  final String supabaseAnonKey;
+  final String supabasePublishableKey;
   final bool enableAnalytics;
   final String? googleMapsApiKey;
 
@@ -74,8 +74,7 @@ class AppConfig {
         .where((key) => env[key] == null || env[key]!.isEmpty)
         .toList();
 
-    final publishableKey =
-        env['SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_ANON_KEY'];
+    final publishableKey = env['SUPABASE_PUBLISHABLE_KEY'];
     if (publishableKey == null || publishableKey.isEmpty) {
       missingVars.add('SUPABASE_PUBLISHABLE_KEY');
     }
@@ -87,24 +86,36 @@ class AppConfig {
       );
     }
 
-    // Additional validation: ensure values are not placeholders
-    final placeholderPatterns = [
-      RegExp(r'YOUR_.*', caseSensitive: false),
-      RegExp(r'PLACEHOLDER', caseSensitive: false),
-      RegExp(r'<.*>'),
-    ];
-
-    for (final key in requiredVars) {
+    // Additional validation: ensure values are not placeholders. Covers the
+    // required vars and the Supabase publishable key.
+    final keysToCheck = <String>[...requiredVars, 'SUPABASE_PUBLISHABLE_KEY'];
+    for (final key in keysToCheck) {
       final value = env[key] ?? '';
-      for (final pattern in placeholderPatterns) {
-        if (pattern.hasMatch(value)) {
-          throw MissingEnvironmentException(
-            missingVariables: ['$key (contains placeholder value)'],
-            environment: environment,
-          );
-        }
+      if (isPlaceholderValue(value)) {
+        throw MissingEnvironmentException(
+          missingVariables: ['$key (contains placeholder value)'],
+          environment: environment,
+        );
       }
     }
+  }
+
+  /// True when [value] looks like an unfilled placeholder (e.g. `YOUR_*`,
+  /// `*PLACEHOLDER*`, `<template>`, or a blank string). Shared by
+  /// [_validateEnvironment] and [SupabaseService] so the two never disagree.
+  static bool isPlaceholderValue(String? value) {
+    final trimmed = value?.trim() ?? '';
+    if (trimmed.isEmpty) return true;
+    const patterns = <String>[
+      r'YOUR_.*',
+      r'.*PLACEHOLDER.*',
+      r'<.*>',
+      r'^your-.*-key$',
+    ];
+    for (final p in patterns) {
+      if (RegExp(p, caseSensitive: false).hasMatch(trimmed)) return true;
+    }
+    return false;
   }
 
   static AppConfig fromDotEnv({required String environment}) {
@@ -117,8 +128,7 @@ class AppConfig {
       environment: environment,
       apiBaseUrl: env['API_BASE_URL']!,
       supabaseUrl: env['SUPABASE_URL']!,
-      supabaseAnonKey:
-          env['SUPABASE_PUBLISHABLE_KEY'] ?? env['SUPABASE_ANON_KEY']!,
+      supabasePublishableKey: env['SUPABASE_PUBLISHABLE_KEY']!,
       enableAnalytics:
           (env['ENABLE_ANALYTICS'] ??
               (environment == 'prod' ? 'true' : 'false')) ==

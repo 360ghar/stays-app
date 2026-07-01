@@ -48,6 +48,6 @@ The app follows a clean architecture pattern with GetX for state management:
 
 ## Environment Configuration
 - `.env.dev`, `.env.staging`, `.env.prod`: Environment variables
-- Key variables: `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`
+- Key variables: `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`
 - Use `flutter_dotenv` and `AppConfig` for environment loading
 - Select entrypoint with `--flavor` flag: `flutter run --flavor dev -t lib/main_dev.dart`

@@ -56,14 +56,21 @@ class InitialBinding extends Bindings {
       }, permanent: true);
     }
 
-    // Initialize Supabase service if needed
+    // Initialize Supabase service if needed. Single registration path of
+    // record: entry points only kick off `initialize()` in parallel and
+    // publish the future on `SupabaseService.supabaseServiceReady`, which
+    // we await here to avoid a double init and a missed `_initialized` flag.
     if (!Get.isRegistered<SupabaseService>()) {
       Get.putAsync<SupabaseService>(() async {
         final s = SupabaseService(
           url: AppConfig.I.supabaseUrl,
-          anonKey: AppConfig.I.supabaseAnonKey,
+          publishableKey: AppConfig.I.supabasePublishableKey,
         );
-        await s.initialize();
+        if (SupabaseService.supabaseServiceReady != null) {
+          await SupabaseService.supabaseServiceReady;
+        } else {
+          await s.initialize();
+        }
         return s;
       }, permanent: true);
     }

@@ -49,12 +49,14 @@ class WishlistRepository {
     final nextCursor = json['next_cursor'] as String?;
     final hasMore = (json['has_more'] as bool?) ?? (nextCursor != null);
     final resolvedLimit = (json['limit'] as num?)?.toInt() ?? limit;
+    final resolvedTotal = json['total'] as int?;
     final filtersApplied = json['filters_applied'] ?? json['filters'];
     return UnifiedPropertyResponse(
       items: properties,
       nextCursor: nextCursor,
       hasMore: hasMore,
       limit: resolvedLimit,
+      total: resolvedTotal,
       filters: filtersApplied is Map
           ? Map<String, dynamic>.from(filtersApplied)
           : null,

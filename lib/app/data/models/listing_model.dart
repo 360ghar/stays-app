@@ -3,7 +3,38 @@ import 'amenity_model.dart';
 import 'location_model.dart';
 import 'user_model.dart';
 
-enum PropertyType { apartment, house, villa, condo }
+enum PropertyType {
+  apartment,
+  house,
+  villa,
+  condo,
+  studio,
+  penthouse,
+  builderFloor,
+  room,
+  loft,
+  pg;
+
+  /// Canonical wire form used in API requests/responses. Single source of
+  /// truth for the snake_case encoding shared with the backend and the
+  /// filter sheet.
+  String get wireName {
+    switch (this) {
+      case PropertyType.builderFloor:
+        return 'builder_floor';
+      default:
+        return name;
+    }
+  }
+
+  static PropertyType? fromWireName(String? value) {
+    if (value == null || value.isEmpty) return null;
+    for (final t in PropertyType.values) {
+      if (t.wireName == value) return t;
+    }
+    return null;
+  }
+}
 
 class ListingModel {
   final String id;
@@ -74,7 +105,7 @@ class ListingModel {
     'id': id,
     'title': title,
     'description': description,
-    'propertyType': propertyType.name,
+    'propertyType': propertyType.wireName,
     'location': location.toMap(),
     'pricePerNight': pricePerNight,
     'images': images,
@@ -94,17 +125,6 @@ class ListingModel {
   String get formattedPrice => CurrencyHelper.format(pricePerNight);
 
   static PropertyType _parsePropertyType(String? value) {
-    switch (value) {
-      case 'apartment':
-        return PropertyType.apartment;
-      case 'house':
-        return PropertyType.house;
-      case 'villa':
-        return PropertyType.villa;
-      case 'condo':
-        return PropertyType.condo;
-      default:
-        return PropertyType.apartment;
-    }
+    return PropertyType.fromWireName(value) ?? PropertyType.apartment;
   }
 }
