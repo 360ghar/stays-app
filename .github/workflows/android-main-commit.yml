@@ -41,6 +41,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Generate code (json_serializable & mocks)
+        # *.g.dart are gitignored; generate before building or the app fails to
+        # compile on missing part files.
+        run: dart run build_runner build --delete-conflicting-outputs
+
       - name: Build APK (prod)
         run: flutter build apk --release --flavor prod -t lib/main_prod.dart
 
