@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,11 +9,14 @@ import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/inquiry/controllers/inquiry_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/booking_pricing_model.dart';
+import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class InquiryView extends StatefulWidget {
   const InquiryView({super.key});
@@ -36,6 +40,11 @@ class _InquiryViewState extends State<InquiryView> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
   late final TextEditingController phoneController;
+
+  /// Backend pricing for the current selection (preferred over local 18%/5%
+  /// estimates). Null until the first successful fetch or after a fetch error.
+  BookingPricingModel? _backendPricing;
+  bool _isFetchingPricing = false;
 
   final DateFormat _dateFormat = DateFormat('EEE, MMM d, yyyy');
   @override
@@ -223,7 +232,9 @@ class _InquiryViewState extends State<InquiryView> {
       setState(() {
         checkInDate = picked.start;
         checkOutDate = picked.end;
+        _backendPricing = null;
       });
+      unawaited(_refreshPricing());
     }
   }
 
@@ -237,23 +248,60 @@ class _InquiryViewState extends State<InquiryView> {
   }
 
   double get baseAmount {
+    if (_backendPricing != null) return _backendPricing!.baseAmount;
     return nightlyRate * nights;
   }
 
   double get serviceCharges {
-    return baseAmount * 0.10; // 10% service charge
+    if (_backendPricing != null) return _backendPricing!.serviceCharges;
+    // Local fallback mirrors backend SERVICE_CHARGE_RATE (5%).
+    return baseAmount * 0.05;
   }
 
   double get taxesAmount {
-    return baseAmount * 0.05; // 5% tax
+    if (_backendPricing != null) return _backendPricing!.taxesAmount;
+    // Local fallback mirrors backend GST_RATE (18%).
+    return baseAmount * 0.18;
   }
 
   double get discountAmount {
-    return 0.0; // No discount
+    if (_backendPricing != null) {
+      return _backendPricing!.discountAmount ?? 0.0;
+    }
+    return 0.0; // No local discount
   }
 
   double get estimatedTotal {
+    if (_backendPricing != null) return _backendPricing!.totalAmount;
     return baseAmount + serviceCharges + taxesAmount - discountAmount;
+  }
+
+  /// Fetch pricing from the backend whenever the dates/guests change so the
+  /// UI shows server-authoritative totals (audit UX #5).
+  Future<void> _refreshPricing() async {
+    if (property == null || checkInDate == null || checkOutDate == null) {
+      return;
+    }
+    if (_isFetchingPricing) return;
+    setState(() => _isFetchingPricing = true);
+    try {
+      final repo = Get.find<BookingRepository>();
+      final pricing = await repo.calculatePricing(
+        propertyId: property!.id,
+        checkInIso: checkInDate!.toUtc().toIso8601String(),
+        checkOutIso: checkOutDate!.toUtc().toIso8601String(),
+        guests: guests,
+      );
+      if (pricing != null) {
+        setState(() => _backendPricing = pricing);
+      }
+    } catch (e) {
+      AppLogger.warning(
+        'Backend pricing fetch failed; using local estimate: $e',
+      );
+    } finally {
+      if (mounted) setState(() => _isFetchingPricing = false);
+    }
   }
 
   Future<void> _submitInquiry() async {
@@ -315,10 +363,18 @@ class _InquiryViewState extends State<InquiryView> {
       return;
     }
     final digits = trimmedPhone.replaceAll(RegExp(r'[^0-9+]'), '');
-    if (digits.replaceAll('+', '').length != 10) {
+    // Accept E.164-style numbers: optional leading '+' followed by 7-15 digits.
+    final hasPlus = digits.startsWith('+');
+    final digitOnly = digits.replaceAll('+', '');
+    final isValid =
+        digitOnly.length >= 7 &&
+        digitOnly.length <= 15 &&
+        (!hasPlus || digits.indexOf('+') == 0) &&
+        !digits.contains('+', 1);
+    if (!isValid) {
       AppSnackbar.warning(
         title: 'Phone',
-        message: 'Please enter a valid phone number.',
+        message: 'Please enter a valid phone number (7-15 digits).',
       );
       return;
     }
@@ -670,7 +726,13 @@ class _InquiryViewState extends State<InquiryView> {
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline),
                       onPressed: guests > 1
-                          ? () => setState(() => guests--)
+                          ? () {
+                              setState(() {
+                                guests--;
+                                _backendPricing = null;
+                              });
+                              unawaited(_refreshPricing());
+                            }
                           : null,
                     ),
                     Text(
@@ -680,7 +742,13 @@ class _InquiryViewState extends State<InquiryView> {
                     IconButton(
                       icon: const Icon(Icons.add_circle_outline),
                       onPressed: guests < maxGuests
-                          ? () => setState(() => guests++)
+                          ? () {
+                              setState(() {
+                                guests++;
+                                _backendPricing = null;
+                              });
+                              unawaited(_refreshPricing());
+                            }
                           : null,
                     ),
                   ],

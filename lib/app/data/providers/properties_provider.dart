@@ -7,15 +7,18 @@ class PropertiesProvider extends BaseProvider {
   Future<UnifiedPropertyResponse> explore({
     required double lat,
     required double lng,
-    int page = 1,
+    String? cursor,
     int limit = 20,
     double radiusKm = 10,
     Map<String, dynamic>? filters,
   }) async {
+    final effectiveCursor = (cursor != null && cursor.trim().isEmpty)
+        ? null
+        : cursor;
     final query = <String, dynamic>{
       'lat': lat,
       'lng': lng,
-      'page': page,
+      if (effectiveCursor != null) 'cursor': effectiveCursor,
       'limit': limit,
       if (radiusKm > 0 && !(filters?.containsKey('radius') ?? false))
         'radius': radiusKm,
@@ -24,11 +27,7 @@ class PropertiesProvider extends BaseProvider {
     final res = await get('/api/v1/properties/', query: query.asQueryParams());
     return handleResponse(res, (json) {
       final map = json as Map<String, dynamic>;
-      final rawList =
-          (map['properties'] as List?) ??
-          (map['data'] is Map<String, dynamic>
-              ? (map['data'] as Map<String, dynamic>)['properties'] as List?
-              : null);
+      final rawList = map['items'] as List?;
       final props =
           rawList
               ?.map(
@@ -38,25 +37,17 @@ class PropertiesProvider extends BaseProvider {
               )
               .toList() ??
           <Property>[];
-      final total =
-          ((map['total'] ?? map['totalCount']) as num?)?.toInt() ??
-          props.length;
-      final totalPages =
-          ((map['total_pages'] ?? map['totalPages']) as num?)?.toInt() ?? 1;
-      final current =
-          ((map['page'] ?? map['currentPage']) as num?)?.toInt() ?? page;
-      final resolvedLimit =
-          ((map['limit'] ?? map['pageSize'] ?? map['per_page'] ?? limit)
-                  as num?)
-              ?.toInt() ??
-          limit;
+      final nextCursor = map['next_cursor'] as String?;
+      final hasMore = (map['has_more'] as bool?) ?? (nextCursor != null);
+      final resolvedLimit = (map['limit'] as num?)?.toInt() ?? limit;
+      final resolvedTotal = map['total'] as int?;
       final filtersApplied = map['filters_applied'] ?? map['filters'];
       return UnifiedPropertyResponse(
-        properties: props,
-        totalCount: total,
-        currentPage: current,
-        totalPages: totalPages,
-        pageSize: resolvedLimit,
+        items: props,
+        nextCursor: nextCursor,
+        hasMore: hasMore,
+        limit: resolvedLimit,
+        total: resolvedTotal,
         filters: filtersApplied is Map
             ? Map<String, dynamic>.from(filtersApplied)
             : null,
@@ -81,10 +72,18 @@ class PropertiesProvider extends BaseProvider {
       query: {'limit': '$limit'},
     );
     return handleResponse(res, (json) {
-      final list = (json is List)
-          ? json
-          : ((json as Map<String, dynamic>)['data'] as List? ?? []);
-      return list
+      // The recommendations endpoint is not cursor-paginated, so it may
+      // return a bare list, {data: [...]}, or the new {items: [...]} envelope.
+      final List<dynamic> rawList;
+      if (json is List) {
+        rawList = json;
+      } else if (json is Map<String, dynamic>) {
+        rawList =
+            (json['items'] as List?) ?? (json['data'] as List?) ?? <dynamic>[];
+      } else {
+        rawList = <dynamic>[];
+      }
+      return rawList
           .map(
             (e) => Property.fromJson(
               _normalizeProperty(Map<String, dynamic>.from(e)),

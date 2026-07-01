@@ -56,19 +56,22 @@ Future<void> main() async {
         }
       }
 
-      // Initialize Supabase service (required before other services)
-      final supabaseService = SupabaseService(
+      // Supabase is owned by InitialBinding.putAsync (single source of truth
+      // for the registered client). This entry point just kicks off init in
+      // parallel with the other services; the binding awaits the result.
+      SupabaseService.supabaseServiceReady = SupabaseService(
         url: AppConfig.I.supabaseUrl,
-        anonKey: AppConfig.I.supabaseAnonKey,
-      );
+        publishableKey: AppConfig.I.supabasePublishableKey,
+      ).initialize();
 
       // Parallelize initialization of independent services for faster startup
       late ThemeService themeService;
       late LocaleService localeService;
 
       await Future.wait([
-        // Supabase initialization (critical)
-        supabaseService.initialize(),
+        // Supabase initialization (critical) — the binding awaits this same
+        // future to avoid a second round-trip.
+        SupabaseService.supabaseServiceReady!,
         // Theme service initialization
         ThemeService().init().then((service) => themeService = service),
         // Locale service initialization
@@ -80,10 +83,8 @@ Future<void> main() async {
         ]),
       ]);
 
-      // Register services with GetX after initialization
-      if (!Get.isRegistered<SupabaseService>()) {
-        Get.put<SupabaseService>(supabaseService, permanent: true);
-      }
+      // Register services with GetX after initialization. Supabase is
+      // registered by InitialBinding — see notes at the top of this block.
       Get.put<ThemeService>(themeService, permanent: true);
       Get.put<LocaleService>(localeService, permanent: true);
 

@@ -35,16 +35,6 @@ class PrivacyView extends GetView<PrivacyController> {
             children: [
               Obx(
                 () => SwitchListTile.adaptive(
-                  title: const Text('Two-factor authentication'),
-                  subtitle: const Text(
-                    'Add an extra verification step when signing in.',
-                  ),
-                  value: controller.twoFactorEnabled.value,
-                  onChanged: controller.setTwoFactorEnabled,
-                ),
-              ),
-              Obx(
-                () => SwitchListTile.adaptive(
                   title: const Text('Profile visibility'),
                   subtitle: const Text(
                     'Allow hosts to view your public profile.',

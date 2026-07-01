@@ -8,7 +8,7 @@ import 'base_provider.dart';
 /// - POST /api/v1/auth/identifier-status (PUBLIC):
 ///     req {identifier}; res {exists, verified, has_password, channel, next_step}
 /// - POST /api/v1/auth/last-method (AUTH):
-///     req {method}; res 204
+///     req {method}; res 200 {message: "..."}
 class AuthApiProvider extends BaseProvider {
   /// Calls the public identifier-status endpoint. Throws on transport errors.
   Future<IdentifierStatus> identifierStatus(String identifier) async {
@@ -28,7 +28,7 @@ class AuthApiProvider extends BaseProvider {
       final response = await post('/api/v1/auth/last-method', {
         'method': method,
       });
-      // 204 No Content is success.
+      // 200 OK with JSON MessageResponse is success.
       handleResponse(response, (_) => null);
     } catch (e) {
       AppLogger.warning('Failed to record last auth method "$method": $e');

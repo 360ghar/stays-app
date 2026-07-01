@@ -1,52 +1,66 @@
 import 'property_model.dart';
 
+/// Cursor-paginated response envelope.
+///
+/// Backend contract (source of truth):
+///   {items: [...], next_cursor: base64-or-null, has_more: bool, limit: int}
+///
+/// `next_cursor` is null on the terminal page. End-of-list is detected via
+/// `has_more == false`. Cursor tokens are opaque base64; never decode them.
 class UnifiedPropertyResponse {
-  final List<Property> properties;
-  final int totalCount;
-  final int currentPage;
-  final int totalPages;
-  final int pageSize;
+  final List<Property> items;
+  final String? nextCursor;
+  final bool hasMore;
+  final int limit;
+  final int? total;
   final Map<String, dynamic>? filters;
 
-  bool get hasNextPage => currentPage < totalPages;
-  bool get hasPreviousPage => currentPage > 1;
+  /// True when the server indicates more pages exist and a cursor is
+  /// available. Both flags must agree before paging: [hasMore] is the
+  /// authoritative "are there more" signal, and [nextCursor] is the token
+  /// the server expects on the next call. If they disagree, treat it as
+  /// "end of list" rather than risk an infinite loop or a missed page.
+  bool get hasNextPage => hasMore && nextCursor != null;
 
   UnifiedPropertyResponse({
-    required this.properties,
-    required this.totalCount,
-    required this.currentPage,
-    required this.totalPages,
-    required this.pageSize,
+    required this.items,
+    required this.nextCursor,
+    required this.hasMore,
+    required this.limit,
+    this.total,
     this.filters,
   });
 
   factory UnifiedPropertyResponse.fromJson(Map<String, dynamic> json) {
+    final rawItems = json['items'] as List?;
+    final props =
+        rawItems
+            ?.map((e) => Property.fromJson(Map<String, dynamic>.from(e)))
+            .toList() ??
+        <Property>[];
+    final nextCursor = json['next_cursor'] as String?;
+    final hasMore = (json['has_more'] as bool?) ?? (nextCursor != null);
+    final resolvedLimit = (json['limit'] as num?)?.toInt() ?? 20;
+    final resolvedTotal = json['total'] as int?;
+    final filtersApplied = json['filters_applied'] ?? json['filters'];
     return UnifiedPropertyResponse(
-      properties:
-          (json['properties'] as List?)
-              ?.map((e) => Property.fromJson(Map<String, dynamic>.from(e)))
-              .toList() ??
-          [],
-      totalCount: ((json['total'] ?? json['totalCount']) as num?)?.toInt() ?? 0,
-      currentPage:
-          ((json['page'] ?? json['currentPage']) as num?)?.toInt() ?? 1,
-      totalPages:
-          ((json['total_pages'] ?? json['totalPages']) as num?)?.toInt() ?? 1,
-      pageSize:
-          ((json['limit'] ?? json['pageSize'] ?? json['per_page']) as num?)
-              ?.toInt() ??
-          20,
-      filters: json['filters'] as Map<String, dynamic>?,
+      items: props,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+      limit: resolvedLimit,
+      total: resolvedTotal,
+      filters: filtersApplied is Map
+          ? Map<String, dynamic>.from(filtersApplied)
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'properties': properties.map((e) => e.toJson()).toList(),
-    'totalCount': totalCount,
-    'currentPage': currentPage,
-    'totalPages': totalPages,
-    'pageSize': pageSize,
-    'limit': pageSize,
-    'filters': filters,
+    'items': items.map((e) => e.toJson()).toList(),
+    'next_cursor': nextCursor,
+    'has_more': hasMore,
+    'limit': limit,
+    if (total != null) 'total': total,
+    if (filters != null) 'filters': filters,
   };
 }

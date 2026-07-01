@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -5,13 +7,16 @@ import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/providers/review_provider.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
+import 'package:stays_app/app/data/repositories/review_repository.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/helpers/booking_helpers.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/features/review/presentation/views/review_dialog.dart';
 import 'package:stays_app/features/trips/views/widgets/booking_details_sheet.dart';
 
 class TripsController extends BaseController {
@@ -312,40 +317,48 @@ class TripsController extends BaseController {
   }
 
   void leaveReview(Map<String, dynamic> booking) {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Review ${booking['hotelName']}'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('How was your stay?'),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  onPressed: () {
-                    Get.back();
-                    AppSnackbar.success(
-                      title: 'Thank You!',
-                      message:
-                          'Your ${index + 1} star review has been submitted',
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.star_border,
-                    color: Colors.amber,
-                    size: 32,
-                  ),
-                );
-              }),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-        ],
-      ),
+    final bookingId = int.tryParse(booking['id']?.toString() ?? '');
+    final hotelName = booking['hotelName']?.toString() ?? 'your stay';
+    if (bookingId == null) {
+      AppSnackbar.warning(
+        title: 'Review',
+        message: 'This inquiry is missing a valid identifier.',
+      );
+      return;
+    }
+    // Ensure review repository is registered (TripsBinding registers it, but
+    // this controller can be reached from the home shell without the binding).
+    if (!Get.isRegistered<ReviewRepository>()) {
+      if (!Get.isRegistered<ReviewProvider>()) {
+        Get.lazyPut<ReviewProvider>(() => ReviewProvider());
+      }
+      Get.lazyPut<ReviewRepository>(
+        () => ReviewRepository(provider: Get.find<ReviewProvider>()),
+      );
+    }
+    unawaited(
+      showReviewDialog(bookingId: bookingId, hotelName: hotelName).then((ok) {
+        if (ok) {
+          // Mark the booking as reviewed locally so the UI can hide the action.
+          final index = _allBookings.indexWhere(
+            (b) => b['id'] == booking['id'],
+          );
+          if (index != -1) {
+            _allBookings[index] = Map<String, dynamic>.from(_allBookings[index])
+              ..['rating'] = 1
+              ..['canReview'] = false;
+          }
+          final pastIndex = pastBookings.indexWhere(
+            (b) => b['id'] == booking['id'],
+          );
+          if (pastIndex != -1) {
+            pastBookings[pastIndex] =
+                Map<String, dynamic>.from(pastBookings[pastIndex])
+                  ..['rating'] = 1
+                  ..['canReview'] = false;
+          }
+        }
+      }),
     );
   }
 
@@ -357,29 +370,6 @@ class TripsController extends BaseController {
       ),
       isScrollControlled: true,
     );
-  }
-
-  String _formatDate(String dateStr) {
-    try {
-      final date = DateTime.parse(dateStr);
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${date.day} ${months[date.month - 1]}, ${date.year}';
-    } catch (e) {
-      return dateStr;
-    }
   }
 
   int get totalBookings => pastBookings.length;

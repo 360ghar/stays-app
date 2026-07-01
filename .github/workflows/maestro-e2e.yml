@@ -1,0 +1,21 @@
+name: Maestro E2E Tests
+
+on:
+  workflow_dispatch:
+
+# Skeleton workflow -- Maestro flows not yet created for stays-app.
+# Enable pull_request / push triggers once .maestro/ directory is populated.
+
+jobs:
+  placeholder:
+    name: Maestro E2E (placeholder)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for Maestro flows
+        run: |
+          if [ -d ".maestro" ]; then
+            echo "Maestro flows found. Full E2E pipeline ready."
+          else
+            echo "No .maestro/ directory yet. Add Maestro flows to enable E2E testing."
+          fi

@@ -14,11 +14,12 @@ class BookingDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -30,7 +31,7 @@ class BookingDetailsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: colors.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -38,31 +39,51 @@ class BookingDetailsSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Title
-          const Text(
+          Text(
             'Inquiry Details',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
 
           // Details
-          _buildDetailRow('Inquiry ID', booking['id']?.toString() ?? ''),
-          _buildDetailRow('Hotel', booking['hotelName']?.toString() ?? ''),
-          _buildDetailRow('Location', booking['location']?.toString() ?? ''),
           _buildDetailRow(
+            context,
+            'Inquiry ID',
+            booking['id']?.toString() ?? '',
+          ),
+          _buildDetailRow(
+            context,
+            'Hotel',
+            booking['hotelName']?.toString() ?? '',
+          ),
+          _buildDetailRow(
+            context,
+            'Location',
+            booking['location']?.toString() ?? '',
+          ),
+          _buildDetailRow(
+            context,
             'Check-in',
             _formatDate(booking['checkIn']?.toString() ?? ''),
           ),
           _buildDetailRow(
+            context,
             'Check-out',
             _formatDate(booking['checkOut']?.toString() ?? ''),
           ),
-          _buildDetailRow('Guests', '${booking['guests'] ?? 0} guests'),
-          _buildDetailRow('Rooms', '${booking['rooms'] ?? 1} room(s)'),
           _buildDetailRow(
+            context,
+            'Guests',
+            '${booking['guests'] ?? 0} guests',
+          ),
+          _buildDetailRow(context, 'Rooms', '${booking['rooms'] ?? 1} room(s)'),
+          _buildDetailRow(
+            context,
             'Total Amount',
             '\$${(booking['totalAmount'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
           ),
           _buildDetailRow(
+            context,
             'Status',
             (booking['status']?.toString() ?? '').toUpperCase(),
           ),
@@ -83,7 +104,7 @@ class BookingDetailsSheet extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: () => Get.back(),
                   child: const Text('Close'),
                 ),
@@ -95,7 +116,8 @@ class BookingDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -105,7 +127,7 @@ class BookingDetailsSheet extends StatelessWidget {
             width: 100,
             child: Text(
               label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              style: TextStyle(color: colors.onSurfaceVariant, fontSize: 14),
             ),
           ),
           Expanded(

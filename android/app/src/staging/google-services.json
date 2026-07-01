@@ -1,21 +1,22 @@
 {
+  "_comment": "TEMPLATE ONLY — replace with the real staging google-services.json from the NON-PROD Firebase Console (project stays-360-nonprod). Do NOT commit the real file with API keys. See android/app/FIREBASE_SETUP.md.",
   "project_info": {
-    "project_number": "866676409773",
-    "project_id": "stays-app-52ca6",
-    "storage_bucket": "stays-app-52ca6.firebasestorage.app"
+    "project_number": "REPLACE_FROM_FIREBASE_CONSOLE",
+    "project_id": "stays-360-nonprod",
+    "storage_bucket": "stays-360-nonprod.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:866676409773:android:e7434edd703cfea8e14d24",
+        "mobilesdk_app_id": "REPLACE_FROM_FIREBASE_CONSOLE",
         "android_client_info": {
-          "package_name": "com.the360ghar.stays.staging"
+          "package_name": "com.the360ghar.stays_app.staging"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBcOC2oanpFWvLmIqlsKxNm81LSnyKieeQ"
+          "current_key": "REPLACE_FROM_FIREBASE_CONSOLE"
         }
       ],
       "services": {

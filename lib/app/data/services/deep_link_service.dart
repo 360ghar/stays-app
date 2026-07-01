@@ -9,9 +9,17 @@ import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class DeepLinkService extends GetxService {
-  StreamSubscription? _sub;
+  StreamSubscription<Uri?>? _sub;
   final AppLinks _appLinks = AppLinks();
   final Rxn<String> pendingDeepLink = Rxn<String>();
+  String? _lastHandledUri;
+  DateTime? _lastHandledAt;
+
+  /// Window within which an identical URI is treated as a duplicate. app_links
+  /// can deliver the cold-start link via both getInitialLink() and
+  /// uriLinkStream within milliseconds; outside this window the same link may
+  /// be legitimately re-opened later in the session.
+  static const Duration _dedupeWindow = Duration(seconds: 2);
 
   static const String _baseUrl = 'https://the360ghar.com';
 
@@ -54,52 +62,56 @@ class DeepLinkService extends GetxService {
   }
 
   void _handleDeepLink(Uri uri) {
-    AppLogger.info('🔗 Received Deep Link: $uri');
+    // app_links may surface the cold-start link via both getInitialLink() and
+    // the uriLinkStream within milliseconds. Dedupe only within a short window
+    // so a user can still re-open the same link later in the session.
+    final uriString = uri.toString();
+    final now = DateTime.now();
+    if (uriString == _lastHandledUri &&
+        _lastHandledAt != null &&
+        now.difference(_lastHandledAt!) < _dedupeWindow) {
+      return;
+    }
+    _lastHandledUri = uriString;
+    _lastHandledAt = now;
+
+    AppLogger.info('🔗 Received Deep Link: ${_redact(uri)}');
 
     final internalPath = _mapToInternalPath(uri);
 
     if (internalPath != null) {
       AppLogger.info('🔗 Mapped to internal path: $internalPath');
-      _navigateToPath(internalPath);
+      unawaited(_navigateToPath(internalPath));
     } else {
-      AppLogger.warning('🔗 Could not parse deep link: $uri');
+      AppLogger.warning('🔗 Could not parse deep link: ${_redact(uri)}');
     }
   }
+
+  /// Strips query and fragment before logging — deep-link params may carry
+  /// tokens or other sensitive data that should never be written to the logs.
+  static Uri _redact(Uri uri) => uri.replace(query: '', fragment: '');
+
+  String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
 
   String? _mapToInternalPath(Uri uri) {
-    final segments = uri.pathSegments;
+    var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     if (segments.isEmpty) return null;
 
-    final firstSegment = segments[0];
-
-    if (firstSegment == 'stays' && segments.length >= 2) {
-      return _mapStaysPrefix(segments.sublist(1));
+    // Links may be namespaced under a leading "stays" prefix
+    // (e.g. /stays/listing/42) or come through bare (e.g. /listing/42).
+    if (segments.first == 'stays') {
+      segments = segments.sublist(1);
     }
+    if (segments.length < 2) return null;
 
-    if (firstSegment == 'listing' && segments.length >= 2) {
-      return _buildListingPath(segments[1]);
+    final entity = segments[0];
+    final id = segments[1];
+    switch (entity) {
+      case 'listing':
+        return _buildListingPath(id);
+      case 'chat':
+        return _buildChatPath(id);
     }
-
-    if (firstSegment == 'chat' && segments.length >= 2) {
-      return _buildChatPath(segments[1]);
-    }
-
-    return null;
-  }
-
-  String? _mapStaysPrefix(List<String> segments) {
-    if (segments.isEmpty) return null;
-
-    final subPath = segments[0];
-
-    if (subPath == 'listing' && segments.length >= 2) {
-      return _buildListingPath(segments[1]);
-    }
-
-    if (subPath == 'chat' && segments.length >= 2) {
-      return _buildChatPath(segments[1]);
-    }
-
     return null;
   }
 
@@ -109,17 +121,20 @@ class DeepLinkService extends GetxService {
   String _buildChatPath(String conversationId) =>
       Routes.chat.replaceAll(':conversationId', conversationId);
 
-  void _navigateToPath(String path) {
+  Future<void> _navigateToPath(String path) async {
     pendingDeepLink.value = path;
-    Future.delayed(const Duration(milliseconds: 500), () {
-      try {
-        Get.toNamed(path);
-      } catch (e) {
-        AppLogger.error('🔗 Failed to navigate to deep link path: $path', e);
-        // If navigation fails (e.g. auth middleware redirects to login),
-        // the pendingDeepLink is preserved for post-login replay.
+    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      await Get.toNamed(path);
+      // If we actually landed on the target (an AuthMiddleware did not bounce
+      // us to login), the pending link is consumed — clear it so it can't be
+      // replayed later. On an auth redirect it is intentionally left set.
+      if (Get.currentRoute == path) {
+        pendingDeepLink.value = null;
       }
-    });
+    } catch (e) {
+      AppLogger.error('🔗 Failed to navigate to deep link path: $path', e);
+    }
   }
 
   String? consumePendingDeepLink() {

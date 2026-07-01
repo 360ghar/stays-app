@@ -20,7 +20,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.a360ghar.stays"
+    namespace = "com.the360ghar.stays_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "28.2.13676358"
 
@@ -46,7 +46,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.the360ghar.stays"
+        applicationId = "com.the360ghar.stays_app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

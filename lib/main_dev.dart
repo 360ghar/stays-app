@@ -39,11 +39,13 @@ Future<void> main() async {
       // Validate high-level API keys
       SecurityService().validateApiKeys();
 
-      // Initialize Supabase service (required before other services)
-      final supabaseService = SupabaseService(
+      // Supabase is owned by InitialBinding.putAsync (single source of truth
+      // for the registered client). We publish the init future here so the
+      // binding can await the same work, avoiding a double `Supabase.initialize`.
+      SupabaseService.supabaseServiceReady = SupabaseService(
         url: AppConfig.I.supabaseUrl,
-        anonKey: AppConfig.I.supabaseAnonKey,
-      );
+        publishableKey: AppConfig.I.supabasePublishableKey,
+      ).initialize();
       final pinsRaw = dotenv.env['API_CERT_SHA256'];
       if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
         final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
@@ -66,8 +68,8 @@ Future<void> main() async {
       late LocaleService localeService;
 
       await Future.wait([
-        // Supabase initialization (critical)
-        supabaseService.initialize(),
+        // Supabase initialization (critical) — shared with the binding.
+        SupabaseService.supabaseServiceReady!,
         // Theme service initialization
         ThemeService().init().then((service) => themeService = service),
         // Locale service initialization
@@ -79,10 +81,8 @@ Future<void> main() async {
         ]),
       ]);
 
-      // Register services with GetX after initialization
-      if (!Get.isRegistered<SupabaseService>()) {
-        Get.put<SupabaseService>(supabaseService, permanent: true);
-      }
+      // Register services with GetX after initialization. SupabaseService is
+      // registered by InitialBinding — see notes above.
       Get.put<ThemeService>(themeService, permanent: true);
       Get.put<LocaleService>(localeService, permanent: true);
 

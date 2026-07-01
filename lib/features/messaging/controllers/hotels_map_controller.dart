@@ -354,7 +354,7 @@ class HotelsMapController extends GetxController {
         filters: _activeFilters.toQueryParameters(),
       );
       _lastRadius = radius;
-      final mapped = resp.properties.map((p) => _toHotelModel(p)).toList();
+      final mapped = resp.items.map((p) => _toHotelModel(p)).toList();
       _allHotels
         ..clear()
         ..addAll(mapped);

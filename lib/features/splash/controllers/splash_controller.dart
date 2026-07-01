@@ -81,7 +81,9 @@ class SplashController extends BaseController {
       AppLogger.info(
         'Core initialization finished. Proceeding to auth check...',
       );
-      unawaited(_navigateToNextScreen());
+      // Await navigation so it does not race with PushNotificationService init
+      // (Critical audit #8). The watchdog still guards against stalls.
+      await _navigateToNextScreen();
     } catch (e, stackTrace) {
       AppLogger.error('CRITICAL STARTUP ERROR: $e', e, stackTrace);
       // If a critical service fails (like Storage), show error and fallback

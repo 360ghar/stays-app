@@ -4,8 +4,10 @@ import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/providers/bookings_provider.dart';
 import 'package:stays_app/app/data/providers/properties_provider.dart';
+import 'package:stays_app/app/data/providers/review_provider.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
+import 'package:stays_app/app/data/repositories/review_repository.dart';
 
 class TripsBinding extends Bindings {
   @override
@@ -34,6 +36,17 @@ class TripsBinding extends Bindings {
 
     if (!Get.isRegistered<FilterController>()) {
       Get.put<FilterController>(FilterController(), permanent: true);
+    }
+
+    // Review repository for the leave-review flow.
+    if (!Get.isRegistered<ReviewProvider>()) {
+      Get.lazyPut<ReviewProvider>(() => ReviewProvider(), fenix: true);
+    }
+    if (!Get.isRegistered<ReviewRepository>()) {
+      Get.lazyPut<ReviewRepository>(
+        () => ReviewRepository(provider: Get.find<ReviewProvider>()),
+        fenix: true,
+      );
     }
 
     if (!Get.isRegistered<TripsController>()) {

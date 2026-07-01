@@ -81,21 +81,18 @@ class BookingRepository {
     }
   }
 
-  Future<List<Booking>> fetchBookings({int page = 1, int limit = 20}) async {
-    final response = await _provider.listBookings(page: page, limit: limit);
-    final rawList =
-        (response['bookings'] as List?) ??
-        (response['results'] as List?) ??
-        (response['data'] as List?) ??
-        <dynamic>[];
+  Future<List<Booking>> fetchBookings({String? cursor, int limit = 20}) async {
+    final response = await _provider.listBookings(cursor: cursor, limit: limit);
+    final dynamic candidates = response['items'] ?? response['data'];
+    final List<dynamic> rawList = candidates is List ? candidates : <dynamic>[];
     return rawList
         .whereType<Map>()
         .map((item) => Booking.fromJson(Map<String, dynamic>.from(item)))
         .toList();
   }
 
-  Future<Map<String, dynamic>> listBookings({int page = 1, int limit = 20}) {
-    return _provider.listBookings(page: page, limit: limit);
+  Future<Map<String, dynamic>> listBookings({String? cursor, int limit = 20}) {
+    return _provider.listBookings(cursor: cursor, limit: limit);
   }
 
   Future<Booking> getBooking(int id) async {

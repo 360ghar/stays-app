@@ -11,22 +11,22 @@ class WishlistRepository {
   Future<void> remove(int propertyId) =>
       _provider.swipe(propertyId: propertyId, isLiked: false);
 
+  /// Remove many liked properties in one backend call (audit UX #9).
+  Future<void> clearAll(List<int> propertyIds) =>
+      _provider.batchRemove(propertyIds);
+
   Future<UnifiedPropertyResponse> listFavorites({
-    int page = 1,
+    String? cursor,
     int limit = 20,
     Map<String, dynamic>? filters,
   }) async {
     final json = await _provider.list(
       isLiked: true,
-      page: page,
+      cursor: cursor,
       limit: limit,
       filters: filters,
     );
-    final rawList =
-        (json['properties'] as List?) ??
-        (json['data'] is Map<String, dynamic>
-            ? (json['data'] as Map<String, dynamic>)['properties'] as List?
-            : null);
+    final rawList = json['items'] as List?;
     final properties =
         rawList?.map((e) {
           final map = Map<String, dynamic>.from(e);
@@ -46,23 +46,17 @@ class WishlistRepository {
           return Property.fromJson(map);
         }).toList() ??
         <Property>[];
-    final total =
-        ((json['total'] ?? json['totalCount']) as num?)?.toInt() ??
-        properties.length;
-    final current =
-        ((json['page'] ?? json['currentPage']) as num?)?.toInt() ?? page;
-    final totalPages =
-        ((json['total_pages'] ?? json['totalPages']) as num?)?.toInt() ?? 1;
-    final resolvedLimit =
-        ((json['limit'] ?? json['pageSize'] ?? limit) as num?)?.toInt() ??
-        limit;
+    final nextCursor = json['next_cursor'] as String?;
+    final hasMore = (json['has_more'] as bool?) ?? (nextCursor != null);
+    final resolvedLimit = (json['limit'] as num?)?.toInt() ?? limit;
+    final resolvedTotal = json['total'] as int?;
     final filtersApplied = json['filters_applied'] ?? json['filters'];
     return UnifiedPropertyResponse(
-      properties: properties,
-      totalCount: total,
-      currentPage: current,
-      totalPages: totalPages,
-      pageSize: resolvedLimit,
+      items: properties,
+      nextCursor: nextCursor,
+      hasMore: hasMore,
+      limit: resolvedLimit,
+      total: resolvedTotal,
       filters: filtersApplied is Map
           ? Map<String, dynamic>.from(filtersApplied)
           : null,

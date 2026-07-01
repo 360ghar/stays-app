@@ -31,7 +31,7 @@ class NavigationController extends GetxController {
     ),
     NavigationTab(
       icon: Icons.location_on_outlined,
-      labelKey: 'nav.locate',
+      labelKey: 'nav.map',
       route: '/inbox',
     ),
     NavigationTab(

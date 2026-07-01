@@ -185,22 +185,15 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
   }
 
   Future<void> _waitForLocationInitialization() async {
-    // Wait for location service to complete initialization
-    const maxWaitTime = Duration(seconds: 10);
-    final startTime = DateTime.now();
-
-    while (!_locationService.isInitialized) {
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Prevent infinite waiting
-      if (DateTime.now().difference(startTime) > maxWaitTime) {
-        AppLogger.warning(
-          'LocationService initialization timeout - proceeding anyway',
-        );
-        break;
-      }
+    // Await the location service's ready completer instead of busy-wait
+    // polling (Critical audit #10). Fall back to a timeout guard.
+    try {
+      await _locationService.ready.timeout(const Duration(seconds: 10));
+    } catch (_) {
+      AppLogger.warning(
+        'LocationService initialization timeout - proceeding anyway',
+      );
     }
-
     AppLogger.info(
       'LocationService initialization confirmed, proceeding with property loading',
     );
@@ -299,7 +292,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
         filters: _activeFilters.toQueryParameters(),
       );
 
-      final props = resp.properties;
+      final props = resp.items;
       AppLogger.info(
         'ExploreController: Received ${props.length} properties from API',
       );
@@ -313,11 +306,11 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
         lat: _locationService.latitude,
         lng: _locationService.longitude,
       );
-      if (cached != null && cached.properties.isNotEmpty) {
+      if (cached != null && cached.items.isNotEmpty) {
         isShowingCachedData.value = true;
-        _updatePropertiesFromResponse(cached.properties);
+        _updatePropertiesFromResponse(cached.items);
         AppLogger.info(
-          'Loaded ${cached.properties.length} cached properties due to error',
+          'Loaded ${cached.items.length} cached properties due to error',
         );
         // Show cached data but also indicate there was an error
         errorMessage.value = '$friendlyError Showing cached data.';

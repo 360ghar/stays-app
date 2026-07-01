@@ -122,7 +122,7 @@ dart run build_runner build --delete-conflicting-outputs
 # Each .env.* file should contain:
 # API_BASE_URL=your-api-url
 # SUPABASE_URL=your-supabase-url
-# SUPABASE_ANON_KEY=your-anon-key
+# SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 # ENABLE_ANALYTICS=true/false
 # GOOGLE_MAPS_API_KEY=your-maps-key (optional)
 ```

@@ -216,7 +216,15 @@ class AuthController extends BaseController {
 
   Future<void> _ensureRememberMePreferenceReady() async {
     _rememberMeReady ??= _initializeRememberMePreference();
-    await _rememberMeReady;
+    try {
+      await _rememberMeReady;
+    } catch (e) {
+      // A failed future would otherwise persist forever, making every
+      // subsequent call fail too. Reset so the next call retries, and
+      // continue with defaults (rememberMe already false) this time.
+      AppLogger.warning('Remember-me init failed, resetting for retry: $e');
+      _rememberMeReady = null;
+    }
   }
 
   void _bindAuthStateListener() {
@@ -226,32 +234,18 @@ class AuthController extends BaseController {
         (data) async {
           final event = data.event;
           final session = data.session;
-          if (event == AuthChangeEvent.signedOut) {
-            // Keep TokenService in sync on sign-out events
-            await _tokenService.clearTokens();
-            await _clearRememberedSession();
-            return;
-          }
+          // SessionController is the single source of truth for session/token
+          // persistence and the `isAuthenticated` observable on auth events.
+          // This listener is intentionally narrow: it only completes a pending
+          // Google OAuth-redirect sign-in, avoiding the sign-out race that
+          // previously existed when both controllers cleared tokens.
           if (session == null) {
             return;
           }
-          if (event == AuthChangeEvent.signedIn ||
-              event == AuthChangeEvent.tokenRefreshed) {
-            // Update TokenService with latest tokens so late-bound controllers see auth state
-            await _updateTokenServiceFromSession(session);
-            await _ensureRememberMePreferenceReady();
-            // Only persist to local remember-me storage if opted in
-            if (rememberMe.value) {
-              await _persistRememberedSession(session: session);
-            }
-
-            // Complete a pending Google OAuth-redirect sign-in: the session has
-            // just arrived via the deep-link callback.
-            if (_pendingGoogleRedirect && event == AuthChangeEvent.signedIn) {
-              _pendingGoogleRedirect = false;
-              isGoogleLoading.value = false;
-              await _completeGoogleSignIn(_userFromSession(session));
-            }
+          if (event == AuthChangeEvent.signedIn && _pendingGoogleRedirect) {
+            _pendingGoogleRedirect = false;
+            isGoogleLoading.value = false;
+            await _completeGoogleSignIn(_userFromSession(session));
           }
         },
         onError: (Object error) {
@@ -873,7 +867,7 @@ class AuthController extends BaseController {
       if (sent) {
         _showSuccessSnackbar(
           title: 'OTP Sent',
-          message: 'We have sent an OTP to +91 $phone',
+          message: 'We have sent an OTP to ${_formatPhoneForDisplay(phone)}',
         );
       }
       return sent;
@@ -909,7 +903,8 @@ class AuthController extends BaseController {
       );
       _showSuccessSnackbar(
         title: 'OTP Sent',
-        message: 'We have sent a verification code to +91 $phone',
+        message:
+            'We have sent a verification code to ${_formatPhoneForDisplay(phone)}',
       );
       return true;
     } on ApiException catch (e) {
@@ -1184,6 +1179,17 @@ class AuthController extends BaseController {
       lastName: meta['last_name'] as String?,
       name: (meta['full_name'] as String?) ?? (meta['name'] as String?),
     );
+  }
+
+  /// Formats a phone number for display in user-facing messages, preserving
+  /// the user's actual country code rather than hardcoding +91. When no
+  /// country code is present, the default Indian code (+91) is used to match
+  /// the value actually sent to Supabase.
+  String _formatPhoneForDisplay(String phone) {
+    final trimmed = phone.trim();
+    if (trimmed.isEmpty) return trimmed;
+    if (trimmed.startsWith('+')) return trimmed;
+    return '+91$trimmed';
   }
 
   ProfileRepository _ensureProfileRepository() {

@@ -243,57 +243,11 @@ class JsonHelpers {
     return response;
   }
 
-  /// Unwraps a paginated response and returns both data and metadata.
-  static ({
-    List<Map<String, dynamic>> items,
-    int currentPage,
-    int totalPages,
-    int totalCount,
-    int pageSize,
-  })
-  unwrapPaginatedResponse(Map<String, dynamic>? response) {
-    if (response == null) {
-      return (
-        items: <Map<String, dynamic>>[],
-        currentPage: 1,
-        totalPages: 1,
-        totalCount: 0,
-        pageSize: 20,
-      );
-    }
-
-    final data = unwrapData(response);
-    final List<Map<String, dynamic>> items;
-
-    if (data is List) {
-      items = data
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } else {
-      items = <Map<String, dynamic>>[];
-    }
-
-    return (
-      items: items,
-      currentPage: getIntOrDefault(
-        response['current_page'] ?? response['page'],
-        1,
-      ),
-      totalPages: getIntOrDefault(
-        response['total_pages'] ?? response['pages'],
-        1,
-      ),
-      totalCount: getIntOrDefault(
-        response['total_count'] ?? response['total'] ?? response['count'],
-        items.length,
-      ),
-      pageSize: getIntOrDefault(
-        response['page_size'] ?? response['limit'] ?? response['per_page'],
-        20,
-      ),
-    );
-  }
+  /// Unwraps a cursor-paginated response and returns the items plus cursor
+  /// metadata. (Helper removed — was added in the diff with no callers. Use
+  /// `UnifiedPropertyResponse.fromJson` directly when the migration lands.)
+  // ponytail: helper intentionally deleted; revive only when the first caller
+  // arrives, and model the result as a class so the contract is self-describing.
 
   // ===== ID Helpers =====
 
