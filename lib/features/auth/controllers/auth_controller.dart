@@ -885,6 +885,35 @@ class AuthController extends BaseController {
     }
   }
 
+  static const _noAccountFoundMessage =
+      'No account found with this email or phone. Check the address or sign up.';
+
+  /// UX-first exists probe before sending a reset OTP (decision: reveal via
+  /// identifier-status, not anti-enumeration).
+  Future<bool> _ensureAccountExistsForReset(String identifier) async {
+    try {
+      final status = await _authRepository.checkIdentifierStatus(
+        identifier.trim(),
+      );
+      if (!status.exists) {
+        emailOrPhoneError.value = _noAccountFoundMessage;
+        return false;
+      }
+      return true;
+    } on ApiException catch (e) {
+      _handleApiError('Forgot Password', e);
+      return false;
+    } catch (e) {
+      AppLogger.error('identifier-status failed during forgot-password', e);
+      _showErrorSnackbar(
+        title: 'Forgot Password',
+        message:
+            "Can't reach the server to verify your account. Check your connection and try again.",
+      );
+      return false;
+    }
+  }
+
   /// Sends a phone OTP for the forgot-password flow via Supabase.
   /// Uses `signInWithOtp` with `shouldCreateUser: false` so only existing
   /// accounts can receive a code.
@@ -897,6 +926,7 @@ class AuthController extends BaseController {
     try {
       isLoading.value = true;
       final formattedPhone = phone.startsWith('+') ? phone : '+91$phone';
+      if (!await _ensureAccountExistsForReset(formattedPhone)) return false;
       await Supabase.instance.client.auth.signInWithOtp(
         phone: formattedPhone,
         shouldCreateUser: false,
@@ -933,6 +963,7 @@ class AuthController extends BaseController {
     }
     try {
       isLoading.value = true;
+      if (!await _ensureAccountExistsForReset(trimmed)) return false;
       await _authRepository.sendEmailOtp(
         email: trimmed,
         shouldCreateUser: false,
@@ -1273,6 +1304,18 @@ class AuthController extends BaseController {
   }
 
   void _handleApiError(String title, ApiException e) {
+    final lower = e.message.toLowerCase();
+    if (lower.contains('email not confirmed') ||
+        lower.contains('phone not confirmed') ||
+        lower.contains('user not confirmed')) {
+      _showErrorSnackbar(
+        title: title,
+        message:
+            'Please verify your account before signing in. We can send you a new code.',
+      );
+      return;
+    }
+
     String message;
     switch (e.statusCode) {
       case 401:

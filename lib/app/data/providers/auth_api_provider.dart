@@ -60,7 +60,7 @@ class AuthApiProvider extends BaseProvider {
   /// Permanently deletes the authenticated user's account.
   /// Backend hard-deletes the Supabase Auth user and anonymizes the local row.
   Future<void> deleteAccount() async {
-    final response = await post('/api/v1/auth/delete-account', {});
+    final response = await post('/api/v1/auth/delete-account', {'confirm': true});
     handleResponse(response, (_) => null);
   }
 }

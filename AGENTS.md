@@ -1,5 +1,7 @@
 # Repository Guidelines for Agentic Coding
 
+> **Canonical guide: [CLAUDE.md](./CLAUDE.md).** Read it first for stack, structure, commands, and conventions.
+
 ## Project Structure & Module Organization
 Flutter source lives in `lib/app/`, split by bindings, controllers, data providers, domain repositories, routes, UI views/widgets, and utilities. Configuration resides in `lib/config/` with environment-specific settings under `environments/`. Localization strings are in `l10n/` (`en.json`, `hi.json`) with helper services. Entrypoints select flavors via `lib/main_dev.dart`, `lib/main_staging.dart`, and `lib/main_prod.dart`. Tests mirror the structure in `test/unit`, `test/widget`, and `test/integration`, keeping `_test.dart` suffixes aligned with source paths.
 

@@ -589,6 +589,14 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
       return;
     }
 
+    if (status.exists && !status.verified) {
+      AppSnackbar.info(
+        title: 'Verify Your Account',
+        message:
+            "Your account isn't verified yet. We've sent a code — enter it below or resend.",
+      );
+    }
+
     // OTP-first path (unverified or unknown account). Only an UNKNOWN
     // identifier should create a new user; an existing-but-unverified account
     // must not be duplicated.
