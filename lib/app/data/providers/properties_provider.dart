@@ -24,7 +24,7 @@ class PropertiesProvider extends BaseProvider {
         'radius': radiusKm,
       ...?filters,
     };
-    final res = await get('/api/v1/properties/', query: query.asQueryParams());
+    final res = await get('/api/v1/properties', query: query.asQueryParams());
     return handleResponse(res, (json) {
       final map = json as Map<String, dynamic>;
       final rawList = map['items'] as List?;
@@ -68,7 +68,7 @@ class PropertiesProvider extends BaseProvider {
 
   Future<List<Property>> recommendations({int limit = 10}) async {
     final res = await get(
-      '/api/v1/properties/recommendations/',
+      '/api/v1/properties/recommendations',
       query: {'limit': '$limit'},
     );
     return handleResponse(res, (json) {

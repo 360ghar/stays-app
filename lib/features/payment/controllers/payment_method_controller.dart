@@ -65,7 +65,6 @@ class PaymentMethodController extends BaseController {
             brand: methods[i].brand,
             last4: methods[i].last4,
             nickname: methods[i].nickname,
-            isDefault: false,
             createdAt: methods[i].createdAt,
           );
         }

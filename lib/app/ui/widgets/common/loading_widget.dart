@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 class LoadingWidget extends StatelessWidget {
+  const LoadingWidget({super.key, this.message, this.size, this.color});
   final String? message;
   final double? size;
   final Color? color;
-
-  const LoadingWidget({super.key, this.message, this.size, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -42,10 +41,9 @@ class LoadingWidget extends StatelessWidget {
 }
 
 class SmallLoadingWidget extends StatelessWidget {
+  const SmallLoadingWidget({super.key, this.color, this.size = 20});
   final Color? color;
   final double size;
-
-  const SmallLoadingWidget({super.key, this.color, this.size = 20});
 
   @override
   Widget build(BuildContext context) {
@@ -62,10 +60,9 @@ class SmallLoadingWidget extends StatelessWidget {
 }
 
 class LinearLoadingIndicator extends StatelessWidget {
+  const LinearLoadingIndicator({super.key, this.height = 4, this.color});
   final double height;
   final Color? color;
-
-  const LinearLoadingIndicator({super.key, this.height = 4, this.color});
 
   @override
   Widget build(BuildContext context) {

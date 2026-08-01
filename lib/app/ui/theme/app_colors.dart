@@ -306,17 +306,17 @@ class AppColors {
 
   /// Material color swatch for primary
   static MaterialColor get primarySwatch =>
-      MaterialColor(primary.toARGB32(), <int, Color>{
-        50: const Color(0xFFEFF6FF),
-        100: const Color(0xFFDBEAFE),
-        200: const Color(0xFFBFDBFE),
+      MaterialColor(primary.toARGB32(), const <int, Color>{
+        50: Color(0xFFEFF6FF),
+        100: Color(0xFFDBEAFE),
+        200: Color(0xFFBFDBFE),
         300: primaryLight,
-        400: const Color(0xFF60A5FA),
+        400: Color(0xFF60A5FA),
         500: primary,
         600: primaryDark,
-        700: const Color(0xFF1D4ED8),
-        800: const Color(0xFF1E40AF),
-        900: const Color(0xFF1E3A8A),
+        700: Color(0xFF1D4ED8),
+        800: Color(0xFF1E40AF),
+        900: Color(0xFF1E3A8A),
       });
 }
 

@@ -1,6 +1,6 @@
 /// Features barrel export
 /// Import specific features as needed rather than this file to avoid circular dependencies
-library features;
+library;
 
 export 'auth/auth.dart';
 export 'explore/explore.dart';

@@ -5,6 +5,7 @@ import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
+import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/utils/extensions/dynamic_extensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
@@ -146,24 +147,21 @@ class PrivacyController extends BaseController {
     }
   }
 
+  /// Backend has no export endpoint; surfaces a clear "not supported" message.
   Future<void> requestDataExport() async {
     if (dataExportInFlight.value) return;
     dataExportInFlight.value = true;
-    final result = await executeWithErrorHandling(() async {
+    try {
       await _profileRepository.requestDataExport();
-      return true;
-    }, showLoading: false);
-    dataExportInFlight.value = false;
-    if (result == true) {
-      AppSnackbar.success(
-        title: 'Data export requested',
-        message: 'We will email you when your data export is ready.',
-      );
-    } else {
+    } catch (e) {
       AppSnackbar.error(
-        title: 'Request failed',
-        message: 'Unable to request data export. Please try again later.',
+        title: 'Not supported',
+        message: e is AppException
+            ? e.message
+            : 'Data export is not supported yet. Please contact support.',
       );
+    } finally {
+      dataExportInFlight.value = false;
     }
   }
 

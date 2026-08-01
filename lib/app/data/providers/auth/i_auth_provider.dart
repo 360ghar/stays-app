@@ -1,8 +1,8 @@
 class ProviderAuthResult {
+  ProviderAuthResult({this.accessToken, this.refreshToken, this.rawUser});
   final String? accessToken;
   final String? refreshToken;
   final Map<String, dynamic>? rawUser;
-  ProviderAuthResult({this.accessToken, this.refreshToken, this.rawUser});
 }
 
 /// Outcome of a Google sign-in attempt, which may complete synchronously
@@ -11,10 +11,9 @@ class ProviderAuthResult {
 enum GoogleSignInStatus { session, redirectLaunched, canceled }
 
 class GoogleSignInOutcome {
+  const GoogleSignInOutcome(this.status, [this.result]);
   final GoogleSignInStatus status;
   final ProviderAuthResult? result;
-
-  const GoogleSignInOutcome(this.status, [this.result]);
 
   /// Native ID-token flow succeeded with a session.
   bool get hasSession => status == GoogleSignInStatus.session;

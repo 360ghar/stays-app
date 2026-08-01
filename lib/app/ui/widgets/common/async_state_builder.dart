@@ -18,11 +18,11 @@ import 'package:get/get.dart';
 /// ```
 class AsyncStateBuilder<T> extends StatelessWidget {
   const AsyncStateBuilder({
-    super.key,
     required this.isLoading,
     required this.error,
     required this.data,
     required this.builder,
+    super.key,
     this.onRetry,
     this.loadingWidget,
     this.errorBuilder,
@@ -93,11 +93,11 @@ class AsyncStateBuilder<T> extends StatelessWidget {
 /// Variant for list data with built-in empty checking
 class AsyncListBuilder<T> extends StatelessWidget {
   const AsyncListBuilder({
-    super.key,
     required this.isLoading,
     required this.error,
     required this.items,
     required this.builder,
+    super.key,
     this.onRetry,
     this.loadingWidget,
     this.errorBuilder,

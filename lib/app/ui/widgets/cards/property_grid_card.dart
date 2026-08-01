@@ -4,27 +4,25 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../data/models/property_model.dart';
 import '../../theme/theme_extensions.dart';
-import '../../theme/app_animations.dart';
 import '../common/animated_widgets.dart';
 import '../common/animated_favorite_button.dart';
 
 class PropertyGridCard extends StatelessWidget {
+  const PropertyGridCard({
+    required this.property,
+    required this.onTap,
+    super.key,
+    this.onFavoriteToggle,
+    this.isFavorite = false,
+    this.heroPrefix,
+    this.isCompact = false,
+  });
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
   final bool isFavorite;
   final String? heroPrefix;
   final bool isCompact;
-
-  const PropertyGridCard({
-    super.key,
-    required this.property,
-    required this.onTap,
-    this.onFavoriteToggle,
-    this.isFavorite = false,
-    this.heroPrefix,
-    this.isCompact = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +37,6 @@ class PropertyGridCard extends StatelessWidget {
     return AnimatedScaleWrapper(
       onTap: onTap,
       scaleFactor: 0.97,
-      duration: AppAnimations.cardPressDuration,
-      curve: AppAnimations.cardPressCurve,
       child: Material(
         color: Colors.transparent,
         elevation: elevation,
@@ -93,7 +89,6 @@ class PropertyGridCard extends StatelessWidget {
               const imageFlex = 6;
               const infoFlex = 5;
               return Column(
-                mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(flex: imageFlex, child: _buildImage(context)),
@@ -145,7 +140,7 @@ class PropertyGridCard extends StatelessWidget {
               highlightColor: colors.surface,
               child: Container(color: colors.surface),
             ),
-            errorWidget: (_, __, ___) => Container(
+            errorWidget: (_, _, _) => Container(
               color: colors.surfaceContainerHighest,
               alignment: Alignment.center,
               child: Icon(
@@ -296,7 +291,7 @@ class PropertyGridCard extends StatelessWidget {
     return Positioned(
       top: inset,
       right: inset,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: context.isDark ? 0.6 : 0.92),
           shape: BoxShape.circle,

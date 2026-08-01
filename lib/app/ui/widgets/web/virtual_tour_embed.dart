@@ -12,7 +12,7 @@ import '../../../routes/app_routes.dart';
 import '../../../utils/helpers/webview_helper.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
-  const VirtualTourEmbed({super.key, required this.tourUrl});
+  const VirtualTourEmbed({required this.tourUrl, super.key});
 
   final String tourUrl;
 
@@ -28,7 +28,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
 
   static final Set<Factory<OneSequenceGestureRecognizer>> _gestureRecognizers =
       <Factory<OneSequenceGestureRecognizer>>{
-        Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+        const Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
       };
 
   @override
@@ -130,7 +130,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
         Positioned(
           top: 8,
           right: 8,
-          child: Container(
+          child: DecoratedBox(
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(20),

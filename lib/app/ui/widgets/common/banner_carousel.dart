@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 class BannerCarousel extends StatefulWidget {
   const BannerCarousel({
-    super.key,
     required this.imageUrls,
+    super.key,
     this.aspectRatio = 16 / 6,
     this.autoPlay = true,
     this.autoPlayInterval = const Duration(seconds: 4),
@@ -101,7 +101,6 @@ class _BannerCarouselState extends State<BannerCarousel> {
                       // Gradient overlay for text/legibility
                       Positioned.fill(
                         child: IgnorePointer(
-                          ignoring: true,
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(

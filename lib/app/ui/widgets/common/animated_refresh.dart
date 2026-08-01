@@ -83,9 +83,9 @@ class _AnimatedRefreshIconState extends State<AnimatedRefreshIcon>
 /// Use this to easily add refresh functionality to any scrollable content.
 class SmartRefresh extends StatefulWidget {
   const SmartRefresh({
-    super.key,
     required this.onRefresh,
     required this.child,
+    super.key,
     this.enabled = true,
     this.color,
     this.backgroundColor,

@@ -27,19 +27,6 @@ extension TextFormFieldThemeExtension on TextFormField {
 
 /// Custom TextField widget that ensures black text color
 class ThemedTextField extends StatelessWidget {
-  final TextEditingController? controller;
-  final String? hintText;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final InputDecoration? decoration;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onTap;
-  final FocusNode? focusNode;
-  final bool? enabled;
-  final int? maxLines;
-  final TextStyle? style;
-
   const ThemedTextField({
     super.key,
     this.controller,
@@ -55,6 +42,18 @@ class ThemedTextField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
+  final TextEditingController? controller;
+  final String? hintText;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final InputDecoration? decoration;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
+  final FocusNode? focusNode;
+  final bool? enabled;
+  final int? maxLines;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {
@@ -86,20 +85,6 @@ class ThemedTextField extends StatelessWidget {
 
 /// Custom TextFormField widget that ensures black text color
 class ThemedTextFormField extends StatelessWidget {
-  final TextEditingController? controller;
-  final String? hintText;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final List<TextInputFormatter>? inputFormatters;
-  final InputDecoration? decoration;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onTap;
-  final FormFieldValidator<String>? validator;
-  final FocusNode? focusNode;
-  final bool? enabled;
-  final int? maxLines;
-  final TextStyle? style;
-
   const ThemedTextFormField({
     super.key,
     this.controller,
@@ -116,6 +101,19 @@ class ThemedTextFormField extends StatelessWidget {
     this.maxLines = 1,
     this.style,
   });
+  final TextEditingController? controller;
+  final String? hintText;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+  final InputDecoration? decoration;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
+  final FormFieldValidator<String>? validator;
+  final FocusNode? focusNode;
+  final bool? enabled;
+  final int? maxLines;
+  final TextStyle? style;
 
   @override
   Widget build(BuildContext context) {

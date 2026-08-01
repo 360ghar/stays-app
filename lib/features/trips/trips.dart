@@ -1,5 +1,5 @@
 /// Trips feature barrel export
-library trips;
+library;
 
 // Bindings
 export 'bindings/trips_binding.dart';

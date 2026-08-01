@@ -1,5 +1,5 @@
 /// Settings feature barrel export
-library settings;
+library;
 
 // Bindings
 export 'bindings/settings_binding.dart';

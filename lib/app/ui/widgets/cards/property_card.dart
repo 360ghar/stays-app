@@ -10,6 +10,18 @@ const double _propertyCardShadowBlur = 20.0;
 const EdgeInsets _propertyCardMargin = EdgeInsets.only(right: 14);
 
 class PropertyCard extends StatelessWidget {
+  const PropertyCard({
+    required this.property,
+    required this.onTap,
+    super.key,
+    this.onFavoriteToggle,
+    this.width = 248,
+    this.height = 184,
+    this.showPrice = true,
+    this.showRating = false,
+    this.heroPrefix,
+    this.isFavorite = false,
+  });
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
@@ -19,19 +31,6 @@ class PropertyCard extends StatelessWidget {
   final bool showRating;
   final String? heroPrefix;
   final bool isFavorite;
-
-  const PropertyCard({
-    super.key,
-    required this.property,
-    required this.onTap,
-    this.onFavoriteToggle,
-    this.width = 248,
-    this.height = 184,
-    this.showPrice = true,
-    this.showRating = false,
-    this.heroPrefix,
-    this.isFavorite = false,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -252,10 +251,9 @@ class PropertyCard extends StatelessWidget {
 }
 
 class PropertyCardShimmer extends StatelessWidget {
+  const PropertyCardShimmer({super.key, this.width = 248, this.height = 184});
   final double width;
   final double height;
-
-  const PropertyCardShimmer({super.key, this.width = 248, this.height = 184});
 
   @override
   Widget build(BuildContext context) {

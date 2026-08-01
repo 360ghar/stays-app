@@ -4,7 +4,7 @@ import '../services/storage_service.dart';
 import '../../utils/services/token_service.dart';
 import '../models/user_model.dart';
 import '../../utils/logger/app_logger.dart';
-import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/helpers/supabase_auth_error_mapper.dart';
 import '../providers/auth/i_auth_provider.dart';
 import '../providers/auth_api_provider.dart';
 
@@ -15,9 +15,6 @@ import '../providers/auth_api_provider.dart';
 enum GoogleLoginStatus { session, redirectLaunched, canceled }
 
 class GoogleLoginResult {
-  final GoogleLoginStatus status;
-  final UserModel? user;
-
   const GoogleLoginResult._(this.status, [this.user]);
 
   const GoogleLoginResult.session(UserModel user)
@@ -25,6 +22,8 @@ class GoogleLoginResult {
   const GoogleLoginResult.redirectLaunched()
     : this._(GoogleLoginStatus.redirectLaunched);
   const GoogleLoginResult.canceled() : this._(GoogleLoginStatus.canceled);
+  final GoogleLoginStatus status;
+  final UserModel? user;
 
   bool get hasSession => status == GoogleLoginStatus.session;
   bool get isRedirect => status == GoogleLoginStatus.redirectLaunched;
@@ -32,13 +31,12 @@ class GoogleLoginResult {
 }
 
 class AuthRepository {
-  final IAuthProvider _provider;
-  final AuthApiProvider _authApi;
-  final StorageService _storage = Get.find<StorageService>();
-
   AuthRepository({required IAuthProvider provider, AuthApiProvider? authApi})
     : _provider = provider,
       _authApi = authApi ?? AuthApiProvider();
+  final IAuthProvider _provider;
+  final AuthApiProvider _authApi;
+  final StorageService _storage = Get.find<StorageService>();
 
   Future<UserModel> loginWithEmail({
     required String email,
@@ -54,8 +52,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -73,8 +70,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -94,8 +90,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -122,8 +117,7 @@ class AuthRepository {
     try {
       return await _authApi.identifierStatus(identifier);
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -163,8 +157,7 @@ class AuthRepository {
           return const GoogleLoginResult.canceled();
       }
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -182,8 +175,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -201,8 +193,7 @@ class AuthRepository {
         shouldCreateUser: shouldCreateUser,
       );
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -217,8 +208,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e, context: AuthErrorContext.otp);
     }
   }
 
@@ -232,8 +222,7 @@ class AuthRepository {
         shouldCreateUser: shouldCreateUser,
       );
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -245,8 +234,7 @@ class AuthRepository {
     try {
       await _provider.addPhone(phone: phone);
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e);
     }
   }
 
@@ -264,8 +252,7 @@ class AuthRepository {
       await _persistUserData(user);
       return user;
     } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: e.toString(), statusCode: 400);
+      rethrowMappedAuthError(e, context: AuthErrorContext.otp);
     }
   }
 

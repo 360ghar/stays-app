@@ -3,21 +3,9 @@ import 'package:stays_app/app/ui/theme/app_animations.dart';
 
 /// Premium elevated button with gradient background and smooth animations.
 class PremiumButton extends StatefulWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool isLoading;
-  final bool isDisabled;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
-  final double? width;
-  final double height;
-  final BorderRadius? borderRadius;
-  final EdgeInsetsGeometry? padding;
-
   const PremiumButton({
-    super.key,
     required this.text,
+    super.key,
     this.onPressed,
     this.icon,
     this.isLoading = false,
@@ -29,6 +17,17 @@ class PremiumButton extends StatefulWidget {
     this.borderRadius,
     this.padding,
   });
+  final String text;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isLoading;
+  final bool isDisabled;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final double? width;
+  final double height;
+  final BorderRadius? borderRadius;
+  final EdgeInsetsGeometry? padding;
 
   @override
   State<PremiumButton> createState() => _PremiumButtonState();
@@ -194,20 +193,9 @@ class _PremiumButtonState extends State<PremiumButton>
 
 /// Premium outlined button with border animation.
 class PremiumOutlinedButton extends StatefulWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final IconData? icon;
-  final bool isLoading;
-  final bool isDisabled;
-  final Color? borderColor;
-  final Color? textColor;
-  final double? width;
-  final double height;
-  final BorderRadius? borderRadius;
-
   const PremiumOutlinedButton({
-    super.key,
     required this.text,
+    super.key,
     this.onPressed,
     this.icon,
     this.isLoading = false,
@@ -218,6 +206,16 @@ class PremiumOutlinedButton extends StatefulWidget {
     this.height = 52,
     this.borderRadius,
   });
+  final String text;
+  final VoidCallback? onPressed;
+  final IconData? icon;
+  final bool isLoading;
+  final bool isDisabled;
+  final Color? borderColor;
+  final Color? textColor;
+  final double? width;
+  final double height;
+  final BorderRadius? borderRadius;
 
   @override
   State<PremiumOutlinedButton> createState() => _PremiumOutlinedButtonState();
@@ -351,17 +349,9 @@ class _PremiumOutlinedButtonState extends State<PremiumOutlinedButton>
 
 /// Premium icon button with ripple effect.
 class PremiumIconButton extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String? tooltip;
-  final Color? backgroundColor;
-  final Color? iconColor;
-  final double size;
-  final bool isLoading;
-
   const PremiumIconButton({
-    super.key,
     required this.icon,
+    super.key,
     this.onPressed,
     this.tooltip,
     this.backgroundColor,
@@ -369,6 +359,13 @@ class PremiumIconButton extends StatefulWidget {
     this.size = 48,
     this.isLoading = false,
   });
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final String? tooltip;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final double size;
+  final bool isLoading;
 
   @override
   State<PremiumIconButton> createState() => _PremiumIconButtonState();
@@ -477,7 +474,7 @@ class _PremiumIconButtonState extends State<PremiumIconButton>
     );
 
     if (widget.tooltip != null) {
-      return Tooltip(message: widget.tooltip!, child: button);
+      return Tooltip(message: widget.tooltip, child: button);
     }
     return button;
   }

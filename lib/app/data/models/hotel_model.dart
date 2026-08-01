@@ -5,22 +5,6 @@ part 'hotel_model.g.dart';
 
 @JsonSerializable()
 class Hotel {
-  final String id;
-  final String name;
-  final String imageUrl;
-  final String city;
-  final String country;
-  final double rating;
-  final int reviews;
-  final double pricePerNight;
-  final String currency;
-  final String propertyType;
-  final bool isFavorite;
-  final double? latitude;
-  final double? longitude;
-  final List<String>? amenities;
-  final String? description;
-
   Hotel({
     required this.id,
     required this.name,
@@ -40,6 +24,21 @@ class Hotel {
   });
 
   factory Hotel.fromJson(Map<String, dynamic> json) => _$HotelFromJson(json);
+  final String id;
+  final String name;
+  final String imageUrl;
+  final String city;
+  final String country;
+  final double rating;
+  final int reviews;
+  final double pricePerNight;
+  final String currency;
+  final String propertyType;
+  final bool isFavorite;
+  final double? latitude;
+  final double? longitude;
+  final List<String>? amenities;
+  final String? description;
   Map<String, dynamic> toJson() => _$HotelToJson(this);
 
   // Mock data generator

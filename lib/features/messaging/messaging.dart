@@ -1,5 +1,5 @@
 /// Messaging feature barrel export
-library messaging;
+library;
 
 // Bindings
 export 'bindings/message_binding.dart';

@@ -58,5 +58,6 @@ class ProfileRepository {
 
   Future<String> uploadAvatar(File file) => _provider.uploadAvatar(file);
 
+  /// Not supported by backend (`POST /users/export/` does not exist).
   Future<void> requestDataExport() => _provider.requestDataExport();
 }

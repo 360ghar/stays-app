@@ -10,22 +10,21 @@ enum EmptyStateType {
 }
 
 class EmptyStateWidget extends StatelessWidget {
-  final String title;
-  final String? message;
-  final Widget? icon;
-  final VoidCallback? action;
-  final String? actionText;
-  final EmptyStateType type;
-
   const EmptyStateWidget({
-    super.key,
     required this.title,
+    super.key,
     this.message,
     this.icon,
     this.action,
     this.actionText,
     this.type = EmptyStateType.general,
   });
+  final String title;
+  final String? message;
+  final Widget? icon;
+  final VoidCallback? action;
+  final String? actionText;
+  final EmptyStateType type;
 
   Widget _defaultIcon(ColorScheme colors) {
     switch (type) {
@@ -164,9 +163,8 @@ class EmptyStateWidget extends StatelessWidget {
 }
 
 class EmptyWishlistWidget extends StatelessWidget {
-  final VoidCallback? onExplore;
-
   const EmptyWishlistWidget({super.key, this.onExplore});
+  final VoidCallback? onExplore;
 
   @override
   Widget build(BuildContext context) {
@@ -191,9 +189,8 @@ class EmptyWishlistWidget extends StatelessWidget {
 }
 
 class EmptyBookingsWidget extends StatelessWidget {
-  final VoidCallback? onBrowse;
-
   const EmptyBookingsWidget({super.key, this.onBrowse});
+  final VoidCallback? onBrowse;
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +219,8 @@ class EmptyBookingsWidget extends StatelessWidget {
 }
 
 class EmptySearchResultsWidget extends StatelessWidget {
-  final VoidCallback? onClearFilters;
-
   const EmptySearchResultsWidget({super.key, this.onClearFilters});
+  final VoidCallback? onClearFilters;
 
   @override
   Widget build(BuildContext context) {

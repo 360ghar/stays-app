@@ -4,8 +4,8 @@ import '../../theme/theme_extensions.dart';
 
 class FilterButton extends StatelessWidget {
   const FilterButton({
-    super.key,
     required this.onPressed,
+    super.key,
     this.isActive = false,
   });
 

@@ -5,8 +5,8 @@ import '../web/virtual_tour_embed.dart';
 
 class InteractiveVirtualTour extends StatefulWidget {
   const InteractiveVirtualTour({
-    super.key,
     required this.tourUrl,
+    super.key,
     this.placeholderImageUrl,
     this.aspectRatio = 0.9,
     this.borderRadius = 16,
@@ -35,7 +35,7 @@ class _InteractiveVirtualTourState extends State<InteractiveVirtualTour> {
 
   void _holdParentScroll() {
     if (_scrollHoldController != null) return;
-    final scrollable = Scrollable.of(context);
+    final scrollable = Scrollable.maybeOf(context);
     if (scrollable == null) return;
     _scrollHoldController = scrollable.position.hold(_onParentScrollReleased);
   }
@@ -98,7 +98,6 @@ class _InteractiveVirtualTourState extends State<InteractiveVirtualTour> {
       onPointerDown: _handlePointerDown,
       onPointerUp: _handlePointerUp,
       onPointerCancel: _handlePointerUp,
-      behavior: HitTestBehavior.deferToChild,
       child: tourContent,
     );
   }
@@ -106,8 +105,8 @@ class _InteractiveVirtualTourState extends State<InteractiveVirtualTour> {
 
 class _InteractivePlaceholder extends StatelessWidget {
   const _InteractivePlaceholder({
-    super.key,
     required this.onTap,
+    super.key,
     this.imageUrl,
   });
 
@@ -129,7 +128,7 @@ class _InteractivePlaceholder extends StatelessWidget {
               placeholder: (context, _) => Container(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
-              errorWidget: (context, _, __) => _fallbackBackground(context),
+              errorWidget: (context, _, _) => _fallbackBackground(context),
             )
           else
             _fallbackBackground(context),
@@ -145,9 +144,9 @@ class _InteractivePlaceholder extends StatelessWidget {
                   width: 1.2,
                 ),
               ),
-              child: Column(
+              child: const Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.threesixty, color: Colors.white, size: 40),
                   SizedBox(height: 8),
                   Text(

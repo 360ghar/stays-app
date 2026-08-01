@@ -1,5 +1,5 @@
 /// Wishlist feature barrel export
-library wishlist;
+library;
 
 // Bindings
 export 'bindings/wishlist_binding.dart';

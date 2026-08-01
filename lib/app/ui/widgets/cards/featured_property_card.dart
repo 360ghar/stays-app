@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
-import 'package:stays_app/app/ui/theme/app_animations.dart';
 import 'package:stays_app/app/ui/widgets/common/animated_widgets.dart';
 import 'package:stays_app/app/ui/widgets/common/animated_favorite_button.dart';
 
@@ -11,20 +10,19 @@ import 'package:stays_app/app/ui/widgets/common/animated_favorite_button.dart';
 /// Displays a full-width card with cinematic 16:9 aspect ratio, gradient overlay,
 /// and "Nearest to you" badge with premium animations and effects.
 class FeaturedPropertyCard extends StatefulWidget {
+  const FeaturedPropertyCard({
+    required this.property,
+    required this.onTap,
+    super.key,
+    this.onFavoriteToggle,
+    this.isFavorite = false,
+    this.heroPrefix,
+  });
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
   final bool isFavorite;
   final String? heroPrefix;
-
-  const FeaturedPropertyCard({
-    super.key,
-    required this.property,
-    required this.onTap,
-    this.onFavoriteToggle,
-    this.isFavorite = false,
-    this.heroPrefix,
-  });
 
   @override
   State<FeaturedPropertyCard> createState() => _FeaturedPropertyCardState();
@@ -57,8 +55,6 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
     return AnimatedScaleWrapper(
       onTap: widget.onTap,
       scaleFactor: 0.97,
-      duration: AppAnimations.cardPressDuration,
-      curve: AppAnimations.cardPressCurve,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         height: 200,
@@ -183,7 +179,7 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
               highlightColor: colors.surface,
               child: Container(color: colors.surface),
             ),
-            errorWidget: (_, __, ___) => placeholder(),
+            errorWidget: (_, _, _) => placeholder(),
           )
         : placeholder();
 
@@ -324,7 +320,7 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
     return Positioned(
       top: 16,
       right: 16,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: context.isDark ? 0.55 : 0.85),
           shape: BoxShape.circle,
@@ -411,20 +407,19 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
 
 /// A compact horizontal strip for the featured/nearest property on Explore.
 class FeaturedPropertyStrip extends StatelessWidget {
+  const FeaturedPropertyStrip({
+    required this.property,
+    required this.onTap,
+    super.key,
+    this.onFavoriteToggle,
+    this.isFavorite = false,
+    this.heroPrefix,
+  });
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
   final bool isFavorite;
   final String? heroPrefix;
-
-  const FeaturedPropertyStrip({
-    super.key,
-    required this.property,
-    required this.onTap,
-    this.onFavoriteToggle,
-    this.isFavorite = false,
-    this.heroPrefix,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -434,8 +429,6 @@ class FeaturedPropertyStrip extends StatelessWidget {
     return AnimatedScaleWrapper(
       onTap: onTap,
       scaleFactor: 0.97,
-      duration: AppAnimations.cardPressDuration,
-      curve: AppAnimations.cardPressCurve,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(10),
@@ -484,15 +477,14 @@ class FeaturedPropertyStrip extends StatelessWidget {
 }
 
 class _FeaturedStripImage extends StatelessWidget {
-  final Property property;
-  final String? heroPrefix;
-  final double size;
-
   const _FeaturedStripImage({
     required this.property,
     required this.size,
     this.heroPrefix,
   });
+  final Property property;
+  final String? heroPrefix;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -516,9 +508,9 @@ class _FeaturedStripImage extends StatelessWidget {
         ? CachedNetworkImage(
             imageUrl: imageUrl,
             fit: BoxFit.cover,
-            placeholder: (_, __) =>
+            placeholder: (_, _) =>
                 Container(color: colors.surfaceContainerHighest),
-            errorWidget: (_, __, ___) => placeholder(),
+            errorWidget: (_, _, _) => placeholder(),
           )
         : placeholder();
 
@@ -534,9 +526,8 @@ class _FeaturedStripImage extends StatelessWidget {
 }
 
 class _FeaturedStripInfo extends StatelessWidget {
-  final Property property;
-
   const _FeaturedStripInfo({required this.property});
+  final Property property;
 
   @override
   Widget build(BuildContext context) {

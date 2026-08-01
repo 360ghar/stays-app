@@ -88,10 +88,9 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
 
 /// Premium bottom navigation bar with glassmorphism and fluid animations.
 class _PremiumBottomNav extends StatelessWidget {
+  const _PremiumBottomNav({required this.controller, required this.isDark});
   final NavigationController controller;
   final bool isDark;
-
-  const _PremiumBottomNav({required this.controller, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +125,6 @@ class _PremiumBottomNav extends StatelessWidget {
               color: colorScheme.outlineVariant.withValues(
                 alpha: isDark ? 0.35 : 0.5,
               ),
-              width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
@@ -343,7 +341,6 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
                                   color: activeColor.withValues(
                                     alpha: 0.1 * _glowAnimation.value,
                                   ),
-                                  width: 1,
                                 ),
                               ),
                             ),

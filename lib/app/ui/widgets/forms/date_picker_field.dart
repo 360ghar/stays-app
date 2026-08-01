@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class DatePickerField extends StatelessWidget {
+  const DatePickerField({required this.label, super.key});
   final String label;
-  const DatePickerField({super.key, required this.label});
   @override
   Widget build(BuildContext context) => TextFormField(
     decoration: InputDecoration(labelText: label),

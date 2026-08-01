@@ -10,9 +10,9 @@ import '../../theme/app_animations.dart';
 /// Features: scale burst, particle explosion, color transition, and bounce.
 class AnimatedFavoriteButton extends StatefulWidget {
   const AnimatedFavoriteButton({
-    super.key,
     required this.isFavorite,
     required this.onToggle,
+    super.key,
     this.size = 24,
     this.normalColor = Colors.white,
     this.favoriteColor = Colors.red,

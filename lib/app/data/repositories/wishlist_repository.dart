@@ -3,8 +3,8 @@ import '../models/property_model.dart';
 import '../models/unified_property_response.dart';
 
 class WishlistRepository {
-  final SwipesProvider _provider;
   WishlistRepository({required SwipesProvider provider}) : _provider = provider;
+  final SwipesProvider _provider;
 
   Future<void> add(int propertyId) =>
       _provider.swipe(propertyId: propertyId, isLiked: true);

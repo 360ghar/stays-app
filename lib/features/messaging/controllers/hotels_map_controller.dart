@@ -28,15 +28,14 @@ class HotelMarker {
 }
 
 class HotelModel {
-  final Property property;
-  final LatLng position;
-  final double distanceKm;
-
   HotelModel({
     required this.property,
     required this.position,
     this.distanceKm = 0,
   });
+  final Property property;
+  final LatLng position;
+  final double distanceKm;
 
   String get id => property.id.toString();
   String get name => property.name;
@@ -261,11 +260,11 @@ class HotelsMapController extends GetxController {
   void onMarkerTapped(HotelModel hotel) {
     final index = hotels.indexWhere((item) => item.id == hotel.id);
     if (index == -1) return;
-    selectHotel(index, syncPage: true, syncMap: true);
+    selectHotel(index);
   }
 
   void onHotelCardChanged(int index) {
-    selectHotel(index, syncPage: false, syncMap: true);
+    selectHotel(index, syncPage: false);
   }
 
   void openPropertyDetail(HotelModel hotel) {
@@ -288,7 +287,7 @@ class HotelsMapController extends GetxController {
     try {
       isLoadingLocation.value = true;
 
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         AppSnackbar.error(
           title: 'Location Error',
@@ -311,7 +310,7 @@ class HotelsMapController extends GetxController {
         }
       }
 
-      Position position = await Geolocator.getCurrentPosition(
+      final Position position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
         ),

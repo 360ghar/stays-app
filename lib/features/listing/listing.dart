@@ -1,5 +1,5 @@
 /// Listing feature barrel export
-library listing;
+library;
 
 // Bindings
 export 'bindings/listing_binding.dart';

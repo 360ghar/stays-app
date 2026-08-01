@@ -227,9 +227,9 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
             ),
           ),
           const SizedBox(height: 8),
-          Container(
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: context.elevatedSurface(0.08),
+              color: context.elevatedSurface(),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: hasError ? colors.error : colors.outlineVariant,

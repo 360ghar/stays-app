@@ -9,9 +9,9 @@ import '../../theme/app_animations.dart';
 /// Use this for any list that should animate items sequentially.
 class StaggeredListItem extends StatelessWidget {
   const StaggeredListItem({
-    super.key,
     required this.index,
     required this.child,
+    super.key,
     this.duration = AppAnimations.listItemDuration,
     this.curve = AppAnimations.listItemCurve,
     this.staggerDelay = AppAnimations.staggerDelay,
@@ -50,8 +50,8 @@ class StaggeredListItem extends StatelessWidget {
 /// Use this for buttons, cards, and interactive elements.
 class AnimatedScaleWrapper extends StatefulWidget {
   const AnimatedScaleWrapper({
-    super.key,
     required this.child,
+    super.key,
     this.onTap,
     this.onLongPress,
     this.scaleFactor = 0.95,
@@ -144,8 +144,8 @@ class _AnimatedScaleWrapperState extends State<AnimatedScaleWrapper>
 /// Use this for page content, dialogs, and overlays.
 class AnimatedFadeIn extends StatelessWidget {
   const AnimatedFadeIn({
-    super.key,
     required this.child,
+    super.key,
     this.duration = AppAnimations.normal,
     this.curve = AppAnimations.easeOut,
     this.delay = Duration.zero,
@@ -192,9 +192,9 @@ class AnimatedFadeIn extends StatelessWidget {
 /// Use this for expandable sections, accordions, etc.
 class AnimatedSizeWrapper extends StatelessWidget {
   const AnimatedSizeWrapper({
-    super.key,
     required this.child,
     required this.isExpanded,
+    super.key,
     this.duration = AppAnimations.medium,
     this.curve = AppAnimations.easeOutCubic,
     this.alignment = Alignment.topCenter,
@@ -226,9 +226,9 @@ class AnimatedSizeWrapper extends StatelessWidget {
 /// A widget that animates opacity based on a boolean condition.
 class AnimatedVisibility extends StatelessWidget {
   const AnimatedVisibility({
-    super.key,
     required this.child,
     required this.visible,
+    super.key,
     this.duration = AppAnimations.fast,
     this.curve = AppAnimations.easeOut,
     this.includeSemantics = true,
@@ -265,8 +265,8 @@ class AnimatedVisibility extends StatelessWidget {
 /// Use for attention-grabbing elements like notification badges.
 class AnimatedPulse extends StatefulWidget {
   const AnimatedPulse({
-    super.key,
     required this.child,
+    super.key,
     this.minScale = 1.0,
     this.maxScale = 1.1,
     this.duration = const Duration(milliseconds: 1000),
@@ -320,8 +320,8 @@ class _AnimatedPulseState extends State<AnimatedPulse>
 /// Use this for skeleton loaders.
 class ShimmerLoading extends StatefulWidget {
   const ShimmerLoading({
-    super.key,
     required this.child,
+    super.key,
     this.baseColor = const Color(0xFFE0E0E0),
     this.highlightColor = const Color(0xFFF5F5F5),
     this.direction = ShimmerDirection.ltr,

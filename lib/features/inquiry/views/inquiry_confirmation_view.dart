@@ -81,7 +81,7 @@ class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
               child: Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   color: colors.surfaceContainerHighest,
                   alignment: Alignment.center,
                   child: Icon(
@@ -291,9 +291,9 @@ class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
     required bool canIncrement,
     required VoidCallback onDecrement,
     required VoidCallback onIncrement,
-    String? helperText,
     required ColorScheme colors,
     required TextTheme textStyles,
+    String? helperText,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

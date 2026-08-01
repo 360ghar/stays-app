@@ -66,11 +66,7 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
       shouldCreateUser: true,
       emailRedirectTo: googleRedirectUrl,
     );
-    return ProviderAuthResult(
-      accessToken: null,
-      refreshToken: null,
-      rawUser: null,
-    );
+    return ProviderAuthResult();
   }
 
   @override

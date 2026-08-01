@@ -1,5 +1,5 @@
 /// Auth feature barrel export
-library auth;
+library;
 
 // Bindings
 export 'bindings/auth_binding.dart';

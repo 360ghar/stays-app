@@ -4,8 +4,8 @@ import '../../../data/models/listing_model.dart';
 import '../../../utils/helpers/currency_helper.dart';
 
 class ListingCard extends StatelessWidget {
+  const ListingCard({required this.listing, super.key});
   final ListingModel listing;
-  const ListingCard({super.key, required this.listing});
 
   @override
   Widget build(BuildContext context) {

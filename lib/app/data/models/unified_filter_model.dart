@@ -5,22 +5,6 @@ import 'property_model.dart';
 /// The fields intentionally mirror the backend query parameters so the model
 /// can be serialized directly when hitting the unified properties endpoint.
 class UnifiedFilterModel {
-  final double? minPrice;
-  final double? maxPrice;
-  final List<String> propertyTypes;
-  final int? minBedrooms;
-  final int? maxBedrooms;
-  final int? minBathrooms;
-  final int? maxBathrooms;
-  final double? minRating;
-  final String? sortBy;
-  final bool? instantBook;
-  final bool? selfCheckIn;
-  final bool? petsAllowed;
-  final bool? smokingAllowed;
-  final String? city;
-  final double? radiusKm;
-
   UnifiedFilterModel({
     this.minPrice,
     this.maxPrice,
@@ -42,6 +26,21 @@ class UnifiedFilterModel {
            : List.unmodifiable(
                propertyTypes.map((type) => type.toLowerCase().trim()),
              );
+  final double? minPrice;
+  final double? maxPrice;
+  final List<String> propertyTypes;
+  final int? minBedrooms;
+  final int? maxBedrooms;
+  final int? minBathrooms;
+  final int? maxBathrooms;
+  final double? minRating;
+  final String? sortBy;
+  final bool? instantBook;
+  final bool? selfCheckIn;
+  final bool? petsAllowed;
+  final bool? smokingAllowed;
+  final String? city;
+  final double? radiusKm;
 
   static final UnifiedFilterModel empty = UnifiedFilterModel();
 

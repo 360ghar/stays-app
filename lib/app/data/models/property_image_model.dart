@@ -4,6 +4,17 @@ part 'property_image_model.g.dart';
 
 @JsonSerializable()
 class PropertyImage {
+  PropertyImage({
+    required this.id,
+    required this.propertyId,
+    required this.imageUrl,
+    required this.displayOrder,
+    this.caption,
+    this.isMainImage = false,
+  });
+
+  factory PropertyImage.fromJson(Map<String, dynamic> json) =>
+      _$PropertyImageFromJson(json);
   final int id;
   @JsonKey(name: 'property_id')
   final int propertyId;
@@ -14,17 +25,5 @@ class PropertyImage {
   final int displayOrder;
   @JsonKey(name: 'is_main_image')
   final bool isMainImage;
-
-  PropertyImage({
-    required this.id,
-    required this.propertyId,
-    required this.imageUrl,
-    this.caption,
-    required this.displayOrder,
-    this.isMainImage = false,
-  });
-
-  factory PropertyImage.fromJson(Map<String, dynamic> json) =>
-      _$PropertyImageFromJson(json);
   Map<String, dynamic> toJson() => _$PropertyImageToJson(this);
 }

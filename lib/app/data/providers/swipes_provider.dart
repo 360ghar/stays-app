@@ -3,7 +3,7 @@ import '../../utils/extensions/http_extensions.dart';
 
 class SwipesProvider extends BaseProvider {
   Future<void> swipe({required int propertyId, required bool isLiked}) async {
-    final res = await post('/api/v1/swipes/', {
+    final res = await post('/api/v1/swipes', {
       'property_id': propertyId,
       'is_liked': isLiked,
     });
@@ -22,7 +22,7 @@ class SwipesProvider extends BaseProvider {
       if (isLiked != null) 'is_liked': isLiked,
       ...?filters,
     };
-    final res = await get('/api/v1/swipes/', query: query.asQueryParams());
+    final res = await get('/api/v1/swipes', query: query.asQueryParams());
     return handleResponse(res, (json) => Map<String, dynamic>.from(json));
   }
 

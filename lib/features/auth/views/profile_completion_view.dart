@@ -74,7 +74,7 @@ class _ProfileCompletionViewState extends State<ProfileCompletionView> {
       // user transitions to app_onboarding or active after profile completion.
       final authRepository = Get.find<AuthRepository>();
       try {
-        final gateState = await authRepository.getAuthGateState(app: 'stays');
+        final gateState = await authRepository.getAuthGateState();
         final stage = gateState['stage'] as String? ?? 'active';
         // Loop prevention: if the backend still returns profile_completion
         // after a successful update (backend bug or data not saved), break

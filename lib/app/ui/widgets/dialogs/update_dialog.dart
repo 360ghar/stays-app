@@ -12,8 +12,8 @@ Future<UpdateDialogResult?> showUpdateDialog(
   BuildContext context, {
   required String currentVersion,
   required String newVersion,
-  String? releaseNotes,
   required VoidCallback onUpdate,
+  String? releaseNotes,
 }) {
   return showDialog<UpdateDialogResult>(
     context: context,

@@ -42,7 +42,7 @@ class CachedImage extends StatelessWidget {
         maxWidthDiskCache: maxWidthDiskCache,
         filterQuality: FilterQuality.medium,
         placeholder: (context, _) => _shimmer(colors),
-        errorWidget: (context, _, __) => _error(colors),
+        errorWidget: (context, _, _) => _error(colors),
       );
     }
 

@@ -55,7 +55,6 @@ class ExploreView extends GetView<ExploreController> {
       toolbarHeight: 64,
       titleSpacing: 16,
       title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: SearchBarWidget(
@@ -224,7 +223,7 @@ class ExploreView extends GetView<ExploreController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SectionHeader(
+              const SectionHeader(
                 title: 'Featured near you',
                 subtitle: 'Closest stay based on your location',
                 leadingIcon: Icons.near_me_rounded,

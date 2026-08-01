@@ -5,22 +5,9 @@ enum ButtonSize { small, medium, large }
 enum ButtonVariant { primary, secondary, outline, ghost, danger }
 
 class CustomButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final ButtonVariant variant;
-  final ButtonSize size;
-  final Widget? leading;
-  final Widget? trailing;
-  final double? width;
-  final double? height;
-  final Color? backgroundColor;
-  final Color? foregroundColor;
-  final String? semanticLabel;
-
   const CustomButton({
-    super.key,
     required this.text,
+    super.key,
     this.onPressed,
     this.isLoading = false,
     this.variant = ButtonVariant.primary,
@@ -33,6 +20,18 @@ class CustomButton extends StatelessWidget {
     this.foregroundColor,
     this.semanticLabel,
   });
+  final String text;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final ButtonVariant variant;
+  final ButtonSize size;
+  final Widget? leading;
+  final Widget? trailing;
+  final double? width;
+  final double? height;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
+  final String? semanticLabel;
 
   double get _buttonHeight {
     if (size == ButtonSize.small) return 36;
@@ -153,7 +152,6 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final buttonStyle = _buildStyle(context);
 
     return Semantics(

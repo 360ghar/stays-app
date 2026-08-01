@@ -19,6 +19,7 @@ class ChatController extends BaseController {
 
   final RxList<MessageModel> messages = <MessageModel>[].obs;
   final RxBool isSending = false.obs;
+  @override
   final RxBool isLoading = false.obs;
   final RxString otherUserTyping = ''.obs;
 

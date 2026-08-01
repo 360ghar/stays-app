@@ -3,6 +3,25 @@ import 'package:flutter/material.dart';
 import '../../theme/theme_extensions.dart';
 
 class SearchBarWidget extends StatelessWidget {
+  const SearchBarWidget({
+    required this.onTap,
+    super.key,
+    this.placeholder = 'Start your search',
+    this.enabled = false,
+    this.controller,
+    this.onChanged,
+    this.onSubmitted,
+    this.leading,
+    this.trailing,
+    this.backgroundColor,
+    this.elevation = 2,
+    this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+    this.height = 50,
+    this.borderRadius,
+    this.shadowColor,
+    this.fontSize = 16,
+    this.iconSize = 24,
+  });
   final String placeholder;
   final VoidCallback onTap;
   final bool enabled;
@@ -19,26 +38,6 @@ class SearchBarWidget extends StatelessWidget {
   final Color? shadowColor;
   final double fontSize;
   final double iconSize;
-
-  const SearchBarWidget({
-    super.key,
-    this.placeholder = 'Start your search',
-    required this.onTap,
-    this.enabled = false,
-    this.controller,
-    this.onChanged,
-    this.onSubmitted,
-    this.leading,
-    this.trailing,
-    this.backgroundColor,
-    this.elevation = 2,
-    this.margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-    this.height = 50,
-    this.borderRadius,
-    this.shadowColor,
-    this.fontSize = 16,
-    this.iconSize = 24,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +88,6 @@ class SearchBarWidget extends StatelessWidget {
                           onChanged: onChanged,
                           onSubmitted: onSubmitted,
                           autofocus: true,
-                          maxLines: 1,
                           style: textStyles.bodyMedium?.copyWith(
                             fontSize: fontSize,
                             fontWeight: FontWeight.w500,
