@@ -120,10 +120,30 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build APK (prod)
-        run: flutter build apk --release --flavor prod -t lib/main_prod.dart
+        # Compile-time dart-defines so the artifact never depends on bundled
+        # .env files. Same per-env secret fallbacks as 'Create environment
+        # files'; defines take precedence in AppConfig.
+        run: |
+          flutter build apk --release --flavor prod -t lib/main_prod.dart \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }} \
+            --dart-define=ENABLE_ANALYTICS=true \
+            --dart-define=DEFAULT_COUNTRY=IN
 
       - name: Build AAB (prod)
-        run: flutter build appbundle --release --flavor prod -t lib/main_prod.dart
+        # Compile-time dart-defines so the artifact never depends on bundled
+        # .env files. Same per-env secret fallbacks as 'Create environment
+        # files'; defines take precedence in AppConfig.
+        run: |
+          flutter build appbundle --release --flavor prod -t lib/main_prod.dart \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }} \
+            --dart-define=ENABLE_ANALYTICS=true \
+            --dart-define=DEFAULT_COUNTRY=IN
 
       - name: Rename APK
         run: |
