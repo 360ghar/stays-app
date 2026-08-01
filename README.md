@@ -72,6 +72,24 @@ Update your environment keys in:
 
 App reads env files via `flutter_dotenv` in the entrypoints and builds `AppConfig` from them.
 
+### Build-time overrides (`--dart-define`)
+
+CI/prod builds may pass `--dart-define` overrides which take **precedence over the bundled `.env.*` files**, so release builds never depend on values baked into the APK bundle:
+
+```bash
+flutter build apk --flavor prod -t lib/main_prod.dart \
+  --dart-define=API_BASE_URL=https://api.360ghar.com \
+  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
+  --dart-define=SUPABASE_PUBLISHABLE_KEY=your-key \
+  --dart-define=GOOGLE_PLACES_API_KEY=your-key \
+  --dart-define=ENABLE_ANALYTICS=true \
+  --dart-define=DEFAULT_COUNTRY=IN
+```
+
+Supported keys: `API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `GOOGLE_MAPS_API_KEY` / `GOOGLE_PLACES_API_KEY`, `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_IOS_CLIENT_ID`, `ENABLE_ANALYTICS` (`true`/`false`), and `DEFAULT_COUNTRY`.
+
+Resolution order per key: **`--dart-define` → `.env.<env>` file → built-in default**. Required keys (`API_BASE_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`) still fail fast with `MissingEnvironmentException` when neither a define nor a dotenv value is present. Local development continues to use the `.env.dev` / `.env.staging` / `.env.prod` files; no defines are required.
+
 Google Places autocomplete needs billing-enabled Places API access on the key above. Keep the value consistent across all environments.
 
 Switch environments by launching with the corresponding entrypoint:
