@@ -16,9 +16,6 @@ class AnalyticsService extends GetxService {
   }
 
   final bool enabled;
-  final List<AnalyticsEvent> _eventQueue = [];
-  final _eventsController = StreamController<AnalyticsEvent>.broadcast();
-  Stream<AnalyticsEvent> get events => _eventsController.stream;
 
   FirebaseAnalytics? _analytics;
   FirebaseAnalyticsObserver? _observer;
@@ -55,17 +52,8 @@ class AnalyticsService extends GetxService {
     }
   }
 
-  @override
-  void onClose() {
-    _runUnawaited(_eventsController.close(), 'close events controller');
-    super.onClose();
-  }
-
   void log(AnalyticsEvent event) {
     if (!enabled) return;
-
-    _eventQueue.add(event);
-    _eventsController.add(event);
 
     // Send to Firebase Analytics
     unawaited(_sendToFirebase(event));
@@ -399,10 +387,9 @@ class AnalyticsService extends GetxService {
   }
 
   void flush() {
-    if (_eventQueue.isNotEmpty) {
-      AppLogger.info('Flushing ${_eventQueue.length} analytics events');
-      _eventQueue.clear();
-    }
+    // Event queue was removed (unbounded growth, no consumers). Firebase
+    // events are sent immediately; nothing to flush.
+    AppLogger.debug('Analytics flush called — events are sent immediately');
   }
 }
 
