@@ -1,9 +1,6 @@
-class PaymentModel {
-  final String id;
-  final num amount;
-  final String currency;
-  final String status;
+import '../../utils/helpers/json_helpers.dart';
 
+class PaymentModel {
   const PaymentModel({
     required this.id,
     required this.amount,
@@ -13,10 +10,14 @@ class PaymentModel {
 
   factory PaymentModel.fromMap(Map<String, dynamic> map) => PaymentModel(
     id: map['id']?.toString() ?? '',
-    amount: map['amount'] as num? ?? 0,
-    currency: map['currency'] as String? ?? 'INR',
-    status: map['status'] as String? ?? 'pending',
+    amount: JsonHelpers.getDouble(map['amount']) ?? 0,
+    currency: JsonHelpers.getStringOrDefault(map['currency'], 'INR'),
+    status: JsonHelpers.getStringOrDefault(map['status'], 'pending'),
   );
+  final String id;
+  final num amount;
+  final String currency;
+  final String status;
 
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -28,22 +29,14 @@ class PaymentModel {
 
 /// A saved payment instrument returned by `/payments/methods`.
 class PaymentMethodModel {
-  final int id;
-  final String methodType;
-  final String? brand;
-  final String? last4;
-  final String? nickname;
-  final bool isDefault;
-  final DateTime createdAt;
-
   const PaymentMethodModel({
     required this.id,
     required this.methodType,
+    required this.createdAt,
     this.brand,
     this.last4,
     this.nickname,
     this.isDefault = false,
-    required this.createdAt,
   });
 
   factory PaymentMethodModel.fromMap(Map<String, dynamic> map) {
@@ -55,14 +48,21 @@ class PaymentMethodModel {
         : 0;
     return PaymentMethodModel(
       id: parsedId,
-      methodType: map['method_type'] as String? ?? 'card',
-      brand: map['brand'] as String?,
-      last4: map['last4'] as String?,
-      nickname: map['nickname'] as String?,
+      methodType: JsonHelpers.getStringOrDefault(map['method_type'], 'card'),
+      brand: JsonHelpers.getString(map['brand']),
+      last4: JsonHelpers.getString(map['last4']),
+      nickname: JsonHelpers.getString(map['nickname']),
       isDefault: map['is_default'] == true || map['is_default'] == 1,
       createdAt: _parseDateTime(map['created_at']),
     );
   }
+  final int id;
+  final String methodType;
+  final String? brand;
+  final String? last4;
+  final String? nickname;
+  final bool isDefault;
+  final DateTime createdAt;
 
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -96,19 +96,12 @@ class PaymentMethodModel {
 
 /// Razorpay order creation response from `/payments/razorpay/order`.
 class RazorpayOrderModel {
-  final String orderId;
-  final double amount;
-  final String currency;
-  final String? keyId;
-  final int bookingId;
-  final Map<String, String> notes;
-
   const RazorpayOrderModel({
     required this.orderId,
     required this.amount,
     required this.currency,
-    this.keyId,
     required this.bookingId,
+    this.keyId,
     this.notes = const {},
   });
 
@@ -121,12 +114,18 @@ class RazorpayOrderModel {
       });
     }
     return RazorpayOrderModel(
-      orderId: map['order_id'] as String? ?? '',
-      amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
-      currency: map['currency'] as String? ?? 'INR',
-      keyId: map['key_id'] as String?,
-      bookingId: (map['booking_id'] as num?)?.toInt() ?? 0,
+      orderId: JsonHelpers.getStringOrDefault(map['order_id']),
+      amount: JsonHelpers.getDouble(map['amount']) ?? 0.0,
+      currency: JsonHelpers.getStringOrDefault(map['currency'], 'INR'),
+      keyId: JsonHelpers.getString(map['key_id']),
+      bookingId: JsonHelpers.getInt(map['booking_id']) ?? 0,
       notes: notes,
     );
   }
+  final String orderId;
+  final double amount;
+  final String currency;
+  final String? keyId;
+  final int bookingId;
+  final Map<String, String> notes;
 }
