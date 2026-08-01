@@ -13,7 +13,7 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
   final StorageService _storage = Get.find<StorageService>();
 
-  // Registered by AuthBinding/InitialBinding (see bindings); no local
+  // Registered once in InitialBinding (R7 DI consolidation); no local
   // fallbacks — construction must fail loudly if DI is misconfigured.
   final GoogleSignInService _google = Get.find<GoogleSignInService>();
   final AppleSignInService _apple = Get.find<AppleSignInService>();
