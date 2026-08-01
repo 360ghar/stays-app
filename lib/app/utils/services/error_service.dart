@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:get/get.dart';
 
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/exceptions/network_exceptions.dart';
 import '../../utils/logger/app_logger.dart';
 
 class ErrorService extends GetxService {
@@ -71,6 +72,12 @@ class ErrorService extends GetxService {
   String getNetworkErrorMessage(dynamic error) {
     if (error == null) return getErrorMessage(error);
 
+    // Transport-level failures carry a classification from the retry layer.
+    if (error is NetworkException &&
+        error.transportFailure != null &&
+        error.transportFailure != TransportFailureKind.none) {
+      return 'Network error. Please check your connection and try again.';
+    }
     if (error is SocketException) {
       return 'No internet connection. Please check your network and try again.';
     }
