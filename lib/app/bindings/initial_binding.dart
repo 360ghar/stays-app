@@ -6,6 +6,7 @@ import '../data/services/deep_link_service.dart';
 import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
 import '../data/services/places_service.dart';
+import '../data/services/remember_me_service.dart';
 import '../data/services/storage_service.dart';
 import '../data/services/supabase_service.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
@@ -53,6 +54,14 @@ class InitialBinding extends Bindings {
       Get.putAsync<TokenService>(() async {
         await storageFuture; // ensure StorageService is registered and ready
         return TokenService();
+      }, permanent: true);
+    }
+
+    // Remember-me preference + last-used auth method (single source of truth;
+    // never stores tokens — see RememberMeService security contract).
+    if (!Get.isRegistered<RememberMeService>()) {
+      Get.putAsync<RememberMeService>(() async {
+        return RememberMeService().init();
       }, permanent: true);
     }
 

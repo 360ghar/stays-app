@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
@@ -16,6 +15,7 @@ import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+import 'package:stays_app/app/utils/helpers/supabase_auth_error_mapper.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 import 'package:stays_app/app/data/services/analytics_service.dart';
 import 'package:stays_app/app/data/services/apple_sign_in_service.dart';
@@ -24,20 +24,6 @@ import 'form_validation_controller.dart';
 import 'otp_controller.dart';
 
 class AuthController extends BaseController {
-  // Storage keys dedicated to the remember-me preference and cached tokens.
-  static const String _rememberMeBox = 'auth_preferences';
-  static const String _rememberMeFlagKey = 'remember_me';
-  // Last-used auth method memory (mirrors RememberMeService keys; same box).
-  static const String _lastMethodKey = 'last_auth_method';
-  static const String _lastIdentifierMaskedKey = 'last_identifier_masked';
-  // Legacy keys from older builds (plaintext tokens). Kept for one-time cleanup.
-  static const String _rememberedAccessTokenKey = 'remembered_access_token';
-  static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
-
-  final AuthRepository _authRepository;
-  final TokenService _tokenService;
-  late final FormValidationController _validation;
-
   AuthController({
     required AuthRepository authRepository,
     required TokenService tokenService,
@@ -48,6 +34,10 @@ class AuthController extends BaseController {
         ? Get.find<FormValidationController>()
         : Get.put<FormValidationController>(FormValidationController());
   }
+
+  final AuthRepository _authRepository;
+  final TokenService _tokenService;
+  late final FormValidationController _validation;
 
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxBool isAuthenticated = false.obs;
@@ -77,13 +67,12 @@ class AuthController extends BaseController {
   /// Whether native Google Sign-In is configured for this build.
   bool get isGoogleSignInConfigured => AppConfig.I.isGoogleSignInConfigured;
 
-  // Local storage for remember-me preference
-  late final GetStorage _authPrefs;
-  Future<void>? _rememberMeReady;
-
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
 
+  Future<void>? _rememberMeReady;
+  // Cancelled in onClose(); the lint cannot see cross-method cancellation.
+  // ignore: cancel_subscriptions
   StreamSubscription<AuthState>? _authSubscription;
 
   @override
@@ -121,7 +110,8 @@ class AuthController extends BaseController {
 
   @override
   void onClose() {
-    _authSubscription?.cancel();
+    final sub = _authSubscription;
+    if (sub != null) unawaited(sub.cancel());
     super.onClose();
   }
 
@@ -178,38 +168,45 @@ class AuthController extends BaseController {
       final user = await _authRepository.getCurrentUser();
       if (user != null) {
         currentUser.value = user;
-        AppLogger.info('Loaded saved user: ${user.email ?? user.phone}');
+        AppLogger.info(
+          'Loaded saved user: ${RememberMeService.maskIdentifier(user.email ?? user.phone ?? user.id)}',
+        );
       }
     } catch (e) {
       AppLogger.error('Failed to load saved user', e);
     }
   }
 
-  // Prepare the remember-me toggle with any value persisted from a previous run.
+  /// Resolves the shared [RememberMeService] (registered in InitialBinding),
+  /// falling back to a self-managed instance in tests/edge cases.
+  Future<RememberMeService> _resolveRememberMeService() async {
+    if (!Get.isRegistered<RememberMeService>()) {
+      Get.put<RememberMeService>(RememberMeService());
+    }
+    final service = Get.find<RememberMeService>();
+    await service.init();
+    return service;
+  }
+
+  // Prepare the remember-me toggle with any value persisted from a previous
+  // run. State lives in RememberMeService (single source of truth).
   Future<void> _initializeRememberMePreference() async {
-    await GetStorage.init(_rememberMeBox);
-    _authPrefs = GetStorage(_rememberMeBox);
-    final storedPreference = _authPrefs.read<bool>(_rememberMeFlagKey) ?? false;
-    rememberMe.value = storedPreference;
+    final service = await _resolveRememberMeService();
+    rememberMe.value = service.enabled;
     // Surface the last-used method so the login screen can pre-select it.
-    lastMethod.value = _authPrefs.read<String>(_lastMethodKey);
-    lastIdentifierMasked.value = _authPrefs.read<String>(
-      _lastIdentifierMaskedKey,
-    );
-    await _migrateLegacyRememberedTokens();
+    lastMethod.value = service.lastMethod.value;
+    lastIdentifierMasked.value = service.lastIdentifierMasked.value;
+    await service.purgeLegacyPlaintextTokens();
   }
 
   // Persist the last-used auth method + masked identifier (see AuthMethods).
   Future<void> _saveLastMethod(String method, {String? identifier}) async {
     if (!AuthMethods.isValid(method)) return;
     await _ensureRememberMePreferenceReady();
-    lastMethod.value = method;
-    await _authPrefs.write(_lastMethodKey, method);
-    if (identifier != null && identifier.trim().isNotEmpty) {
-      final masked = RememberMeService.maskIdentifier(identifier.trim());
-      lastIdentifierMasked.value = masked;
-      await _authPrefs.write(_lastIdentifierMaskedKey, masked);
-    }
+    final service = await _resolveRememberMeService();
+    await service.setLastMethod(method: method, identifier: identifier);
+    lastMethod.value = service.lastMethod.value;
+    lastIdentifierMasked.value = service.lastIdentifierMasked.value;
     // Mirror to the backend (best-effort, never blocks the UX).
     unawaited(_authRepository.recordLastMethod(method));
   }
@@ -228,17 +225,17 @@ class AuthController extends BaseController {
   }
 
   void _bindAuthStateListener() {
-    _authSubscription?.cancel();
+    final sub = _authSubscription;
+    if (sub != null) unawaited(sub.cancel());
     _authSubscription = trackSubscription(
       Supabase.instance.client.auth.onAuthStateChange.listen(
         (data) async {
           final event = data.event;
           final session = data.session;
-          // SessionController is the single source of truth for session/token
-          // persistence and the `isAuthenticated` observable on auth events.
-          // This listener is intentionally narrow: it only completes a pending
-          // Google OAuth-redirect sign-in, avoiding the sign-out race that
-          // previously existed when both controllers cleared tokens.
+          // TokenService/Supabase own session persistence; this listener is
+          // intentionally narrow: it only completes a pending Google
+          // OAuth-redirect sign-in, avoiding sign-out races from multiple
+          // controllers clearing tokens.
           if (session == null) {
             return;
           }
@@ -259,80 +256,21 @@ class AuthController extends BaseController {
   Future<void> setRememberMe(bool value) async {
     await _ensureRememberMePreferenceReady();
     rememberMe.value = value;
-    await _authPrefs.write(_rememberMeFlagKey, value);
+    final service = await _resolveRememberMeService();
+    await service.setEnabled(value: value);
     if (!value) {
-      await _clearRememberedSession();
-    }
-  }
-
-  // Persist the latest Supabase session details when the user opts in.
-  Future<void> _persistRememberedSession({Session? session}) async {
-    await _ensureRememberMePreferenceReady();
-    // Tokens are already stored securely via TokenService/StorageService.
-    // We only keep a boolean flag in GetStorage to control auto-login.
-    await _authPrefs.write(_rememberMeFlagKey, true);
-    await _clearLegacyRememberedSession();
-  }
-
-  // Drop any cached credentials when the user opts out or signs out.
-  Future<void> _clearRememberedSession() async {
-    await _ensureRememberMePreferenceReady();
-    await _clearLegacyRememberedSession();
-  }
-
-  Future<void> _clearLegacyRememberedSession() async {
-    await _authPrefs.remove(_rememberedAccessTokenKey);
-    await _authPrefs.remove(_rememberedRefreshTokenKey);
-  }
-
-  Future<void> _migrateLegacyRememberedTokens() async {
-    // If legacy plaintext tokens exist, migrate them to secure storage once.
-    try {
-      final legacyAccess = _authPrefs.read<String>(_rememberedAccessTokenKey);
-      final legacyRefresh = _authPrefs.read<String>(_rememberedRefreshTokenKey);
-
-      if ((legacyAccess == null || legacyAccess.isEmpty) &&
-          (legacyRefresh == null || legacyRefresh.isEmpty)) {
-        return;
-      }
-
-      if (rememberMe.value && legacyAccess != null && legacyAccess.isNotEmpty) {
-        try {
-          await _tokenService.ready;
-          await _tokenService.storeTokens(
-            accessToken: legacyAccess,
-            refreshToken: legacyRefresh,
-          );
-          AppLogger.info(
-            'Migrated legacy remember-me tokens to secure storage',
-          );
-        } catch (e) {
-          // Fallback to StorageService if TokenService not ready yet
-          if (Get.isRegistered<StorageService>()) {
-            final storage = Get.find<StorageService>();
-            await storage.saveTokens(
-              accessToken: legacyAccess,
-              refreshToken: legacyRefresh,
-            );
-          }
-        }
-      }
-    } catch (e) {
-      AppLogger.warning('Failed to migrate legacy remember-me tokens: $e');
-    } finally {
-      await _clearLegacyRememberedSession();
+      await service.purgeLegacyPlaintextTokens();
     }
   }
 
   // Centralised helper that applies the user's remember-me choice post-login.
   Future<void> _syncRememberMeStateAfterLogin() async {
     await _ensureRememberMePreferenceReady();
-    if (rememberMe.value) {
-      await _persistRememberedSession();
-      return;
+    final service = await _resolveRememberMeService();
+    await service.setEnabled(value: rememberMe.value);
+    if (!rememberMe.value) {
+      await service.purgeLegacyPlaintextTokens();
     }
-    await _authPrefs.write(_rememberMeFlagKey, false);
-    await _clearRememberedSession();
   }
 
   // Login with email or phone
@@ -517,7 +455,7 @@ class AuthController extends BaseController {
     final hasPhone = (user.phone ?? '').trim().isNotEmpty;
     if (!hasPhone) {
       final otpController = Get.find<OTPController>();
-      otpController.initializeOTP(type: OTPType.addPhone, phone: '');
+      otpController.initializeOTP(type: OTPType.addPhone);
       await Get.toNamed(Routes.verification);
       return;
     }
@@ -559,7 +497,7 @@ class AuthController extends BaseController {
       final hasPhone = (user.phone ?? '').trim().isNotEmpty;
       if (!hasPhone) {
         final otpController = Get.find<OTPController>();
-        otpController.initializeOTP(type: OTPType.addPhone, phone: '');
+        otpController.initializeOTP(type: OTPType.addPhone);
         await Get.toNamed(Routes.verification);
         return;
       }
@@ -785,7 +723,7 @@ class AuthController extends BaseController {
   /// Fetch the auth gate state from the backend.
   Future<Map<String, dynamic>?> _fetchAuthGateState() async {
     try {
-      return await _authRepository.getAuthGateState(app: 'stays');
+      return await _authRepository.getAuthGateState();
     } catch (e) {
       AppLogger.warning('Failed to fetch auth gate state: $e');
       return null;
@@ -941,11 +879,14 @@ class AuthController extends BaseController {
       _handleApiError('Forgot Password', e);
       return false;
     } catch (e) {
+      // Direct Supabase call — map AuthException to product copy (rate limit,
+      // SMS failed, etc.) instead of a generic "unable to send" snackbar.
       AppLogger.error('Forgot password OTP failed', e);
-      _showErrorSnackbar(
-        title: 'Failed to Send OTP',
-        message: 'Unable to send verification code. Please try again.',
+      final mapped = mapSupabaseAuthError(
+        e,
+        context: AuthErrorContext.forgotPassword,
       );
+      _handleApiError('Failed to Send OTP', mapped);
       return false;
     } finally {
       isLoading.value = false;
@@ -964,10 +905,7 @@ class AuthController extends BaseController {
     try {
       isLoading.value = true;
       if (!await _ensureAccountExistsForReset(trimmed)) return false;
-      await _authRepository.sendEmailOtp(
-        email: trimmed,
-        shouldCreateUser: false,
-      );
+      await _authRepository.sendEmailOtp(email: trimmed);
       _showSuccessSnackbar(
         title: 'Code Sent',
         message: 'We sent a 6-digit code to $trimmed',
@@ -1097,11 +1035,11 @@ class AuthController extends BaseController {
   }
 
   Future<void> register({
+    required String email,
+    required String password,
     String? name,
     String? firstName,
     String? lastName,
-    required String email,
-    required String password,
     String? confirmPassword,
   }) async {
     try {
@@ -1304,6 +1242,8 @@ class AuthController extends BaseController {
   }
 
   void _handleApiError(String title, ApiException e) {
+    // Prefer repository-mapped product copy when present (status already
+    // classified: 401 credentials, 403 unverified, 429 rate limit, etc.).
     final lower = e.message.toLowerCase();
     if (lower.contains('email not confirmed') ||
         lower.contains('phone not confirmed') ||
@@ -1316,21 +1256,40 @@ class AuthController extends BaseController {
       return;
     }
 
+    // Mapped AuthException messages are already user-facing — show as-is.
+    if (e.message.isNotEmpty &&
+        !e.message.contains('AuthException(') &&
+        !e.message.startsWith('Exception:')) {
+      // Only rewrite truly generic transport codes when message is empty-ish.
+      if (e.statusCode == 500 && e.message.toLowerCase().contains('internal')) {
+        _showErrorSnackbar(
+          title: title,
+          message: 'Server error. Please try again later.',
+        );
+        return;
+      }
+      _showErrorSnackbar(title: title, message: e.message);
+      return;
+    }
+
     String message;
     switch (e.statusCode) {
       case 401:
+        message = 'Invalid email/phone or password.';
+        break;
+      case 403:
         message =
-            'Invalid credentials. Please check your email/phone and password.';
+            'Please verify your account before signing in. We can send you a new code.';
         break;
       case 404:
         message =
-            'Account not found. Please check your credentials or sign up.';
+            'No account found with this email or phone. Check the address or sign up.';
         break;
       case 422:
         message = 'Invalid input. Please check your information and try again.';
         break;
       case 429:
-        message = 'Too many attempts. Please try again later.';
+        message = 'Too many requests. Please wait a few minutes and try again.';
         break;
       case 500:
         message = 'Server error. Please try again later.';

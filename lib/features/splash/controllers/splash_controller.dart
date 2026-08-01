@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:stays_app/app/data/services/push_notification_service.dart';
+import 'package:stays_app/app/data/services/remember_me_service.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
@@ -11,12 +11,6 @@ import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
 
 class SplashController extends BaseController {
-  static const String _rememberMeBox = 'auth_preferences';
-  static const String _rememberMeFlagKey = 'remember_me';
-  // Legacy keys from older builds (plaintext tokens). Kept for one-time cleanup.
-  static const String _rememberedAccessTokenKey = 'remembered_access_token';
-  static const String _rememberedRefreshTokenKey = 'remembered_refresh_token';
-
   bool _navigated = false;
   Timer? _watchdog;
 
@@ -109,11 +103,6 @@ class SplashController extends BaseController {
     }
 
     try {
-      await GetStorage.init(_rememberMeBox);
-      final prefs = GetStorage(_rememberMeBox);
-      final bool rememberMeEnabled =
-          prefs.read<bool>(_rememberMeFlagKey) ?? false;
-
       final storage = Get.find<StorageService>();
       final tokenService = Get.isRegistered<TokenService>()
           ? Get.find<TokenService>()
@@ -122,15 +111,18 @@ class SplashController extends BaseController {
         await tokenService.ready;
       }
 
-      final legacyAccess = prefs.read<String>(_rememberedAccessTokenKey);
-      final legacyRefresh = prefs.read<String>(_rememberedRefreshTokenKey);
+      // Remember-me flag + legacy plaintext purge live in RememberMeService.
+      final rememberMeService = Get.isRegistered<RememberMeService>()
+          ? Get.find<RememberMeService>()
+          : null;
+      final rememberMeEnabled = rememberMeService?.enabled ?? false;
+      await rememberMeService?.purgeLegacyPlaintextTokens();
 
       var session = Supabase.instance.client.auth.currentSession;
       bool hasActiveSession = session != null && session.accessToken.isNotEmpty;
 
       if (!rememberMeEnabled) {
         AppLogger.info('Remember-me disabled. Clearing session/tokens.');
-        await _clearLegacyRememberedSession(prefs);
         await _signOutAndClear(storage, tokenService);
         _navigated = true;
         _watchdog?.cancel();
@@ -138,25 +130,18 @@ class SplashController extends BaseController {
         return;
       }
 
-      // Try to restore Supabase session if none exists
+      // Restore from the SECURE storage refresh token only (never from the
+      // legacy plaintext box).
       if (!hasActiveSession) {
-        if (legacyRefresh != null && legacyRefresh.isNotEmpty) {
-          session = await _restoreSessionFromRefreshToken(legacyRefresh);
+        final secureRefresh = await storage.getRefreshToken();
+        if (secureRefresh != null && secureRefresh.isNotEmpty) {
+          session = await _restoreSessionFromRefreshToken(secureRefresh);
           hasActiveSession = session != null && session.accessToken.isNotEmpty;
-        }
-        if (!hasActiveSession) {
-          final secureRefresh = await storage.getRefreshToken();
-          if (secureRefresh != null && secureRefresh.isNotEmpty) {
-            session = await _restoreSessionFromRefreshToken(secureRefresh);
-            hasActiveSession =
-                session != null && session.accessToken.isNotEmpty;
-          }
         }
       }
 
       if (hasActiveSession) {
         await _syncTokenServiceFromSession(session!, storage, tokenService);
-        await _clearLegacyRememberedSession(prefs);
         AppLogger.info('Active session detected. Navigating to home.');
         _navigated = true;
         _watchdog?.cancel();
@@ -166,7 +151,6 @@ class SplashController extends BaseController {
 
       // Fallback: if token service already has valid tokens, allow navigation.
       if (tokenService?.hasValidToken == true) {
-        await _clearLegacyRememberedSession(prefs);
         AppLogger.info('Valid tokens detected. Navigating to home.');
         _navigated = true;
         _watchdog?.cancel();
@@ -174,7 +158,6 @@ class SplashController extends BaseController {
         return;
       }
 
-      await _clearLegacyRememberedSession(prefs);
       AppLogger.info(
         'Remember-me enabled but no valid session/tokens. Going to login.',
       );
@@ -240,11 +223,6 @@ class SplashController extends BaseController {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
     );
-  }
-
-  Future<void> _clearLegacyRememberedSession(GetStorage prefs) async {
-    await prefs.remove(_rememberedAccessTokenKey);
-    await prefs.remove(_rememberedRefreshTokenKey);
   }
 
   Future<void> _signOutAndClear(
