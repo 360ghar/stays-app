@@ -123,9 +123,7 @@ class PushNotificationService extends GetxService {
 
   Future<void> _registerTokenWithBackend(String token) async {
     try {
-      if (!Get.isRegistered<UsersProvider>()) {
-        Get.put<UsersProvider>(UsersProvider());
-      }
+      // Registered once in InitialBinding (R7 DI consolidation).
       final provider = Get.find<UsersProvider>();
 
       String? appVersion;

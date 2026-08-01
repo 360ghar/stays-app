@@ -11,7 +11,6 @@ import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/data/repositories/profile_repository.dart';
-import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
@@ -29,10 +28,10 @@ class AuthController extends BaseController {
     required TokenService tokenService,
   }) : _authRepository = authRepository,
        _tokenService = tokenService {
-    // Resolve the shared FormValidationController via GetX so lifecycle hooks run
-    _validation = Get.isRegistered<FormValidationController>()
-        ? Get.find<FormValidationController>()
-        : Get.put<FormValidationController>(FormValidationController());
+    // Resolve the shared FormValidationController via GetX so lifecycle hooks
+    // run. It is registered once in InitialBinding (R7 DI consolidation), so a
+    // direct find is always safe here.
+    _validation = Get.find<FormValidationController>();
   }
 
   final AuthRepository _authRepository;
@@ -92,9 +91,8 @@ class AuthController extends BaseController {
 
   Future<void> _resolveAppleAvailability() async {
     try {
-      final service = Get.isRegistered<AppleSignInService>()
-          ? Get.find<AppleSignInService>()
-          : Get.put<AppleSignInService>(AppleSignInService());
+      // Registered once in InitialBinding (R7 DI consolidation).
+      final service = Get.find<AppleSignInService>();
       isAppleSignInAvailable.value = await service.isAvailable();
     } catch (e) {
       AppLogger.warning('Apple availability resolve failed: $e');
@@ -1168,15 +1166,9 @@ class AuthController extends BaseController {
   }
 
   ProfileRepository _ensureProfileRepository() {
-    if (Get.isRegistered<ProfileRepository>()) {
-      return Get.find<ProfileRepository>();
-    }
-    if (!Get.isRegistered<UsersProvider>()) {
-      Get.put<UsersProvider>(UsersProvider());
-    }
-    final repo = ProfileRepository(provider: Get.find<UsersProvider>());
-    Get.put<ProfileRepository>(repo);
-    return repo;
+    // Registered once in InitialBinding (R7 DI consolidation); no local
+    // fallback — misconfiguration must fail loudly.
+    return Get.find<ProfileRepository>();
   }
 
   Future<UserModel?> updateUserProfileData({
