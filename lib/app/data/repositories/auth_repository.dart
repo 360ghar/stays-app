@@ -313,7 +313,9 @@ class AuthRepository {
         refreshToken: res.refreshToken,
       );
     } catch (e) {
-      AppLogger.warning('Failed to persist tokens: $e');
+      // Non-fatal (the in-memory session still works), but must be observable
+      // so silent token loss surfaces in logs/crash reports.
+      AppLogger.error('Failed to persist tokens', e);
     }
   }
 

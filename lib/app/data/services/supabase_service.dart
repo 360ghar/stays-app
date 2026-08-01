@@ -13,12 +13,22 @@ class SupabaseService {
 
   static bool _initialized = false;
 
+  /// Last initialization error, if any. Set in the catch on failure and
+  /// cleared at the start of each attempt so a later success (or placeholder
+  /// skip) reports a clean slate. Startup never rethrows — callers can poll
+  /// [isReady] / [lastInitError] instead.
+  static Object? lastInitError;
+
+  /// Whether Supabase has been initialized successfully.
+  bool get isReady => _initialized;
+
   /// Optional shared init future. When the entry point sets this, the
   /// `InitialBinding` registration awaits the same promise instead of
   /// re-running `initialize()` (which would be a no-op but skip awaiting).
   static Future<void>? supabaseServiceReady;
 
   Future<void> initialize() async {
+    lastInitError = null;
     if (_initialized) return;
     // Skip initialization if either value is a placeholder; the same set of
     // patterns is enforced in AppConfig._validateEnvironment.
@@ -33,6 +43,8 @@ class SupabaseService {
       await Supabase.initialize(url: url, anonKey: publishableKey);
       _initialized = true;
     } catch (e, st) {
+      _initialized = false;
+      lastInitError = e;
       AppLogger.error('Supabase initialize failed', e, st);
     }
   }

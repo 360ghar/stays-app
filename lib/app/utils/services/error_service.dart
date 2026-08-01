@@ -31,19 +31,19 @@ class ErrorService extends GetxService {
   String getErrorMessage(dynamic error) {
     if (error == null) return 'An unknown error occurred.';
 
-    if (error is ApiException) {
+    // AppException and subclasses (NetworkException, ApiException,
+    // AuthException, ValidationException) carry curated, user-safe copy.
+    if (error is AppException) {
       return error.message;
-    }
-
-    if (error is Exception) {
-      final str = error.toString();
-      return str.startsWith('Exception: ') ? str.substring(11) : str;
     }
 
     if (error is String) {
       return error;
     }
 
+    // Unknown exceptions (incl. SDK internals) must never leak into
+    // snackbars; log the original for diagnostics and return generic copy.
+    AppLogger.debug('getErrorMessage: unexpected error type', error);
     return 'An unexpected error occurred. Please try again.';
   }
 

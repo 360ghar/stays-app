@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:url_launcher/url_launcher.dart' show LaunchMode;
 
+import '../../../config/app_config.dart';
 import '../services/storage_service.dart';
 import '../services/google_sign_in_service.dart';
 import '../services/apple_sign_in_service.dart';
@@ -12,13 +13,10 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
   final StorageService _storage = Get.find<StorageService>();
 
-  GoogleSignInService get _google => Get.isRegistered<GoogleSignInService>()
-      ? Get.find<GoogleSignInService>()
-      : Get.put<GoogleSignInService>(GoogleSignInService());
-
-  AppleSignInService get _apple => Get.isRegistered<AppleSignInService>()
-      ? Get.find<AppleSignInService>()
-      : Get.put<AppleSignInService>(AppleSignInService());
+  // Registered by AuthBinding/InitialBinding (see bindings); no local
+  // fallbacks — construction must fail loudly if DI is misconfigured.
+  final GoogleSignInService _google = Get.find<GoogleSignInService>();
+  final AppleSignInService _apple = Get.find<AppleSignInService>();
 
   @override
   Future<ProviderAuthResult> loginWithEmail({
@@ -95,10 +93,17 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
     if (currentPassword != null && currentPassword.isNotEmpty) {
       final email = _supabase.auth.currentUser?.email;
       if (email != null) {
-        await _supabase.auth.signInWithPassword(
-          email: email,
-          password: newPassword,
-        );
+        try {
+          await _supabase.auth.signInWithPassword(
+            email: email,
+            password: newPassword,
+          );
+        } catch (e) {
+          // The password was already changed successfully above; the re-login
+          // only refreshes the local session. A failure here must never throw:
+          // the update itself succeeded and the user can sign in again later.
+          AppLogger.warning('Re-login after password update failed', e);
+        }
       }
     }
   }
@@ -292,6 +297,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   String _ensureE164(String phone) {
     final trimmed = phone.replaceAll(RegExp(r'\s+'), '');
     if (trimmed.startsWith('+')) return trimmed;
-    return '+91$trimmed';
+    return '${AppConfig.I.defaultCountryDialCode}$trimmed';
   }
 }
