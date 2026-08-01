@@ -3,7 +3,9 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import 'package:stays_app/features/inquiry/controllers/inquiry_confirmation_controller.dart';
+import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 
@@ -14,6 +16,17 @@ class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
 
   @override
   Widget build(BuildContext context) {
+    // Post-submission success mode (F18/R18): when the route is opened with
+    // the created Booking (or a map containing one) render the confirmation
+    // summary instead of the pre-submission Property editor.
+    final args = Get.arguments;
+    if (args is Booking) {
+      return _buildBookingConfirmation(context, args);
+    }
+    if (args is Map<String, dynamic> && args['booking'] is Booking) {
+      return _buildBookingConfirmation(context, args['booking'] as Booking);
+    }
+
     final colors = Theme.of(context).colorScheme;
     final textStyles = Theme.of(context).textTheme;
 
@@ -501,5 +514,256 @@ class InquiryConfirmationView extends GetView<InquiryConfirmationController> {
     if (picked != null) {
       controller.setCheckOutDate(picked);
     }
+  }
+
+  // --- Post-submission confirmation (F18/R18) ---
+
+  Widget _buildBookingConfirmation(BuildContext context, Booking booking) {
+    final colors = Theme.of(context).colorScheme;
+    final textStyles = Theme.of(context).textTheme;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Inquiry Sent')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSuccessHeader(booking, colors, textStyles),
+            const SizedBox(height: 24),
+            _buildBookingSummary(booking, colors, textStyles),
+            const SizedBox(height: 24),
+            _buildBookingTotal(booking, colors, textStyles),
+          ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.all(24),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => Get.offAllNamed(Routes.home, arguments: 0),
+            child: const Text('Back to Home'),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuccessHeader(
+    Booking booking,
+    ColorScheme colors,
+    TextTheme textStyles,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Icon(Icons.check_circle_rounded, size: 52, color: colors.primary),
+          const SizedBox(height: 12),
+          Text(
+            'Your inquiry has been sent!',
+            style: textStyles.titleLarge?.copyWith(
+              color: colors.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Reference: ${booking.bookingReference}',
+            style: textStyles.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingSummary(
+    Booking booking,
+    ColorScheme colors,
+    TextTheme textStyles,
+  ) {
+    final property = booking.property;
+    final imageUrl = property?.displayImage ?? booking.propertyImageUrl ?? '';
+    final location = booking.displayLocation.isNotEmpty
+        ? booking.displayLocation
+        : (property?.fullAddress ?? '');
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (imageUrl.isNotEmpty)
+            AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  color: colors.surfaceContainerHighest,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.image_not_supported_outlined,
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            )
+          else
+            Container(
+              height: 140,
+              width: double.infinity,
+              color: colors.surfaceContainerHighest,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.image_outlined,
+                size: 48,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  booking.displayTitle,
+                  style: textStyles.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
+                ),
+                if (location.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.location_on_outlined,
+                        size: 18,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          location,
+                          style: textStyles.bodyMedium?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                _buildDetailRow(
+                  Icons.calendar_today_outlined,
+                  'Check-in',
+                  _dateFormat.format(booking.checkInDate),
+                  colors,
+                  textStyles,
+                ),
+                const SizedBox(height: 10),
+                _buildDetailRow(
+                  Icons.calendar_month_outlined,
+                  'Check-out',
+                  _dateFormat.format(booking.checkOutDate),
+                  colors,
+                  textStyles,
+                ),
+                const SizedBox(height: 10),
+                _buildDetailRow(
+                  Icons.nights_stay_outlined,
+                  'Nights',
+                  '${booking.nights}',
+                  colors,
+                  textStyles,
+                ),
+                const SizedBox(height: 10),
+                _buildDetailRow(
+                  Icons.people_outline,
+                  'Guests',
+                  '${booking.guests}',
+                  colors,
+                  textStyles,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    IconData icon,
+    String label,
+    String value,
+    ColorScheme colors,
+    TextTheme textStyles,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colors.onSurfaceVariant),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: textStyles.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: textStyles.bodyMedium?.copyWith(
+            color: colors.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBookingTotal(
+    Booking booking,
+    ColorScheme colors,
+    TextTheme textStyles,
+  ) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildPriceRow(
+              'Total amount',
+              CurrencyHelper.format(booking.totalAmount),
+              textStyles,
+              colors,
+              emphasize: true,
+            ),
+            const Divider(height: 24),
+            _buildPriceRow(
+              'Status',
+              '${booking.bookingStatus} · ${booking.paymentStatus}',
+              textStyles,
+              colors,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

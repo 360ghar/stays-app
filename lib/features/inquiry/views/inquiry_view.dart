@@ -7,7 +7,6 @@ import 'package:intl/intl.dart';
 
 import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/inquiry/controllers/inquiry_controller.dart';
-import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/booking_pricing_model.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
@@ -27,7 +26,6 @@ class InquiryView extends StatefulWidget {
 
 class _InquiryViewState extends State<InquiryView> {
   late final InquiryController bookingController;
-  TripsController? tripsController;
   AuthController? authController;
   Worker? _userWorker;
 
@@ -51,9 +49,6 @@ class _InquiryViewState extends State<InquiryView> {
   void initState() {
     super.initState();
     bookingController = Get.find<InquiryController>();
-    if (Get.isRegistered<TripsController>()) {
-      tripsController = Get.find<TripsController>();
-    }
     if (Get.isRegistered<AuthController>()) {
       authController = Get.find<AuthController>();
     }
@@ -125,7 +120,7 @@ class _InquiryViewState extends State<InquiryView> {
       );
     }
     // Fallback: try cached storage if fields are empty
-    _tryPrefillFromStorage();
+    unawaited(_tryPrefillFromStorage());
 
     // If missing name/email/phone, trigger a profile refresh once
     if (authController != null) {
@@ -135,7 +130,7 @@ class _InquiryViewState extends State<InquiryView> {
           ((user.email ?? '').isEmpty) ||
           ((user.phone ?? '').isEmpty);
       if (needsFetch) {
-        authController!.fetchAndCacheProfile();
+        unawaited(authController!.fetchAndCacheProfile());
       }
     }
   }
@@ -402,21 +397,14 @@ class _InquiryViewState extends State<InquiryView> {
       },
     );
 
+    // On success the controller refreshes trips and navigates to the inquiry
+    // confirmation screen; only surface the failure path here.
     final latestBooking = bookingController.latestBooking.value;
     final status = bookingController.statusMessage.value;
     final isSuccessful =
         latestBooking != null && !status.toLowerCase().contains('failed');
 
-    if (isSuccessful) {
-      if (tripsController != null) {
-        await tripsController!.loadPastBookings(forceRefresh: true);
-      }
-      AppSnackbar.success(
-        title: 'Inquiry Sent Successfully',
-        message: 'We have recorded your inquiry for ${property!.name}.',
-      );
-      Get.offAllNamed(Routes.home, arguments: 0);
-    } else {
+    if (!isSuccessful) {
       final rawError = bookingController.errorMessage.value;
       final errorMessage = rawError.isNotEmpty
           ? rawError
