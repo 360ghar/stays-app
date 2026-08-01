@@ -179,11 +179,17 @@ class AuthController extends BaseController {
 
   /// Resolves the shared [RememberMeService] (registered in InitialBinding),
   /// falling back to a self-managed instance in tests/edge cases.
+  ///
+  /// The binding registers via `putAsync`, so the instance may still be
+  /// initializing when this runs — guard the find and fall back to a local
+  /// instance + init in that case.
   Future<RememberMeService> _resolveRememberMeService() async {
-    if (!Get.isRegistered<RememberMeService>()) {
-      Get.put<RememberMeService>(RememberMeService());
+    RememberMeService service;
+    try {
+      service = Get.find<RememberMeService>();
+    } catch (_) {
+      service = Get.put<RememberMeService>(RememberMeService());
     }
-    final service = Get.find<RememberMeService>();
     await service.init();
     return service;
   }

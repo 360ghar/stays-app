@@ -153,12 +153,19 @@ class PropertiesRepository {
     }
     final future = operation();
     _inFlight[key] = future;
-    future.whenComplete(() {
-      // Only remove if this exact future is still registered.
-      if (identical(_inFlight[key], future)) {
-        _inFlight.remove(key);
-      }
-    });
+    // Clean up regardless of outcome. The derived future's error is handled
+    // here (callers await the ORIGINAL future, which still propagates errors);
+    // without the onError handler a failed request would produce an unhandled
+    // async error on the derived future.
+    unawaited(
+      future
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {})
+          .whenComplete(() {
+            if (identical(_inFlight[key], future)) {
+              _inFlight.remove(key);
+            }
+          }),
+    );
     return future;
   }
 

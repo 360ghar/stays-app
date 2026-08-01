@@ -74,6 +74,9 @@ jobs:
         # tests and it triggers Gradle flavor resolution on headless runners).
         run: flutter test --coverage
 
+      - name: Check for outdated dependencies (non-blocking report)
+        run: flutter pub outdated --no-dev-dependencies || true
+
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v5
