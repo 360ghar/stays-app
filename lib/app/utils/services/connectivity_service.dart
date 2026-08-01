@@ -36,6 +36,10 @@ class ConnectivityService extends GetxService {
   }
 
   Future<void> _initialize() async {
+    // Optimistic online state: assume connectivity until the first real check
+    // resolves, so early requests don't each perform a blocking socket probe.
+    isOnline.value = true;
+    status.value = ConnectivityStatus.connected;
     try {
       _subscription = Connectivity().onConnectivityChanged.listen(
         _handleConnectivityChange,
@@ -113,7 +117,27 @@ class ConnectivityService extends GetxService {
     }
   }
 
+  /// Memoized probe result with a short TTL so hot paths (per-request
+  /// connectivity checks in BaseProvider) don't each open sockets.
+  bool? _cachedProbeResult;
+  DateTime? _cachedProbeAt;
+  static const Duration _probeCacheTtl = Duration(seconds: 5);
+
   Future<bool> _hasInternetAccess() async {
+    final now = DateTime.now();
+    final cached = _cachedProbeResult;
+    if (cached != null &&
+        _cachedProbeAt != null &&
+        now.difference(_cachedProbeAt!) < _probeCacheTtl) {
+      return cached;
+    }
+    final result = await _probeInternetAccess();
+    _cachedProbeResult = result;
+    _cachedProbeAt = DateTime.now();
+    return result;
+  }
+
+  Future<bool> _probeInternetAccess() async {
     final apiHost = _resolveApiHost();
     final hosts = <String>{if (apiHost.isNotEmpty) apiHost, 'google.com'};
 
