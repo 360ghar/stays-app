@@ -16,7 +16,10 @@ class SecurityService extends GetxService {
 
   void _validateKey(String name, String value) {
     if (value.isEmpty || value.contains('YOUR_DEV_SUPABASE')) {
-      AppLogger.warning('Potentially invalid $name configured', value);
+      // Never log the configured value itself — only a masked form.
+      AppLogger.warning('Potentially invalid $name configured', {
+        'value': obfuscate(value),
+      });
     }
   }
 

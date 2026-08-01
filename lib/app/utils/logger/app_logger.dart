@@ -8,16 +8,19 @@ class AppLogger {
       methodCount: 1,
       errorMethodCount: 5,
       lineLength: 80,
-      colors: true,
-      printEmojis: true,
       dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
     ),
     level: _getLogLevel(),
   );
 
   static Level _getLogLevel() {
-    if (AppConfig.isProduction) return Level.warning;
-    if (AppConfig.isStaging) return Level.info;
+    try {
+      if (AppConfig.isProduction) return Level.warning;
+      if (AppConfig.isStaging) return Level.info;
+    } catch (_) {
+      // AppConfig not configured yet (early startup / unit tests): fall back
+      // to trace so logging never crashes before configuration is set.
+    }
     return Level.trace;
   }
 
@@ -35,6 +38,23 @@ class AppLogger {
   static void logResponse(dynamic response) =>
       _logger.d(_fmt('API Response', response));
 
-  static String _fmt(String message, [dynamic data]) =>
-      data == null ? message : '$message | ${data.toString()}';
+  static String _fmt(String message, [dynamic data]) {
+    if (data == null) return message;
+    if (data is Map) {
+      final kv = data.entries
+          .map((e) => '${e.key}=${_stringify(e.value)}')
+          .join(' ');
+      return '$message | $kv';
+    }
+    return '$message | ${_stringify(data)}';
+  }
+
+  /// Stringifies a log value, truncating long strings so a single log line
+  /// stays bounded and greppable.
+  static String _stringify(dynamic value) {
+    if (value == null) return 'null';
+    final s = value.toString();
+    if (s.length <= 200) return s;
+    return '${s.substring(0, 200)}…(${s.length} chars)';
+  }
 }

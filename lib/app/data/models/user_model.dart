@@ -1,30 +1,6 @@
 import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class UserModel {
-  final String id;
-  final String? supabaseId;
-  final String? email;
-  final String? phone;
-  final String? firstName;
-  final String? lastName;
-  final String? name;
-  final String? avatarUrl;
-  final String? profileImageUrl;
-  final String? bio;
-  final DateTime? dateOfBirth;
-  final Map<String, dynamic>? preferences;
-  final Map<String, dynamic>? notificationSettings;
-  final Map<String, dynamic>? privacySettings;
-  final double? currentLatitude;
-  final double? currentLongitude;
-  final bool? isActive;
-  final bool? isVerified;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-  final bool isSuperHost;
-  final String? agentId;
-  final Map<String, dynamic>? metadata;
-
   const UserModel({
     required this.id,
     this.supabaseId,
@@ -50,6 +26,101 @@ class UserModel {
     this.agentId,
     this.metadata,
   });
+
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    Map<String, dynamic>? parseMap(dynamic value) {
+      if (value == null) return null;
+      if (value is Map<String, dynamic>) return value;
+      if (value is Map) {
+        return value.map((key, dynamic v) => MapEntry('$key', v));
+      }
+      return null;
+    }
+
+    return UserModel(
+      // Backend `id` is int; keep as string for UI/storage stability.
+      id: _asString(map['id']) ?? '',
+      // Backend wire name is supabase_user_id (not supabase_id).
+      supabaseId:
+          _asString(map['supabase_user_id']) ??
+          _asString(map['supabase_id']) ??
+          _asString(map['supabaseId']),
+      email: _asString(map['email']),
+      phone:
+          _asString(map['phone']) ??
+          _asString(map['phone_number']) ??
+          _asString(map['mobile']) ??
+          _asString(map['mobile_number']),
+      firstName: _asString(map['firstName']) ?? _asString(map['first_name']),
+      lastName: _asString(map['lastName']) ?? _asString(map['last_name']),
+      name: _asString(map['name']) ?? _asString(map['full_name']),
+      avatarUrl:
+          _asString(map['avatarUrl']) ??
+          _asString(map['avatar_url']) ??
+          _asString(map['profile_image_url']),
+      profileImageUrl:
+          _asString(map['profileImageUrl']) ??
+          _asString(map['profile_image_url']) ??
+          _asString(map['avatarUrl']),
+      bio: _asString(map['bio']),
+      dateOfBirth: _parseDate(
+        map['date_of_birth'] ?? map['dob'] ?? map['dateOfBirth'],
+      ),
+      preferences: parseMap(map['preferences']),
+      notificationSettings: parseMap(
+        map['notification_settings'] ?? map['notificationSettings'],
+      ),
+      privacySettings: parseMap(
+        map['privacy_settings'] ?? map['privacySettings'],
+      ),
+      currentLatitude: _toDouble(
+        map['current_latitude'] ?? map['currentLatitude'],
+      ),
+      currentLongitude: _toDouble(
+        map['current_longitude'] ?? map['currentLongitude'],
+      ),
+      isActive:
+          JsonHelpers.getBool(map['is_active']) ??
+          JsonHelpers.getBool(map['isActive']),
+      isVerified:
+          JsonHelpers.getBool(map['is_verified']) ??
+          JsonHelpers.getBool(map['isVerified']),
+      createdAt: _parseDate(map['created_at'] ?? map['createdAt']),
+      updatedAt: _parseDate(map['updated_at'] ?? map['updatedAt']),
+      isSuperHost:
+          JsonHelpers.getBool(map['isSuperHost']) ??
+          JsonHelpers.getBool(map['is_super_host']) ??
+          false,
+      agentId: _asString(map['agent_id']) ?? _asString(map['agentId']),
+      metadata: parseMap(map['metadata']),
+    );
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      UserModel.fromMap(json);
+  final String id;
+  final String? supabaseId;
+  final String? email;
+  final String? phone;
+  final String? firstName;
+  final String? lastName;
+  final String? name;
+  final String? avatarUrl;
+  final String? profileImageUrl;
+  final String? bio;
+  final DateTime? dateOfBirth;
+  final Map<String, dynamic>? preferences;
+  final Map<String, dynamic>? notificationSettings;
+  final Map<String, dynamic>? privacySettings;
+  final double? currentLatitude;
+  final double? currentLongitude;
+  final bool? isActive;
+  final bool? isVerified;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final bool isSuperHost;
+  final String? agentId;
+  final Map<String, dynamic>? metadata;
 
   String get fullName {
     final buffer = StringBuffer();
@@ -152,69 +223,9 @@ class UserModel {
     );
   }
 
-  factory UserModel.fromMap(Map<String, dynamic> map) {
-    Map<String, dynamic>? parseMap(dynamic value) {
-      if (value == null) return null;
-      if (value is Map<String, dynamic>) return value;
-      if (value is Map) {
-        return value.map((key, dynamic v) => MapEntry('$key', v));
-      }
-      return null;
-    }
-
-    return UserModel(
-      id: _asString(map['id']) ?? '',
-      supabaseId: _asString(map['supabase_id']) ?? _asString(map['supabaseId']),
-      email: _asString(map['email']),
-      phone:
-          _asString(map['phone']) ??
-          _asString(map['phone_number']) ??
-          _asString(map['mobile']) ??
-          _asString(map['mobile_number']),
-      firstName: _asString(map['firstName']) ?? _asString(map['first_name']),
-      lastName: _asString(map['lastName']) ?? _asString(map['last_name']),
-      name: _asString(map['name']) ?? _asString(map['full_name']),
-      avatarUrl:
-          _asString(map['avatarUrl']) ??
-          _asString(map['avatar_url']) ??
-          _asString(map['profile_image_url']),
-      profileImageUrl:
-          _asString(map['profileImageUrl']) ??
-          _asString(map['profile_image_url']) ??
-          _asString(map['avatarUrl']),
-      bio: _asString(map['bio']),
-      dateOfBirth: _parseDate(
-        map['date_of_birth'] ?? map['dob'] ?? map['dateOfBirth'],
-      ),
-      preferences: parseMap(map['preferences']),
-      notificationSettings: parseMap(
-        map['notification_settings'] ?? map['notificationSettings'],
-      ),
-      privacySettings: parseMap(
-        map['privacy_settings'] ?? map['privacySettings'],
-      ),
-      currentLatitude: _toDouble(
-        map['current_latitude'] ?? map['currentLatitude'],
-      ),
-      currentLongitude: _toDouble(
-        map['current_longitude'] ?? map['currentLongitude'],
-      ),
-      isActive: map['is_active'] as bool? ?? map['isActive'] as bool?,
-      isVerified: map['is_verified'] as bool? ?? map['isVerified'] as bool?,
-      createdAt: _parseDate(map['created_at'] ?? map['createdAt']),
-      updatedAt: _parseDate(map['updated_at'] ?? map['updatedAt']),
-      isSuperHost:
-          map['isSuperHost'] as bool? ?? map['is_super_host'] as bool? ?? false,
-      agentId: _asString(map['agent_id']) ?? _asString(map['agentId']),
-      metadata: parseMap(map['metadata']),
-    );
-  }
-
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      UserModel.fromMap(json);
-
   Map<String, dynamic> toMap() => {
     'id': id,
+    'supabase_user_id': supabaseId,
     'supabase_id': supabaseId,
     'email': email,
     'phone': phone,

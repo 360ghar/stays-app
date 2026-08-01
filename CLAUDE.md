@@ -107,7 +107,7 @@ lib/
 │       ├── extensions/    # Dart extensions
 │       ├── helpers/       # Utility functions
 │       └── logger/        # Logging configuration
-├── l10n/                  # Localization (EN, ES, FR)
+├── l10n/                  # Localization (EN, HI)
 └── main*.dart             # Environment-specific entry points
 ```
 

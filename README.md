@@ -15,7 +15,7 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 - Location-aware explore + map view (Flutter Map markers, Google Places autocomplete)
 - **In-app update prompts** with optional and force update support ([docs](docs/app-updates.md))
 - Theming (Material 3), responsive helpers, reusable widgets
-- Localization scaffolding (EN/ES/FR) via GetX Translations
+- Localization (EN/HI) via GetX Translations (`l10n/en.json`, `l10n/hi.json`)
 - Clean, layered architecture (providers → repositories → controllers → views)
 
 ## Tech Stack
@@ -134,13 +134,14 @@ Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET`
 
 - Initial route: `/` (Splash) → middleware redirects to `/login` or `/home`
 - Bottom tabs available under `/home` (Explore, Trips, Inbox, Profile)
-- Other routes:
-  - `/search`, `/search-results`
-  - `/listing/:id`
-  - `/booking`
+- Other routes (canonical list in `lib/app/routes/app_routes.dart`):
+  - `/force-update`, `/onboarding`, `/login`, `/register`, `/verification`, `/reset-password`, `/set-password`, `/profile-completion`
+  - `/search-results`, `/listing/:id`, `/location-search`
+  - `/inquiry`, `/inquiry-confirmation` (booking flow)
   - `/payment`, `/payment-methods`
   - `/inbox`, `/chat/:conversationId`
-  - `/profile`
+  - `/tour` (360° virtual tour), `/wishlist`
+  - `/profile`, `/profile/edit`, `/profile/preferences`, `/profile/notifications`, `/profile/privacy`, `/profile/help`, `/profile/about`, `/profile/legal`, `/profile/feedback/bug`, `/profile/feedback/feature`, `/account-settings`, `/inquiries`
 
 ## Testing
 
@@ -149,7 +150,16 @@ flutter test
 flutter test --coverage
 ```
 
-Current widget tests validate root app bootstrapping. You can extend unit/widget/integration tests under `test/`.
+Current unit/widget tests live under `test/`:
+- `test/unit/controllers/auth/auth_controller_test.dart` — auth controller + form validation
+- `test/unit/controllers/settings/theme_controller_test.dart`
+- `test/unit/utils/services/token_info_test.dart` — token expiry/refresh semantics
+- `test/unit/utils/extensions/dynamic_extensions_test.dart`
+- `test/unit/supabase_auth_error_mapper_test.dart`
+- `test/app/utils/helpers/json_helpers_test.dart`, `test/user_model_contract_test.dart`
+- `test/widget_test.dart` — root app bootstrapping
+
+Mocks are generated (gitignored): run `dart run build_runner build --delete-conflicting-outputs` after touching `@GenerateMocks`/`@JsonSerializable` files.
 
 Recommended local checks before you push:
 
@@ -159,14 +169,14 @@ Recommended local checks before you push:
 ## Localization
 
 - GetX-based translations in `lib/l10n/localization_service.dart`
-- Resource files in `l10n/en.json`, `l10n/es.json`, `l10n/fr.json`
+- Resource files in `l10n/en.json`, `l10n/hi.json` (EN + HI only)
 
 ## Notes & TODOs
 
-- API integration points (providers) are scaffolded; wire them to your real backend endpoints.
-- Token/session refresh uses Supabase SDK session lifecycle; avoid custom refresh-token flows.
-- Supabase is initialized via `SupabaseService`; replace placeholders in `AppConfig`.
-- A 360° media viewer is not included; integrate your preferred viewer in listing detail.
+- `.env.dev` / `.env.staging` / `.env.prod` are gitignored but declared as pubspec assets — a fresh clone must create them from `.env.example` before `flutter run`/`flutter build`.
+- Session/token refresh uses the Supabase SDK session lifecycle; avoid custom refresh-token flows.
+- Supabase is initialized via `SupabaseService` from `AppConfig` values.
+- 360° tours render via the in-app Kuula webview (`WebViewHelper`).
 
 ## Known Local Build Issues
 

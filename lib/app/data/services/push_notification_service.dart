@@ -211,6 +211,13 @@ class PushNotificationService extends GetxService {
     }
   }
 
+  /// FCM route IDs are interpolated into route templates — validate the
+  /// format so a malicious payload cannot craft arbitrary paths.
+  static bool _isValidRouteId(String? id) {
+    if (id == null || id.isEmpty || id.length > 64) return false;
+    return RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id);
+  }
+
   /// Routes the user to a specific screen based on FCM `data`.
   /// Supported keys: `type` (booking|message|listing) + `id`, or `deep_link`.
   /// `deep_link` payloads are validated against the same allowlist used by
@@ -243,16 +250,20 @@ class PushNotificationService extends GetxService {
           break;
         case 'message':
         case 'chat':
-          if (id != null) {
+          if (_isValidRouteId(id)) {
             unawaited(
-              Get.toNamed(Routes.chat.replaceAll(':conversationId', id)),
+              Get.toNamed(Routes.chat.replaceAll(':conversationId', id!)),
             );
+          } else {
+            AppLogger.warning('Dropped FCM route with invalid id: $type/$id');
           }
           break;
         case 'listing':
         case 'property':
-          if (id != null) {
-            unawaited(Get.toNamed(Routes.listingDetail.replaceAll(':id', id)));
+          if (_isValidRouteId(id)) {
+            unawaited(Get.toNamed(Routes.listingDetail.replaceAll(':id', id!)));
+          } else {
+            AppLogger.warning('Dropped FCM route with invalid id: $type/$id');
           }
           break;
         default:
