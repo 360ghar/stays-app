@@ -158,14 +158,14 @@ jobs:
           fi
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stays-app-release-apk
           path: build/app/outputs/flutter-apk/360ghar-stays-prod.apk
           if-no-files-found: error
 
       - name: Upload AAB
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stays-app-release-aab
           path: build/app/outputs/bundle/prodRelease/app-prod-release.aab
