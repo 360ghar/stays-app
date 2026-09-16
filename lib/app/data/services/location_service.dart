@@ -8,6 +8,8 @@ import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LocationService extends GetxService {
+  // geocoding 5.x groups all functionality in the Geocoding class.
+  final Geocoding _geocoding = Geocoding();
   final _currentPosition = Rxn<Position>();
   // Selected location overrides current GPS position for querying backend
   final RxnDouble _selectedLat = RxnDouble();
@@ -157,10 +159,8 @@ class LocationService extends GetxService {
 
   Future<void> _updateLocationNameFromPosition(Position position) async {
     try {
-      final List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
+      final List<Placemark> placemarks = await _geocoding
+          .placemarkFromCoordinates(position.latitude, position.longitude);
 
       if (placemarks.isNotEmpty) {
         final place = placemarks[0];
@@ -229,7 +229,7 @@ class LocationService extends GetxService {
 
   Future<void> _updateCityFromCoordinates(double lat, double lng) async {
     try {
-      final placemarks = await placemarkFromCoordinates(lat, lng);
+      final placemarks = await _geocoding.placemarkFromCoordinates(lat, lng);
       if (placemarks.isNotEmpty) {
         _currentCity.value = _deriveCityFromPlacemark(placemarks[0]);
       }
