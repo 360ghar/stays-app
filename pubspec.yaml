@@ -50,7 +50,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   geolocator: ^14.0.2
   geocoding: ^5.0.0
-  permission_handler: ^13.0.2
+  permission_handler: ^12.0.3
   webview_flutter: ^4.8.0
   webview_flutter_android: ^4.10.2
   webview_flutter_wkwebview: ^3.23.0
