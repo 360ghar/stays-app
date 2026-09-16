@@ -48,7 +48,7 @@ dependencies:
   flutter_svg: ^2.0.10+1
   equatable: ^3.0.0
   flutter_dotenv: ^6.0.0
-  geolocator: ^14.0.2
+  geolocator: ^14.0.3
   geocoding: ^5.0.0
   permission_handler: ^12.0.3
   webview_flutter: ^4.8.0
@@ -84,9 +84,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: ^2.4.11
+  build_runner: ^2.16.1
   json_serializable: ^6.7.1
-  mockito: ^5.4.4
+  mockito: ^5.8.1
   flutter_launcher_icons: ^0.14.4
   integration_test:
     sdk: flutter
