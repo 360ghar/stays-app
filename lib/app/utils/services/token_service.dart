@@ -194,6 +194,15 @@ class TokenService extends GetxService {
     if (!_ready.isCompleted) {
       await ready;
     }
+    await _clearTokensInternal();
+  }
+
+  /// Storage + state reset without waiting on [ready].
+  ///
+  /// [_loadStoredTokens] runs inside [_initialize] before [_ready] completes,
+  /// so it must use this directly: going through [clearTokens] would await
+  /// [ready] and deadlock initialization (and hang callers for 30s in tests).
+  Future<void> _clearTokensInternal() async {
     try {
       _currentToken = null;
       await _storageService?.clearTokens();
@@ -307,12 +316,12 @@ class TokenService extends GetxService {
           AppLogger.info('Tokens loaded successfully from storage');
         } else {
           AppLogger.warning('Invalid or expired token in storage');
-          await clearTokens();
+          await _clearTokensInternal();
         }
       }
     } catch (e) {
       AppLogger.error('Failed to load stored tokens', e);
-      await clearTokens();
+      await _clearTokensInternal();
     }
   }
 
