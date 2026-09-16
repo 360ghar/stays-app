@@ -400,7 +400,6 @@ class RotateScaleTransition extends PageRouteBuilder<void> {
                angle: rotationAnimation.value,
                child: Transform.scale(
                  scale: scaleAnimation.value,
-                 alignment: Alignment.center,
                  child: child,
                ),
              ),

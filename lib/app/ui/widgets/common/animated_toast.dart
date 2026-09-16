@@ -12,8 +12,8 @@ enum ToastType { success, error, warning, info }
 /// Shows slide-in notifications with icons and smooth animations.
 class AnimatedToast extends StatefulWidget {
   const AnimatedToast({
-    super.key,
     required this.message,
+    super.key,
     this.type = ToastType.info,
     this.duration = const Duration(seconds: 3),
     this.position = ToastPosition.top,
@@ -99,7 +99,7 @@ class AnimatedToast extends StatefulWidget {
     String message, {
     Duration duration = const Duration(seconds: 3),
   }) {
-    show(context, message: message, type: ToastType.info, duration: duration);
+    show(context, message: message, duration: duration);
   }
 
   @override
@@ -279,31 +279,31 @@ class _ToastContent extends StatelessWidget {
   _ToastConfig _getToastConfig(ToastType type) {
     switch (type) {
       case ToastType.success:
-        return _ToastConfig(
+        return const _ToastConfig(
           icon: Icons.check_circle,
-          iconColor: const Color(0xFF4CAF50),
-          backgroundColor: const Color(0xFF1B5E20),
+          iconColor: Color(0xFF4CAF50),
+          backgroundColor: Color(0xFF1B5E20),
           textColor: Colors.white,
         );
       case ToastType.error:
-        return _ToastConfig(
+        return const _ToastConfig(
           icon: Icons.error,
-          iconColor: const Color(0xFFEF5350),
-          backgroundColor: const Color(0xFFB71C1C),
+          iconColor: Color(0xFFEF5350),
+          backgroundColor: Color(0xFFB71C1C),
           textColor: Colors.white,
         );
       case ToastType.warning:
-        return _ToastConfig(
+        return const _ToastConfig(
           icon: Icons.warning,
-          iconColor: const Color(0xFFFFA726),
-          backgroundColor: const Color(0xFFE65100),
+          iconColor: Color(0xFFFFA726),
+          backgroundColor: Color(0xFFE65100),
           textColor: Colors.white,
         );
       case ToastType.info:
-        return _ToastConfig(
+        return const _ToastConfig(
           icon: Icons.info,
-          iconColor: const Color(0xFF42A5F5),
-          backgroundColor: const Color(0xFF0D47A1),
+          iconColor: Color(0xFF42A5F5),
+          backgroundColor: Color(0xFF0D47A1),
           textColor: Colors.white,
         );
     }

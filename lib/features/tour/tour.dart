@@ -1,5 +1,5 @@
 /// Tour feature barrel export
-library tour;
+library;
 
 // Bindings
 export 'bindings/tour_binding.dart';

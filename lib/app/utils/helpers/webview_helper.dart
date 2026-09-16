@@ -6,6 +6,8 @@ import 'package:webview_flutter_android/webview_flutter_android.dart'
     as webview_android;
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
+import '../logger/app_logger.dart';
+
 class WebViewHelper {
   WebViewHelper._();
 
@@ -18,7 +20,10 @@ class WebViewHelper {
     if (!kIsWeb) {
       if (defaultTargetPlatform == TargetPlatform.android) {
         WebViewPlatform.instance ??= webview_android.AndroidWebViewPlatform();
-        webview_android.AndroidWebViewController.enableDebugging(true);
+        // Debug bridge must never ship in release builds.
+        if (kDebugMode) {
+          webview_android.AndroidWebViewController.enableDebugging(true);
+        }
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         WebViewPlatform.instance ??= WebKitWebViewPlatform();
       }
@@ -30,9 +35,38 @@ class WebViewHelper {
     return url.toLowerCase().contains('kuula.co');
   }
 
+  /// Hosts the tour webview may navigate to. Anything else is blocked.
+  static const Set<String> _allowedTourHosts = {'kuula.co', 'www.kuula.co'};
+
+  /// Default navigation policy for tour webviews: only `https` URLs on the
+  /// Kuula embed hosts may load. All other schemes/hosts are blocked so a
+  /// backend-supplied `virtualTourUrl` cannot drive the user to arbitrary
+  /// content inside the app's webview.
+  static NavigationDecision defaultNavigationPolicy(NavigationRequest request) {
+    final uri = Uri.tryParse(request.url);
+    if (uri == null || uri.scheme != 'https') {
+      AppLogger.warning(
+        'Blocked webview navigation (non-https): ${request.url}',
+      );
+      return NavigationDecision.prevent;
+    }
+    final host = uri.host.toLowerCase();
+    final allowed =
+        _allowedTourHosts.contains(host) || host.endsWith('.kuula.co');
+    if (!allowed) {
+      AppLogger.warning('Blocked webview navigation to: $host');
+      return NavigationDecision.prevent;
+    }
+    return NavigationDecision.navigate;
+  }
+
   static String _normalizeKuulaUrl(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme) {
+      return url;
+    }
+    if (uri.scheme != 'https') {
+      // load() rejects non-https up front; keep the raw value for the log.
       return url;
     }
     final host = uri.host.toLowerCase();
@@ -47,8 +81,21 @@ class WebViewHelper {
     return uri.replace(queryParameters: updatedQuery).toString();
   }
 
+  /// Minimal HTML-escaping for values interpolated into [buildKuulaHtml].
+  static String _escapeHtml(String value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+
   static String buildKuulaHtml(String url) {
     final sanitized = _normalizeKuulaUrl(url.trim());
+    // Defense in depth: the URL has already passed scheme/host validation,
+    // but escape it anyway before interpolating into the HTML.
+    final escaped = _escapeHtml(sanitized);
     return '''
 <!DOCTYPE html>
 <html lang="en">
@@ -79,7 +126,7 @@ class WebViewHelper {
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       allowfullscreen
       scrolling="no"
-      src="$sanitized"
+      src="$escaped"
     ></iframe>
   </body>
 </html>
@@ -120,7 +167,9 @@ class WebViewHelper {
           onPageFinished: onPageFinished,
           onWebResourceError: onWebResourceError,
           onProgress: onProgress,
-          onNavigationRequest: onNavigationRequest,
+          // Default to the safe Kuula-only policy when the caller does not
+          // supply a custom one.
+          onNavigationRequest: onNavigationRequest ?? defaultNavigationPolicy,
         ),
       );
 
@@ -135,13 +184,16 @@ class WebViewHelper {
 
   static Future<void> load(String url, WebViewController controller) async {
     if (url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    // Only https URLs may load inside the app webview.
+    if (uri == null || uri.scheme != 'https') {
+      AppLogger.warning('Blocked webview load (non-https): $url');
+      return;
+    }
     if (isKuulaUrl(url)) {
       await controller.loadHtmlString(buildKuulaHtml(url));
     } else {
-      final uri = Uri.tryParse(url);
-      if (uri != null) {
-        await controller.loadRequest(uri);
-      }
+      await controller.loadRequest(uri);
     }
   }
 

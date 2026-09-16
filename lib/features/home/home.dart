@@ -1,5 +1,5 @@
 /// Home feature barrel export
-library home;
+library;
 
 // Bindings
 export 'bindings/home_binding.dart';

@@ -104,26 +104,7 @@ class PrivacyView extends GetView<PrivacyController> {
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
-              Obx(
-                () => OutlinedButton.icon(
-                  onPressed: controller.dataExportInFlight.value
-                      ? null
-                      : controller.requestDataExport,
-                  icon: controller.dataExportInFlight.value
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.file_download_outlined),
-                  label: Text(
-                    controller.dataExportInFlight.value
-                        ? 'Requesting export...'
-                        : 'Request data export',
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
+              // Data export hidden: backend has no POST /users/export/ endpoint.
               Obx(
                 () => ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(

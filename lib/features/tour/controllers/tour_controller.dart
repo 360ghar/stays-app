@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/webview_helper.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class TourController extends GetxController {
   final RxnString tourUrl = RxnString();
@@ -56,15 +57,23 @@ class TourController extends GetxController {
 
   void _resolveUrlFromArguments() {
     final args = Get.arguments;
+    String? resolved;
     if (args is String) {
-      tourUrl.value = args;
+      resolved = args;
     } else if (args is Property) {
-      tourUrl.value = args.virtualTourUrl;
+      resolved = args.virtualTourUrl;
     } else if (args is Map) {
       final dynamic value = args['url'] ?? args['virtualTourUrl'];
       if (value is String && value.isNotEmpty) {
-        tourUrl.value = value;
+        resolved = value;
       }
+    }
+    // Only https tour URLs may be loaded (WebViewHelper enforces this too).
+    final uri = resolved == null ? null : Uri.tryParse(resolved);
+    if (resolved != null && uri != null && uri.scheme == 'https') {
+      tourUrl.value = resolved;
+    } else if (resolved != null) {
+      AppLogger.warning('Rejected non-https tour URL from arguments');
     }
   }
 }

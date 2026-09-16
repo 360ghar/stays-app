@@ -30,22 +30,36 @@ class PlacesService extends GetConnect {
     httpClient.baseUrl = 'https://maps.googleapis.com/maps/api/place';
     httpClient.timeout = const Duration(seconds: 20);
     httpClient.addRequestModifier<Object?>((request) async {
-      // Ensure JSON responses and lightweight logging
+      // Ensure JSON responses and lightweight logging.
+      // NOTE: the API key travels in the `key` query param but must NEVER
+      // appear in logs — redact the query string before logging.
       request.headers['Accept'] = 'application/json';
       AppLogger.logRequest({
         'method': request.method,
-        'url': request.url.toString(),
+        'url': _redactKey(request.url.toString()),
       });
       return request;
     });
     httpClient.addResponseModifier<Object?>((request, response) async {
       AppLogger.logResponse({
         'status': response.statusCode,
-        'url': request.url.toString(),
+        'url': _redactKey(request.url.toString()),
       });
       return response;
     });
     super.onInit();
+  }
+
+  /// Strips the `key` query parameter (and any value-like params) so the
+  /// Places API key never reaches the logs.
+  String _redactKey(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return url;
+    final params = Map<String, String>.from(uri.queryParameters);
+    if (params.containsKey('key')) {
+      params['key'] = '<redacted>';
+    }
+    return uri.replace(queryParameters: params).toString();
   }
 
   String get _apiKey =>

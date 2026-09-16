@@ -115,11 +115,22 @@ class DeepLinkService extends GetxService {
     return null;
   }
 
-  String _buildListingPath(String listingId) =>
-      Routes.listingDetail.replaceAll(':id', listingId);
+  /// Route IDs are interpolated into route templates — validate the format so
+  /// a crafted deep link cannot escape into arbitrary paths.
+  static bool _isValidRouteId(String id) {
+    if (id.isEmpty || id.length > 64) return false;
+    return RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id);
+  }
 
-  String _buildChatPath(String conversationId) =>
-      Routes.chat.replaceAll(':conversationId', conversationId);
+  String? _buildListingPath(String listingId) {
+    if (!_isValidRouteId(listingId)) return null;
+    return Routes.listingDetail.replaceAll(':id', listingId);
+  }
+
+  String? _buildChatPath(String conversationId) {
+    if (!_isValidRouteId(conversationId)) return null;
+    return Routes.chat.replaceAll(':conversationId', conversationId);
+  }
 
   Future<void> _navigateToPath(String path) async {
     pendingDeepLink.value = path;

@@ -1,4 +1,5 @@
 import '../../utils/helpers/currency_helper.dart';
+import '../../utils/helpers/json_helpers.dart';
 import 'amenity_model.dart';
 import 'location_model.dart';
 import 'user_model.dart';
@@ -37,6 +38,53 @@ enum PropertyType {
 }
 
 class ListingModel {
+  ListingModel({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.propertyType,
+    required this.location,
+    required this.pricePerNight,
+    required this.images,
+    required this.amenities,
+    required this.host,
+    required this.maxGuests,
+    required this.bedrooms,
+    required this.bathrooms,
+    required this.createdAt,
+    required this.updatedAt,
+    this.rating = 0,
+    this.reviewCount = 0,
+    this.houseRules = const [],
+  });
+
+  factory ListingModel.fromMap(Map<String, dynamic> map) => ListingModel(
+    id: map['id']?.toString() ?? '',
+    title: JsonHelpers.getStringOrDefault(map['title']),
+    description: JsonHelpers.getStringOrDefault(map['description']),
+    propertyType: _parsePropertyType(
+      JsonHelpers.getString(map['propertyType']),
+    ),
+    location: LocationModel.fromMap(
+      JsonHelpers.getMap(map['location']) ?? const {},
+    ),
+    pricePerNight: JsonHelpers.getDouble(map['pricePerNight']) ?? 0,
+    images: _stringList(map['images']),
+    amenities:
+        JsonHelpers.getMapList(
+          map['amenities'],
+        )?.map(AmenityModel.fromMap).toList() ??
+        <AmenityModel>[],
+    host: UserModel.fromMap(JsonHelpers.getMap(map['host']) ?? const {}),
+    maxGuests: JsonHelpers.getInt(map['maxGuests']) ?? 1,
+    bedrooms: JsonHelpers.getInt(map['bedrooms']) ?? 1,
+    bathrooms: JsonHelpers.getInt(map['bathrooms']) ?? 1,
+    rating: JsonHelpers.getDouble(map['rating']) ?? 0,
+    reviewCount: JsonHelpers.getInt(map['reviewCount']) ?? 0,
+    houseRules: _stringList(map['houseRules']),
+    createdAt: JsonHelpers.getDateTime(map['createdAt']) ?? DateTime.now(),
+    updatedAt: JsonHelpers.getDateTime(map['updatedAt']) ?? DateTime.now(),
+  );
   final String id;
   final String title;
   final String description;
@@ -55,51 +103,11 @@ class ListingModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  ListingModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.propertyType,
-    required this.location,
-    required this.pricePerNight,
-    required this.images,
-    required this.amenities,
-    required this.host,
-    required this.maxGuests,
-    required this.bedrooms,
-    required this.bathrooms,
-    this.rating = 0,
-    this.reviewCount = 0,
-    this.houseRules = const [],
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  factory ListingModel.fromMap(Map<String, dynamic> map) => ListingModel(
-    id: map['id']?.toString() ?? '',
-    title: map['title'] as String? ?? '',
-    description: map['description'] as String? ?? '',
-    propertyType: _parsePropertyType(map['propertyType'] as String?),
-    location: LocationModel.fromMap(
-      map['location'] as Map<String, dynamic>? ?? const {},
-    ),
-    pricePerNight: (map['pricePerNight'] as num?)?.toDouble() ?? 0,
-    images: (map['images'] as List? ?? []).cast<String>(),
-    amenities: ((map['amenities'] as List? ?? []).cast<Map<String, dynamic>>())
-        .map(AmenityModel.fromMap)
-        .toList(),
-    host: UserModel.fromMap(map['host'] as Map<String, dynamic>? ?? const {}),
-    maxGuests: map['maxGuests'] as int? ?? 1,
-    bedrooms: map['bedrooms'] as int? ?? 1,
-    bathrooms: map['bathrooms'] as int? ?? 1,
-    rating: (map['rating'] as num?)?.toDouble() ?? 0,
-    reviewCount: map['reviewCount'] as int? ?? 0,
-    houseRules: (map['houseRules'] as List? ?? []).cast<String>(),
-    createdAt:
-        DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
-    updatedAt:
-        DateTime.tryParse(map['updatedAt'] as String? ?? '') ?? DateTime.now(),
-  );
+  /// Safely extracts a list of strings from a JSON value.
+  static List<String> _stringList(dynamic value) {
+    if (value is! List) return <String>[];
+    return value.whereType<String>().map((e) => e).toList();
+  }
 
   Map<String, dynamic> toMap() => {
     'id': id,

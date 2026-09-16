@@ -1,5 +1,5 @@
 /// Splash feature barrel export
-library splash;
+library;
 
 // Bindings
 export 'bindings/splash_binding.dart';

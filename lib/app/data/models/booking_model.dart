@@ -2,24 +2,6 @@ import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class Booking {
-  final int id;
-  final int propertyId;
-  final int userId;
-  final String bookingReference;
-  final DateTime checkInDate;
-  final DateTime checkOutDate;
-  final int guests;
-  final int nights;
-  final double totalAmount;
-  final String bookingStatus;
-  final String paymentStatus;
-  final DateTime createdAt;
-  final Property? property;
-  final String? propertyTitle;
-  final String? propertyCity;
-  final String? propertyCountry;
-  final String? propertyImageUrl;
-
   Booking({
     required this.id,
     required this.propertyId,
@@ -98,6 +80,23 @@ class Booking {
       propertyImageUrl: _stringOrNull(propertyImageSource),
     );
   }
+  final int id;
+  final int propertyId;
+  final int userId;
+  final String bookingReference;
+  final DateTime checkInDate;
+  final DateTime checkOutDate;
+  final int guests;
+  final int nights;
+  final double totalAmount;
+  final String bookingStatus;
+  final String paymentStatus;
+  final DateTime createdAt;
+  final Property? property;
+  final String? propertyTitle;
+  final String? propertyCity;
+  final String? propertyCountry;
+  final String? propertyImageUrl;
 
   String get displayTitle => property?.name ?? propertyTitle ?? 'Stay';
 

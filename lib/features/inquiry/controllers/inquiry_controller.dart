@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:get/get.dart';
 
 import 'package:stays_app/app/data/models/booking_model.dart';
@@ -5,11 +6,13 @@ import 'package:stays_app/app/data/models/booking_pricing_model.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
+import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 
 class InquiryController extends GetxController {
-  final BookingRepository _repository;
   InquiryController({required BookingRepository repository})
     : _repository = repository;
+
+  final BookingRepository _repository;
 
   final RxBool isSubmitting = false.obs;
   final RxString statusMessage = ''.obs;
@@ -45,10 +48,12 @@ class InquiryController extends GetxController {
     int? nights,
     String? specialRequests,
     Map<String, dynamic>? additionalPayload,
-    Map<String, num>? fallbackPricing,
   }) async {
     try {
       errorMessage.value = '';
+      // Reset any previous booking so a failed re-submit can never look like
+      // a success to the view (stale-state guard).
+      latestBooking.value = null;
       statusMessage.value = 'Preparing inquiry...';
       isSubmitting.value = true;
 
@@ -78,129 +83,46 @@ class InquiryController extends GetxController {
           });
         } else {
           AppLogger.warning(
-            'Pricing response was empty. Falling back to locally computed values.',
+            'Pricing response was empty for property $propertyId',
           );
         }
       } catch (error, stackTrace) {
-        AppLogger.warning('Pricing request failed, using fallback values', {
-          'error': error.toString(),
-          'stackTrace': stackTrace.toString(),
-        });
-      }
-
-      double? _sanitizeAmount(double? value) {
-        if (value == null) return null;
-        if (value.isNaN || value.isInfinite) return null;
-        return value;
-      }
-
-      double _resolveRequiredAmount(String key, double? primary) {
-        final sanitized = _sanitizeAmount(primary);
-        if (sanitized != null) return sanitized;
-        final fallbackValue = fallbackPricing?[key];
-        if (fallbackValue != null) {
-          final resolved = fallbackValue.toDouble();
-          AppLogger.warning('Using fallback pricing value', {
-            'key': key,
-            'fallback': resolved,
-          });
-          return resolved;
-        }
         AppLogger.warning(
-          'Missing $key in pricing response. Defaulting to 0.0.',
+          'Pricing request failed for property $propertyId',
+          error,
         );
-        return 0.0;
+        AppLogger.error(
+          'Pricing request stack trace for property $propertyId',
+          error,
+          stackTrace,
+        );
       }
 
-      double? _resolveOptionalAmount(String key, double? primary) {
-        final sanitized = _sanitizeAmount(primary);
-        if (sanitized != null) return sanitized;
-        final hasFallback = fallbackPricing?.containsKey(key) ?? false;
-        if (hasFallback) {
-          final resolved = fallbackPricing![key]!.toDouble();
-          AppLogger.warning('Using fallback pricing value', {
-            'key': key,
-            'fallback': resolved,
-          });
-          return resolved;
-        }
-        return null;
-      }
-
-      final baseAmount = _resolveRequiredAmount(
-        'base_amount',
-        pricingModel?.baseAmount,
-      );
-      final taxesAmount = _resolveRequiredAmount(
-        'taxes_amount',
-        pricingModel?.taxesAmount,
-      );
-      final serviceCharges = _resolveRequiredAmount(
-        'service_charges',
-        pricingModel?.serviceCharges,
-      );
-      final totalAmount = _resolveRequiredAmount(
-        'total_amount',
-        pricingModel?.totalAmount,
-      );
-      final discountAmount = _resolveOptionalAmount(
-        'discount_amount',
-        pricingModel?.discountAmount,
-      );
-
-      AppLogger.info('Sanitized pricing values', {
-        'base_amount': baseAmount,
-        'taxes_amount': taxesAmount,
-        'service_charges': serviceCharges,
-        'discount_amount': discountAmount,
-        'total_amount': totalAmount,
-      });
-
-      if (totalAmount <= 0) {
+      if (pricingModel == null || !pricingModel.hasValidAmounts) {
         AppLogger.warning(
-          'Total amount is non-positive. Proceeding with inquiry submission.',
+          'Pricing unavailable or invalid for property $propertyId; inquiry not submitted',
         );
+        latestBooking.value = null;
+        errorMessage.value = 'Pricing unavailable. Please try again.';
+        statusMessage.value = 'Could not confirm pricing';
+        return;
       }
 
       statusMessage.value = 'Submitting inquiry...';
 
-      int? resolvedNights = nights;
-      final pricingNights = pricingModel?.nights;
-      if (resolvedNights == null && pricingNights != null) {
-        resolvedNights = pricingNights;
-      }
-
-      final trimmedEmail = primaryGuestEmail.trim();
-      final payload = <String, dynamic>{
-        'property_id': propertyId,
-        'check_in_date': checkInIso,
-        'check_out_date': checkOutIso,
-        'guests': guests,
-        'primary_guest_name': primaryGuestName,
-        'primary_guest_phone': primaryGuestPhone,
-        'primary_guest_email': trimmedEmail,
-        // Provide a structured guest_details per API contract
-        'guest_details': {'adults': guests},
-        'base_amount': baseAmount,
-        'taxes_amount': taxesAmount,
-        'service_charges': serviceCharges,
-        if (discountAmount != null) 'discount_amount': discountAmount,
-        'total_amount': totalAmount,
-        'booking_status': 'pending',
-        'payment_status': 'pending',
-      };
-
-      if (resolvedNights != null) {
-        payload['nights'] = resolvedNights;
-      }
-
-      if (specialRequests != null && specialRequests.trim().isNotEmpty) {
-        payload['special_requests'] = specialRequests.trim();
-      }
-
-      if (additionalPayload != null && additionalPayload.isNotEmpty) {
-        payload.addAll(additionalPayload);
-      }
+      final payload = buildBookingPayload(
+        pricing: pricingModel,
+        propertyId: propertyId,
+        checkInIso: checkInIso,
+        checkOutIso: checkOutIso,
+        guests: guests,
+        primaryGuestName: primaryGuestName,
+        primaryGuestPhone: primaryGuestPhone,
+        primaryGuestEmail: primaryGuestEmail,
+        nights: nights,
+        specialRequests: specialRequests,
+        additionalPayload: additionalPayload,
+      );
 
       AppLogger.info('Submitting inquiry payload', {
         'property_id': propertyId,
@@ -208,12 +130,7 @@ class InquiryController extends GetxController {
         'check_out_date': checkOutIso,
         'guests': guests,
         'nights': payload['nights'],
-        'base_amount': baseAmount,
-        'taxes_amount': taxesAmount,
-        'service_charges': serviceCharges,
-        'discount_amount': payload['discount_amount'],
-        'total_amount': totalAmount,
-        'has_email': trimmedEmail.isNotEmpty,
+        'has_email': primaryGuestEmail.trim().isNotEmpty,
       });
 
       final booking = await _repository.createBooking(payload);
@@ -223,6 +140,34 @@ class InquiryController extends GetxController {
         'booking_id': booking.id,
         'booking_status': booking.bookingStatus,
       });
+
+      // Refresh trips so the new inquiry shows up immediately, then hand off
+      // to the confirmation screen (F18/R18: the route existed but nothing
+      // navigated to it after a successful submission).
+      if (Get.isRegistered<TripsController>()) {
+        try {
+          await Get.find<TripsController>().loadPastBookings(
+            forceRefresh: true,
+          );
+        } catch (e, stackTrace) {
+          AppLogger.warning('Trips refresh after inquiry submission failed', e);
+          AppLogger.error(
+            'Trips refresh stack trace after inquiry submission',
+            e,
+            stackTrace,
+          );
+        }
+      }
+
+      await Get.offAllNamed(
+        Routes.inquiryConfirmation,
+        arguments: <String, dynamic>{
+          'booking': booking,
+          // Best-effort: lets the confirmation controller hydrate its
+          // property state when the server embedded it in the response.
+          'property': booking.property,
+        },
+      );
     } catch (e, stackTrace) {
       latestBooking.value = null;
       errorMessage.value = e.toString();
@@ -232,4 +177,59 @@ class InquiryController extends GetxController {
       isSubmitting.value = false;
     }
   }
+}
+
+/// Builds the booking payload from server-authoritative [pricing].
+///
+/// Money fields always originate from [BookingPricingModel]; caller-supplied
+/// [additionalPayload] is applied FIRST so it can never override them.
+/// Throws [PricingUnavailableException] when the pricing is invalid.
+@visibleForTesting
+Map<String, dynamic> buildBookingPayload({
+  required BookingPricingModel pricing,
+  required int propertyId,
+  required String checkInIso,
+  required String checkOutIso,
+  required int guests,
+  required String primaryGuestName,
+  required String primaryGuestPhone,
+  required String primaryGuestEmail,
+  int? nights,
+  String? specialRequests,
+  Map<String, dynamic>? additionalPayload,
+}) {
+  if (!pricing.hasValidAmounts) {
+    throw const PricingUnavailableException();
+  }
+  final payload = <String, dynamic>{...?additionalPayload};
+  payload.addAll({
+    'property_id': propertyId,
+    'check_in_date': checkInIso,
+    'check_out_date': checkOutIso,
+    'guests': guests,
+    'primary_guest_name': primaryGuestName,
+    'primary_guest_phone': primaryGuestPhone,
+    'primary_guest_email': primaryGuestEmail,
+    // Provide a structured guest_details per API contract
+    'guest_details': {'adults': guests},
+    'base_amount': pricing.baseAmount,
+    'taxes_amount': pricing.taxesAmount,
+    'service_charges': pricing.serviceCharges,
+    if (pricing.discountAmount != null)
+      'discount_amount': pricing.discountAmount,
+    'total_amount': pricing.totalAmount,
+    'booking_status': 'pending',
+    'payment_status': 'pending',
+  });
+
+  final resolvedNights = nights ?? pricing.nights;
+  if (resolvedNights != null) {
+    payload['nights'] = resolvedNights;
+  }
+
+  if (specialRequests != null && specialRequests.trim().isNotEmpty) {
+    payload['special_requests'] = specialRequests.trim();
+  }
+
+  return payload;
 }

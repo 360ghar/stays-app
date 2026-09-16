@@ -11,18 +11,33 @@ import '../../utils/logger/app_logger.dart';
 import '../../utils/services/connectivity_service.dart';
 
 class PropertiesRepository {
-  final PropertiesProvider _provider;
-  PropertyCacheService? _cacheService;
-
   PropertiesRepository({required PropertiesProvider provider})
     : _provider = provider {
     _initCache();
   }
+  final PropertiesProvider _provider;
+  PropertyCacheService? _cacheService;
+
+  /// In-flight request dedupe: concurrent calls with the same key share one
+  /// network request. Entries are removed when the future completes.
+  final Map<String, Future<dynamic>> _inFlight = {};
 
   void _initCache() {
     if (Get.isRegistered<PropertyCacheService>()) {
       _cacheService = Get.find<PropertyCacheService>();
     }
+  }
+
+  /// Lazily re-resolves the cache service (cheap) so a late registration
+  /// (e.g. InitialBinding's putAsync completing after this repository was
+  /// constructed) is still picked up.
+  PropertyCacheService? _cache() {
+    final cached = _cacheService;
+    if (cached != null) return cached;
+    if (Get.isRegistered<PropertyCacheService>()) {
+      _cacheService = Get.find<PropertyCacheService>();
+    }
+    return _cacheService;
   }
 
   Future<UnifiedPropertyResponse> explore({
@@ -33,7 +48,7 @@ class PropertiesRepository {
     double radiusKm = 10,
     Map<String, dynamic>? filters,
     bool forceRefresh = false,
-  }) async {
+  }) {
     const defaultLat = 19.0760;
     const defaultLng = 72.8777;
 
@@ -48,13 +63,39 @@ class PropertiesRepository {
     }
     la ??= defaultLat;
     ln ??= defaultLng;
+    final resolvedLat = la;
+    final resolvedLng = ln;
     final queryFilters = <String, dynamic>{...?filters}
       ..removeWhere((key, value) => value == null);
     queryFilters.putIfAbsent('purpose', () => 'short_stay');
 
+    return _dedupe(
+      'explore|$resolvedLat|$resolvedLng|$cursor|$limit|$radiusKm|${_stableFiltersHash(queryFilters)}',
+      () => _explore(
+        resolvedLat,
+        resolvedLng,
+        cursor,
+        limit,
+        radiusKm,
+        queryFilters,
+        forceRefresh,
+      ),
+    );
+  }
+
+  Future<UnifiedPropertyResponse> _explore(
+    double la,
+    double ln,
+    String? cursor,
+    int limit,
+    double radiusKm,
+    Map<String, dynamic> queryFilters,
+    bool forceRefresh,
+  ) async {
     // Try cache first if not forcing refresh
-    if (!forceRefresh && _cacheService != null) {
-      final cached = _cacheService!.getCachedExploreResults(
+    final cache = _cache();
+    if (!forceRefresh && cache != null) {
+      final cached = cache.getCachedExploreResults(
         lat: la,
         lng: ln,
         cursor: cursor,
@@ -89,15 +130,43 @@ class PropertiesRepository {
 
     // Cache the response
     unawaited(
-      _cacheService?.cacheExploreResults(
-        response,
-        lat: la,
-        lng: ln,
-        cursor: cursor,
-      ),
+      cache?.cacheExploreResults(response, lat: la, lng: ln, cursor: cursor),
     );
 
     return response;
+  }
+
+  /// Deterministic, order-independent fingerprint of the filters map so the
+  /// dedupe key is stable across equivalent requests.
+  String _stableFiltersHash(Map<String, dynamic> filters) {
+    final sorted = filters.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    return sorted.map((e) => '${e.key}=${e.value.toString()}').join('&');
+  }
+
+  /// Runs [operation], deduplicating concurrent calls with the same [key].
+  Future<T> _dedupe<T>(String key, Future<T> Function() operation) {
+    final existing = _inFlight[key];
+    if (existing != null) {
+      AppLogger.debug('Deduping in-flight request: $key');
+      return existing as Future<T>;
+    }
+    final future = operation();
+    _inFlight[key] = future;
+    // Clean up regardless of outcome. The derived future's error is handled
+    // here (callers await the ORIGINAL future, which still propagates errors);
+    // without the onError handler a failed request would produce an unhandled
+    // async error on the derived future.
+    unawaited(
+      future
+          .then<void>((_) {}, onError: (Object _, StackTrace _) {})
+          .whenComplete(() {
+            if (identical(_inFlight[key], future)) {
+              _inFlight.remove(key);
+            }
+          }),
+    );
+    return future;
   }
 
   /// Background refresh for stale-while-revalidate pattern
@@ -133,10 +202,15 @@ class PropertiesRepository {
     }
   }
 
-  Future<Property> getDetails(int id, {bool forceRefresh = false}) async {
+  Future<Property> getDetails(int id, {bool forceRefresh = false}) {
+    return _dedupe('details|$id', () => _getDetails(id, forceRefresh));
+  }
+
+  Future<Property> _getDetails(int id, bool forceRefresh) async {
     // Try cache first
-    if (!forceRefresh && _cacheService != null) {
-      final cached = _cacheService!.getCachedPropertyDetails(id);
+    final cache = _cache();
+    if (!forceRefresh && cache != null) {
+      final cached = cache.getCachedPropertyDetails(id);
       if (cached != null) {
         AppLogger.info('Returning cached property details for ID $id');
         // Refresh in background
@@ -146,7 +220,7 @@ class PropertiesRepository {
     }
 
     final property = await _provider.getDetails(id);
-    unawaited(_cacheService?.cachePropertyDetails(property));
+    unawaited(cache?.cachePropertyDetails(property));
     return property;
   }
 
@@ -157,7 +231,7 @@ class PropertiesRepository {
         return;
       }
       final property = await _provider.getDetails(id);
-      await _cacheService?.cachePropertyDetails(property);
+      await _cache()?.cachePropertyDetails(property);
     } catch (e) {
       AppLogger.warning('Background details refresh failed: $e');
     }
@@ -166,10 +240,18 @@ class PropertiesRepository {
   Future<List<Property>> recommendations({
     int limit = 10,
     bool forceRefresh = false,
-  }) async {
+  }) {
+    return _dedupe(
+      'recommendations|$limit',
+      () => _recommendations(limit, forceRefresh),
+    );
+  }
+
+  Future<List<Property>> _recommendations(int limit, bool forceRefresh) async {
     // Try cache first
-    if (!forceRefresh && _cacheService != null) {
-      final cached = _cacheService!.getCachedRecommendations();
+    final cache = _cache();
+    if (!forceRefresh && cache != null) {
+      final cached = cache.getCachedRecommendations();
       if (cached != null) {
         AppLogger.info('Returning cached recommendations');
         unawaited(_refreshRecommendationsInBackground(limit));
@@ -178,7 +260,7 @@ class PropertiesRepository {
     }
 
     final properties = await _provider.recommendations(limit: limit);
-    unawaited(_cacheService?.cacheRecommendations(properties));
+    unawaited(cache?.cacheRecommendations(properties));
     return properties;
   }
 
@@ -189,7 +271,7 @@ class PropertiesRepository {
         return;
       }
       final properties = await _provider.recommendations(limit: limit);
-      await _cacheService?.cacheRecommendations(properties);
+      await _cache()?.cacheRecommendations(properties);
     } catch (e) {
       AppLogger.warning('Background recommendations refresh failed: $e');
     }
@@ -201,7 +283,7 @@ class PropertiesRepository {
     double? lng,
     String? cursor,
   }) {
-    return _cacheService?.getCachedExploreResults(
+    return _cache()?.getCachedExploreResults(
       lat: lat,
       lng: lng,
       cursor: cursor,
@@ -211,11 +293,11 @@ class PropertiesRepository {
 
   /// Get cached property details when offline
   Property? getOfflinePropertyDetails(int id) {
-    return _cacheService?.getCachedPropertyDetails(id, ignoreExpiry: true);
+    return _cache()?.getCachedPropertyDetails(id, ignoreExpiry: true);
   }
 
   /// Clear all cached data
   Future<void> clearCache() async {
-    await _cacheService?.clearAll();
+    await _cache()?.clearAll();
   }
 }

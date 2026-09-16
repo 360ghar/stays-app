@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends AppBar {
-  CustomAppBar({super.key, required String titleText})
+  CustomAppBar({required String titleText, super.key})
     : super(title: Text(titleText));
 }

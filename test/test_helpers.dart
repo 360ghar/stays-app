@@ -196,8 +196,8 @@ class PerformanceTestHelpers {
   static Future<List<Duration>> benchmarkBuilds(
     Widget widget,
     int iterations, {
-    Duration? delayBetweenBuilds,
     required WidgetTester tester,
+    Duration? delayBetweenBuilds,
   }) async {
     final durations = <Duration>[];
 

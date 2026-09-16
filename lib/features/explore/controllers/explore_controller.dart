@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/models/unified_filter_model.dart';
@@ -8,29 +9,18 @@ import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/app/utils/constants/app_constants.dart';
-
+import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
+
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
-import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
 import 'package:stays_app/app/data/services/analytics_service.dart';
+import 'package:stays_app/app/utils/mixins/favorite_toggle_mixin.dart';
 
-class ExploreController extends BaseController with ImagePrefetchMixin {
-  final LocationService _locationService;
-  final PropertiesRepository _propertiesRepository;
-  final WishlistRepository _wishlistRepository;
-  final FilterController _filterController;
-  final FavoritesController _favoritesController;
-
-  final RxBool isOffline = false.obs;
-  final RxBool isShowingCachedData = false.obs;
-
-  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
-  Worker? _filterWorker;
-  Worker? _locationWorker;
-
+class ExploreController extends BaseController
+    with ImagePrefetchMixin, FavoriteToggleMixin {
   ExploreController({
     required LocationService locationService,
     required PropertiesRepository propertiesRepository,
@@ -42,6 +32,22 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
        _wishlistRepository = wishlistRepository,
        _filterController = filterController,
        _favoritesController = favoritesController;
+  final LocationService _locationService;
+  final PropertiesRepository _propertiesRepository;
+  final WishlistRepository _wishlistRepository;
+  final FilterController _filterController;
+  final FavoritesController _favoritesController;
+
+  @override
+  WishlistRepository? get wishlistRepository => _wishlistRepository;
+
+  @override
+  FavoritesController get favoritesController => _favoritesController;
+
+  final RxBool isOffline = false.obs;
+  final RxBool isShowingCachedData = false.obs;
+
+  UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
 
   final RxList<Property> popularHomes = <Property>[].obs;
   final RxList<Property> nearbyHotels =
@@ -153,7 +159,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     _logScreenView();
     // _filterController is now injected via constructor
     _activeFilters = _filterController.filterFor(FilterScope.explore);
-    _filterWorker = trackWorker(
+    trackWorker(
       debounce<UnifiedFilterModel>(
         _filterController.rxFor(FilterScope.explore),
         (filters) async {
@@ -166,7 +172,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     );
     _fetchInitialData();
     // Reload properties when user selects a new location
-    _locationWorker = trackWorker(
+    trackWorker(
       ever<String>(_locationService.locationNameRx, (_) {
         _reloadWithFilters();
       }),
@@ -177,11 +183,6 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     if (Get.isRegistered<AnalyticsService>()) {
       Get.find<AnalyticsService>().logScreenView('Explore');
     }
-  }
-
-  @override
-  void onClose() {
-    super.onClose();
   }
 
   Future<void> _waitForLocationInitialization() async {
@@ -421,45 +422,43 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
   }
 
   void navigateToPropertyDetail(Property property) {
-    Get.toNamed('/listing/${property.id}', arguments: property);
+    Get.toNamed(
+      Routes.listingDetail.replaceAll(':id', '${property.id}'),
+      arguments: property,
+    );
 
     // Prefetch all images for the property detail view
     prefetchDetailImages(property);
   }
 
-  Future<void> toggleFavorite(Property property) async {
+  @override
+  Future<FavoriteToggleResult> toggleFavorite(
+    Property property, {
+    VoidCallback? onSuccess,
+  }) async {
     final propertyId = property.id;
-    final isCurrentlyFavorite = _favoritesController.isFavorite(propertyId);
-    unawaited(HapticHelper.favoriteToggle());
-
-    try {
-      if (isCurrentlyFavorite) {
-        await _wishlistRepository.remove(propertyId);
-        _favoritesController.removeFavorite(propertyId);
+    // Shared toggle logic (wishlist repo + favorites state + snackbar +
+    // haptics) lives in FavoriteToggleMixin; controller-specific concerns
+    // (list updates + analytics) run on success.
+    final result = await super.toggleFavorite(
+      property,
+      onSuccess: () {
+        final isNowFavorite = _favoritesController.isFavorite(propertyId);
+        _updatePropertyFavoriteStatusInLists(propertyId, isNowFavorite);
         if (Get.isRegistered<AnalyticsService>()) {
-          Get.find<AnalyticsService>().logWishlistRemoved('$propertyId');
+          if (isNowFavorite) {
+            Get.find<AnalyticsService>().logWishlistAdded('$propertyId');
+          } else {
+            Get.find<AnalyticsService>().logWishlistRemoved('$propertyId');
+          }
         }
-      } else {
-        await _wishlistRepository.add(propertyId);
-        _favoritesController.addFavorite(propertyId);
-        if (Get.isRegistered<AnalyticsService>()) {
-          Get.find<AnalyticsService>().logWishlistAdded('$propertyId');
-        }
-      }
-      _updatePropertyFavoriteStatusInLists(propertyId, !isCurrentlyFavorite);
-      AppSnackbar.success(
-        title: isCurrentlyFavorite
-            ? 'Removed from Wishlist'
-            : 'Added to Wishlist',
-        message: '${property.name} updated.',
-      );
-    } catch (e) {
-      AppLogger.error('Error toggling favorite', e);
-      AppSnackbar.error(
-        title: 'Error',
-        message: 'Could not update wishlist. Please try again.',
-      );
+        onSuccess?.call();
+      },
+    );
+    if (!result.success) {
+      AppLogger.error('Error toggling favorite: ${result.errorMessage}');
     }
+    return result;
   }
 
   void _updatePropertyFavoriteStatusInLists(int propertyId, bool isFavorite) {
@@ -478,6 +477,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     }
   }
 
+  @override
   bool isPropertyFavorite(int propertyId) {
     return _favoritesController.isFavorite(propertyId);
   }
@@ -486,7 +486,7 @@ class ExploreController extends BaseController with ImagePrefetchMixin {
     final lat = _locationService.latitude;
     final lng = _locationService.longitude;
     Get.toNamed(
-      '/search-results',
+      Routes.searchResults,
       arguments: {
         'category': categoryType,
         if (lat != null) 'lat': lat,

@@ -18,7 +18,6 @@ class SearchResultsView extends GetView<ListingController> {
     final filterController = Get.find<FilterController>();
     final filtersRx = filterController.rxFor(FilterScope.locate);
     final colors = Theme.of(context).colorScheme;
-    final textStyles = Theme.of(context).textTheme;
     return Scaffold(
       backgroundColor: colors.surface,
       appBar: LocationFilterAppBar(
@@ -107,7 +106,7 @@ class SearchResultsView extends GetView<ListingController> {
                 final base = filterController.filterFor(FilterScope.locate);
                 filterController.setFilters(
                   FilterScope.locate,
-                  base.copyWith(sortBy: null),
+                  base.copyWith(),
                 );
                 Get.back();
               },
@@ -134,12 +133,11 @@ class SearchResultsView extends GetView<ListingController> {
     final textStyles = Theme.of(context).textTheme;
     if (isInitialLoading) {
       return [
-        SliverFillRemaining(
-          hasScrollBody: true,
+        const SliverFillRemaining(
           child: Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: const [
+              children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 12),
                 Text('Loading properties...'),

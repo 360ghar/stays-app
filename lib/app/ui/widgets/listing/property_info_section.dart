@@ -6,20 +6,19 @@ import '../../../utils/helpers/currency_helper.dart';
 
 /// Property basic information section widget
 class PropertyInfoSection extends StatelessWidget {
-  final Property property;
-  final VoidCallback? onBookNow;
-  final VoidCallback? onContact;
-  final VoidCallback? onFavorite;
-  final bool isFavorite;
-
   const PropertyInfoSection({
-    super.key,
     required this.property,
+    super.key,
     this.onBookNow,
     this.onContact,
     this.onFavorite,
     this.isFavorite = false,
   });
+  final Property property;
+  final VoidCallback? onBookNow;
+  final VoidCallback? onContact;
+  final VoidCallback? onFavorite;
+  final bool isFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +33,7 @@ class PropertyInfoSection extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withOpacity(0.1),
+            color: colors.shadow.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -110,13 +109,13 @@ class PropertyInfoSection extends StatelessWidget {
   }
 
   Widget _buildFavoriteButton() {
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withValues(alpha: 0.9),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

@@ -3,18 +3,9 @@ import 'package:flutter/material.dart';
 import '../../theme/theme_extensions.dart';
 
 class SectionHeader extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final IconData? leadingIcon;
-  final Color? leadingIconColor;
-  final TextStyle? subtitleStyle;
-  final VoidCallback? onViewAll;
-  final EdgeInsetsGeometry padding;
-  final TextStyle? titleStyle;
-
   const SectionHeader({
-    super.key,
     required this.title,
+    super.key,
     this.subtitle,
     this.leadingIcon,
     this.leadingIconColor,
@@ -23,6 +14,14 @@ class SectionHeader extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 20),
     this.titleStyle,
   });
+  final String title;
+  final String? subtitle;
+  final IconData? leadingIcon;
+  final Color? leadingIconColor;
+  final TextStyle? subtitleStyle;
+  final VoidCallback? onViewAll;
+  final EdgeInsetsGeometry padding;
+  final TextStyle? titleStyle;
 
   @override
   Widget build(BuildContext context) {

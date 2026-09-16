@@ -9,9 +9,9 @@ import '../../theme/app_animations.dart';
 /// Features focus animation, clear button, and search suggestions.
 class AnimatedSearchBar extends StatefulWidget {
   const AnimatedSearchBar({
-    super.key,
     required this.onChanged,
     required this.onSubmitted,
+    super.key,
     this.hintText = 'Search...',
     this.leadingIcon,
     this.trailingIcon,
@@ -306,9 +306,9 @@ class _AnimatedClearButtonState extends State<_AnimatedClearButton>
 /// Use this in app bars or toolbars where space is limited.
 class ExpandingSearchField extends StatefulWidget {
   const ExpandingSearchField({
-    super.key,
     required this.onChanged,
     required this.onSubmitted,
+    super.key,
     this.hintText = 'Search...',
     this.onTap,
     this.onClose,

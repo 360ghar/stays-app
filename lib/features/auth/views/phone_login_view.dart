@@ -317,9 +317,9 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           ],
         ),
         const SizedBox(height: 8),
-        Container(
+        DecoratedBox(
           decoration: BoxDecoration(
-            color: context.elevatedSurface(0.08),
+            color: context.elevatedSurface(),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: colors.outlineVariant),
           ),
@@ -388,9 +388,9 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
           final hasError = controller.passwordError.value.isNotEmpty;
           return Column(
             children: [
-              Container(
+              DecoratedBox(
                 decoration: BoxDecoration(
-                  color: context.elevatedSurface(0.08),
+                  color: context.elevatedSurface(),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: hasError ? colors.error : colors.outlineVariant,

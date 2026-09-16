@@ -14,8 +14,6 @@ class StorageKeys {
   // Remember-me preferences
   static const rememberMeBox = 'auth_preferences';
   static const rememberMeFlag = 'remember_me';
-  static const rememberedAccessToken = 'remembered_access_token';
-  static const rememberedRefreshToken = 'remembered_refresh_token';
 
   // App storage boxes
   static const appStorageBox = 'app_storage';

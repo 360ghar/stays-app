@@ -124,9 +124,9 @@ class _VerificationViewState extends State<VerificationView> with CodeAutoFill {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          Container(
+          DecoratedBox(
             decoration: BoxDecoration(
-              color: context.elevatedSurface(0.08),
+              color: context.elevatedSurface(),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: colors.outlineVariant),
             ),

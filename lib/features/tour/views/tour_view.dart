@@ -94,12 +94,7 @@ class TourView extends GetView<TourController> {
         }
         return Stack(
           children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.zero,
-                child: _buildWebView(context),
-              ),
-            ),
+            Positioned.fill(child: ClipRRect(child: _buildWebView(context))),
             if (controller.progress.value > 0 &&
                 controller.progress.value < 100)
               Positioned(

@@ -20,6 +20,10 @@ class PropertyCacheService {
   /// Cache expiry duration (2 hours)
   static const Duration cacheExpiry = Duration(hours: 2);
 
+  /// Bump when the cached payload shape changes; old-shape entries are
+  /// ignored rather than misparsed.
+  static const int schemaVersion = 2;
+
   /// Maximum number of cached property details (LRU eviction)
   static const int maxCachedProperties = 100;
 
@@ -57,10 +61,13 @@ class PropertyCacheService {
     try {
       final key = _buildExploreKey(lat, lng, cursor);
       final data = {
+        'schema_version': schemaVersion,
         'items': response.items.map((p) => p.toJson()).toList(),
         'nextCursor': response.nextCursor,
         'hasMore': response.hasMore,
         'limit': response.limit,
+        if (response.total != null) 'total': response.total,
+        if (response.filters != null) 'filters': response.filters,
       };
       await _storage.write(key, jsonEncode(data));
       await _storage.write(
@@ -94,15 +101,22 @@ class PropertyCacheService {
       if (jsonStr == null) return null;
 
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      // Ignore entries written by an older schema version.
+      if (data['schema_version'] != schemaVersion) return null;
       final items = (data['items'] as List)
           .map((json) => Property.fromJson(json as Map<String, dynamic>))
           .toList();
+      final rawFilters = data['filters'];
 
       return UnifiedPropertyResponse(
         items: items,
         nextCursor: data['nextCursor'] as String?,
         hasMore: (data['hasMore'] as bool?) ?? false,
         limit: (data['limit'] as num?)?.toInt() ?? items.length,
+        total: (data['total'] as num?)?.toInt(),
+        filters: rawFilters is Map
+            ? Map<String, dynamic>.from(rawFilters)
+            : null,
       );
     } catch (e) {
       AppLogger.warning('Failed to read cached explore results: $e');

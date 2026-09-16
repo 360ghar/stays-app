@@ -13,8 +13,8 @@ import 'search_bar_widget.dart';
 class LocationFilterAppBar extends StatelessWidget
     implements PreferredSizeWidget {
   const LocationFilterAppBar({
-    super.key,
     required this.scope,
+    super.key,
     this.showBackButton = false,
     this.onLocationTap,
     this.onFilterPressed,
@@ -49,7 +49,6 @@ class LocationFilterAppBar extends StatelessWidget
       toolbarHeight: preferredSize.height,
       actions: trailingActions,
       title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(child: _buildSearchField(context)),
           const SizedBox(width: 12),
@@ -100,10 +99,7 @@ class LocationFilterAppBar extends StatelessWidget
   Widget _buildFilterButton(BuildContext context) {
     final controller = _filterController;
     if (controller == null) {
-      return FilterButton(
-        isActive: false,
-        onPressed: () => _showFilterUnavailable(context),
-      );
+      return FilterButton(onPressed: () => _showFilterUnavailable(context));
     }
     final filtersRx = controller.rxFor(scope);
     return Obx(

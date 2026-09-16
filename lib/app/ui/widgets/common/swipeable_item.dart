@@ -10,9 +10,9 @@ import '../../theme/app_animations.dart';
 /// Features swipe-to-delete with confirmation, custom actions, and haptic feedback.
 class SwipeableItem extends StatefulWidget {
   const SwipeableItem({
-    super.key,
     required this.itemKey,
     required this.child,
+    super.key,
     this.onDelete,
     this.onEdit,
     this.onArchive,
@@ -84,7 +84,10 @@ class _SwipeableItemState extends State<SwipeableItem>
     }
 
     if (_isDeleting) return;
-    _isDeleting = true;
+    setState(() {
+      _isConfirmingDelete = false;
+      _isDeleting = true;
+    });
 
     // Haptic feedback
     HapticFeedback.heavyImpact();
@@ -110,7 +113,6 @@ class _SwipeableItemState extends State<SwipeableItem>
   Widget build(BuildContext context) {
     if (_isDeleting) {
       return SizeTransition(
-        axis: Axis.vertical,
         sizeFactor: _scaleAnimation,
         child: FadeTransition(opacity: _fadeAnimation, child: widget.child),
       );
@@ -151,7 +153,7 @@ class _SwipeableItemState extends State<SwipeableItem>
               widget.child,
               if (_isConfirmingDelete)
                 Positioned.fill(
-                  child: Container(
+                  child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: Colors.red.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(12),
@@ -159,11 +161,7 @@ class _SwipeableItemState extends State<SwipeableItem>
                     child: Center(
                       child: _DeleteConfirmation(
                         onCancel: _cancelDelete,
-                        onConfirm: () {
-                          _controller.forward().then((_) {
-                            widget.onDelete?.call();
-                          });
-                        },
+                        onConfirm: _handleDelete,
                       ),
                     ),
                   ),
@@ -204,7 +202,7 @@ class _DeleteConfirmation extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.delete_rounded, color: Colors.white, size: 24),
+        const Icon(Icons.delete_rounded, color: Colors.white, size: 24),
         const SizedBox(width: 8),
         const Text(
           'Delete?',
@@ -261,10 +259,10 @@ class _DeleteConfirmation extends StatelessWidget {
 /// A simpler swipe-to-dismiss without confirmation.
 class SimpleSwipeable extends StatelessWidget {
   const SimpleSwipeable({
-    super.key,
     required this.itemKey,
     required this.child,
     required this.onDismissed,
+    super.key,
     this.direction = DismissDirection.endToStart,
     this.backgroundIcon = Icons.delete_rounded,
     this.backgroundColor,

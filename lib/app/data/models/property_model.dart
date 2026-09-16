@@ -6,6 +6,75 @@ part 'property_model.g.dart';
 
 @JsonSerializable()
 class Property {
+  Property({
+    required this.id,
+    required this.name,
+    required this.propertyType,
+    required this.city,
+    required this.country,
+    required this.pricePerNight,
+    this.description,
+    this.purpose = 'short_stay',
+    this.address,
+    this.state,
+    this.latitude,
+    this.longitude,
+    this.zipCode,
+    this.locality,
+    this.subLocality,
+    this.landmark,
+    this.currency = AppConstants.defaultCurrencyCode,
+    this.basePrice,
+    this.monthlyRent,
+    this.securityDeposit,
+    this.maintenanceCharges,
+    this.pricePerSqft,
+    this.bedrooms,
+    this.bathrooms,
+    this.balconies,
+    this.maxGuests,
+    this.squareFeet,
+    this.floor,
+    this.totalFloors,
+    this.parkingSpaces,
+    this.ageOfProperty,
+    this.minimumStay,
+    this.viewCount,
+    this.likeCount,
+    this.interestCount,
+    this.rating,
+    this.reviewsCount,
+    this.ownerId,
+    this.ownerName,
+    this.ownerContact,
+    this.builderName,
+    this.images,
+    this.coverImage,
+    this.virtualTourUrl,
+    this.has360View,
+    this.features,
+    this.amenities,
+    this.tags,
+    this.available,
+    this.availableFrom,
+    this.status,
+    this.calendarData,
+    this.createdAt,
+    this.updatedAt,
+    this.distanceKm,
+    this.liked,
+    this.userHasScheduledVisit,
+    this.isFavorite = false,
+  });
+
+  factory Property.fromJson(Map<String, dynamic> json) {
+    final model = _$PropertyFromJson(json);
+    final dynamic likedValue = json['liked'] ?? json['is_liked'];
+    final bool shouldMarkFavorite = likedValue is bool
+        ? likedValue
+        : model.liked == true;
+    return shouldMarkFavorite ? model.copyWith(isFavorite: true) : model;
+  }
   final int id;
   @JsonKey(name: 'title')
   final String name;
@@ -125,76 +194,6 @@ class Property {
   // Local state (not from API)
   @JsonKey(includeFromJson: false, includeToJson: false)
   final bool isFavorite;
-
-  Property({
-    required this.id,
-    required this.name,
-    this.description,
-    required this.propertyType,
-    this.purpose = 'short_stay',
-    this.address,
-    required this.city,
-    this.state,
-    required this.country,
-    this.latitude,
-    this.longitude,
-    this.zipCode,
-    this.locality,
-    this.subLocality,
-    this.landmark,
-    required this.pricePerNight,
-    this.currency = AppConstants.defaultCurrencyCode,
-    this.basePrice,
-    this.monthlyRent,
-    this.securityDeposit,
-    this.maintenanceCharges,
-    this.pricePerSqft,
-    this.bedrooms,
-    this.bathrooms,
-    this.balconies,
-    this.maxGuests,
-    this.squareFeet,
-    this.floor,
-    this.totalFloors,
-    this.parkingSpaces,
-    this.ageOfProperty,
-    this.minimumStay,
-    this.viewCount,
-    this.likeCount,
-    this.interestCount,
-    this.rating,
-    this.reviewsCount,
-    this.ownerId,
-    this.ownerName,
-    this.ownerContact,
-    this.builderName,
-    this.images,
-    this.coverImage,
-    this.virtualTourUrl,
-    this.has360View,
-    this.features,
-    this.amenities,
-    this.tags,
-    this.available,
-    this.availableFrom,
-    this.status,
-    this.calendarData,
-    this.createdAt,
-    this.updatedAt,
-    this.distanceKm,
-    this.liked,
-    this.userHasScheduledVisit,
-    this.isFavorite = false,
-  });
-
-  factory Property.fromJson(Map<String, dynamic> json) {
-    final model = _$PropertyFromJson(json);
-    final dynamic likedValue = json['liked'] ?? json['is_liked'];
-    final bool shouldMarkFavorite = likedValue is bool
-        ? likedValue
-        : model.liked == true;
-    return shouldMarkFavorite ? model.copyWith(isFavorite: true) : model;
-  }
   Map<String, dynamic> toJson() => _$PropertyToJson(this);
 
   // Safe converters to handle non-list values gracefully

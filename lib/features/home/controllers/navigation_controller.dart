@@ -9,7 +9,7 @@ import 'package:stays_app/app/utils/helpers/haptic_helper.dart';
 class NavigationController extends GetxController {
   // Default to the Home/Explore tab (index 0)
   final RxInt currentIndex = 0.obs;
-  final PageController pageController = PageController(initialPage: 0);
+  final PageController pageController = PageController();
 
   int? _pendingTabIndex;
 
@@ -117,13 +117,12 @@ class NavigationController extends GetxController {
 }
 
 class NavigationTab {
-  final IconData icon;
-  final String labelKey;
-  final String route;
-
   NavigationTab({
     required this.icon,
     required this.labelKey,
     required this.route,
   });
+  final IconData icon;
+  final String labelKey;
+  final String route;
 }

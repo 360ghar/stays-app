@@ -163,7 +163,6 @@ class ProfileView extends GetView<ProfileController> {
             userEmail: controller.email.value,
             isLoading: controller.isLoading.value,
             avatarUrl: controller.avatarUrl.value,
-            dense: false,
           ),
         ),
       ),
@@ -446,7 +445,9 @@ class _MenuTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withValues(alpha: 0.3),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: colorScheme.onSurface),

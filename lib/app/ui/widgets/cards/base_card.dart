@@ -13,8 +13,8 @@ import '../../theme/theme_extensions.dart';
 /// - Inkwell splash effects
 abstract class BaseCard extends StatelessWidget {
   const BaseCard({
-    super.key,
     required this.onTap,
+    super.key,
     this.borderRadius,
     this.elevation,
     this.padding,
@@ -103,10 +103,10 @@ abstract class BaseCard extends StatelessWidget {
 /// Base image card widget for cards with hero images at the top.
 abstract class BaseImageCard extends StatelessWidget {
   const BaseImageCard({
-    super.key,
     required this.onTap,
     required this.imageUrl,
     required this.heroTag,
+    super.key,
     this.borderRadius,
     this.onFavoriteToggle,
     this.isFavorite = false,

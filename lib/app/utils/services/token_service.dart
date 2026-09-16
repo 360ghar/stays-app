@@ -68,8 +68,7 @@ class TokenService extends GetxService {
   Timer? _refreshTimer;
   final RxBool isAuthenticated = false.obs;
   final Completer<void> _ready = Completer<void>();
-  bool _isRefreshing = false;
-  bool _supabaseSessionAvailable = false;
+  Future<bool>? _inFlightRefresh;
   bool _initializationComplete = false;
   Object? _initializationError;
 
@@ -130,22 +129,14 @@ class TokenService extends GetxService {
   }
 
   String? get accessToken {
-    // Safe access even before initialization
-    if (!_initializationComplete) {
-      // Try Supabase session as fallback before init completes
-      try {
-        final supabaseToken =
-            Supabase.instance.client.auth.currentSession?.accessToken;
-        if (supabaseToken != null) return supabaseToken;
-      } catch (_) {
-        // Supabase not ready yet
-      }
-      return null;
-    }
-    if (_supabaseSessionAvailable) {
+    // Safe access even before initialization: prefer the live Supabase
+    // session, falling back to the locally stored token.
+    try {
       final supabaseToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
       if (supabaseToken != null) return supabaseToken;
+    } catch (_) {
+      // Supabase not ready yet
     }
     return _currentToken?.accessToken;
   }
@@ -166,12 +157,6 @@ class TokenService extends GetxService {
     if (!_initializationComplete) {
       return false;
     }
-    if (_supabaseSessionAvailable) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null && session.isExpired == false) {
-        return true;
-      }
-    }
     return _currentToken != null && !_currentToken!.isExpired;
   }
 
@@ -187,12 +172,6 @@ class TokenService extends GetxService {
         // Supabase not ready yet
       }
       return false;
-    }
-    if (_supabaseSessionAvailable) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session != null && session.isExpired == true) {
-        return true;
-      }
     }
     return _currentToken?.shouldRefresh ?? false;
   }
@@ -215,9 +194,17 @@ class TokenService extends GetxService {
     if (!_ready.isCompleted) {
       await ready;
     }
+    await _clearTokensInternal();
+  }
+
+  /// Storage + state reset without waiting on [ready].
+  ///
+  /// [_loadStoredTokens] runs inside [_initialize] before [_ready] completes,
+  /// so it must use this directly: going through [clearTokens] would await
+  /// [ready] and deadlock initialization (and hang callers for 30s in tests).
+  Future<void> _clearTokensInternal() async {
     try {
       _currentToken = null;
-      _supabaseSessionAvailable = false;
       await _storageService?.clearTokens();
       isAuthenticated.value = false;
       _stopRefreshTimer();
@@ -275,7 +262,6 @@ class TokenService extends GetxService {
         _storageService = Get.find<StorageService>();
       }
 
-      _checkSupabaseSession();
       await _loadStoredTokens();
 
       if (isAuthenticated.value) {
@@ -294,28 +280,20 @@ class TokenService extends GetxService {
     }
   }
 
-  void _checkSupabaseSession() {
-    try {
-      final session = Supabase.instance.client.auth.currentSession;
-      _supabaseSessionAvailable = session != null;
-      if (_supabaseSessionAvailable) {
-        AppLogger.info('Supabase session detected');
-      }
-    } catch (e) {
-      AppLogger.warning('Failed to check Supabase session: $e');
-      _supabaseSessionAvailable = false;
-    }
-  }
-
   Future<void> _loadStoredTokens() async {
     try {
-      if (_supabaseSessionAvailable) {
-        final session = Supabase.instance.client.auth.currentSession;
-        if (session != null && session.isExpired == false) {
-          isAuthenticated.value = true;
-          AppLogger.info('Using Supabase session');
-          return;
-        }
+      // Prefer the live Supabase session when available. Guarded: in tests or
+      // before Supabase initialization the assertion must not break startup.
+      Session? supabaseSession;
+      try {
+        supabaseSession = Supabase.instance.client.auth.currentSession;
+      } catch (_) {
+        // Supabase not ready yet — fall through to stored tokens.
+      }
+      if (supabaseSession != null && supabaseSession.isExpired == false) {
+        isAuthenticated.value = true;
+        AppLogger.info('Using Supabase session');
+        return;
       }
 
       final accessToken = await _storageService!.getAccessToken();
@@ -338,12 +316,12 @@ class TokenService extends GetxService {
           AppLogger.info('Tokens loaded successfully from storage');
         } else {
           AppLogger.warning('Invalid or expired token in storage');
-          await clearTokens();
+          await _clearTokensInternal();
         }
       }
     } catch (e) {
       AppLogger.error('Failed to load stored tokens', e);
-      await clearTokens();
+      await _clearTokensInternal();
     }
   }
 
@@ -366,26 +344,30 @@ class TokenService extends GetxService {
       final response = await Supabase.instance.client.auth.refreshSession();
 
       if (response.session != null) {
-        _supabaseSessionAvailable = true;
         AppLogger.info('Supabase session refreshed successfully');
         return true;
       }
       return false;
     } catch (e) {
       AppLogger.error('Supabase session refresh failed', e);
-      _supabaseSessionAvailable = false;
       return false;
     }
   }
 
-  Future<bool> _refreshTokens() async {
-    if (_isRefreshing) {
-      AppLogger.info('Token refresh already in progress, waiting...');
-      await Future.delayed(const Duration(seconds: 1));
-      return hasValidToken;
-    }
+  /// Refreshes the Supabase session, deduplicating concurrent callers so a
+  /// burst of refresh requests results in a single network round-trip.
+  Future<bool> _refreshTokens() {
+    final inFlight = _inFlightRefresh;
+    if (inFlight != null) return inFlight;
 
-    _isRefreshing = true;
+    final future = _doRefreshTokens();
+    _inFlightRefresh = future;
+    return future.whenComplete(() {
+      _inFlightRefresh = null;
+    });
+  }
+
+  Future<bool> _doRefreshTokens() async {
     try {
       final success = await _refreshWithSupabase();
       if (success) return true;
@@ -396,8 +378,6 @@ class TokenService extends GetxService {
       AppLogger.error('Token refresh failed', e);
       await clearTokens();
       return false;
-    } finally {
-      _isRefreshing = false;
     }
   }
 

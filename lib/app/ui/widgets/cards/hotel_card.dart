@@ -4,6 +4,17 @@ import 'package:stays_app/app/data/models/hotel_model.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HotelCard extends StatelessWidget {
+  const HotelCard({
+    required this.hotel,
+    required this.onTap,
+    super.key,
+    this.onFavoriteToggle,
+    this.width = 280,
+    this.height = 200,
+    this.showPrice = true,
+    this.showRating = true,
+    this.heroPrefix,
+  });
   final Hotel hotel;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
@@ -12,18 +23,6 @@ class HotelCard extends StatelessWidget {
   final bool showPrice;
   final bool showRating;
   final String? heroPrefix;
-
-  const HotelCard({
-    super.key,
-    required this.hotel,
-    required this.onTap,
-    this.onFavoriteToggle,
-    this.width = 280,
-    this.height = 200,
-    this.showPrice = true,
-    this.showRating = true,
-    this.heroPrefix,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -191,10 +190,9 @@ class HotelCard extends StatelessWidget {
 }
 
 class HotelCardShimmer extends StatelessWidget {
+  const HotelCardShimmer({super.key, this.width = 280, this.height = 200});
   final double width;
   final double height;
-
-  const HotelCardShimmer({super.key, this.width = 280, this.height = 200});
 
   @override
   Widget build(BuildContext context) {

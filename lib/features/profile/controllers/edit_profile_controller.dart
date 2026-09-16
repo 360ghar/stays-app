@@ -29,9 +29,7 @@ class EditProfileController extends BaseController {
 
   final formKey = GlobalKey<FormState>();
 
-  // Listeners for profile changes
-  late final Worker _profileChangeWorker;
-  late final Worker _authChangeWorker;
+  // Listeners for profile changes (managed by BaseController via trackWorker)
 
   late final TextEditingController firstNameController;
   late final TextEditingController lastNameController;
@@ -63,7 +61,7 @@ class EditProfileController extends BaseController {
     _initializeFields();
 
     // Listen for profile changes and update form fields accordingly
-    _profileChangeWorker = trackWorker(
+    trackWorker(
       ever(_profileController.user, (UserModel? user) {
         if (user != null) {
           _updateFieldsFromUser(user);
@@ -71,7 +69,7 @@ class EditProfileController extends BaseController {
       }),
     );
 
-    _authChangeWorker = trackWorker(
+    trackWorker(
       ever(_authController.currentUser, (UserModel? user) {
         if (user != null) {
           _updateFieldsFromUser(user);

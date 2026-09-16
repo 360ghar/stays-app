@@ -1,11 +1,8 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../utils/logger/app_logger.dart';
 
-/// Service responsible for managing the "Remember Me" functionality.
-/// Handles persisting and restoring user sessions across app launches.
 /// Auth methods recognized by the backend `/auth/last-method` contract.
 class AuthMethods {
   static const String google = 'google';
@@ -27,17 +24,26 @@ class AuthMethods {
   static bool isValid(String? method) => method != null && all.contains(method);
 }
 
+/// Manages the "Remember Me" preference and last-used auth method memory.
+///
+/// SECURITY CONTRACT: this service NEVER stores tokens. Session tokens live
+/// exclusively in TokenService/StorageService (flutter_secure_storage);
+/// GetStorage here holds only a boolean flag and masked identifiers. The
+/// legacy plaintext-token keys are purged, never written.
 class RememberMeService extends GetxService {
   static const String _boxName = 'auth_preferences';
   static const String _rememberMeFlagKey = 'remember_me';
-  static const String _accessTokenKey = 'remembered_access_token';
-  static const String _refreshTokenKey = 'remembered_refresh_token';
+  // Legacy keys from older builds (plaintext tokens). Kept for one-time
+  // cleanup/migration only — never written to.
+  static const String _legacyAccessTokenKey = 'remembered_access_token';
+  static const String _legacyRefreshTokenKey = 'remembered_refresh_token';
   // Last-used auth method memory (req: remember & pre-select last method).
   static const String _lastMethodKey = 'last_auth_method';
   static const String _lastIdentifierMaskedKey = 'last_identifier_masked';
 
   late final GetStorage _storage;
   final RxBool isEnabled = false.obs;
+  bool _initialized = false;
 
   /// Last-used auth method (one of [AuthMethods]); null if none recorded.
   final RxnString lastMethod = RxnString();
@@ -45,8 +51,10 @@ class RememberMeService extends GetxService {
   /// Masked last identifier (e.g. `j***@gmail.com`, `+91 98****3210`).
   final RxnString lastIdentifierMasked = RxnString();
 
-  /// Initialize the service
+  /// Initialize the service (idempotent — safe to call from multiple
+  /// controllers during startup).
   Future<RememberMeService> init() async {
+    if (_initialized) return this;
     await GetStorage.init(_boxName);
     _storage = GetStorage(_boxName);
     isEnabled.value = _storage.read<bool>(_rememberMeFlagKey) ?? false;
@@ -54,6 +62,9 @@ class RememberMeService extends GetxService {
     lastIdentifierMasked.value = _storage.read<String>(
       _lastIdentifierMaskedKey,
     );
+    _initialized = true;
+    // One-time cleanup of legacy plaintext tokens left by older builds.
+    await purgeLegacyPlaintextTokens();
     AppLogger.info(
       'RememberMeService initialized. Enabled: ${isEnabled.value}, '
       'lastMethod: ${lastMethod.value}',
@@ -64,71 +75,27 @@ class RememberMeService extends GetxService {
   /// Check if remember-me is enabled
   bool get enabled => isEnabled.value;
 
-  /// Check if we have stored credentials
-  bool get hasStoredCredentials {
-    final accessToken = _storage.read<String>(_accessTokenKey);
-    final refreshToken = _storage.read<String>(_refreshTokenKey);
-    return accessToken != null &&
-        accessToken.isNotEmpty &&
-        refreshToken != null &&
-        refreshToken.isNotEmpty;
+  /// Removes legacy plaintext token keys from older builds (migration purge).
+  Future<void> purgeLegacyPlaintextTokens() async {
+    await _storage.remove(_legacyAccessTokenKey);
+    await _storage.remove(_legacyRefreshTokenKey);
   }
-
-  /// Get stored access token
-  String? get storedAccessToken => _storage.read<String>(_accessTokenKey);
-
-  /// Get stored refresh token
-  String? get storedRefreshToken => _storage.read<String>(_refreshTokenKey);
 
   /// Enable or disable remember-me
   Future<void> setEnabled({required bool value}) async {
     isEnabled.value = value;
     await _storage.write(_rememberMeFlagKey, value);
-    if (!value) {
-      await clearStoredSession();
-    }
   }
 
-  /// Persist the current Supabase session
-  Future<void> persistSession({Session? session}) async {
-    final activeSession =
-        session ?? Supabase.instance.client.auth.currentSession;
-    if (activeSession == null) {
-      AppLogger.warning('Cannot persist session: no active session');
-      return;
-    }
-
-    await _storage.write(_rememberMeFlagKey, true);
-    await _storage.write(_accessTokenKey, activeSession.accessToken);
-
-    final refreshToken = activeSession.refreshToken;
-    if (refreshToken != null && refreshToken.isNotEmpty) {
-      await _storage.write(_refreshTokenKey, refreshToken);
-    }
-
-    AppLogger.info('Session persisted for remember-me');
-  }
-
-  /// Clear stored session credentials
-  Future<void> clearStoredSession() async {
-    await _storage.remove(_accessTokenKey);
-    await _storage.remove(_refreshTokenKey);
-    AppLogger.info('Stored session cleared');
-  }
-
-  /// Sync remember-me state after login
+  /// Sync remember-me state after login (flag only — tokens are handled by
+  /// TokenService).
   Future<void> syncAfterLogin() async {
-    if (isEnabled.value) {
-      await persistSession();
-    } else {
-      await _storage.write(_rememberMeFlagKey, false);
-      await clearStoredSession();
-    }
+    await _storage.write(_rememberMeFlagKey, isEnabled.value);
   }
 
-  /// Handle sign-out by clearing stored session
+  /// Handle sign-out by clearing the preference flag.
   Future<void> onSignOut() async {
-    await clearStoredSession();
+    await setEnabled(value: false);
   }
 
   // ---------------------------------------------------------------------------

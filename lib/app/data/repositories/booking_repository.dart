@@ -5,14 +5,14 @@ import '../models/booking_pricing_model.dart';
 import '../providers/bookings_provider.dart';
 
 class BookingRepository {
-  final BookingsProvider _provider;
   BookingRepository({required BookingsProvider provider})
     : _provider = provider;
 
+  final BookingsProvider _provider;
+
   Future<Booking> createBooking(Map<String, dynamic> payload) async {
     try {
-      final data = await _provider.createBooking(payload);
-      return Booking.fromJson(_extractBookingPayload(data));
+      return await _provider.createBooking(payload);
     } on ApiException catch (error, stackTrace) {
       AppLogger.error('createBooking failed', error, stackTrace);
       rethrow;
@@ -34,7 +34,7 @@ class BookingRepository {
     required String checkInIso,
     required String checkOutIso,
     required int guests,
-  }) async {
+  }) {
     return _provider.checkAvailability(
       propertyId: propertyId,
       checkInIso: checkInIso,
@@ -50,21 +50,15 @@ class BookingRepository {
     required int guests,
   }) async {
     try {
-      final response = await _provider.calculatePricing(
+      final pricing = await _provider.calculatePricing(
         propertyId: propertyId,
         checkInIso: checkInIso,
         checkOutIso: checkOutIso,
         guests: guests,
       );
-      final pricingMap = _extractPricingMap(response);
-      if (pricingMap == null || pricingMap.isEmpty) {
-        AppLogger.warning(
-          'calculatePricing returned an empty payload',
-          response,
-        );
-        return null;
-      }
-      return BookingPricingModel.fromMap(pricingMap);
+      // A parsed-but-empty pricing payload (all amounts 0.0, no nights) is
+      // treated as "no pricing available" by callers via hasValidAmounts.
+      return pricing;
     } on ApiException catch (error, stackTrace) {
       AppLogger.error('calculatePricing failed', error, stackTrace);
       rethrow;
@@ -81,23 +75,27 @@ class BookingRepository {
     }
   }
 
-  Future<List<Booking>> fetchBookings({String? cursor, int limit = 20}) async {
-    final response = await _provider.listBookings(cursor: cursor, limit: limit);
-    final dynamic candidates = response['items'] ?? response['data'];
-    final List<dynamic> rawList = candidates is List ? candidates : <dynamic>[];
-    return rawList
-        .whereType<Map>()
-        .map((item) => Booking.fromJson(Map<String, dynamic>.from(item)))
-        .toList();
-  }
-
-  Future<Map<String, dynamic>> listBookings({String? cursor, int limit = 20}) {
+  Future<List<Booking>> fetchBookings({String? cursor, int limit = 20}) {
     return _provider.listBookings(cursor: cursor, limit: limit);
   }
 
   Future<Booking> getBooking(int id) async {
-    final data = await _provider.getBooking(id);
-    return Booking.fromJson(_extractBookingPayload(data));
+    try {
+      return await _provider.getBooking(id);
+    } on ApiException catch (error, stackTrace) {
+      AppLogger.error('getBooking failed', error, stackTrace);
+      rethrow;
+    } catch (error, stackTrace) {
+      AppLogger.error(
+        'getBooking encountered an unexpected error',
+        error,
+        stackTrace,
+      );
+      throw ApiException(
+        message: 'Unable to load booking details. Please try again later.',
+        statusCode: 500,
+      );
+    }
   }
 
   Future<void> cancelBooking({
@@ -120,30 +118,5 @@ class BookingRepository {
         statusCode: 500,
       );
     }
-  }
-
-  Map<String, dynamic> _extractBookingPayload(Map<String, dynamic> source) {
-    if (source['booking'] is Map<String, dynamic>) {
-      return Map<String, dynamic>.from(source['booking'] as Map);
-    }
-    return Map<String, dynamic>.from(source);
-  }
-
-  Map<String, dynamic>? _extractPricingMap(Map<String, dynamic> source) {
-    final candidates = <dynamic>[
-      source['pricing'],
-      source['data'],
-      source['result'],
-      source['breakdown'],
-    ];
-    for (final candidate in candidates) {
-      if (candidate is Map) {
-        final mapped = candidate.map<String, dynamic>(
-          (key, value) => MapEntry(key.toString(), value),
-        );
-        return mapped;
-      }
-    }
-    return source.isNotEmpty ? source : null;
   }
 }

@@ -1,5 +1,5 @@
 /// Explore feature barrel export
-library explore;
+library;
 
 // Bindings
 export 'bindings/explore_binding.dart';

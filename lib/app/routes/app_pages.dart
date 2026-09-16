@@ -55,7 +55,6 @@ import 'package:stays_app/features/update/update.dart';
 
 // Core imports - Middleware and Routes
 import '../middlewares/auth_middleware.dart';
-import '../middlewares/initial_middleware.dart';
 import 'app_routes.dart';
 
 // Feature imports - Profile
@@ -80,7 +79,6 @@ class AppPages {
       name: Routes.initial,
       page: () => const SplashView(),
       binding: SplashBinding(),
-      middlewares: [InitialMiddleware()],
     ),
     GetPage(
       name: Routes.forceUpdate,

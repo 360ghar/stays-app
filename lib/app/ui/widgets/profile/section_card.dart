@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 
 class SectionCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? margin;
-  final EdgeInsetsGeometry? padding;
-
   const SectionCard({
-    super.key,
     required this.child,
+    super.key,
     this.margin,
     this.padding,
   });
+  final Widget child;
+  final EdgeInsetsGeometry? margin;
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +22,6 @@ class SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.outline.withValues(alpha: 0.12),
-          width: 1,
         ),
         boxShadow: [
           BoxShadow(

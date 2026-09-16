@@ -2,19 +2,13 @@ import '../models/payment_model.dart';
 import '../providers/payment_provider.dart';
 
 class PaymentRepository {
-  final PaymentProvider _provider;
   PaymentRepository({required PaymentProvider provider}) : _provider = provider;
 
-  /// Legacy intent endpoint (kept for compatibility).
-  Future<Map<String, dynamic>> createIntent({
-    required String bookingId,
-    required num amount,
-  }) => _provider.createIntent(bookingId, amount);
+  final PaymentProvider _provider;
 
   /// Create a Razorpay order for a booking.
-  Future<RazorpayOrderModel> createRazorpayOrder(int bookingId) async {
-    final data = await _provider.createRazorpayOrder(bookingId);
-    return RazorpayOrderModel.fromMap(data);
+  Future<RazorpayOrderModel> createRazorpayOrder(int bookingId) {
+    return _provider.createRazorpayOrder(bookingId);
   }
 
   /// Verify a Razorpay payment signature.
@@ -42,24 +36,21 @@ class PaymentRepository {
   }
 
   /// List the current user's saved payment methods.
-  Future<List<PaymentMethodModel>> listMethods() async {
-    final list = await _provider.listMethods();
-    return list.map(PaymentMethodModel.fromMap).toList();
+  Future<List<PaymentMethodModel>> listMethods() {
+    return _provider.listMethods();
   }
 
   /// Save a new payment method.
-  Future<PaymentMethodModel> addMethod(Map<String, dynamic> payload) async {
-    final data = await _provider.addMethod(payload);
-    return PaymentMethodModel.fromMap(data);
+  Future<PaymentMethodModel> addMethod(Map<String, dynamic> payload) {
+    return _provider.addMethod(payload);
   }
 
   /// Update a saved payment method.
   Future<PaymentMethodModel> updateMethod(
     int methodId,
     Map<String, dynamic> payload,
-  ) async {
-    final data = await _provider.updateMethod(methodId, payload);
-    return PaymentMethodModel.fromMap(data);
+  ) {
+    return _provider.updateMethod(methodId, payload);
   }
 
   /// Delete a saved payment method.

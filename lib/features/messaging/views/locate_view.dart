@@ -177,7 +177,7 @@ class LocateView extends GetView<HotelsMapController> {
                           ),
                         ),
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
                         'locate.loading_hotels'.tr,
                         style: textStyles.bodyMedium?.copyWith(
@@ -459,16 +459,15 @@ class _HotelMarkerOverlay extends StatelessWidget {
 }
 
 class LocatePropertyCard extends StatelessWidget {
-  final HotelModel hotel;
-  final VoidCallback onTap;
-  final bool isSelected;
-
   const LocatePropertyCard({
-    super.key,
     required this.hotel,
     required this.onTap,
     required this.isSelected,
+    super.key,
   });
+  final HotelModel hotel;
+  final VoidCallback onTap;
+  final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -534,7 +533,7 @@ class LocatePropertyCard extends StatelessWidget {
     final bedrooms = property.bedrooms;
     final hasBedrooms = bedrooms != null && bedrooms > 0;
     final distanceKm = hotel.distanceKm;
-    Widget fallback = _buildPlaceholder(colors);
+    final Widget fallback = _buildPlaceholder(colors);
     Widget infoChip(String text, {IconData? icon}) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -601,7 +600,7 @@ class LocatePropertyCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.92),
+                color: colorScheme.primaryContainer.withValues(alpha: 0.92),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -649,7 +648,7 @@ class LocatePropertyCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (hasBedrooms)
-                    infoChip('${bedrooms!} BHK', icon: Icons.king_bed_rounded),
+                    infoChip('$bedrooms BHK', icon: Icons.king_bed_rounded),
                   if (hasBedrooms && distanceKm > 0) const SizedBox(height: 6),
                   if (distanceKm > 0)
                     infoChip('${distanceKm.toStringAsFixed(1)} km'),
@@ -678,13 +677,13 @@ class LocatePropertyCard extends StatelessWidget {
     final baseTitleStyle = textTheme.titleSmall ?? textTheme.titleMedium;
     final titleStyle = baseTitleStyle?.copyWith(
       fontWeight: FontWeight.w700,
-      fontSize: _shrinkFont(baseTitleStyle?.fontSize, 1),
+      fontSize: _shrinkFont(baseTitleStyle.fontSize),
       height: 1.05,
     );
     final priceStyle = textTheme.titleSmall?.copyWith(
       color: primary,
       fontWeight: FontWeight.w700,
-      fontSize: _shrinkFont(textTheme.titleSmall?.fontSize, 1),
+      fontSize: _shrinkFont(textTheme.titleSmall?.fontSize),
     );
     final addressStyle = textTheme.bodySmall?.copyWith(
       color: colors.onSurface.withValues(alpha: 0.6),
@@ -715,9 +714,9 @@ class LocatePropertyCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: primary.withOpacity(0.08),
+                  color: primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: primary.withOpacity(0.5)),
+                  border: Border.all(color: primary.withValues(alpha: 0.5)),
                 ),
                 child: Text(priceText, style: priceStyle),
               ),
@@ -792,12 +791,11 @@ class _LocationChip extends StatelessWidget {
               ),
             ],
             border: Border.all(
-              color: colorScheme.outlineVariant.withOpacity(0.55),
+              color: colorScheme.outlineVariant.withValues(alpha: 0.55),
               width: 1.1,
             ),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.search_rounded, color: colorScheme.primary, size: 18),
               const SizedBox(width: 10),
@@ -809,7 +807,7 @@ class _LocationChip extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.1,
-                    color: colorScheme.onSurface.withOpacity(0.8),
+                    color: colorScheme.onSurface.withValues(alpha: 0.8),
                   ),
                 ),
               ),
@@ -823,7 +821,7 @@ class _LocationChip extends StatelessWidget {
               else
                 Icon(
                   Icons.expand_more_rounded,
-                  color: colorScheme.onSurface.withOpacity(0.45),
+                  color: colorScheme.onSurface.withValues(alpha: 0.45),
                   size: 18,
                 ),
             ],
@@ -858,7 +856,7 @@ class _MapActionButton extends StatelessWidget {
     return Material(
       shape: const CircleBorder(),
       elevation: 3,
-      shadowColor: Colors.black.withOpacity(0.12),
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       color: background,
       child: InkWell(
         onTap: onTap,
@@ -892,7 +890,7 @@ class _MapControlButton extends StatelessWidget {
       color: colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
       elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.12),
+      shadowColor: Colors.black.withValues(alpha: 0.12),
       child: InkWell(
         onTap: isLoading ? null : onTap,
         borderRadius: BorderRadius.circular(13),
@@ -926,9 +924,9 @@ class _FilterTagChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: colorScheme.primary.withOpacity(0.12),
+        color: colorScheme.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colorScheme.primary.withOpacity(0.4)),
+        border: Border.all(color: colorScheme.primary.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
@@ -955,13 +953,13 @@ class _LocateSearchSheet extends StatelessWidget {
       onTap: () => FocusScope.of(context).unfocus(),
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
-        child: Container(
+        child: DecoratedBox(
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -977,7 +975,7 @@ class _LocateSearchSheet extends StatelessWidget {
                   width: 48,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: colorScheme.onSurface.withOpacity(0.2),
+                    color: colorScheme.onSurface.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1025,7 +1023,9 @@ class _LocateSearchSheet extends StatelessWidget {
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                          color: colorScheme.outlineVariant.withOpacity(0.6),
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.6,
+                          ),
                           width: 1.2,
                         ),
                       ),
@@ -1039,7 +1039,9 @@ class _LocateSearchSheet extends StatelessWidget {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide(
-                          color: colorScheme.outlineVariant.withOpacity(0.6),
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ),
@@ -1070,7 +1072,7 @@ class _LocateSearchSheet extends StatelessWidget {
                       child: ListView.separated(
                         shrinkWrap: true,
                         itemCount: items.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, _) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final prediction = items[index];
                           return ListTile(
@@ -1111,7 +1113,7 @@ class _WishlistOverlayButtonState extends State<_WishlistOverlayButton> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withOpacity(0.35),
+      color: Colors.black.withValues(alpha: 0.35),
       shape: const CircleBorder(),
       child: InkWell(
         onTap: () => setState(() => _saved = !_saved),

@@ -174,7 +174,7 @@ class _AvatarPreview extends StatelessWidget {
             width: 120,
             height: 120,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _initialsFallback(context),
+            errorBuilder: (_, _, _) => _initialsFallback(context),
           ),
         );
       } else {

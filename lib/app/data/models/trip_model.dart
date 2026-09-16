@@ -1,15 +1,6 @@
 import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class TripModel {
-  final String id;
-  final String propertyName;
-  final DateTime checkIn;
-  final DateTime checkOut;
-  final String status;
-  final String? propertyImage;
-  final double? totalCost;
-  final String? hostName;
-
   TripModel({
     required this.id,
     required this.propertyName,
@@ -23,16 +14,24 @@ class TripModel {
 
   factory TripModel.fromMap(Map<String, dynamic> map) => TripModel(
     id: map['id']?.toString() ?? '',
-    propertyName: map['propertyName'] as String? ?? '',
+    propertyName: JsonHelpers.getStringOrDefault(map['propertyName']),
     checkIn: JsonHelpers.getDateTime(map['checkIn']) ?? DateTime.now(),
     checkOut:
         JsonHelpers.getDateTime(map['checkOut']) ??
         (JsonHelpers.getDateTime(map['checkIn']) ?? DateTime.now()),
-    status: map['status'] as String? ?? 'pending',
-    propertyImage: map['propertyImage'] as String?,
-    totalCost: (map['totalCost'] as num?)?.toDouble(),
-    hostName: map['hostName'] as String?,
+    status: JsonHelpers.getStringOrDefault(map['status'], 'pending'),
+    propertyImage: JsonHelpers.getString(map['propertyImage']),
+    totalCost: JsonHelpers.getDouble(map['totalCost']),
+    hostName: JsonHelpers.getString(map['hostName']),
   );
+  final String id;
+  final String propertyName;
+  final DateTime checkIn;
+  final DateTime checkOut;
+  final String status;
+  final String? propertyImage;
+  final double? totalCost;
+  final String? hostName;
 
   Map<String, dynamic> toMap() => {
     'id': id,

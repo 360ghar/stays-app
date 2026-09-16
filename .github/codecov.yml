@@ -1,0 +1,25 @@
+# Codecov configuration for stays-app.
+#
+# Coverage gates are currently INFORMATIONAL (never fail CI). The repository is
+# migrating toward a hard coverage gate: once overall coverage exceeds 20%,
+# flip `informational` to `false` on both statuses below to make the project
+# and patch checks block merges (threshold still applies as a 1% tolerance).
+coverage:
+  status:
+    project:
+      default:
+        enabled: true
+        informational: true
+        threshold: 1%
+    patch:
+      default:
+        enabled: true
+        informational: true
+
+comment:
+  layout: "header, diff, flags, footer"
+  hide_complexity: true
+
+flag_management:
+  default_rules:
+    carryforward: true

@@ -1,5 +1,5 @@
 /// Inquiry feature barrel export
-library inquiry;
+library;
 
 // Bindings
 export 'bindings/inquiry_binding.dart';

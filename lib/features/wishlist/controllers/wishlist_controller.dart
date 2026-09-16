@@ -17,7 +17,7 @@ class WishlistController extends BaseController {
 
   final RxList<Property> wishlistItems = <Property>[].obs;
   final RxBool isRefreshing = false.obs;
-  final RxnString nextCursor = RxnString(null);
+  final RxnString nextCursor = RxnString();
   final RxBool hasMore = false.obs;
   final int pageSize = 20;
   // Local count of currently-loaded wishlist items. Not read from the backend;
@@ -103,11 +103,7 @@ class WishlistController extends BaseController {
     errorMessage.value = '';
     try {
       final UnifiedPropertyResponse response = await _wishlistRepository!
-          .listFavorites(
-            cursor: null,
-            limit: pageSize,
-            filters: _buildFilterQuery(),
-          );
+          .listFavorites(limit: pageSize, filters: _buildFilterQuery());
       nextCursor.value = response.nextCursor;
       hasMore.value = response.hasMore;
       final List<Property> fetchedProperties = List<Property>.from(

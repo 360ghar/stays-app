@@ -1,5 +1,5 @@
 /// Profile feature barrel export
-library profile;
+library;
 
 // Bindings
 export 'bindings/profile_binding.dart';

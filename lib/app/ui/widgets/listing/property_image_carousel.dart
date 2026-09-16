@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 
 /// Reusable property image carousel widget
 class PropertyImageCarousel extends StatelessWidget {
+  const PropertyImageCarousel({
+    required this.images,
+    required this.heroPrefix,
+    super.key,
+    this.onPageChanged,
+    this.height = 300,
+    this.enableHero = true,
+  });
   final List<String> images;
   final String heroPrefix;
   final Function(int)? onPageChanged;
   final double height;
   final bool enableHero;
-
-  const PropertyImageCarousel({
-    super.key,
-    required this.images,
-    required this.heroPrefix,
-    this.onPageChanged,
-    this.height = 300,
-    this.enableHero = true,
-  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 
 class ErrorDisplay extends StatelessWidget {
-  final String message;
-  final String? title;
-  final VoidCallback? onRetry;
-  final String? retryText;
-  final Widget? icon;
-  final bool showRetry;
-
   const ErrorDisplay({
-    super.key,
     required this.message,
+    super.key,
     this.title,
     this.onRetry,
     this.retryText,
     this.icon,
     this.showRetry = true,
   });
+  final String message;
+  final String? title;
+  final VoidCallback? onRetry;
+  final String? retryText;
+  final Widget? icon;
+  final bool showRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -88,9 +87,8 @@ class ErrorDisplay extends StatelessWidget {
 }
 
 class NetworkErrorDisplay extends StatelessWidget {
-  final VoidCallback? onRetry;
-
   const NetworkErrorDisplay({super.key, this.onRetry});
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +111,9 @@ class NetworkErrorDisplay extends StatelessWidget {
 }
 
 class ServerErrorDisplay extends StatelessWidget {
+  const ServerErrorDisplay({super.key, this.errorCode, this.onRetry});
   final String? errorCode;
   final VoidCallback? onRetry;
-
-  const ServerErrorDisplay({super.key, this.errorCode, this.onRetry});
 
   @override
   Widget build(BuildContext context) {

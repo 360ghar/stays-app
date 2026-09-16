@@ -19,7 +19,7 @@ class TripsView extends GetView<TripsController> {
     final colors = context.colors;
     return Scaffold(
       backgroundColor: colors.surface,
-      appBar: LocationFilterAppBar(scope: FilterScope.booking),
+      appBar: const LocationFilterAppBar(scope: FilterScope.booking),
       body: Obx(() {
         if (controller.isLoading.value && controller.pastBookings.isEmpty) {
           return const Center(child: CircularProgressIndicator());
@@ -378,7 +378,6 @@ class TripsView extends GetView<TripsController> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Align(
-        alignment: Alignment.center,
         child: FractionallySizedBox(
           widthFactor: widthFactor,
           child: ConstrainedBox(
@@ -451,8 +450,6 @@ class TripsView extends GetView<TripsController> {
                                       ),
                                       const SizedBox(height: 4),
                                       Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
                                         children: [
                                           Icon(
                                             Icons.location_on_outlined,

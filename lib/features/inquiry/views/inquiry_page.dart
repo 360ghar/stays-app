@@ -238,7 +238,7 @@ class InquiriesPage extends StatelessWidget {
 
   void _showFilterSheet(BuildContext context) {
     final theme = Theme.of(context);
-    final options = const [
+    const options = [
       _StatusOption(null, 'All inquiries'),
       _StatusOption('completed', 'Completed inquiries'),
       _StatusOption('upcoming', 'Upcoming inquiries'),
@@ -297,6 +297,18 @@ class InquiriesPage extends StatelessWidget {
 }
 
 class _ListItem {
+  factory _ListItem.year(int year) =>
+      _ListItem._(_ListItemType.yearHeader, year: year);
+  factory _ListItem.booking(
+    Map<String, dynamic> booking, {
+    int animationIndex = 0,
+  }) => _ListItem._(
+    _ListItemType.booking,
+    booking: booking,
+    animationIndex: animationIndex,
+  );
+  factory _ListItem.spacing(double value) =>
+      _ListItem._(_ListItemType.spacing, spacing: value);
   const _ListItem._(
     this.type, {
     this.booking,
@@ -310,18 +322,6 @@ class _ListItem {
   final int? year;
   final double? spacing;
   final int animationIndex;
-  factory _ListItem.year(int year) =>
-      _ListItem._(_ListItemType.yearHeader, year: year);
-  factory _ListItem.booking(
-    Map<String, dynamic> booking, {
-    int animationIndex = 0,
-  }) => _ListItem._(
-    _ListItemType.booking,
-    booking: booking,
-    animationIndex: animationIndex,
-  );
-  factory _ListItem.spacing(double value) =>
-      _ListItem._(_ListItemType.spacing, spacing: value);
 }
 
 enum _ListItemType { yearHeader, booking, spacing }
@@ -347,7 +347,7 @@ class _BookingCard extends StatelessWidget {
     final dateRange = _formatDateRange(booking);
     final guestsLabel = _formatGuests(booking);
     Widget buildImagePlaceholder() => Container(
-      color: colors.surfaceVariant,
+      color: colors.surfaceContainerHighest,
       alignment: Alignment.center,
       child: Icon(
         Icons.photo,
@@ -365,7 +365,7 @@ class _BookingCard extends StatelessWidget {
       );
     }
 
-    return Container(
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
@@ -598,7 +598,7 @@ class _DetailChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceVariant.withValues(alpha: 0.4),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

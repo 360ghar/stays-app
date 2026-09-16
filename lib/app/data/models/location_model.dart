@@ -1,9 +1,6 @@
-class LocationModel {
-  final String city;
-  final String country;
-  final double lat;
-  final double lng;
+import '../../utils/helpers/json_helpers.dart';
 
+class LocationModel {
   const LocationModel({
     required this.city,
     required this.country,
@@ -12,11 +9,15 @@ class LocationModel {
   });
 
   factory LocationModel.fromMap(Map<String, dynamic> map) => LocationModel(
-    city: map['city'] as String? ?? '',
-    country: map['country'] as String? ?? '',
-    lat: (map['lat'] as num?)?.toDouble() ?? 0,
-    lng: (map['lng'] as num?)?.toDouble() ?? 0,
+    city: JsonHelpers.getStringOrDefault(map['city']),
+    country: JsonHelpers.getStringOrDefault(map['country']),
+    lat: JsonHelpers.getDouble(map['lat']) ?? 0,
+    lng: JsonHelpers.getDouble(map['lng']) ?? 0,
   );
+  final String city;
+  final String country;
+  final double lat;
+  final double lng;
 
   Map<String, dynamic> toMap() => {
     'city': city,

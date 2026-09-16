@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:get/get.dart';
 
 import '../../utils/exceptions/app_exceptions.dart';
+import '../../utils/exceptions/network_exceptions.dart';
 import '../../utils/logger/app_logger.dart';
 
 class ErrorService extends GetxService {
@@ -30,19 +31,19 @@ class ErrorService extends GetxService {
   String getErrorMessage(dynamic error) {
     if (error == null) return 'An unknown error occurred.';
 
-    if (error is ApiException) {
+    // AppException and subclasses (NetworkException, ApiException,
+    // AuthException, ValidationException) carry curated, user-safe copy.
+    if (error is AppException) {
       return error.message;
-    }
-
-    if (error is Exception) {
-      final str = error.toString();
-      return str.startsWith('Exception: ') ? str.substring(11) : str;
     }
 
     if (error is String) {
       return error;
     }
 
+    // Unknown exceptions (incl. SDK internals) must never leak into
+    // snackbars; log the original for diagnostics and return generic copy.
+    AppLogger.debug('getErrorMessage: unexpected error type', error);
     return 'An unexpected error occurred. Please try again.';
   }
 
@@ -71,6 +72,12 @@ class ErrorService extends GetxService {
   String getNetworkErrorMessage(dynamic error) {
     if (error == null) return getErrorMessage(error);
 
+    // Transport-level failures carry a classification from the retry layer.
+    if (error is NetworkException &&
+        error.transportFailure != null &&
+        error.transportFailure != TransportFailureKind.none) {
+      return 'Network error. Please check your connection and try again.';
+    }
     if (error is SocketException) {
       return 'No internet connection. Please check your network and try again.';
     }

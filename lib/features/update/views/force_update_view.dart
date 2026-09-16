@@ -149,15 +149,14 @@ class ForceUpdateView extends GetView<ForceUpdateController> {
 }
 
 class _VersionRow extends StatelessWidget {
-  final String label;
-  final String version;
-  final bool isHighlighted;
-
   const _VersionRow({
     required this.label,
     required this.version,
     this.isHighlighted = false,
   });
+  final String label;
+  final String version;
+  final bool isHighlighted;
 
   @override
   Widget build(BuildContext context) {

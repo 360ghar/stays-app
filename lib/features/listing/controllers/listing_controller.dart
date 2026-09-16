@@ -19,7 +19,7 @@ class ListingController extends BaseController {
 
   final RxList<Property> listings = <Property>[].obs;
   final RxBool isRefreshing = false.obs;
-  final RxnString nextCursor = RxnString(null);
+  final RxnString nextCursor = RxnString();
   final RxBool hasMore = false.obs;
   final int pageSize = 20;
 
@@ -29,7 +29,6 @@ class ListingController extends BaseController {
   Map<String, dynamic>? _filtersFromArgs;
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
   FilterController? _filterController;
-  Worker? _filterWorker;
 
   @override
   void onInit() {
@@ -84,7 +83,7 @@ class ListingController extends BaseController {
     } else {
       _activeFilters = _filterController!.filterFor(FilterScope.explore);
     }
-    _filterWorker = trackWorker(
+    trackWorker(
       debounce<UnifiedFilterModel>(
         _filterController!.rxFor(FilterScope.locate),
         (filters) async {
@@ -120,7 +119,6 @@ class ListingController extends BaseController {
       final response = await _repository.explore(
         lat: _queryLat,
         lng: _queryLng,
-        cursor: null,
         limit: pageSize,
         radiusKm: _radiusKm,
         filters: _buildFilters(),

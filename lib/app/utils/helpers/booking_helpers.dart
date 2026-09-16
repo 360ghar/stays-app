@@ -1,4 +1,5 @@
 /// Helpers for booking status checks.
+library;
 
 /// Keywords indicating a negative/excluded booking status.
 const _negativeStatusKeywords = [

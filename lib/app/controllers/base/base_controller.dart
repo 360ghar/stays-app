@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
-import '../../utils/helpers/error_handler.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/performance/performance_monitor.dart';
 import '../../utils/services/error_service.dart';
@@ -55,9 +54,6 @@ abstract class BaseController extends GetxController {
 
     // Handle error through ErrorService for consistent logging and reporting
     _errorService.handleError(error, stackTrace, context);
-
-    // Call deprecated handler for backwards compatibility
-    ErrorHandler.handleError(error);
   }
 
   /// Execute a function with loading state and error handling
@@ -91,44 +87,6 @@ abstract class BaseController extends GetxController {
     errorMessage.value = '';
   }
 
-  /// Execute with automatic retry mechanism
-  Future<T?> executeWithRetry<T>(
-    Future<T> Function() operation, {
-    int maxRetries = 3,
-    Duration delay = const Duration(seconds: 1),
-    bool showLoading = true,
-  }) async {
-    int attempts = 0;
-
-    while (attempts < maxRetries) {
-      try {
-        if (showLoading && attempts == 0) {
-          isLoading.value = true;
-          errorMessage.value = '';
-        }
-        final result = await operation();
-        return result;
-      } catch (error, stackTrace) {
-        attempts++;
-        if (attempts >= maxRetries) {
-          handleError(error, stackTrace);
-          if (showLoading) {
-            isLoading.value = false;
-          }
-          rethrow;
-        }
-        AppLogger.warning('Retrying operation after error: $error');
-        await Future.delayed(delay * attempts); // Exponential backoff
-      } finally {
-        if (showLoading && attempts > 0 && attempts >= maxRetries) {
-          isLoading.value = false;
-        }
-      }
-    }
-
-    return null;
-  }
-
   @override
   void onInit() {
     super.onInit();
@@ -148,7 +106,7 @@ abstract class BaseController extends GetxController {
     // Cancel all subscriptions
     for (final subscription in _subscriptions) {
       try {
-        subscription.cancel();
+        unawaited(subscription.cancel());
       } catch (error) {
         AppLogger.warning('Error canceling subscription: $error');
       }

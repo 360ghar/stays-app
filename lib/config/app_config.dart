@@ -27,6 +27,7 @@ class AppConfig {
     this.googleMapsApiKey,
     this.googleWebClientId,
     this.googleIosClientId,
+    this.defaultCountry = 'IN',
   });
 
   final String environment;
@@ -43,6 +44,33 @@ class AppConfig {
   /// Google OAuth iOS client ID. On iOS this is used as the `clientId`
   /// for the native Google Sign-In ID-token flow.
   final String? googleIosClientId;
+
+  /// ISO-3166 alpha-2 country code used for phone normalization when the user
+  /// has not explicitly picked a country. Resolved from `DEFAULT_COUNTRY`
+  /// with precedence: --dart-define > .env file > 'IN'.
+  final String defaultCountry;
+
+  /// Dial code for [defaultCountry] (e.g. `+91` for `IN`), used by phone
+  /// normalization as a fallback when no country is selected.
+  ///
+  /// The map below is intentionally tiny and is only a fallback; the source
+  /// of truth for supported countries/dial codes lives with the country
+  /// picker used by the auth flow.
+  static const Map<String, String> _defaultCountryDialCodes = <String, String>{
+    'IN': '+91',
+    'US': '+1',
+    'GB': '+44',
+    'AE': '+971',
+    'SG': '+65',
+    'AU': '+61',
+    'CA': '+1',
+    'MY': '+60',
+  };
+
+  /// Dial code for [defaultCountry]. Falls back to `+91` for countries not
+  /// present in the tiny map above.
+  String get defaultCountryDialCode =>
+      _defaultCountryDialCodes[defaultCountry] ?? '+91';
 
   static late AppConfig _instance;
 
@@ -119,27 +147,90 @@ class AppConfig {
   }
 
   static AppConfig fromDotEnv({required String environment}) {
-    final env = dotenv.env;
+    // ── Effective-value resolution (computed once) ─────────────────────────
+    // Precedence: --dart-define (compile-time) WINS, then the bundled .env
+    // file (runtime, loaded by the entrypoint via `dotenv.load`), then the
+    // built-in default. Defines are baked in at build time (const
+    // String.fromEnvironment) so CI/prod builds never depend on a key that
+    // was stripped from the bundled .env file.
+    final apiBaseUrl =
+        _define('API_BASE_URL') ?? _nullIfEmpty(dotenv.env['API_BASE_URL']);
+    final supabaseUrl =
+        _define('SUPABASE_URL') ?? _nullIfEmpty(dotenv.env['SUPABASE_URL']);
+    final supabasePublishableKey =
+        _define('SUPABASE_PUBLISHABLE_KEY') ??
+        _nullIfEmpty(dotenv.env['SUPABASE_PUBLISHABLE_KEY']);
+    // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY. Within
+    // each tier (define vs dotenv) the MAPS alias wins, and any define beats
+    // any dotenv value.
+    final googleMapsApiKey =
+        _define('GOOGLE_MAPS_API_KEY') ??
+        _define('GOOGLE_PLACES_API_KEY') ??
+        _nullIfEmpty(dotenv.env['GOOGLE_MAPS_API_KEY']) ??
+        _nullIfEmpty(dotenv.env['GOOGLE_PLACES_API_KEY']);
+    final googleWebClientId =
+        _define('GOOGLE_WEB_CLIENT_ID') ??
+        _nullIfEmpty(dotenv.env['GOOGLE_WEB_CLIENT_ID']);
+    final googleIosClientId =
+        _define('GOOGLE_IOS_CLIENT_ID') ??
+        _nullIfEmpty(dotenv.env['GOOGLE_IOS_CLIENT_ID']);
+    final enableAnalyticsRaw =
+        _define('ENABLE_ANALYTICS') ??
+        _nullIfEmpty(dotenv.env['ENABLE_ANALYTICS']) ??
+        (environment == 'prod' ? 'true' : 'false');
+    final defaultCountry =
+        (_define('DEFAULT_COUNTRY') ??
+                _nullIfEmpty(dotenv.env['DEFAULT_COUNTRY']) ??
+                'IN')
+            .toUpperCase();
 
-    // Validate environment variables before proceeding
-    _validateEnvironment(env, environment);
+    // Validate the EFFECTIVE values (define over dotenv), not the raw dotenv
+    // map, so a define can satisfy a key that is absent from the .env file.
+    _validateEnvironment(<String, String>{
+      'API_BASE_URL': apiBaseUrl ?? '',
+      'SUPABASE_URL': supabaseUrl ?? '',
+      'SUPABASE_PUBLISHABLE_KEY': supabasePublishableKey ?? '',
+    }, environment);
 
     return AppConfig(
       environment: environment,
-      apiBaseUrl: env['API_BASE_URL']!,
-      supabaseUrl: env['SUPABASE_URL']!,
-      supabasePublishableKey: env['SUPABASE_PUBLISHABLE_KEY']!,
-      enableAnalytics:
-          (env['ENABLE_ANALYTICS'] ??
-              (environment == 'prod' ? 'true' : 'false')) ==
-          'true',
-      // Support either GOOGLE_MAPS_API_KEY or GOOGLE_PLACES_API_KEY
-      googleMapsApiKey:
-          env['GOOGLE_MAPS_API_KEY'] ?? env['GOOGLE_PLACES_API_KEY'],
+      apiBaseUrl: apiBaseUrl!,
+      supabaseUrl: supabaseUrl!,
+      supabasePublishableKey: supabasePublishableKey!,
+      enableAnalytics: enableAnalyticsRaw == 'true',
+      googleMapsApiKey: googleMapsApiKey,
       // Optional Google Sign-In client IDs (empty/missing => Google disabled).
-      googleWebClientId: _nullIfEmpty(env['GOOGLE_WEB_CLIENT_ID']),
-      googleIosClientId: _nullIfEmpty(env['GOOGLE_IOS_CLIENT_ID']),
+      googleWebClientId: googleWebClientId,
+      googleIosClientId: googleIosClientId,
+      defaultCountry: defaultCountry,
     );
+  }
+
+  /// Compile-time `--dart-define` values. `String.fromEnvironment` only reads
+  /// real values in const contexts, so each supported key is captured once in
+  /// this const table and looked up at runtime by [_define].
+  static const Map<String, String> _defines = <String, String>{
+    'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),
+    'SUPABASE_URL': String.fromEnvironment('SUPABASE_URL'),
+    'SUPABASE_PUBLISHABLE_KEY': String.fromEnvironment(
+      'SUPABASE_PUBLISHABLE_KEY',
+    ),
+    'GOOGLE_MAPS_API_KEY': String.fromEnvironment('GOOGLE_MAPS_API_KEY'),
+    'GOOGLE_PLACES_API_KEY': String.fromEnvironment('GOOGLE_PLACES_API_KEY'),
+    'GOOGLE_WEB_CLIENT_ID': String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+    'GOOGLE_IOS_CLIENT_ID': String.fromEnvironment('GOOGLE_IOS_CLIENT_ID'),
+    'ENABLE_ANALYTICS': String.fromEnvironment('ENABLE_ANALYTICS'),
+    'DEFAULT_COUNTRY': String.fromEnvironment('DEFAULT_COUNTRY'),
+  };
+
+  /// Returns the build-time `--dart-define` value for [key], or null when the
+  /// define is absent or empty. Compile-time defines take precedence over the
+  /// bundled .env files (see [fromDotEnv]).
+  static String? _define(String key) {
+    final value = _defines[key] ?? '';
+    if (value.isEmpty) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   static String? _nullIfEmpty(String? value) {

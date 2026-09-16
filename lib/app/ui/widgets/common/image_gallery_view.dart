@@ -54,10 +54,10 @@ class _ImageGalleryViewState extends State<ImageGalleryView> {
                 minScale: PhotoViewComputedScale.contained,
                 maxScale: PhotoViewComputedScale.covered * 3,
                 heroAttributes: PhotoViewHeroAttributes(tag: 'gallery_$index'),
-                errorBuilder: (context, error, __) => Center(
+                errorBuilder: (context, error, _) => const Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(Icons.broken_image, color: Colors.white70, size: 48),
                       SizedBox(height: 8),
                       Text(

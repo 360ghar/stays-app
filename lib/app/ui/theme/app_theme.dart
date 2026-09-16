@@ -9,10 +9,7 @@ import 'app_text_styles.dart';
 class AppTheme {
   /// Light color scheme with premium shadows and surfaces
   static final ColorScheme _lightColorScheme =
-      ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-      ).copyWith(
+      ColorScheme.fromSeed(seedColor: AppColors.primary).copyWith(
         surface: AppColors.surface,
         surfaceContainerHighest: AppColors.surfaceVariant,
         surfaceContainerHigh: const Color(0xFFF1F5F9),
@@ -539,10 +536,7 @@ class AppTheme {
         ),
         elevation: WidgetStateProperty.all(0),
         shape: WidgetStateProperty.all(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: BorderSide.none,
-          ),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         ),
         padding: WidgetStateProperty.all(
           const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -608,7 +602,6 @@ class AppTheme {
           border: Border(
             bottom: BorderSide(
               color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-              width: 1,
             ),
           ),
         ),

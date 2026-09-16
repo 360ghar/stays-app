@@ -9,10 +9,9 @@ import '../logger/app_logger.dart';
 /// Provide a comma-separated list of allowed base64 SHA-256 pins via
 /// env var API_CERT_SHA256. Only applies to the API host from AppConfig.
 class PinningHttpOverrides extends HttpOverrides {
+  PinningHttpOverrides({required this.allowedPins, required this.host});
   final Set<String> allowedPins;
   final String host;
-
-  PinningHttpOverrides({required this.allowedPins, required this.host});
 
   @override
   HttpClient createHttpClient(SecurityContext? context) {

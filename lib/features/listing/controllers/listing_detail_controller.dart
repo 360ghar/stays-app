@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
@@ -12,11 +15,9 @@ import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/features/wishlist/controllers/wishlist_controller.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
 import 'package:stays_app/app/data/services/analytics_service.dart';
+import 'package:stays_app/app/data/services/deep_link_service.dart';
 
 class ListingDetailController extends BaseController {
-  final PropertiesRepository _repository;
-  WishlistRepository? _wishlistRepository;
-
   ListingDetailController({
     required PropertiesRepository repository,
     WishlistRepository? wishlistRepository,
@@ -36,6 +37,9 @@ class ListingDetailController extends BaseController {
       'ListingDetailController initialized with wishlist repository: ${_wishlistRepository != null}',
     );
   }
+
+  final PropertiesRepository _repository;
+  WishlistRepository? _wishlistRepository;
 
   final PageController galleryController = PageController();
   final Rxn<Property> listing = Rxn<Property>();
@@ -61,7 +65,7 @@ class ListingDetailController extends BaseController {
 
     // Refresh details in background if we already have a partial listing
     final shouldShowLoader = listing.value == null;
-    load(parsedId, showLoader: shouldShowLoader);
+    unawaited(load(parsedId, showLoader: shouldShowLoader));
   }
 
   Future<void> load(int id, {bool showLoader = true}) async {
@@ -105,7 +109,9 @@ class ListingDetailController extends BaseController {
     if (!Get.isRegistered<ImagePrefetchService>()) return;
 
     try {
-      Get.find<ImagePrefetchService>().prefetchPropertyDetailImages(property);
+      unawaited(
+        Get.find<ImagePrefetchService>().prefetchPropertyDetailImages(property),
+      );
     } catch (e) {
       AppLogger.debug('Failed to prefetch gallery images: $e');
     }
@@ -127,7 +133,7 @@ class ListingDetailController extends BaseController {
     for (int i = 1; i <= 2; i++) {
       final nextIndex = currentIndex + i;
       if (nextIndex < images.length) {
-        prefetchService.prefetchImage(images[nextIndex].imageUrl);
+        unawaited(prefetchService.prefetchImage(images[nextIndex].imageUrl));
       }
     }
   }
@@ -188,6 +194,29 @@ class ListingDetailController extends BaseController {
 
   bool isPropertyFavorite(int propertyId) {
     return _favoritesController.isFavorite(propertyId);
+  }
+
+  Future<void> shareListing(Property property) async {
+    try {
+      final propertyId = property.id;
+      final url = DeepLinkService.listingUrl('$propertyId');
+      final lines = <String>[
+        if (property.name.isNotEmpty) property.name,
+        if (property.address?.isNotEmpty == true) property.address!,
+        url,
+      ];
+      final text = lines.join('\n');
+      await Share.share(text, subject: property.name);
+      if (Get.isRegistered<AnalyticsService>()) {
+        Get.find<AnalyticsService>().logShare('listing', '$propertyId');
+      }
+    } catch (e, stack) {
+      AppLogger.error('Failed to share listing', e, stack);
+      AppSnackbar.error(
+        title: 'Share failed',
+        message: 'Could not open the share sheet. Please try again.',
+      );
+    }
   }
 
   void navigateToInquiryConfirmation(Property property) {

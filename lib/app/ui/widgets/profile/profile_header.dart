@@ -1,6 +1,16 @@
 import 'package:flutter/material.dart';
 
 class ProfileHeader extends StatelessWidget {
+  const ProfileHeader({
+    required this.initials,
+    required this.userName,
+    required this.userType,
+    required this.userEmail,
+    super.key,
+    this.isLoading = false,
+    this.avatarUrl,
+    this.dense = false,
+  });
   final String initials;
   final String userName;
   final String userType;
@@ -8,17 +18,6 @@ class ProfileHeader extends StatelessWidget {
   final bool isLoading;
   final bool dense;
   final String? avatarUrl;
-
-  const ProfileHeader({
-    super.key,
-    required this.initials,
-    required this.userName,
-    required this.userType,
-    required this.userEmail,
-    this.isLoading = false,
-    this.avatarUrl,
-    this.dense = false,
-  });
 
   @override
   Widget build(BuildContext context) {

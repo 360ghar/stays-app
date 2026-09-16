@@ -37,17 +37,30 @@ abstract class Routes {
   static const profileFeedbackBug = '/profile/feedback/bug';
   static const profileFeedbackFeature = '/profile/feedback/feature';
 
-  // Backwards compatibility aliases (will be removed once consumers migrate)
+  // Backwards compatibility aliases (deprecated; migrate to the canonical
+  // constants above). Will be removed once consumers migrate.
+  @Deprecated('Use Routes.inquiry instead')
   static const enquiry = inquiry; // British spelling alias
+  @Deprecated('Use Routes.inquiryConfirmation instead')
   static const enquiryConfirmation = inquiryConfirmation;
+  @Deprecated('Use Routes.inquiry instead')
   static const booking = inquiry; // Legacy naming alias
+  @Deprecated('Use Routes.inquiryConfirmation instead')
   static const bookingConfirmation = inquiryConfirmation;
+  @Deprecated('Use Routes.inquiries instead')
   static const enquiries = inquiries; // British spelling alias
+  @Deprecated('Use Routes.inquiries instead')
   static const trips = inquiries;
+  @Deprecated('Use Routes.profileHelp instead')
   static const help = profileHelp;
+  @Deprecated('Use Routes.editProfile instead')
   static const profileView = editProfile;
+  @Deprecated('Use Routes.profilePrivacy instead')
   static const privacySecurity = profilePrivacy;
+  @Deprecated('Use Routes.profileAbout instead')
   static const appInfo = profileAbout;
+  @Deprecated('Use Routes.profileLegal instead')
   static const legal = profileLegal;
+  @Deprecated('Use Routes.profilePrivacy instead')
   static const privacy = profilePrivacy;
 }

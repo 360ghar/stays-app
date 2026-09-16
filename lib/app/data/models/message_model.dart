@@ -1,11 +1,6 @@
-class MessageModel {
-  final String id;
-  final String conversationId;
-  final String senderId;
-  final String content;
-  final DateTime createdAt;
-  final DateTime? readAt;
+import '../../utils/helpers/json_helpers.dart';
 
+class MessageModel {
   const MessageModel({
     required this.id,
     required this.conversationId,
@@ -22,16 +17,20 @@ class MessageModel {
         map['conversationId']?.toString() ??
         '',
     senderId: map['sender_id']?.toString() ?? map['senderId']?.toString() ?? '',
-    content: map['content'] as String? ?? '',
+    content: JsonHelpers.getStringOrDefault(map['content']),
     createdAt:
-        DateTime.tryParse(
-          (map['created_at'] ?? map['createdAt']) as String? ?? '',
-        ) ??
+        JsonHelpers.getDateTime(map['created_at'] ?? map['createdAt']) ??
         DateTime.now(),
     readAt: (map['read_at'] == null || map['read_at'] == '')
         ? null
         : DateTime.tryParse(map['read_at'].toString()),
   );
+  final String id;
+  final String conversationId;
+  final String senderId;
+  final String content;
+  final DateTime createdAt;
+  final DateTime? readAt;
 
   Map<String, dynamic> toMap() => {
     'id': id,
@@ -49,6 +48,31 @@ class MessageModel {
 
 /// A conversation summary for the inbox list.
 class ConversationModel {
+  const ConversationModel({
+    required this.id,
+    required this.guestId,
+    required this.hostId,
+    required this.createdAt,
+    this.propertyId,
+    this.bookingId,
+    this.lastMessage,
+    this.lastMessageAt,
+  });
+
+  factory ConversationModel.fromMap(Map<String, dynamic> map) =>
+      ConversationModel(
+        id: map['id']?.toString() ?? '',
+        propertyId: JsonHelpers.getInt(map['property_id']),
+        bookingId: JsonHelpers.getInt(map['booking_id']),
+        guestId: map['guest_id']?.toString() ?? '',
+        hostId: map['host_id']?.toString() ?? '',
+        lastMessage: JsonHelpers.getString(map['last_message']),
+        lastMessageAt:
+            (map['last_message_at'] == null || map['last_message_at'] == '')
+            ? null
+            : DateTime.tryParse(map['last_message_at'].toString()),
+        createdAt: JsonHelpers.getDateTime(map['created_at']) ?? DateTime.now(),
+      );
   final String id;
   final int? propertyId;
   final int? bookingId;
@@ -57,32 +81,4 @@ class ConversationModel {
   final String? lastMessage;
   final DateTime? lastMessageAt;
   final DateTime createdAt;
-
-  const ConversationModel({
-    required this.id,
-    this.propertyId,
-    this.bookingId,
-    required this.guestId,
-    required this.hostId,
-    this.lastMessage,
-    this.lastMessageAt,
-    required this.createdAt,
-  });
-
-  factory ConversationModel.fromMap(Map<String, dynamic> map) =>
-      ConversationModel(
-        id: map['id']?.toString() ?? '',
-        propertyId: (map['property_id'] as num?)?.toInt(),
-        bookingId: (map['booking_id'] as num?)?.toInt(),
-        guestId: map['guest_id']?.toString() ?? '',
-        hostId: map['host_id']?.toString() ?? '',
-        lastMessage: map['last_message'] as String?,
-        lastMessageAt:
-            (map['last_message_at'] == null || map['last_message_at'] == '')
-            ? null
-            : DateTime.tryParse(map['last_message_at'].toString()),
-        createdAt:
-            DateTime.tryParse(map['created_at'] as String? ?? '') ??
-            DateTime.now(),
-      );
 }

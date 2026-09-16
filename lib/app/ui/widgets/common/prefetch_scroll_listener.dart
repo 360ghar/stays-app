@@ -7,22 +7,21 @@ import '../../../data/services/image_prefetch_service.dart';
 /// A widget that listens to scroll events and triggers image prefetching
 /// when the user scrolls near the end of visible content.
 class PrefetchScrollListener extends StatefulWidget {
+  const PrefetchScrollListener({
+    required this.child,
+    required this.scrollController,
+    required this.properties,
+    super.key,
+    this.visibleItemCount = 3,
+    this.prefetchThreshold = 2,
+    this.prefetchBatchSize = 5,
+  });
   final Widget child;
   final ScrollController scrollController;
   final List<Property> properties;
   final int visibleItemCount;
   final int prefetchThreshold;
   final int prefetchBatchSize;
-
-  const PrefetchScrollListener({
-    super.key,
-    required this.child,
-    required this.scrollController,
-    required this.properties,
-    this.visibleItemCount = 3,
-    this.prefetchThreshold = 2,
-    this.prefetchBatchSize = 5,
-  });
 
   @override
   State<PrefetchScrollListener> createState() => _PrefetchScrollListenerState();
@@ -86,20 +85,19 @@ class _PrefetchScrollListenerState extends State<PrefetchScrollListener> {
 
 /// A simpler alternative: wrap a horizontal ListView to prefetch on scroll
 class HorizontalPrefetchList extends StatefulWidget {
+  const HorizontalPrefetchList({
+    required this.properties,
+    required this.itemBuilder,
+    super.key,
+    this.itemWidth = 262.0,
+    this.padding,
+    this.physics,
+  });
   final List<Property> properties;
   final Widget Function(BuildContext, int) itemBuilder;
   final double itemWidth;
   final EdgeInsets? padding;
   final ScrollPhysics? physics;
-
-  const HorizontalPrefetchList({
-    super.key,
-    required this.properties,
-    required this.itemBuilder,
-    this.itemWidth = 262.0,
-    this.padding,
-    this.physics,
-  });
 
   @override
   State<HorizontalPrefetchList> createState() => _HorizontalPrefetchListState();

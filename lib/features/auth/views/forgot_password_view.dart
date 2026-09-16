@@ -130,7 +130,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Remember your password? ",
+                    'Remember your password? ',
                     style: textStyles.bodyMedium?.copyWith(
                       color: colors.onSurface.withValues(alpha: 0.7),
                     ),
@@ -172,7 +172,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           const SizedBox(height: 8),
           DecoratedBox(
             decoration: BoxDecoration(
-              color: context.elevatedSurface(0.08),
+              color: context.elevatedSurface(),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: hasError ? colors.error : colors.outlineVariant,

@@ -152,7 +152,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   void _handleMinPriceInput() {
     if (_isUpdatingPriceFields) return;
     final value = _parsePrice(_minPriceController.text);
-    double start = value?.clamp(_priceFloor, _priceCeil) ?? _priceFloor;
+    final double start = value?.clamp(_priceFloor, _priceCeil) ?? _priceFloor;
     double end = _priceRange.end;
     if (start > end) {
       end = start;
@@ -166,7 +166,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
   void _handleMaxPriceInput() {
     if (_isUpdatingPriceFields) return;
     final value = _parsePrice(_maxPriceController.text);
-    double end = value?.clamp(_priceFloor, _priceCeil) ?? _priceCeil;
+    final double end = value?.clamp(_priceFloor, _priceCeil) ?? _priceCeil;
     double start = _priceRange.start;
     if (end < start) {
       start = end;
@@ -360,7 +360,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         const SizedBox(height: 12),
         RangeSlider(
           values: _priceRange,
-          min: _priceFloor,
           max: _priceCeil,
           divisions: 40,
           labels: RangeLabels(
@@ -453,7 +452,6 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
         ),
         Slider(
           value: _minRating,
-          min: 0,
           max: 5,
           divisions: 10,
           activeColor: _colorScheme.primary,

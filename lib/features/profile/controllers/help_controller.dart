@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/data/models/feedback_model.dart';
+import 'package:stays_app/app/data/repositories/feedback_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
@@ -10,6 +12,8 @@ import 'package:url_launcher/url_launcher.dart';
 class HelpController extends GetxController {
   final RxBool isSubmittingFeedback = false.obs;
   final TextEditingController feedbackController = TextEditingController();
+
+  late final FeedbackRepository _feedbackRepository;
 
   final List<FaqItem> faqs = const [
     FaqItem(
@@ -56,6 +60,18 @@ class HelpController extends GetxController {
   ];
 
   @override
+  void onInit() {
+    super.onInit();
+    try {
+      _feedbackRepository = Get.find<FeedbackRepository>();
+    } catch (e) {
+      AppLogger.warning(
+        'FeedbackRepository not available for HelpController: $e',
+      );
+    }
+  }
+
+  @override
   void onClose() {
     feedbackController.dispose();
     super.onClose();
@@ -70,7 +86,7 @@ class HelpController extends GetxController {
         await _launchUri(Uri(scheme: 'tel', path: channel.value));
         break;
       case SupportChannelType.chat:
-        Get.toNamed(Routes.inbox);
+        await Get.toNamed(Routes.inbox);
         break;
     }
   }
@@ -80,10 +96,22 @@ class HelpController extends GetxController {
     if (message.isEmpty || isSubmittingFeedback.value) {
       return;
     }
+    if (!Get.isRegistered<FeedbackRepository>()) {
+      AppSnackbar.error(
+        title: 'Feedback not sent',
+        message: 'Feedback service is not available. Please try again later.',
+      );
+      return;
+    }
     try {
       isSubmittingFeedback.value = true;
-      // Placeholder for API integration.
-      await Future<void>.delayed(const Duration(milliseconds: 600));
+      final request = BugReportRequest(
+        bugType: 'other',
+        title: 'Help & support request',
+        description: message,
+        tags: const ['stays', 'help'],
+      );
+      await _feedbackRepository.submitBugReport(request);
       feedbackController.clear();
       AppSnackbar.success(
         title: 'Feedback received',

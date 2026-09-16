@@ -8,20 +8,6 @@ import 'property_model.dart';
 /// `next_cursor` is null on the terminal page. End-of-list is detected via
 /// `has_more == false`. Cursor tokens are opaque base64; never decode them.
 class UnifiedPropertyResponse {
-  final List<Property> items;
-  final String? nextCursor;
-  final bool hasMore;
-  final int limit;
-  final int? total;
-  final Map<String, dynamic>? filters;
-
-  /// True when the server indicates more pages exist and a cursor is
-  /// available. Both flags must agree before paging: [hasMore] is the
-  /// authoritative "are there more" signal, and [nextCursor] is the token
-  /// the server expects on the next call. If they disagree, treat it as
-  /// "end of list" rather than risk an infinite loop or a missed page.
-  bool get hasNextPage => hasMore && nextCursor != null;
-
   UnifiedPropertyResponse({
     required this.items,
     required this.nextCursor,
@@ -54,6 +40,19 @@ class UnifiedPropertyResponse {
           : null,
     );
   }
+  final List<Property> items;
+  final String? nextCursor;
+  final bool hasMore;
+  final int limit;
+  final int? total;
+  final Map<String, dynamic>? filters;
+
+  /// True when the server indicates more pages exist and a cursor is
+  /// available. Both flags must agree before paging: [hasMore] is the
+  /// authoritative "are there more" signal, and [nextCursor] is the token
+  /// the server expects on the next call. If they disagree, treat it as
+  /// "end of list" rather than risk an infinite loop or a missed page.
+  bool get hasNextPage => hasMore && nextCursor != null;
 
   Map<String, dynamic> toJson() => {
     'items': items.map((e) => e.toJson()).toList(),

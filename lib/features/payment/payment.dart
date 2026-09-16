@@ -1,5 +1,5 @@
 /// Payment feature barrel export
-library payment;
+library;
 
 // Bindings
 export 'bindings/payment_binding.dart';

@@ -27,10 +27,25 @@ jobs:
           cache: true
 
       - name: Create environment files
+        # Per-environment secrets win when configured; shared secrets are the
+        # fallback so existing setups keep working. ENABLE_ANALYTICS is set
+        # explicitly per flavor (prod=true).
         run: |-
-          for ENV_FILE in ".env.dev" ".env.staging" ".env.prod"; do
-          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
-          done
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_DEV || secrets.API_BASE_URL }}" > .env.dev
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_DEV || secrets.SUPABASE_URL }}" >> .env.dev
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.dev
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_DEV || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.dev
+          echo "ENABLE_ANALYTICS=false" >> .env.dev
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_STAGING || secrets.API_BASE_URL }}" > .env.staging
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_STAGING || secrets.SUPABASE_URL }}" >> .env.staging
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.staging
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_STAGING || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.staging
+          echo "ENABLE_ANALYTICS=false" >> .env.staging
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }}" > .env.prod
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }}" >> .env.prod
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.prod
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.prod
+          echo "ENABLE_ANALYTICS=true" >> .env.prod
 
       - name: Install dependencies
         run: flutter pub get
@@ -69,10 +84,25 @@ jobs:
           cache: true
 
       - name: Create environment files
+        # Per-environment secrets win when configured; shared secrets are the
+        # fallback so existing setups keep working. ENABLE_ANALYTICS is set
+        # explicitly per flavor (prod=true).
         run: |-
-          for ENV_FILE in ".env.dev" ".env.staging" ".env.prod"; do
-          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
-          done
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_DEV || secrets.API_BASE_URL }}" > .env.dev
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_DEV || secrets.SUPABASE_URL }}" >> .env.dev
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.dev
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_DEV || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.dev
+          echo "ENABLE_ANALYTICS=false" >> .env.dev
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_STAGING || secrets.API_BASE_URL }}" > .env.staging
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_STAGING || secrets.SUPABASE_URL }}" >> .env.staging
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.staging
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_STAGING || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.staging
+          echo "ENABLE_ANALYTICS=false" >> .env.staging
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }}" > .env.prod
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }}" >> .env.prod
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.prod
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.prod
+          echo "ENABLE_ANALYTICS=true" >> .env.prod
 
       - name: Decode keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/keystore.jks
@@ -90,10 +120,30 @@ jobs:
         run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Build APK (prod)
-        run: flutter build apk --release --flavor prod -t lib/main_prod.dart
+        # Compile-time dart-defines so the artifact never depends on bundled
+        # .env files. Same per-env secret fallbacks as 'Create environment
+        # files'; defines take precedence in AppConfig.
+        run: |
+          flutter build apk --release --flavor prod -t lib/main_prod.dart \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }} \
+            --dart-define=ENABLE_ANALYTICS=true \
+            --dart-define=DEFAULT_COUNTRY=IN
 
       - name: Build AAB (prod)
-        run: flutter build appbundle --release --flavor prod -t lib/main_prod.dart
+        # Compile-time dart-defines so the artifact never depends on bundled
+        # .env files. Same per-env secret fallbacks as 'Create environment
+        # files'; defines take precedence in AppConfig.
+        run: |
+          flutter build appbundle --release --flavor prod -t lib/main_prod.dart \
+            --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }} \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }} \
+            --dart-define=ENABLE_ANALYTICS=true \
+            --dart-define=DEFAULT_COUNTRY=IN
 
       - name: Rename APK
         run: |

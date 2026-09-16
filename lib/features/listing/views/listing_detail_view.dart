@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,6 +12,7 @@ import 'package:stays_app/app/ui/theme/app_dimensions.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/features/listing/controllers/listing_detail_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/property_image_model.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/ui/widgets/listing/interactive_virtual_tour.dart';
 import 'package:stays_app/app/ui/widgets/common/image_gallery_view.dart';
@@ -24,7 +27,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
     return Scaffold(
       backgroundColor: colors.surface,
       extendBody: true,
-      extendBodyBehindAppBar: false,
       body: Obx(() {
         if (controller.isLoading.value && controller.listing.value == null) {
           return const Center(child: CircularProgressIndicator());
@@ -53,7 +55,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
             _buildHeroSliver(context, listing),
 
             SliverPadding(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppDimensions.xl + 4,
                 AppDimensions.xxl + 8,
                 AppDimensions.xl + 4,
@@ -168,9 +170,9 @@ class ListingDetailView extends GetView<ListingDetailController> {
 
             children: [
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (images.isNotEmpty) {
-                    showImageGallery(
+                    await showImageGallery(
                       context,
                       imageUrls: images,
                       initialIndex: controller.currentImageIndex.value,
@@ -321,7 +323,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
                                   )
                                 : Colors.black.withValues(alpha: 0.45),
 
-                            onTap: () => _showComingSoon(context, 'Share stay'),
+                            onTap: () => controller.shareListing(listing),
                           ),
 
                           const SizedBox(width: 12),
@@ -495,7 +497,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
           child: InteractiveVirtualTour(
             tourUrl: listing.virtualTourUrl!,
             placeholderImageUrl: listing.displayImage,
-            borderRadius: 16,
             aspectRatio: 0.8,
             startActive: true,
           ),
@@ -558,10 +559,7 @@ class ListingDetailView extends GetView<ListingDetailController> {
       decoration: BoxDecoration(
         color: colors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,7 +595,6 @@ class ListingDetailView extends GetView<ListingDetailController> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colors.outlineVariant.withValues(alpha: 0.2),
-                  width: 1,
                 ),
               ),
               child: Row(
@@ -909,64 +906,66 @@ class ListingDetailView extends GetView<ListingDetailController> {
   }) {
     final colors = Theme.of(context).colorScheme;
     final textStyles = Theme.of(context).textTheme;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: colors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (context) {
-        final paddingBottom = MediaQuery.of(context).padding.bottom;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(24, 16, 24, paddingBottom + 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  height: 4,
-                  width: 60,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: colors.outlineVariant,
-                    borderRadius: BorderRadius.circular(100),
+    unawaited(
+      showModalBottomSheet<void>(
+        context: context,
+        backgroundColor: colors.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        isScrollControlled: true,
+        builder: (context) {
+          final paddingBottom = MediaQuery.of(context).padding.bottom;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(24, 16, 24, paddingBottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    height: 4,
+                    width: 60,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: colors.outlineVariant,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                title,
-                style: textStyles.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: colors.onSurface,
+                Text(
+                  title,
+                  style: textStyles.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              ...items.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.check_circle_outline, size: 18),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          item,
-                          style: textStyles.bodyMedium?.copyWith(
-                            color: colors.onSurface.withValues(alpha: 0.85),
+                const SizedBox(height: 16),
+                ...items.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.check_circle_outline, size: 18),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            item,
+                            style: textStyles.bodyMedium?.copyWith(
+                              color: colors.onSurface.withValues(alpha: 0.85),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      },
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1008,30 +1007,12 @@ class ListingDetailView extends GetView<ListingDetailController> {
     }
   }
 
-  void _showComingSoon(BuildContext context, String label) {
-    final colors = Theme.of(context).colorScheme;
-    final textStyles = Theme.of(context).textTheme;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          '$label coming soon',
-          style: textStyles.bodyMedium?.copyWith(color: colors.onPrimary),
-        ),
-        backgroundColor: colors.primary,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   List<String> _resolveGalleryImages(Property listing) {
     final urls = <String>{};
     if (listing.displayImage?.isNotEmpty == true) {
       urls.add(listing.displayImage!);
     }
-    for (final image in listing.images ?? const []) {
+    for (final image in listing.images ?? const <PropertyImage>[]) {
       if (image.imageUrl.isNotEmpty) {
         urls.add(image.imageUrl);
       }

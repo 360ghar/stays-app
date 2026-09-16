@@ -331,7 +331,6 @@ class WishlistView extends GetView<WishlistController> {
                       if (locationLine != null) ...[
                         const SizedBox(height: 4),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
                               Icons.place_outlined,
@@ -452,7 +451,7 @@ class WishlistView extends GetView<WishlistController> {
 
     if (hasRating && ratingLabel != null) {
       widgets.addAll([
-        Icon(Icons.star_rounded, size: 14, color: Colors.amber),
+        const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
         const SizedBox(width: 4),
         Text(
           ratingLabel,
@@ -529,7 +528,7 @@ class WishlistView extends GetView<WishlistController> {
     if (bedrooms == null || bedrooms <= 0) {
       return '';
     }
-    return '${bedrooms} BHK';
+    return '$bedrooms BHK';
   }
 
   String _formatDistance(double distanceKm) {

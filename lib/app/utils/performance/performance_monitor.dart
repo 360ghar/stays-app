@@ -8,10 +8,9 @@ class PerformanceMonitor extends GetxService {
 }
 
 class PerformanceSpan {
+  PerformanceSpan._(this.name);
   final String name;
   final DateTime _start = DateTime.now();
-
-  PerformanceSpan._(this.name);
 
   void end() {
     final elapsed = DateTime.now().difference(_start);

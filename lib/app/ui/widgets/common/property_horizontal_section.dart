@@ -9,6 +9,25 @@ import 'package:stays_app/app/ui/widgets/common/animated_widgets.dart';
 /// A reusable horizontal scrolling section for property cards.
 /// Displays a section title and a horizontally scrollable list of property cards.
 class PropertyHorizontalSection extends StatelessWidget {
+  const PropertyHorizontalSection({
+    required this.title,
+    required this.properties,
+    super.key,
+    this.subtitle,
+    this.leadingIcon,
+    this.titleStyle,
+    this.subtitleStyle,
+    this.isLoading = false,
+    this.onViewAll,
+    this.onPropertyTap,
+    this.onFavoriteToggle,
+    this.isPropertyFavorite,
+    this.sectionPrefix = 'section',
+    this.padding,
+    this.emptyMessage,
+    this.cardHeight,
+    this.cardWidth,
+  });
   final String title;
   final String? subtitle;
   final IconData? leadingIcon;
@@ -25,26 +44,6 @@ class PropertyHorizontalSection extends StatelessWidget {
   final String? emptyMessage;
   final double? cardHeight;
   final double? cardWidth;
-
-  const PropertyHorizontalSection({
-    super.key,
-    required this.title,
-    required this.properties,
-    this.subtitle,
-    this.leadingIcon,
-    this.titleStyle,
-    this.subtitleStyle,
-    this.isLoading = false,
-    this.onViewAll,
-    this.onPropertyTap,
-    this.onFavoriteToggle,
-    this.isPropertyFavorite,
-    this.sectionPrefix = 'section',
-    this.padding,
-    this.emptyMessage,
-    this.cardHeight,
-    this.cardWidth,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +153,7 @@ class PropertyHorizontalSection extends StatelessWidget {
   ) {
     return SizedBox(
       width: width,
-      child: Container(
+      child: DecoratedBox(
         decoration: BoxDecoration(
           color: colors.surface,
           borderRadius: BorderRadius.circular(16),

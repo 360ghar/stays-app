@@ -3,15 +3,16 @@ import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/data/providers/bookings_provider.dart';
-import 'package:stays_app/app/data/providers/properties_provider.dart';
 import 'package:stays_app/app/data/providers/review_provider.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
-import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/review_repository.dart';
 
 class TripsBinding extends Bindings {
   @override
   void dependencies() {
+    // PropertiesProvider/Repository are registered ONCE in InitialBinding
+    // (R7 DI consolidation); only trips-scoped deps live here.
+
     final bookingsProvider = Get.isRegistered<BookingsProvider>()
         ? Get.find<BookingsProvider>()
         : Get.put(BookingsProvider(), permanent: true);
@@ -20,17 +21,6 @@ class TripsBinding extends Bindings {
       Get.put<BookingRepository>(
         BookingRepository(provider: bookingsProvider),
         permanent: true,
-      );
-    }
-
-    if (!Get.isRegistered<PropertiesProvider>()) {
-      Get.lazyPut<PropertiesProvider>(() => PropertiesProvider(), fenix: true);
-    }
-
-    if (!Get.isRegistered<PropertiesRepository>()) {
-      Get.lazyPut<PropertiesRepository>(
-        () => PropertiesRepository(provider: Get.find<PropertiesProvider>()),
-        fenix: true,
       );
     }
 

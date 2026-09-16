@@ -5,17 +5,9 @@ import 'package:stays_app/app/ui/theme/app_animations.dart';
 /// A premium animated section wrapper that staggers entrance animations
 /// for child widgets, creating a cascading reveal effect.
 class PremiumAnimatedSection extends StatefulWidget {
-  final Widget child;
-  final int index;
-  final Duration delay;
-  final Duration duration;
-  final Curve curve;
-  final Offset slideOffset;
-  final bool autoStart;
-
   const PremiumAnimatedSection({
-    super.key,
     required this.child,
+    super.key,
     this.index = 0,
     this.delay = Duration.zero,
     this.duration = AppAnimations.medium,
@@ -23,6 +15,13 @@ class PremiumAnimatedSection extends StatefulWidget {
     this.slideOffset = const Offset(0, 0.05),
     this.autoStart = true,
   });
+  final Widget child;
+  final int index;
+  final Duration delay;
+  final Duration duration;
+  final Curve curve;
+  final Offset slideOffset;
+  final bool autoStart;
 
   @override
   State<PremiumAnimatedSection> createState() => _PremiumAnimatedSectionState();
@@ -119,22 +118,21 @@ class _PremiumAnimatedSectionState extends State<PremiumAnimatedSection>
 
 /// A list builder with staggered entrance animations.
 class StaggeredAnimatedList extends StatelessWidget {
+  const StaggeredAnimatedList({
+    required this.itemCount,
+    required this.itemBuilder,
+    super.key,
+    this.delay = Duration.zero,
+    this.duration = AppAnimations.medium,
+    this.curve = AppAnimations.easeOutCubic,
+    this.slideOffset = const Offset(0, 0.05),
+  });
   final int itemCount;
   final Widget Function(BuildContext, int) itemBuilder;
   final Duration delay;
   final Duration duration;
   final Curve curve;
   final Offset slideOffset;
-
-  const StaggeredAnimatedList({
-    super.key,
-    required this.itemCount,
-    required this.itemBuilder,
-    this.delay = Duration.zero,
-    this.duration = AppAnimations.medium,
-    this.curve = AppAnimations.easeOutCubic,
-    this.slideOffset = const Offset(0, 0.05),
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,22 +156,21 @@ class StaggeredAnimatedList extends StatelessWidget {
 
 /// A container with premium entrance animation.
 class PremiumAnimatedContainer extends StatefulWidget {
-  final Widget child;
-  final VoidCallback? onTap;
-  final Duration duration;
-  final Curve curve;
-  final double scaleOnPress;
-  final bool enableRipple;
-
   const PremiumAnimatedContainer({
-    super.key,
     required this.child,
+    super.key,
     this.onTap,
     this.duration = AppAnimations.fast,
     this.curve = AppAnimations.easeOutCubic,
     this.scaleOnPress = 0.96,
     this.enableRipple = true,
   });
+  final Widget child;
+  final VoidCallback? onTap;
+  final Duration duration;
+  final Curve curve;
+  final double scaleOnPress;
+  final bool enableRipple;
 
   @override
   State<PremiumAnimatedContainer> createState() =>
@@ -184,7 +181,6 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  bool _isPressed = false;
 
   @override
   void initState() {
@@ -201,17 +197,14 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
   }
 
   void _handleTapDown(TapDownDetails details) {
-    setState(() => _isPressed = true);
     _controller.reverse();
   }
 
   void _handleTapUp(TapUpDetails details) {
-    setState(() => _isPressed = false);
     _controller.forward();
   }
 
   void _handleTapCancel() {
-    setState(() => _isPressed = false);
     _controller.forward();
   }
 
@@ -235,19 +228,9 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
 
 /// A glassmorphism container with blur effect.
 class GlassContainer extends StatelessWidget {
-  final Widget child;
-  final double blur;
-  final double opacity;
-  final double borderRadius;
-  final Border? border;
-  final EdgeInsetsGeometry padding;
-  final EdgeInsetsGeometry margin;
-  final LinearGradient? gradient;
-  final BoxShadow? shadow;
-
   const GlassContainer({
-    super.key,
     required this.child,
+    super.key,
     this.blur = 10,
     this.opacity = 0.1,
     this.borderRadius = 20,
@@ -257,6 +240,15 @@ class GlassContainer extends StatelessWidget {
     this.gradient,
     this.shadow,
   });
+  final Widget child;
+  final double blur;
+  final double opacity;
+  final double borderRadius;
+  final Border? border;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+  final LinearGradient? gradient;
+  final BoxShadow? shadow;
 
   @override
   Widget build(BuildContext context) {
@@ -280,7 +272,7 @@ class GlassContainer extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
           filter: blur == 0
-              ? ImageFilter.blur(sigmaX: 0, sigmaY: 0)
+              ? ImageFilter.blur()
               : ImageFilter.blur(sigmaX: blur, sigmaY: blur),
           child: Container(
             padding: padding,
@@ -315,7 +307,6 @@ class GlassContainer extends StatelessWidget {
                     color: isDark
                         ? const Color(0xFFFFFFFF).withValues(alpha: 0.1)
                         : const Color(0xFFFFFFFF).withValues(alpha: 0.3),
-                    width: 1,
                   ),
             ),
             child: child,

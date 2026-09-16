@@ -8,30 +8,6 @@ enum TextFieldSize { small, medium, large }
 enum TextFieldVariant { outlined, filled, underlined }
 
 class CustomTextField extends StatelessWidget {
-  final TextEditingController? controller;
-  final String? hintText;
-  final String? labelText;
-  final String? errorText;
-  final bool obscureText;
-  final bool readOnly;
-  final int? maxLines;
-  final int? maxLength;
-  final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
-  final ValueChanged<String>? onChanged;
-  final VoidCallback? onTap;
-  final FormFieldValidator<String>? validator;
-  final TextFieldSize size;
-  final TextFieldVariant variant;
-  final Widget? prefixIcon;
-  final Widget? suffixIcon;
-  final List<TextInputFormatter>? inputFormatters;
-  final bool enabled;
-  final String? helperText;
-  final Color? backgroundColor;
-  final Color? borderColor;
-  final EdgeInsetsGeometry? contentPadding;
-
   const CustomTextField({
     super.key,
     this.controller,
@@ -58,6 +34,29 @@ class CustomTextField extends StatelessWidget {
     this.borderColor,
     this.contentPadding,
   });
+  final TextEditingController? controller;
+  final String? hintText;
+  final String? labelText;
+  final String? errorText;
+  final bool obscureText;
+  final bool readOnly;
+  final int? maxLines;
+  final int? maxLength;
+  final TextInputType? keyboardType;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
+  final FormFieldValidator<String>? validator;
+  final TextFieldSize size;
+  final TextFieldVariant variant;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final List<TextInputFormatter>? inputFormatters;
+  final bool enabled;
+  final String? helperText;
+  final Color? backgroundColor;
+  final Color? borderColor;
+  final EdgeInsetsGeometry? contentPadding;
 
   double get _textFieldHeight {
     switch (size) {
@@ -128,15 +127,13 @@ class CustomTextField extends StatelessWidget {
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radius),
-            borderSide: BorderSide(
-              color: outlineColor.withValues(alpha: 0.5),
-              width: 1,
-            ),
+            borderSide: BorderSide(color: outlineColor.withValues(alpha: 0.5)),
           ),
         );
 
       case TextFieldVariant.filled:
-        final fillColor = backgroundColor ?? theme.colorScheme.surfaceVariant;
+        final fillColor =
+            backgroundColor ?? theme.colorScheme.surfaceContainerHighest;
         return InputDecoration(
           hintText: hintText,
           labelText: labelText,
@@ -163,7 +160,7 @@ class CustomTextField extends StatelessWidget {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radius),
-            borderSide: BorderSide(color: errorColor, width: 1),
+            borderSide: BorderSide(color: errorColor),
           ),
         );
 
@@ -181,22 +178,16 @@ class CustomTextField extends StatelessWidget {
           contentPadding:
               contentPadding ?? const EdgeInsets.symmetric(vertical: 12),
           border: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: borderColor ?? outlineColor,
-              width: 1,
-            ),
+            borderSide: BorderSide(color: borderColor ?? outlineColor),
           ),
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(
-              color: borderColor ?? outlineColor,
-              width: 1,
-            ),
+            borderSide: BorderSide(color: borderColor ?? outlineColor),
           ),
           focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: primaryColor, width: 2),
           ),
           errorBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: errorColor, width: 1),
+            borderSide: BorderSide(color: errorColor),
           ),
         );
     }
@@ -229,20 +220,19 @@ class CustomTextField extends StatelessWidget {
 }
 
 class SearchTextField extends StatelessWidget {
+  const SearchTextField({
+    required this.controller,
+    required this.hintText,
+    super.key,
+    this.onChanged,
+    this.onClear,
+    this.enabled = true,
+  });
   final TextEditingController controller;
   final String hintText;
   final ValueChanged<String>? onChanged;
   final VoidCallback? onClear;
   final bool enabled;
-
-  const SearchTextField({
-    super.key,
-    required this.controller,
-    required this.hintText,
-    this.onChanged,
-    this.onClear,
-    this.enabled = true,
-  });
 
   @override
   Widget build(BuildContext context) {
@@ -272,7 +262,7 @@ class SearchTextField extends StatelessWidget {
                 )
               : null,
           filled: true,
-          fillColor: theme.colorScheme.surfaceVariant,
+          fillColor: theme.colorScheme.surfaceContainerHighest,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radius),
             borderSide: BorderSide.none,

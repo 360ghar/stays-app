@@ -1,3 +1,5 @@
+import '../../utils/helpers/json_helpers.dart';
+
 /// Request payload for submitting a bug report or feature request.
 ///
 /// Maps to the shared backend contract `POST /api/v1/bugs`.
@@ -17,15 +19,13 @@ class BugReportRequest {
 
   factory BugReportRequest.fromMap(Map<String, dynamic> map) {
     return BugReportRequest(
-      source: map['source'] as String? ?? 'mobile',
-      bugType: map['bug_type'] as String? ?? 'other',
-      severity: map['severity'] as String? ?? 'medium',
-      title: map['title'] as String? ?? '',
-      description: map['description'] as String? ?? '',
-      appVersion: map['app_version'] as String?,
-      deviceInfo: map['device_info'] is Map<String, dynamic>
-          ? Map<String, dynamic>.from(map['device_info'] as Map)
-          : null,
+      source: JsonHelpers.getStringOrDefault(map['source'], 'mobile'),
+      bugType: JsonHelpers.getStringOrDefault(map['bug_type'], 'other'),
+      severity: JsonHelpers.getStringOrDefault(map['severity'], 'medium'),
+      title: JsonHelpers.getStringOrDefault(map['title']),
+      description: JsonHelpers.getStringOrDefault(map['description']),
+      appVersion: JsonHelpers.getString(map['app_version']),
+      deviceInfo: JsonHelpers.getMap(map['device_info']),
       tags: map['tags'] is List
           ? (map['tags'] as List).map((e) => e.toString()).toList()
           : null,

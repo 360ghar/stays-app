@@ -30,10 +30,25 @@ jobs:
           cache: true
 
       - name: Create environment files
+        # Per-environment secrets win when configured; shared secrets are the
+        # fallback so existing setups keep working. ENABLE_ANALYTICS is set
+        # explicitly per flavor (prod=true).
         run: |-
-          for ENV_FILE in ".env.dev" ".env.staging" ".env.prod"; do
-          echo -e "API_BASE_URL=${{ secrets.API_BASE_URL }}\nSUPABASE_URL=${{ secrets.SUPABASE_URL }}\nSUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}\nGOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY }}" > $ENV_FILE
-          done
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_DEV || secrets.API_BASE_URL }}" > .env.dev
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_DEV || secrets.SUPABASE_URL }}" >> .env.dev
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_DEV || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.dev
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_DEV || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.dev
+          echo "ENABLE_ANALYTICS=false" >> .env.dev
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_STAGING || secrets.API_BASE_URL }}" > .env.staging
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_STAGING || secrets.SUPABASE_URL }}" >> .env.staging
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_STAGING || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.staging
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_STAGING || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.staging
+          echo "ENABLE_ANALYTICS=false" >> .env.staging
+          echo "API_BASE_URL=${{ secrets.API_BASE_URL_PROD || secrets.API_BASE_URL }}" > .env.prod
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD || secrets.SUPABASE_URL }}" >> .env.prod
+          echo "SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY_PROD || secrets.SUPABASE_PUBLISHABLE_KEY }}" >> .env.prod
+          echo "GOOGLE_PLACES_API_KEY=${{ secrets.GOOGLE_PLACES_API_KEY_PROD || secrets.GOOGLE_PLACES_API_KEY }}" >> .env.prod
+          echo "ENABLE_ANALYTICS=true" >> .env.prod
 
       - name: Install dependencies
         run: flutter pub get
@@ -58,6 +73,9 @@ jobs:
         # --flavor (that is a build/integration flag, unnecessary for unit
         # tests and it triggers Gradle flavor resolution on headless runners).
         run: flutter test --coverage
+
+      - name: Check for outdated dependencies (non-blocking report)
+        run: flutter pub outdated --no-dev-dependencies || true
 
       - name: Upload coverage to Codecov
         if: always()
