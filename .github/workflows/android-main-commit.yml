@@ -48,9 +48,11 @@ jobs:
 
       - name: Install Android API 37 platform
         # permission_handler 13 / secure_storage 11 compile against API 37,
-        # which the runner image does not ship. Install it explicitly.
+        # which the runner image does not ship. Refresh the SDK package list
+        # first so the new platform is visible, then install it explicitly.
         run: |-
           SDKMANAGER="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --update
           yes | "$SDKMANAGER" "platforms;android-37" "build-tools;37.0.0"
 
       - name: Decode keystore
