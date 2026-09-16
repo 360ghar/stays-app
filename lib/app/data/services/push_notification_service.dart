@@ -166,7 +166,7 @@ class PushNotificationService extends GetxService {
         iOS: DarwinInitializationSettings(),
       );
       await _localNotifications.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: (response) {
           // The payload carries the FCM data map encoded as a query string.
           final payload = response.payload;
@@ -190,10 +190,10 @@ class PushNotificationService extends GetxService {
       await _ensureLocalNotificationsInitialized();
       final payload = _encodeData(data);
       _localNotifications.show(
-        DateTime.now().millisecondsSinceEpoch.remainder(100000),
-        title,
-        body,
-        const NotificationDetails(
+        id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'default_channel',
             'Notifications',
