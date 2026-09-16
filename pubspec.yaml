@@ -70,7 +70,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   maplibre_gl: 0.26.1
   flutter_secure_storage: ^10.0.0
-  app_links: ^6.4.1
+  app_links: ^7.2.1
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.2
   firebase_crashlytics: ^5.0.6
