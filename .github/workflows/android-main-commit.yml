@@ -12,9 +12,9 @@ jobs:
     name: Build Android APK (main, prod)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stays-app-main-apk-${{ github.sha }}
           path: build/app/outputs/flutter-apk/360ghar-stays-prod.apk
