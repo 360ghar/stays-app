@@ -144,7 +144,7 @@ jobs:
             --dart-define=DEFAULT_COUNTRY=IN
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: stays-app-release-ipa
           path: build/ios/ipa/*.ipa
