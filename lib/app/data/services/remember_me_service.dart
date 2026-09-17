@@ -1,5 +1,5 @@
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../utils/logger/app_logger.dart';
 
@@ -28,43 +28,40 @@ class AuthMethods {
 ///
 /// SECURITY CONTRACT: this service NEVER stores tokens. Session tokens live
 /// exclusively in TokenService/StorageService (flutter_secure_storage);
-/// GetStorage here holds only a boolean flag and masked identifiers. The
-/// legacy plaintext-token keys are purged, never written.
-class RememberMeService extends GetxService {
-  static const String _boxName = 'auth_preferences';
+/// shared preferences here hold only a boolean flag and masked identifiers.
+class RememberMeService {
+  factory RememberMeService() => _shared;
+  RememberMeService._internal();
+
+  // Shared instance so the legacy GetX graph and the Riverpod graph share
+  // one preference state during migration.
+  static final RememberMeService _shared = RememberMeService._internal();
+
   static const String _rememberMeFlagKey = 'remember_me';
-  // Legacy keys from older builds (plaintext tokens). Kept for one-time
-  // cleanup/migration only — never written to.
-  static const String _legacyAccessTokenKey = 'remembered_access_token';
-  static const String _legacyRefreshTokenKey = 'remembered_refresh_token';
   // Last-used auth method memory (req: remember & pre-select last method).
   static const String _lastMethodKey = 'last_auth_method';
   static const String _lastIdentifierMaskedKey = 'last_identifier_masked';
 
-  late final GetStorage _storage;
-  final RxBool isEnabled = false.obs;
+  SharedPreferences? _prefs;
+  final ValueNotifier<bool> isEnabled = ValueNotifier<bool>(false);
   bool _initialized = false;
 
   /// Last-used auth method (one of [AuthMethods]); null if none recorded.
-  final RxnString lastMethod = RxnString();
+  final ValueNotifier<String?> lastMethod = ValueNotifier<String?>(null);
 
   /// Masked last identifier (e.g. `j***@gmail.com`, `+91 98****3210`).
-  final RxnString lastIdentifierMasked = RxnString();
+  final ValueNotifier<String?> lastIdentifierMasked =
+      ValueNotifier<String?>(null);
 
   /// Initialize the service (idempotent — safe to call from multiple
   /// controllers during startup).
   Future<RememberMeService> init() async {
     if (_initialized) return this;
-    await GetStorage.init(_boxName);
-    _storage = GetStorage(_boxName);
-    isEnabled.value = _storage.read<bool>(_rememberMeFlagKey) ?? false;
-    lastMethod.value = _storage.read<String>(_lastMethodKey);
-    lastIdentifierMasked.value = _storage.read<String>(
-      _lastIdentifierMaskedKey,
-    );
+    _prefs ??= await SharedPreferences.getInstance();
+    isEnabled.value = _prefs?.getBool(_rememberMeFlagKey) ?? false;
+    lastMethod.value = _prefs?.getString(_lastMethodKey);
+    lastIdentifierMasked.value = _prefs?.getString(_lastIdentifierMaskedKey);
     _initialized = true;
-    // One-time cleanup of legacy plaintext tokens left by older builds.
-    await purgeLegacyPlaintextTokens();
     AppLogger.info(
       'RememberMeService initialized. Enabled: ${isEnabled.value}, '
       'lastMethod: ${lastMethod.value}',
@@ -75,22 +72,18 @@ class RememberMeService extends GetxService {
   /// Check if remember-me is enabled
   bool get enabled => isEnabled.value;
 
-  /// Removes legacy plaintext token keys from older builds (migration purge).
-  Future<void> purgeLegacyPlaintextTokens() async {
-    await _storage.remove(_legacyAccessTokenKey);
-    await _storage.remove(_legacyRefreshTokenKey);
-  }
-
   /// Enable or disable remember-me
   Future<void> setEnabled({required bool value}) async {
     isEnabled.value = value;
-    await _storage.write(_rememberMeFlagKey, value);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeFlagKey, value);
   }
 
   /// Sync remember-me state after login (flag only — tokens are handled by
   /// TokenService).
   Future<void> syncAfterLogin() async {
-    await _storage.write(_rememberMeFlagKey, isEnabled.value);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeFlagKey, isEnabled.value);
   }
 
   /// Handle sign-out by clearing the preference flag.
@@ -113,30 +106,31 @@ class RememberMeService extends GetxService {
       return;
     }
     lastMethod.value = method;
-    await _storage.write(_lastMethodKey, method);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setString(_lastMethodKey, method);
 
     if (identifier != null && identifier.trim().isNotEmpty) {
       final masked = maskIdentifier(identifier.trim());
       lastIdentifierMasked.value = masked;
-      await _storage.write(_lastIdentifierMaskedKey, masked);
+      await prefs.setString(_lastIdentifierMaskedKey, masked);
     }
     AppLogger.info('Saved last auth method: $method');
   }
 
   /// Returns the stored last-used auth method (or null).
   String? getLastMethod() =>
-      lastMethod.value ?? _storage.read<String>(_lastMethodKey);
+      lastMethod.value ?? _prefs?.getString(_lastMethodKey);
 
   /// Returns the stored masked identifier (or null).
   String? getLastIdentifierMasked() =>
-      lastIdentifierMasked.value ??
-      _storage.read<String>(_lastIdentifierMaskedKey);
+      lastIdentifierMasked.value ?? _prefs?.getString(_lastIdentifierMaskedKey);
 
   Future<void> clearLastMethod() async {
     lastMethod.value = null;
     lastIdentifierMasked.value = null;
-    await _storage.remove(_lastMethodKey);
-    await _storage.remove(_lastIdentifierMaskedKey);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.remove(_lastMethodKey);
+    await prefs.remove(_lastIdentifierMaskedKey);
   }
 
   /// Masks an email or phone identifier for safe local display.

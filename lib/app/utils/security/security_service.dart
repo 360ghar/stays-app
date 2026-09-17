@@ -1,10 +1,7 @@
-import 'package:get/get.dart';
-
 import '../../../config/app_config.dart';
 import '../logger/app_logger.dart';
 
-class SecurityService extends GetxService {
-  static SecurityService get I => Get.find<SecurityService>();
+class SecurityService {
 
   /// Pure static validator: reads [AppConfig] only, never touches GetX, so
   /// entry points can call it before any binding runs. Do not make this an

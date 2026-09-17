@@ -3,8 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Supabase auth state as Riverpod. Source of truth for go_router redirect.
 ///
-/// Mirrors the legacy [AuthMiddleware] check: a session with a non-empty
-/// access token means authenticated.
+/// A session with a non-empty access token means authenticated.
 final supabaseClientProvider = Provider<SupabaseClient>((ref) {
   return Supabase.instance.client;
 });

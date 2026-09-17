@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:stays_app/config/app_config.dart';
-import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
@@ -24,7 +23,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   AppLogger.info('FCM background message: ${message.messageId}');
 }
 
-class PushNotificationService extends GetxService {
+class PushNotificationService {
   PushNotificationService(StorageService _);
 
   late FirebaseMessaging _messaging;
@@ -235,11 +234,7 @@ class PushNotificationService extends GetxService {
           );
           return;
         }
-        if (useV2Router) {
-          unawaited(v2RouterInstance().push(mapLegacyPathToV2(allowlisted)));
-        } else {
-          unawaited(Get.toNamed(allowlisted));
-        }
+        unawaited(v2RouterInstance().push(allowlisted));
         return;
       }
       final type = data['type']?.toString().toLowerCase();
@@ -248,24 +243,14 @@ class PushNotificationService extends GetxService {
         case 'booking':
         case 'inquiry':
           if (id != null) {
-            if (useV2Router) {
-              unawaited(
-                v2RouterInstance().push(mapLegacyPathToV2(Routes.inquiries)),
-              );
-            } else {
-              unawaited(Get.toNamed(Routes.inquiries));
-            }
+            unawaited(v2RouterInstance().push(AppPaths.trips));
           }
           break;
         case 'message':
         case 'chat':
           if (_isValidRouteId(id)) {
-            final path = Routes.chat.replaceAll(':conversationId', id!);
-            if (useV2Router) {
-              unawaited(v2RouterInstance().push(mapLegacyPathToV2(path)));
-            } else {
-              unawaited(Get.toNamed(path));
-            }
+            final path = '/chat/$id';
+            unawaited(v2RouterInstance().push(path));
           } else {
             AppLogger.warning('Dropped FCM route with invalid id: $type/$id');
           }
@@ -273,12 +258,8 @@ class PushNotificationService extends GetxService {
         case 'listing':
         case 'property':
           if (_isValidRouteId(id)) {
-            final path = Routes.listingDetail.replaceAll(':id', id!);
-            if (useV2Router) {
-              unawaited(v2RouterInstance().push(mapLegacyPathToV2(path)));
-            } else {
-              unawaited(Get.toNamed(path));
-            }
+            final path = '/listing/$id';
+            unawaited(v2RouterInstance().push(path));
           } else {
             AppLogger.warning('Dropped FCM route with invalid id: $type/$id');
           }

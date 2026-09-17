@@ -117,7 +117,7 @@ class ProfileView extends GetView<ProfileController> {
                               icon: Icons.article_outlined,
                               title: 'Legal',
                               subtitle: 'Terms, privacy, refunds',
-                              onTap: () => Get.toNamed(Routes.legal),
+                              onTap: () => Get.toNamed(Routes.profileLegal),
                             ),
                             _MenuTile(
                               icon: Icons.info_outline,

@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
-import 'package:stays_app/app/data/repositories/properties_repository.dart';
-import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
+import 'package:stays_app/core/providers/favorites_provider.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/core/ui/async_state.dart';
@@ -60,10 +58,7 @@ final _detailProvider = FutureProvider.autoDispose
         final property = args.initial!;
         if (property.id == args.id) return property;
       }
-      if (!Get.isRegistered<PropertiesRepository>()) {
-        throw StateError('PropertiesRepository not ready');
-      }
-      return Get.find<PropertiesRepository>().getDetails(args.id);
+      return ref.watch(propertiesRepositoryProvider).getDetails(args.id);
     });
 
 class _DetailBody extends ConsumerStatefulWidget {
@@ -87,18 +82,13 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final id = widget.property.id;
     setState(() => _favorite = !_favorite);
     try {
-      if (!Get.isRegistered<FavoritesController>()) return;
-      final favorites = Get.find<FavoritesController>();
+      final favorites = ref.read(favoritesProvider.notifier);
       if (_favorite) {
         favorites.addFavorite(id);
-        if (Get.isRegistered<WishlistRepository>()) {
-          await Get.find<WishlistRepository>().add(id);
-        }
+        await ref.read(wishlistRepositoryProvider).add(id);
       } else {
         favorites.removeFavorite(id);
-        if (Get.isRegistered<WishlistRepository>()) {
-          await Get.find<WishlistRepository>().remove(id);
-        }
+        await ref.read(wishlistRepositoryProvider).remove(id);
       }
     } catch (e) {
       AppLogger.error('Detail v2: favorite toggle failed', e);

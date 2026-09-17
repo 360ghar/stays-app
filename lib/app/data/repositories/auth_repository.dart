@@ -1,5 +1,3 @@
-import 'package:get/get.dart';
-
 import '../services/storage_service.dart';
 import '../../utils/services/token_service.dart';
 import '../models/user_model.dart';
@@ -31,21 +29,29 @@ class GoogleLoginResult {
 }
 
 class AuthRepository {
-  /// All dependencies are constructor-injected. The `Get.find` fallback lives
-  /// only in `InitialBinding` (the single registration site); this class never
-  /// calls `Get.find` for its own fields so misconfigured DI fails loudly at
-  /// the binding. (`TokenService` is still resolved lazily inside methods via
-  /// `Get.find` because it boots asynchronously after this repository.)
+  /// All dependencies are constructor-injected. (`TokenService` is optional
+  /// because it boots asynchronously after this repository; token sync is
+  /// best-effort until it is bound via [bindTokenService].)
   AuthRepository({
     required IAuthProvider provider,
     required StorageService storage,
     AuthApiProvider? authApi,
+    TokenService? tokenService,
   }) : _provider = provider,
        _authApi = authApi ?? AuthApiProvider(),
-       _storage = storage;
+       _storage = storage,
+       _tokenService = tokenService;
   final IAuthProvider _provider;
   final AuthApiProvider _authApi;
   final StorageService _storage;
+  TokenService? _tokenService;
+
+  /// Late-bound token service for graphs that construct the repository
+  /// before the async token service finishes initializing.
+  // ignore: use_setters_to_change_properties
+  void bindTokenService(TokenService tokens) {
+    _tokenService ??= tokens;
+  }
 
   Future<UserModel> loginWithEmail({
     required String email,
@@ -271,11 +277,15 @@ class AuthRepository {
     try {
       await _provider.logout();
     } finally {
-      try {
-        final tokenService = Get.find<TokenService>();
-        await tokenService.ready;
-        await tokenService.clearTokens();
-      } catch (_) {
+      final tokenService = _tokenService;
+      if (tokenService != null) {
+        try {
+          await tokenService.ready;
+          await tokenService.clearTokens();
+        } catch (_) {
+          await _storage.clearTokens();
+        }
+      } else {
         await _storage.clearTokens();
       }
       await _storage.clearUserData();
@@ -316,8 +326,9 @@ class AuthRepository {
 
   Future<void> _persistTokens(ProviderAuthResult res) async {
     if (res.accessToken == null) return;
+    final tokenService = _tokenService;
+    if (tokenService == null) return;
     try {
-      final tokenService = Get.find<TokenService>();
       await tokenService.ready;
       await tokenService.storeTokens(
         accessToken: res.accessToken!,

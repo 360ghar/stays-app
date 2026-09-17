@@ -1,27 +1,34 @@
 import 'dart:convert';
 import 'dart:async';
 
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class StorageService extends GetxService {
+class StorageService {
+  factory StorageService() => _shared;
+  StorageService._internal();
+
+  // Shared instance so the legacy GetX graph and the Riverpod graph use the
+  // same backing store during migration. Use [StorageService()] everywhere.
+  static final StorageService _shared = StorageService._internal();
+
   // Completes when initialize() finishes so dependents can await readiness
   static final Completer<void> _ready = Completer<void>();
   static Future<void> get ready => _ready.future;
-  static const _boxName = 'app_storage';
   static const _accessTokenKey = 'access_token';
   static const _refreshTokenKey = 'refresh_token';
   static const _userDataKey = 'user_data';
 
-  late final GetStorage _box;
+  SharedPreferences? _prefs;
   late FlutterSecureStorage _secureStorage;
+  bool _initialized = false;
 
   Future<StorageService> initialize() async {
+    if (_initialized) return this;
     try {
-      await GetStorage.init(_boxName);
-      _box = GetStorage(_boxName);
+      _prefs ??= await SharedPreferences.getInstance();
       _secureStorage = const FlutterSecureStorage();
+      _initialized = true;
       if (!_ready.isCompleted) {
         _ready.complete();
       }
@@ -125,26 +132,31 @@ class StorageService extends GetxService {
       !jsonEncode(userData).contains('accessToken'),
       'saveUserData must never persist tokens; use TokenService.storeTokens instead',
     );
-    await _box.write(_userDataKey, jsonEncode(userData));
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setString(_userDataKey, jsonEncode(userData));
   }
 
   Future<Map<String, dynamic>?> getUserData() async {
-    final raw = _box.read<String>(_userDataKey);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    final raw = prefs.getString(_userDataKey);
     if (raw == null) return null;
     return jsonDecode(raw) as Map<String, dynamic>;
   }
 
   Future<void> clearUserData() async {
-    await _box.remove(_userDataKey);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.remove(_userDataKey);
   }
 
   // Cache management (non-sensitive data)
   Future<void> cache(String key, Map<String, dynamic> value) async {
-    await _box.write('cache_$key', jsonEncode(value));
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setString('cache_$key', jsonEncode(value));
   }
 
   Future<Map<String, dynamic>?> getCached(String key) async {
-    final raw = _box.read<String>('cache_$key');
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    final raw = prefs.getString('cache_$key');
     if (raw == null) return null;
     return jsonDecode(raw) as Map<String, dynamic>;
   }

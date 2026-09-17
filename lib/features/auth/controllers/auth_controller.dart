@@ -201,7 +201,6 @@ class AuthController extends BaseController {
     // Surface the last-used method so the login screen can pre-select it.
     lastMethod.value = service.lastMethod.value;
     lastIdentifierMasked.value = service.lastIdentifierMasked.value;
-    await service.purgeLegacyPlaintextTokens();
   }
 
   // Persist the last-used auth method + masked identifier (see AuthMethods).
@@ -263,9 +262,6 @@ class AuthController extends BaseController {
     rememberMe.value = value;
     final service = await _resolveRememberMeService();
     await service.setEnabled(value: value);
-    if (!value) {
-      await service.purgeLegacyPlaintextTokens();
-    }
   }
 
   // Centralised helper that applies the user's remember-me choice post-login.
@@ -273,9 +269,6 @@ class AuthController extends BaseController {
     await _ensureRememberMePreferenceReady();
     final service = await _resolveRememberMeService();
     await service.setEnabled(value: rememberMe.value);
-    if (!rememberMe.value) {
-      await service.purgeLegacyPlaintextTokens();
-    }
   }
 
   // Login with email or phone

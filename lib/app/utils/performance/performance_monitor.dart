@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import '../logger/app_logger.dart';
 
 /// Per-screen API-call counters alongside elapsed histograms.
@@ -9,8 +8,14 @@ import '../logger/app_logger.dart';
 ///   final calls = PerformanceMonitor.I.countSummary('provider.GET');
 ///   final top = PerformanceMonitor.I.topOperations(limit: 5);
 ///   AppLogger.info('calls=$calls top=$top');
-class PerformanceMonitor extends GetxService {
-  static PerformanceMonitor get I => Get.find<PerformanceMonitor>();
+class PerformanceMonitor {
+  factory PerformanceMonitor() => _shared;
+  PerformanceMonitor._internal();
+
+  // Shared instance so metrics accumulate app-wide across both DI graphs.
+  static final PerformanceMonitor _shared = PerformanceMonitor._internal();
+
+  static PerformanceMonitor get I => _shared;
 
   /// Per-operation elapsed-ms samples for histogram-style reporting.
   /// Bounded at [_maxSamplesPerOperation] entries per key (ring drop of the

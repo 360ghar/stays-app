@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:url_launcher/url_launcher.dart' show LaunchMode;
 
@@ -9,7 +8,7 @@ import '../services/apple_sign_in_service.dart';
 import 'auth/i_auth_provider.dart';
 import '../../utils/logger/app_logger.dart';
 
-class SupabaseAuthProvider extends GetxService implements IAuthProvider {
+class SupabaseAuthProvider implements IAuthProvider {
   /// All dependencies are constructor-injected. The `Get.find` fallback lives
   /// only in `InitialBinding` (the single registration site); this class never
   /// calls `Get.find` itself so misconfigured DI fails loudly at the binding.

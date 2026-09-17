@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:get/get.dart';
 
 import '../../utils/logger/app_logger.dart';
 
-class AnalyticsService extends GetxService {
+class AnalyticsService {
   AnalyticsService({required this.enabled}) {
     _initializeFirebaseAnalytics();
     if (enabled) {
@@ -22,8 +21,6 @@ class AnalyticsService extends GetxService {
 
   /// Get the Firebase Analytics observer for navigation tracking
   FirebaseAnalyticsObserver? get observer => _observer;
-
-  static AnalyticsService get I => Get.find<AnalyticsService>();
 
   void _runUnawaited(Future<void> future, String operation) {
     unawaited(

@@ -7,7 +7,17 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
-class LocationService extends GetxService {
+class LocationService {
+  factory LocationService() => _shared;
+  LocationService._internal() {
+    _readyCompleter = Completer<void>();
+    unawaited(_initLocationService());
+  }
+
+  // Shared instance so the legacy GetX graph and the Riverpod graph share
+  // one permission flow and position stream during migration.
+  static final LocationService _shared = LocationService._internal();
+
   // geocoding 5.x groups all functionality in the Geocoding class.
   final Geocoding _geocoding = Geocoding();
   final _currentPosition = Rxn<Position>();
@@ -36,13 +46,6 @@ class LocationService extends GetxService {
       _selectedLat.value ?? _currentPosition.value?.latitude;
   double? get longitude =>
       _selectedLng.value ?? _currentPosition.value?.longitude;
-
-  @override
-  void onInit() {
-    super.onInit();
-    _readyCompleter = Completer<void>();
-    unawaited(_initLocationService());
-  }
 
   /// Completes when the location service has finished its initial setup.
   /// Callers can `await locationService.ready` instead of busy-wait polling.

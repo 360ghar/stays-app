@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:stays_app/app/data/models/message_model.dart';
 import 'package:stays_app/app/data/repositories/message_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 class ChatUiState {
   const ChatUiState({
@@ -49,9 +49,7 @@ class ChatNotifier extends AutoDisposeFamilyNotifier<ChatUiState, String> {
     }
   }
 
-  MessageRepository? get _repo => Get.isRegistered<MessageRepository>()
-      ? Get.find<MessageRepository>()
-      : null;
+  MessageRepository get _repo => ref.watch(messageRepositoryProvider);
 
   @override
   ChatUiState build(String conversationId) {
@@ -65,13 +63,6 @@ class ChatNotifier extends AutoDisposeFamilyNotifier<ChatUiState, String> {
 
   Future<void> _bootstrap(String conversationId) async {
     final repo = _repo;
-    if (repo == null) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Chat service unavailable.',
-      );
-      return;
-    }
     try {
       final list = await repo.listMessages(conversationId);
       state = state.copyWith(messages: list, isLoading: false);
@@ -109,8 +100,8 @@ class ChatNotifier extends AutoDisposeFamilyNotifier<ChatUiState, String> {
 
   Future<void> send(String conversationId, String content) async {
     final text = content.trim();
+    if (text.isEmpty || state.isSending) return;
     final repo = _repo;
-    if (text.isEmpty || state.isSending || repo == null) return;
     state = state.copyWith(isSending: true);
     final optimistic = MessageModel(
       id: 'optimistic-${DateTime.now().microsecondsSinceEpoch}',

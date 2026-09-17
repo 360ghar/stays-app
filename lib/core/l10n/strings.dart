@@ -13,7 +13,7 @@ final localeProvider = StateProvider<Locale>(
 String tr(WidgetRef ref, String key) {
   final locale = ref.watch(localeProvider);
   final tag = '${locale.languageCode}_${locale.countryCode}';
-  final keys = LocalizationService().keys;
+  final keys = LocalizationService.keys;
   return keys[tag]?[key] ?? keys['en_US']?[key] ?? key;
 }
 
@@ -21,6 +21,6 @@ String tr(WidgetRef ref, String key) {
 String trOf(Ref ref, String key) {
   final locale = ref.watch(localeProvider);
   final tag = '${locale.languageCode}_${locale.countryCode}';
-  final keys = LocalizationService().keys;
+  final keys = LocalizationService.keys;
   return keys[tag]?[key] ?? keys['en_US']?[key] ?? key;
 }

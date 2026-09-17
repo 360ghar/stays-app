@@ -1,12 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:get/get.dart';
 
 import '../../app/utils/logger/app_logger.dart';
-import '../../app/utils/performance/performance_monitor.dart';
 import '../../app/utils/security/cert_pinning.dart';
-import '../../app/utils/services/error_service.dart';
 import '../../config/app_config.dart';
 
 /// Shared boot helpers for all entry points
@@ -20,15 +17,6 @@ import '../../config/app_config.dart';
 ///
 /// Cert pinning stays opt-in via the `API_CERT_SHA256` env var in every
 /// flavor; see [applyCertPinning].
-void ensureCommonBindings() {
-  if (!Get.isRegistered<ErrorService>()) {
-    Get.put<ErrorService>(ErrorService(), permanent: true);
-  }
-  if (!Get.isRegistered<PerformanceMonitor>()) {
-    Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
-  }
-}
-
 /// Opt-in certificate pinning from `API_CERT_SHA256` (comma-separated
 /// base64 SPKI pins). No-op when unset/empty. Pure w.r.t. DI: touches only
 /// [HttpOverrides.global], never GetX.

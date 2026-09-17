@@ -1,14 +1,17 @@
 import 'dart:convert';
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:get/get.dart';
 
 import '../app/data/services/locale_service.dart';
 import '../app/utils/logger/app_logger.dart';
 
-class LocalizationService extends Translations {
+/// Static string tables loaded from JSON assets at boot.
+///
+/// V2-only: locale state lives in `localeProvider` (seeded from
+/// [initialLocale] at startup). Changing language persists via
+/// [updateLocale]/[changeLocale] and the UI updates through the provider.
+class LocalizationService {
   // Supported locales
   static const fallbackLocale = Locale('en', 'US');
   static final List<String> langs = ['English', 'हिन्दी'];
@@ -23,8 +26,7 @@ class LocalizationService extends Translations {
   // Initial locale is resolved and assigned during init()
   static Locale initialLocale = fallbackLocale;
 
-  @override
-  Map<String, Map<String, String>> get keys => _keys;
+  static Map<String, Map<String, String>> get keys => _keys;
 
   // Initialize by loading JSON assets and reading saved locale
   static Future<void> init(LocaleService localeService) async {
@@ -106,16 +108,15 @@ class LocalizationService extends Translations {
     Locale locale,
     LocaleService localeService,
   ) async {
-    if (Get.locale == locale) return;
     await localeService.saveLocale(locale);
-    unawaited(Get.updateLocale(locale));
+    initialLocale = locale;
   }
 
   static Locale _getLocaleFromLanguage(String lang) {
     for (int i = 0; i < langs.length; i++) {
       if (lang == langs[i]) return locales[i];
     }
-    return Get.locale ?? initialLocale;
+    return initialLocale;
   }
 }
 

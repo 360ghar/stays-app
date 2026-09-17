@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
-import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
+import 'package:stays_app/core/providers/favorites_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Pure helpers (unit-testable, no GetX / no Flutter)
@@ -123,7 +123,7 @@ class ExploreUiState {
 }
 
 // ---------------------------------------------------------------------------
-// Notifier (strangler: reads legacy GetX services until Phase 3)
+// Notifier
 // ---------------------------------------------------------------------------
 
 final exploreProvider = NotifierProvider<ExploreNotifier, ExploreUiState>(
@@ -137,24 +137,14 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
     return const ExploreUiState();
   }
 
-  PropertiesRepository? get _repo => Get.isRegistered<PropertiesRepository>()
-      ? Get.find<PropertiesRepository>()
-      : null;
+  PropertiesRepository get _repo => ref.watch(propertiesRepositoryProvider);
 
-  LocationService? get _location =>
-      Get.isRegistered<LocationService>() ? Get.find<LocationService>() : null;
+  LocationService get _location => ref.watch(locationServiceProvider);
 
-  FavoritesController? get _favorites => Get.isRegistered<FavoritesController>()
-      ? Get.find<FavoritesController>()
-      : null;
-
-  WishlistRepository? get _wishlist => Get.isRegistered<WishlistRepository>()
-      ? Get.find<WishlistRepository>()
-      : null;
+  WishlistRepository get _wishlist => ref.watch(wishlistRepositoryProvider);
 
   String get _selectedCity {
     final location = _location;
-    if (location == null) return '';
     final city = location.currentCity.isNotEmpty
         ? location.currentCity
         : location.locationName.split(',').last;
@@ -163,16 +153,8 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
 
   Future<void> refresh() async {
     state = state.copyWith(isLoading: true, error: '');
-    final repo = _repo;
-    if (repo == null) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Still starting up. Pull to retry.',
-      );
-      return;
-    }
     try {
-      final resp = await repo.explore(limit: 30, radiusKm: 100);
+      final resp = await _repo.explore(limit: 30, radiusKm: 100);
       _applyProps(resp.items, cached: false);
     } catch (e, s) {
       AppLogger.error('Explore v2: load failed', e, s);
@@ -196,9 +178,9 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
     try {
       final location = _location;
       return _repo
-          ?.getOfflineExploreResults(
-            lat: location?.latitude,
-            lng: location?.longitude,
+          .getOfflineExploreResults(
+            lat: location.latitude,
+            lng: location.longitude,
           )
           ?.items;
     } catch (_) {
@@ -207,12 +189,11 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
   }
 
   void _applyProps(List<Property> props, {required bool cached}) {
-    final favorites = _favorites;
-    if (favorites != null) {
-      favorites.addAll(
-        props.where((p) => p.isFavorite || p.liked == true).map((p) => p.id),
-      );
-    }
+    ref
+        .read(favoritesProvider.notifier)
+        .addAll(
+          props.where((p) => p.isFavorite || p.liked == true).map((p) => p.id),
+        );
     final parts = partitionExplore(props, _selectedCity);
     final location = _location;
     state = ExploreUiState(
@@ -220,14 +201,13 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
       nearby: parts.nearby,
       isLoading: false,
       showingCached: cached,
-      locationName: location?.locationName ?? '',
+      locationName: location.locationName,
       city: _selectedCity,
     );
   }
 
   Future<void> useMyLocation() async {
     final location = _location;
-    if (location == null) return;
     state = state.copyWith(isLoading: true);
     try {
       location.clearSelectedLocation();
@@ -238,14 +218,14 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
     await refresh();
   }
 
-  bool isFavorite(int id) => _favorites?.isFavorite(id) ?? false;
+  bool isFavorite(int id) =>
+      ref.watch(favoritesProvider).contains(id);
 
   Future<void> toggleFavorite(Property property) async {
-    final favorites = _favorites;
+    final favorites = ref.read(favoritesProvider.notifier);
     final wishlist = _wishlist;
-    final nowFavorite = favorites?.isFavorite(property.id) ?? false;
+    final nowFavorite = favorites.isFavorite(property.id);
     _setLocalFavorite(property.id, !nowFavorite);
-    if (favorites == null || wishlist == null) return;
     try {
       if (nowFavorite) {
         favorites.removeFavorite(property.id);

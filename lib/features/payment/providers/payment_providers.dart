@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import 'package:stays_app/app/data/models/payment_model.dart';
 import 'package:stays_app/app/data/repositories/payment_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 enum PaymentStatus { idle, processing, success, failed, cancelled }
 
@@ -62,9 +62,7 @@ class PaymentNotifier extends Notifier<PaymentUiState> {
     return const PaymentUiState();
   }
 
-  PaymentRepository? get _repo => Get.isRegistered<PaymentRepository>()
-      ? Get.find<PaymentRepository>()
-      : null;
+  PaymentRepository get _repo => ref.watch(paymentRepositoryProvider);
 
   void configure({
     required int bookingId,
@@ -81,7 +79,6 @@ class PaymentNotifier extends Notifier<PaymentUiState> {
   }
 
   Future<void> process({String? name, String? email, String? phone}) async {
-    final repo = _repo;
     if (state.status == PaymentStatus.processing) return;
     if (state.bookingId <= 0) {
       state = state.copyWith(
@@ -90,16 +87,9 @@ class PaymentNotifier extends Notifier<PaymentUiState> {
       );
       return;
     }
-    if (repo == null) {
-      state = state.copyWith(
-        status: PaymentStatus.failed,
-        message: 'Payment service unavailable.',
-      );
-      return;
-    }
     state = state.copyWith(status: PaymentStatus.processing, message: '');
     try {
-      final order = await repo.createRazorpayOrder(state.bookingId);
+      final order = await _repo.createRazorpayOrder(state.bookingId);
       _activeOrder = order;
       AppLogger.info('Razorpay order created: ${order.orderId}');
       if (order.keyId == null || order.keyId!.isEmpty) {
@@ -140,17 +130,9 @@ class PaymentNotifier extends Notifier<PaymentUiState> {
   }
 
   Future<void> _handleSuccess(PaymentSuccessResponse response) async {
-    final repo = _repo;
     AppLogger.info('Razorpay payment success: ${response.paymentId}');
-    if (repo == null) {
-      state = state.copyWith(
-        status: PaymentStatus.failed,
-        message: 'Payment could not be verified. Contact support.',
-      );
-      return;
-    }
     try {
-      final ok = await repo.verifyRazorpayPayment(
+      final ok = await _repo.verifyRazorpayPayment(
         bookingId: state.bookingId,
         razorpayOrderId: response.orderId ?? _activeOrder?.orderId ?? '',
         razorpayPaymentId: response.paymentId ?? '',

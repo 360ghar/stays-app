@@ -12,8 +12,8 @@ class AboutController extends GetxController {
   final RxString environment = ''.obs;
 
   final List<Map<String, String>> complianceItems = const [
-    {'title': 'Terms & Conditions', 'route': Routes.legal, 'slug': 'terms'},
-    {'title': 'Privacy Policy', 'route': Routes.legal, 'slug': 'privacy'},
+    {'title': 'Terms & Conditions', 'route': Routes.profileLegal, 'slug': 'terms'},
+    {'title': 'Privacy Policy', 'route': Routes.profileLegal, 'slug': 'privacy'},
     {
       'title': 'Refund & Cancellation Policy',
       'route': Routes.profileHelp,

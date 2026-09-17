@@ -1,7 +1,7 @@
-import 'package:get/get.dart';
+import 'package:stays_app/app/data/providers/base_provider.dart';
+import 'package:stays_app/app/utils/extensions/http_extensions.dart';
 import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
-import 'package:stays_app/app/utils/extensions/http_extensions.dart';
 
 class PlacePrediction {
   const PlacePrediction({required this.description, required this.placeId});
@@ -22,45 +22,20 @@ class PlaceDetailsResult {
   final String name; // formatted address or name
 }
 
-class PlacesService extends GetConnect {
-  PlacesService();
+class PlacesService extends BaseProvider {
+  factory PlacesService() => _shared;
+  PlacesService._internal()
+    : super(
+        baseUrl: 'https://maps.googleapis.com/maps/api/place',
+        timeout: const Duration(seconds: 20),
+        // Third-party host: the base client redacts query strings in logs
+        // (so the `key` param never reaches logs) and sends no bearer token.
+        authHeader: false,
+      );
 
-  @override
-  void onInit() {
-    httpClient.baseUrl = 'https://maps.googleapis.com/maps/api/place';
-    httpClient.timeout = const Duration(seconds: 20);
-    httpClient.addRequestModifier<Object?>((request) async {
-      // Ensure JSON responses and lightweight logging.
-      // NOTE: the API key travels in the `key` query param but must NEVER
-      // appear in logs — redact the query string before logging.
-      request.headers['Accept'] = 'application/json';
-      AppLogger.logRequest({
-        'method': request.method,
-        'url': _redactKey(request.url.toString()),
-      });
-      return request;
-    });
-    httpClient.addResponseModifier<Object?>((request, response) async {
-      AppLogger.logResponse({
-        'status': response.statusCode,
-        'url': _redactKey(request.url.toString()),
-      });
-      return response;
-    });
-    super.onInit();
-  }
-
-  /// Strips the `key` query parameter (and any value-like params) so the
-  /// Places API key never reaches the logs.
-  String _redactKey(String url) {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return url;
-    final params = Map<String, String>.from(uri.queryParameters);
-    if (params.containsKey('key')) {
-      params['key'] = '<redacted>';
-    }
-    return uri.replace(queryParameters: params).toString();
-  }
+  // Shared instance so the legacy GetX graph and the Riverpod graph share
+  // one Dio client during migration.
+  static final PlacesService _shared = PlacesService._internal();
 
   String get _apiKey =>
       AppConfig.I.googleMapsApiKey ?? 'YOUR_GOOGLE_MAPS_API_KEY';

@@ -111,12 +111,11 @@ class SplashController extends BaseController {
         await tokenService.ready;
       }
 
-      // Remember-me flag + legacy plaintext purge live in RememberMeService.
+      // Remember-me flag lives in RememberMeService.
       final rememberMeService = Get.isRegistered<RememberMeService>()
           ? Get.find<RememberMeService>()
           : null;
       final rememberMeEnabled = rememberMeService?.enabled ?? false;
-      await rememberMeService?.purgeLegacyPlaintextTokens();
 
       var session = Supabase.instance.client.auth.currentSession;
       bool hasActiveSession = session != null && session.accessToken.isNotEmpty;

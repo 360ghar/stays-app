@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 /// Validation rule interface for different field types
@@ -163,7 +164,7 @@ class FieldValidator {
   FieldValidator(this.rules);
 
   final List<ValidationRule> rules;
-  final RxString error = ''.obs;
+  final ValueNotifier<String> error = ValueNotifier<String>('');
 
   /// Validate the field with the given value
   bool validate(String? value) {
@@ -198,7 +199,7 @@ class ValidationResult {
 }
 
 /// Centralized validation service for all forms
-class ValidationService extends GetxService {
+class ValidationService {
   static ValidationService get I => Get.find<ValidationService>();
 
   final Map<String, FieldValidator> _validators = {};
@@ -294,7 +295,7 @@ class ValidationService extends GetxService {
   /// Dispose all validators
   void dispose() {
     for (final validator in _validators.values) {
-      validator.error.close();
+      validator.error.dispose();
     }
     _validators.clear();
   }

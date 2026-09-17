@@ -11,7 +11,7 @@ import '../models/property_image_model.dart';
 
 /// Service for prefetching images to improve perceived performance.
 /// Preloads property images before they're displayed to eliminate loading delays.
-class ImagePrefetchService extends GetxService {
+class ImagePrefetchService {
   static ImagePrefetchService get I => Get.find<ImagePrefetchService>();
 
   final DefaultCacheManager _cacheManager = DefaultCacheManager();

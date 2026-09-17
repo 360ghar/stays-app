@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
 import 'package:stays_app/app/data/models/payment_model.dart';
 import 'package:stays_app/app/data/repositories/payment_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 class PaymentMethodsUiState {
   const PaymentMethodsUiState({
@@ -42,22 +42,12 @@ class PaymentMethodsNotifier extends Notifier<PaymentMethodsUiState> {
     return const PaymentMethodsUiState();
   }
 
-  PaymentRepository? get _repo => Get.isRegistered<PaymentRepository>()
-      ? Get.find<PaymentRepository>()
-      : null;
+  PaymentRepository get _repo => ref.watch(paymentRepositoryProvider);
 
   Future<void> load() async {
     state = state.copyWith(isLoading: true, error: '');
-    final repo = _repo;
-    if (repo == null) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Payment service unavailable.',
-      );
-      return;
-    }
     try {
-      final list = await repo.listMethods();
+      final list = await _repo.listMethods();
       state = PaymentMethodsUiState(methods: list);
     } catch (e, s) {
       AppLogger.error('Payment methods v2: load failed', e, s);
@@ -79,7 +69,7 @@ class PaymentMethodsNotifier extends Notifier<PaymentMethodsUiState> {
       state = state.copyWith(methods: next);
     }
     try {
-      await _repo?.removeMethod(methodId);
+      await _repo.removeMethod(methodId);
     } catch (e, s) {
       AppLogger.error('Payment methods v2: remove failed', e, s);
       if (removed != null) {
