@@ -32,17 +32,16 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  flutter_riverpod: ^2.6.1
-  riverpod_annotation: ^2.6.1
-  go_router: ^15.1.2
+  flutter_riverpod: ^3.4.3
+  go_router: ^18.0.1
   supabase_flutter: ^2.6.0
   json_annotation: ^4.9.0
   logger: ^2.0.2+1
-  cached_network_image: ^3.4.1
+  cached_network_image: ^4.0.0
   flutter_cache_manager: ^3.3.1
   image_picker: ^1.0.7
   package_info_plus: ^10.2.1
-  shimmer: ^3.0.0
+  shimmer: ^4.0.0
   intl: ^0.20.2
   connectivity_plus: ^7.0.0
   url_launcher: ^6.3.1
@@ -51,7 +50,7 @@ dependencies:
   flutter_dotenv: ^6.0.0
   geolocator: ^14.0.2
   geocoding: ^5.0.0
-  permission_handler: ^12.0.3
+  permission_handler: ^13.0.2
   webview_flutter: ^4.8.0
   webview_flutter_android: ^4.10.2
   webview_flutter_wkwebview: ^3.23.0

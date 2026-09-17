@@ -88,7 +88,7 @@ final inquiryFormProvider =
       InquiryFormNotifier.new,
     );
 
-class InquiryFormNotifier extends AutoDisposeNotifier<InquiryFormState> {
+class InquiryFormNotifier extends Notifier<InquiryFormState> {
   @override
   InquiryFormState build() => const InquiryFormState();
 

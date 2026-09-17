@@ -36,9 +36,13 @@ class ChatUiState {
 }
 
 final chatProvider = NotifierProvider.autoDispose
-    .family<ChatNotifier, ChatUiState, String>(ChatNotifier.new);
+    .family<ChatNotifier, ChatUiState, String>((arg) => ChatNotifier(arg));
 
-class ChatNotifier extends AutoDisposeFamilyNotifier<ChatUiState, String> {
+class ChatNotifier extends Notifier<ChatUiState> {
+  ChatNotifier(this.conversationId);
+
+  final String conversationId;
+
   RealtimeChannel? _channel;
 
   String get _me {
@@ -52,7 +56,7 @@ class ChatNotifier extends AutoDisposeFamilyNotifier<ChatUiState, String> {
   MessageRepository get _repo => ref.watch(messageRepositoryProvider);
 
   @override
-  ChatUiState build(String conversationId) {
+  ChatUiState build() {
     ref.onDispose(() {
       unawaited(_channel?.unsubscribe());
       _channel = null;

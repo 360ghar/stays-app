@@ -12,6 +12,9 @@ analyzer:
     - '**/*.mocks.dart'
     - 'lib/generated/**'
     - 'build/**'
+    - android/**
+    - ios/**
+    - web/**
 
 linter:
   rules:

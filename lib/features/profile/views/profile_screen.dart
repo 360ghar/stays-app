@@ -25,7 +25,7 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(_profileUserProvider);
-    final user = userAsync.valueOrNull;
+    final user = userAsync.value;
     return Scaffold(
       backgroundColor: StayTokens.paper,
       appBar: AppBar(title: const Text('Profile')),
