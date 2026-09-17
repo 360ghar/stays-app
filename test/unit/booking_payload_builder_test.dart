@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:stays_app/app/data/models/booking_pricing_model.dart';
-import 'package:stays_app/features/inquiry/controllers/inquiry_controller.dart';
+import 'package:stays_app/features/inquiry/providers/inquiry_providers.dart';
 
 void main() {
   const validPricing = BookingPricingModel(
@@ -55,9 +55,9 @@ void main() {
     });
   });
 
-  group('buildBookingPayload', () {
+  group('buildInquiryPayload', () {
     test('builds a payload with server-authoritative money fields', () {
-      final payload = buildBookingPayload(
+      final payload = buildInquiryPayload(
         pricing: validPricing,
         propertyId: 42,
         checkInIso: '2026-08-01T00:00:00Z',
@@ -87,7 +87,7 @@ void main() {
         totalAmount: 0,
       );
       expect(
-        () => buildBookingPayload(
+        () => buildInquiryPayload(
           pricing: invalid,
           propertyId: 1,
           checkInIso: '2026-08-01T00:00:00Z',
@@ -102,7 +102,7 @@ void main() {
     });
 
     test('additionalPayload can never override money fields', () {
-      final payload = buildBookingPayload(
+      final payload = buildInquiryPayload(
         pricing: validPricing,
         propertyId: 1,
         checkInIso: '2026-08-01T00:00:00Z',
@@ -124,7 +124,7 @@ void main() {
     });
 
     test('caller nights win over pricing nights when provided', () {
-      final payload = buildBookingPayload(
+      final payload = buildInquiryPayload(
         pricing: validPricing,
         propertyId: 1,
         checkInIso: '2026-08-01T00:00:00Z',

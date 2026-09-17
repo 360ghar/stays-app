@@ -4,7 +4,6 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/router/app_router.dart';
 
@@ -93,9 +92,9 @@ class DeepLinkService {
   /// tokens or other sensitive data that should never be written to the logs.
   static Uri _redact(Uri uri) => uri.replace(query: '', fragment: '');
 
-  String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
+  static String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
 
-  String? _mapToInternalPath(Uri uri) {
+  static String? _mapToInternalPath(Uri uri) {
     var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
     if (segments.isEmpty) return null;
 
@@ -124,14 +123,14 @@ class DeepLinkService {
     return RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id);
   }
 
-  String? _buildListingPath(String listingId) {
+  static String? _buildListingPath(String listingId) {
     if (!_isValidRouteId(listingId)) return null;
-    return Routes.listingDetail.replaceAll(':id', listingId);
+    return AppPaths.listing(listingId);
   }
 
-  String? _buildChatPath(String conversationId) {
+  static String? _buildChatPath(String conversationId) {
     if (!_isValidRouteId(conversationId)) return null;
-    return Routes.chat.replaceAll(':conversationId', conversationId);
+    return AppPaths.chat(conversationId);
   }
 
   Future<void> _navigateToPath(String path) async {

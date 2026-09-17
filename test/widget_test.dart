@@ -5,17 +5,13 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-
-import 'package:stays_app/app/ui/theme/app_theme.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('App builds root GetMaterialApp', (WidgetTester tester) async {
-    final app = GetMaterialApp(
-      theme: AppTheme.lightTheme,
-      home: const Scaffold(body: Center(child: Text('Hello'))),
+  testWidgets('App builds root MaterialApp', (WidgetTester tester) async {
+    const app = MaterialApp(
+      home: Scaffold(body: Center(child: Text('Hello'))),
     );
     await tester.pumpWidget(app);
     expect(find.text('Hello'), findsOneWidget);

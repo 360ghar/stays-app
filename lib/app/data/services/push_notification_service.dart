@@ -285,7 +285,7 @@ class PushNotificationService {
     } catch (_) {
       return null;
     }
-    return DeepLinkService().mapToInternalPath(uri);
+    return DeepLinkService.mapToInternalPath(uri);
   }
 
   static String _redact(String input) {

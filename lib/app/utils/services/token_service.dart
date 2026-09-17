@@ -67,7 +67,7 @@ class TokenService {
   /// via [_inFlightRefresh]. External callers (authenticator, splash restore)
   /// use the public [refresh] entry point, never the private [_refreshTokens].
   TokenService({StorageService? storageService})
-    : _storageService = storageService ?? StorageService() {
+    : _storageService = storageService {
     unawaited(_initialize());
   }
 
@@ -266,8 +266,13 @@ class TokenService {
 
   Future<void> _initialize() async {
     try {
-      _storageService ??= StorageService();
-      await StorageService.ready;
+      if (_storageService == null) {
+        // Real boot path: default to the shared store and wait for its async
+        // init. An explicitly injected store (tests, scoped graphs) is
+        // assumed ready by its owner.
+        _storageService = StorageService();
+        await StorageService.ready;
+      }
       await _loadStoredTokens();
 
       if (isAuthenticated.value) {
