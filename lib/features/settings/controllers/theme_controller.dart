@@ -21,7 +21,7 @@ class ThemeController extends GetxController {
 
   bool get isSystemMode => themeMode.value == ThemeMode.system;
 
-  Future<void> toggleDarkMode(bool isDark) async {
+  Future<void> toggleDarkMode({required bool isDark}) async {
     await updateThemeMode(isDark ? ThemeMode.dark : ThemeMode.light);
   }
 

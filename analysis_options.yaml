@@ -11,6 +11,7 @@ analyzer:
     - '**/*.freezed.dart'
     - '**/*.mocks.dart'
     - 'lib/generated/**'
+    - 'build/**'
 
 linter:
   rules:

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -216,7 +217,7 @@ class _ThemeToggleTile extends StatelessWidget {
   const _ThemeToggleTile({required this.value, required this.onChanged});
 
   final bool value;
-  final Future<void> Function(bool) onChanged;
+  final Future<void> Function({required bool isDark}) onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -271,7 +272,7 @@ class _ThemeToggleTile extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: (isEnabled) {
-              onChanged(isEnabled);
+              unawaited(onChanged(isDark: isEnabled));
             },
           ),
         ],

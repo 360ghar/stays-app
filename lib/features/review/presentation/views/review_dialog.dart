@@ -94,6 +94,6 @@ Future<bool> showReviewDialog({
     barrierDismissible: false,
   );
 
-  Get.delete<ReviewController>(tag: 'review_$bookingId');
+  await Get.delete<ReviewController>(tag: 'review_$bookingId');
   return result ?? false;
 }

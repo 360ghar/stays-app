@@ -1,5 +1,21 @@
 import 'package:flutter/material.dart';
 
+/// LEGACY theme constants. Do not use in new code.
+///
+/// Canonical theme going forward: design tokens in [StayTokens]
+/// (`lib/core/theme/tokens.dart`) + the Material 3 [AppTheme] in
+/// `lib/app/ui/theme/app_theme.dart`.
+///
+/// Deprecated because this class is stale: `errorColor` (and `errorRed`,
+/// `successColor`, `warningColor`, `infoColor`) are all blue
+/// (`0xFF3B82F6` / `0xFF60A5FA` / `0xFF93C5FD`) instead of semantic
+/// red/green/amber, so error states render in primary blue. Kept only until
+/// remaining imports migrate to `AppTheme` + `StayTokens`.
+@Deprecated(
+  'Use StayTokens (lib/core/theme/tokens.dart) + AppTheme '
+  '(lib/app/ui/theme/app_theme.dart) instead. This class has the wrong '
+  'errorColor (blue, not red).',
+)
 class AppTheme {
   static const Color primaryColor = Color(0xFF60A5FA);
   static const Color secondaryColor = Color(0xFF93C5FD);

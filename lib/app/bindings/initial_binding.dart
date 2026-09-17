@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../config/app_config.dart';
-import 'package:stays_app/app/controllers/notification/notification_controller.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/analytics_service.dart';
 import '../data/services/location_service.dart';
@@ -37,6 +37,20 @@ import 'package:stays_app/features/auth/controllers/auth_controller.dart';
 import 'package:stays_app/features/auth/controllers/form_validation_controller.dart';
 
 class InitialBinding extends Bindings {
+  /// Completes when the async startup chain (StorageService → TokenService,
+  /// SupabaseService, caches) finishes registering. Startup ordering contract:
+  /// [StorageService] initializes first and publishes [StorageService.ready];
+  /// [TokenService] and every other dependent await that future instead of
+  /// holding a local putAsync future, so there is exactly one ready signal
+  /// per service and no unawaited chain can boot out of order. Supabase init
+  /// is kicked off by the entry point and shared via
+  /// `SupabaseService.supabaseServiceReady`; this binding only awaits it.
+  static final Completer<void> _readyCompleter = Completer<void>();
+
+  /// Single future for the whole async DI chain. Completes (or throws) once
+  /// every startup putAsync above has registered.
+  static Future<void> get ready => _readyCompleter.future;
+
   @override
   void dependencies() {
     // Core services that don't depend on others
@@ -59,23 +73,23 @@ class InitialBinding extends Bindings {
       }, permanent: true),
     );
 
-    // Initialize async services in dependency order
-    // 1) Kick off StorageService initialization asynchronously and keep its future
+    // Initialize async services in dependency order.
+    // 1) StorageService first; dependents await StorageService.ready (the
+    // single ready signal) rather than a local future.
     final storageFuture = Get.putAsync<StorageService>(() async {
       final service = StorageService();
       await service.initialize();
       return service;
     }, permanent: true);
 
-    // 2) Register TokenService only after StorageService finishes
-    if (!Get.isRegistered<TokenService>()) {
-      unawaited(
-        Get.putAsync<TokenService>(() async {
-          await storageFuture; // ensure StorageService is registered and ready
-          return TokenService();
-        }, permanent: true),
-      );
-    }
+    // 2) TokenService only after StorageService is ready, with the storage
+    // handle injected (no Get.find inside the service constructor path).
+    final tokenFuture = !Get.isRegistered<TokenService>()
+        ? Get.putAsync<TokenService>(() async {
+            await StorageService.ready;
+            return TokenService(storageService: Get.find<StorageService>());
+          }, permanent: true)
+        : Future.value(Get.find<TokenService>());
 
     // Remember-me preference + last-used auth method (single source of truth;
     // never stores tokens — see RememberMeService security contract).
@@ -87,32 +101,44 @@ class InitialBinding extends Bindings {
       );
     }
 
-    // Initialize Supabase service if needed. Single registration path of
-    // record: entry points only kick off `initialize()` in parallel and
-    // publish the future on `SupabaseService.supabaseServiceReady`, which
-    // we await here to avoid a double init and a missed `_initialized` flag.
-    if (!Get.isRegistered<SupabaseService>()) {
-      unawaited(
-        Get.putAsync<SupabaseService>(() async {
-          final s = SupabaseService(
-            url: AppConfig.I.supabaseUrl,
-            publishableKey: AppConfig.I.supabasePublishableKey,
-          );
-          if (SupabaseService.supabaseServiceReady != null) {
-            await SupabaseService.supabaseServiceReady;
-          } else {
-            await s.initialize();
-          }
-          return s;
-        }, permanent: true),
-      );
-    }
+    // 3) SupabaseService: entry points kick off `initialize()` in parallel and
+    // publish the future on `SupabaseService.supabaseServiceReady`, which we
+    // await here to avoid a double init and a missed `_initialized` flag.
+    final supabaseFuture = !Get.isRegistered<SupabaseService>()
+        ? Get.putAsync<SupabaseService>(() async {
+            final s = SupabaseService(
+              url: AppConfig.I.auth.supabaseUrl,
+              publishableKey: AppConfig.I.auth.supabasePublishableKey,
+            );
+            if (SupabaseService.supabaseServiceReady != null) {
+              await SupabaseService.supabaseServiceReady;
+            } else {
+              await s.initialize();
+            }
+            return s;
+          }, permanent: true)
+        : Future.value(Get.find<SupabaseService>());
+
+    // Single ready future for the auth-critical startup chain. Independent
+    // services above (crash reporting, remember-me, caches, prefetch) stay
+    // fire-and-forget by design and are intentionally not part of this gate.
+    unawaited(
+      Future.wait([storageFuture, tokenFuture, supabaseFuture])
+          .then((_) {
+            if (!_readyCompleter.isCompleted) _readyCompleter.complete();
+          })
+          .catchError((Object e, StackTrace s) {
+            if (!_readyCompleter.isCompleted) {
+              _readyCompleter.completeError(e, s);
+            }
+          }),
+    );
 
     // App-specific services (remove excessive permanent: true)
     Get.put<LocationService>(LocationService());
     Get.put<PlacesService>(PlacesService());
     Get.put<AnalyticsService>(
-      AnalyticsService(enabled: AppConfig.I.enableAnalytics),
+      AnalyticsService(enabled: AppConfig.I.api.enableAnalytics),
       permanent: true,
     );
 
@@ -137,9 +163,6 @@ class InitialBinding extends Bindings {
       }, permanent: true),
     );
 
-    // NotificationController is initialized here during app startup
-    Get.put<NotificationController>(NotificationController(), permanent: true);
-
     // ============================================================
     // AUTH GRAPH — canonical single registration (R7 DI consolidation).
     // This binding always runs first (GetMaterialApp.initialBinding), so the
@@ -153,8 +176,17 @@ class InitialBinding extends Bindings {
     // Backend auth state-machine client (identifier-status / last-method).
     Get.lazyPut<AuthApiProvider>(() => AuthApiProvider(), fenix: true);
 
-    // Canonical auth provider: Supabase in all flavors.
-    Get.lazyPut<IAuthProvider>(() => SupabaseAuthProvider(), fenix: true);
+    // Canonical auth provider: Supabase in all flavors. Dependencies are
+    // injected here — the only site where Get.find fallbacks live.
+    Get.lazyPut<IAuthProvider>(
+      () => SupabaseAuthProvider(
+        client: Supabase.instance.client,
+        storage: Get.find<StorageService>(),
+        google: Get.find<GoogleSignInService>(),
+        apple: Get.find<AppleSignInService>(),
+      ),
+      fenix: true,
+    );
 
     // Shared user/profile graph (UsersProvider -> ProfileRepository).
     Get.lazyPut<UsersProvider>(() => UsersProvider(), fenix: true);
@@ -171,10 +203,12 @@ class InitialBinding extends Bindings {
     );
 
     // Canonical AuthRepository with the AuthApiProvider wired into it.
+    // Get.find fallbacks live here, not in the repository constructor.
     Get.lazyPut<AuthRepository>(
       () => AuthRepository(
         provider: Get.find<IAuthProvider>(),
         authApi: Get.find<AuthApiProvider>(),
+        storage: Get.find<StorageService>(),
       ),
     );
 

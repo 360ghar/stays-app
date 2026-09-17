@@ -48,11 +48,11 @@ class PaymentMethodController extends BaseController {
     try {
       final method = await _repository.addMethod({
         'method_type': methodType,
-        if (brand != null) 'brand': brand,
-        if (last4 != null) 'last4': last4,
-        if (razorpayToken != null) 'razorpay_token': razorpayToken,
-        if (razorpayPaymentId != null) 'razorpay_payment_id': razorpayPaymentId,
-        if (nickname != null) 'nickname': nickname,
+        'brand': ?brand,
+        'last4': ?last4,
+        'razorpay_token': ?razorpayToken,
+        'razorpay_payment_id': ?razorpayPaymentId,
+        'nickname': ?nickname,
         'is_default': isDefault,
       });
       methods.insert(0, method);

@@ -25,7 +25,7 @@ class SwipesProvider extends BaseProvider {
     final query = <String, dynamic>{
       if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       'limit': limit,
-      if (isLiked != null) 'is_liked': isLiked,
+      'is_liked': ?isLiked,
       ...?filters,
     };
     final res = await get('/api/v1/swipes', query: query.asQueryParams());

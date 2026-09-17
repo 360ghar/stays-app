@@ -70,11 +70,11 @@ class PrivacyController extends BaseController {
     );
   }
 
-  void setProfileVisible(bool value) {
+  void setProfileVisible({required bool value}) {
     profileVisible.value = value;
   }
 
-  void setLocationSharing(bool value) {
+  void setLocationSharing({required bool value}) {
     locationSharing.value = value;
   }
 

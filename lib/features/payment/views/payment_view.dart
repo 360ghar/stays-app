@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:stays_app/features/payment/controllers/payment_controller.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 /// Full payment screen. Expects booking context via [Get.arguments]:
 ///   - `booking_id` (int, required)
@@ -18,8 +19,8 @@ class PaymentView extends StatelessWidget {
     final args = (Get.arguments is Map)
         ? Get.arguments as Map
         : <String, dynamic>{};
-    final bookingId = (args['booking_id'] as num?)?.toInt() ?? 0;
-    final amount = (args['amount'] as num?)?.toDouble() ?? 0.0;
+    final bookingId = asInt(args['booking_id']) ?? 0;
+    final amount = asDouble(args['amount']) ?? 0.0;
     final currency = (args['currency'] as String?) ?? 'INR';
     final title = args['title'] as String? ?? 'Booking';
     final email = args['email'] as String?;

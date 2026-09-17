@@ -3,11 +3,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/app_config.dart';
+import 'core/boot/v2_boot.dart';
+import 'core/router/app_router.dart';
 import 'app/routes/app_pages.dart';
 import 'l10n/localization_service.dart';
 import 'app/bindings/initial_binding.dart';
@@ -18,9 +21,8 @@ import 'app/data/services/supabase_service.dart';
 import 'app/data/services/crash_reporting_service.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
-import 'app/utils/performance/performance_monitor.dart';
-import 'app/utils/services/error_service.dart';
 import 'app/utils/security/security_service.dart';
+import 'core/boot/common_boot.dart';
 import 'features/settings/controllers/theme_controller.dart';
 
 Future<void> main() async {
@@ -31,18 +33,13 @@ Future<void> main() async {
       // Default to dev if launched via lib/main.dart
       await dotenv.load(fileName: '.env.dev');
       AppConfig.setConfig(AppConfig.dev());
-      if (!Get.isRegistered<ErrorService>()) {
-        Get.put<ErrorService>(ErrorService(), permanent: true);
-      }
-      if (!Get.isRegistered<PerformanceMonitor>()) {
-        Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
-      }
-      SecurityService().validateApiKeys();
+      ensureCommonBindings();
+      SecurityService.validateApiKeys();
 
       // Optional certificate pinning when API_CERT_SHA256 is provided
       final pinsRaw = dotenv.env['API_CERT_SHA256'];
       if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
-        final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
+        final host = Uri.parse(AppConfig.I.api.apiBaseUrl).host;
         final pins = pinsRaw
             .split(',')
             .map((e) => e.trim())
@@ -60,8 +57,8 @@ Future<void> main() async {
       // for the registered client). This entry point just kicks off init in
       // parallel with the other services; the binding awaits the result.
       SupabaseService.supabaseServiceReady = SupabaseService(
-        url: AppConfig.I.supabaseUrl,
-        publishableKey: AppConfig.I.supabasePublishableKey,
+        url: AppConfig.I.auth.supabaseUrl,
+        publishableKey: AppConfig.I.auth.supabasePublishableKey,
       ).initialize();
 
       // Parallelize initialization of independent services for faster startup
@@ -97,7 +94,13 @@ Future<void> main() async {
         permanent: true,
       );
 
-      runApp(const MyApp());
+      // V2 boot has no GetMaterialApp to run InitialBinding, so run the
+      // canonical DI graph here. Legacy boot runs it via initialBinding.
+      if (useV2Router) {
+        ensureV2Bindings();
+      }
+
+      runApp(const ProviderScope(child: MyApp()));
     },
     (error, stackTrace) async {
       AppLogger.error('Uncaught zone error', error, stackTrace);
@@ -120,6 +123,13 @@ class MyApp extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     return Obx(() {
       final currentLocale = Get.locale ?? LocalizationService.initialLocale;
+      if (useV2Router) {
+        return buildV2App(
+          title: '360ghar stays',
+          themeMode: themeController.themeMode.value,
+          locale: currentLocale,
+        );
+      }
       return GetMaterialApp(
         title: '360ghar stays',
         theme: AppTheme.lightTheme,

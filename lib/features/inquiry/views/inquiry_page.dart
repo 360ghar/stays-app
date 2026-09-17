@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,6 +9,7 @@ import 'package:stays_app/app/utils/constants/app_constants.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
 import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/ui/widgets/common/location_filter_app_bar.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 String _deriveStatusCategory(String? status) {
   final value = status?.toString().toLowerCase() ?? '';
@@ -145,7 +147,7 @@ class InquiriesPage extends StatelessWidget {
                     case _ListItemType.booking:
                       final booking = item.booking!;
                       final priceLabel = _currencyFormat.format(
-                        (booking['totalAmount'] as num?)?.toDouble() ?? 0,
+                        asDouble(booking['totalAmount']) ?? 0,
                       );
                       final category = _deriveStatusCategory(booking['status']);
                       final animationDuration = Duration(
@@ -205,16 +207,12 @@ class InquiriesPage extends StatelessWidget {
     final grouped = <int, List<Map<String, dynamic>>>{};
     final sorted = List<Map<String, dynamic>>.from(bookings)
       ..sort((a, b) {
-        final aDate =
-            DateTime.tryParse(a['checkIn']?.toString() ?? '') ?? DateTime.now();
-        final bDate =
-            DateTime.tryParse(b['checkIn']?.toString() ?? '') ?? DateTime.now();
+        final aDate = asDateTime(a['checkIn']) ?? DateTime.now();
+        final bDate = asDateTime(b['checkIn']) ?? DateTime.now();
         return bDate.compareTo(aDate);
       });
     for (final booking in sorted) {
-      final checkIn =
-          DateTime.tryParse(booking['checkIn']?.toString() ?? '') ??
-          DateTime.now();
+      final checkIn = asDateTime(booking['checkIn']) ?? DateTime.now();
       grouped.putIfAbsent(checkIn.year, () => []).add(booking);
     }
     final years = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -244,51 +242,57 @@ class InquiriesPage extends StatelessWidget {
       _StatusOption('upcoming', 'Upcoming inquiries'),
       _StatusOption('today', 'Today\'s inquiries'),
     ];
-    Get.bottomSheet(
-      SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Filter by status',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+    unawaited(
+      Get.bottomSheet(
+        SafeArea(
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
-              const SizedBox(height: 12),
-              ...options.map((option) {
-                final isActive =
-                    _statusFilter.value == option.value ||
-                    (option.value == null && _statusFilter.value == null);
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    option.label,
-                    style: GoogleFonts.poppins(
-                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Filter by status',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
                   ),
-                  trailing: isActive
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          color: theme.colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () {
-                    _statusFilter.value = option.value;
-                    Get.back();
-                  },
-                );
-              }),
-            ],
+                ),
+                const SizedBox(height: 12),
+                ...options.map((option) {
+                  final isActive =
+                      _statusFilter.value == option.value ||
+                      (option.value == null && _statusFilter.value == null);
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      option.label,
+                      style: GoogleFonts.poppins(
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w400,
+                      ),
+                    ),
+                    trailing: isActive
+                        ? Icon(
+                            Icons.check_circle_rounded,
+                            color: theme.colorScheme.primary,
+                          )
+                        : null,
+                    onTap: () {
+                      _statusFilter.value = option.value;
+                      Get.back();
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -509,16 +513,16 @@ class _BookingCard extends StatelessWidget {
   }
 
   String _formatDateRange(Map<String, dynamic> booking) {
-    final checkIn = DateTime.tryParse(booking['checkIn']?.toString() ?? '');
-    final checkOut = DateTime.tryParse(booking['checkOut']?.toString() ?? '');
+    final checkIn = asDateTime(booking['checkIn']);
+    final checkOut = asDateTime(booking['checkOut']);
     if (checkIn == null || checkOut == null) return '-';
     final formatter = DateFormat('dd MMM, yyyy');
     return '${formatter.format(checkIn)} – ${formatter.format(checkOut)}';
   }
 
   String _formatGuests(Map<String, dynamic> booking) {
-    final guests = (booking['guests'] as num?)?.toInt() ?? 0;
-    final rooms = (booking['rooms'] as num?)?.toInt() ?? 0;
+    final guests = asInt(booking['guests']) ?? 0;
+    final rooms = asInt(booking['rooms']) ?? 0;
     final guestLabel = guests == 1 ? 'guest' : 'guests';
     final roomLabel = rooms == 1 ? 'room' : 'rooms';
     return '$guests $guestLabel • $rooms $roomLabel';

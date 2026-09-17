@@ -162,7 +162,7 @@ class PropertiesRepository {
           .then<void>((_) {}, onError: (Object _, StackTrace _) {})
           .whenComplete(() {
             if (identical(_inFlight[key], future)) {
-              _inFlight.remove(key);
+              unawaited(_inFlight.remove(key));
             }
           }),
     );

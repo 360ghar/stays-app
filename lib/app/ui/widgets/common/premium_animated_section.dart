@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:stays_app/app/ui/theme/app_animations.dart';
@@ -75,7 +76,7 @@ class _PremiumAnimatedSectionState extends State<PremiumAnimatedSection>
       _hasStarted = true;
       Future.delayed(widget.delay, () {
         if (mounted) {
-          _controller.forward();
+          unawaited(_controller.forward());
         }
       });
     }
@@ -193,19 +194,19 @@ class _PremiumAnimatedContainerState extends State<PremiumAnimatedContainer>
     ).animate(CurvedAnimation(parent: _controller, curve: widget.curve));
 
     // Start entrance animation
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   void _handleTapDown(TapDownDetails details) {
-    _controller.reverse();
+    unawaited(_controller.reverse());
   }
 
   void _handleTapUp(TapUpDetails details) {
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   void _handleTapCancel() {
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   @override

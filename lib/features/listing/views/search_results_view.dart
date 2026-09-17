@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -70,54 +71,58 @@ class SearchResultsView extends GetView<ListingController> {
       ('relevance', 'Relevance'),
     ];
     final current = filterController.filterFor(FilterScope.locate).sortBy;
-    Get.bottomSheet(
-      SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Sort by',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            ...options.map((opt) {
-              final (value, label) = opt;
-              return RadioListTile<String>(
-                value: value,
-                groupValue: current,
-                title: Text(label),
-                onChanged: (selected) {
-                  if (selected == null) return;
-                  final base = filterController.filterFor(FilterScope.locate);
-                  filterController.setFilters(
-                    FilterScope.locate,
-                    base.copyWith(sortBy: selected),
-                  );
-                  Get.back();
-                },
+    unawaited(
+      Get.bottomSheet(
+        SafeArea(
+          child: RadioGroup<String>(
+            groupValue: current,
+            onChanged: (selected) {
+              if (selected == null) return;
+              final base = filterController.filterFor(FilterScope.locate);
+              filterController.setFilters(
+                FilterScope.locate,
+                base.copyWith(sortBy: selected),
               );
-            }),
-            ListTile(
-              leading: const Icon(Icons.clear),
-              title: const Text('Clear sort'),
-              onTap: () {
-                final base = filterController.filterFor(FilterScope.locate);
-                filterController.setFilters(
-                  FilterScope.locate,
-                  base.copyWith(),
-                );
-                Get.back();
-              },
+              Get.back();
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Sort by',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                ...options.map((opt) {
+                  final (value, label) = opt;
+                  return RadioListTile<String>(
+                    value: value,
+                    title: Text(label),
+                  );
+                }),
+                ListTile(
+                  leading: const Icon(Icons.clear),
+                  title: const Text('Clear sort'),
+                  onTap: () {
+                    final base = filterController.filterFor(FilterScope.locate);
+                    filterController.setFilters(
+                      FilterScope.locate,
+                      base.copyWith(),
+                    );
+                    Get.back();
+                  },
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
+          ),
         ),
-      ),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
       ),
     );
   }

@@ -56,7 +56,14 @@ abstract class BaseController extends GetxController {
     _errorService.handleError(error, stackTrace, context);
   }
 
-  /// Execute a function with loading state and error handling
+  /// Execute a function with loading state and error handling.
+  ///
+  /// Returns the operation's value, or null when the operation threw (the
+  /// error is already surfaced via [handleError] unless [swallowError]).
+  /// Null therefore means failure — with one caveat: it is ambiguous with an
+  /// operation that legitimately returns null. Callers that need to tell
+  /// "failed" apart from "null result" must try/catch the operation
+  /// themselves instead of using this helper.
   Future<T?> executeWithErrorHandling<T>(
     Future<T> Function() operation, {
     bool showLoading = true,

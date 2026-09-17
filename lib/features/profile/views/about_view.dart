@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/features/profile/controllers/about_controller.dart';
@@ -52,7 +53,7 @@ class AboutView extends GetView<AboutController> {
                   onTap: () {
                     final route = item['route'];
                     if (route != null) {
-                      Get.toNamed(route, arguments: item['slug']);
+                      unawaited(Get.toNamed(route, arguments: item['slug']));
                     }
                   },
                 ),

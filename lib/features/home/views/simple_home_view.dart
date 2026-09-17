@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,7 +43,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
         final now = DateTime.now();
         if (_lastBackPress != null &&
             now.difference(_lastBackPress!) < const Duration(seconds: 2)) {
-          SystemNavigator.pop();
+          unawaited(SystemNavigator.pop());
         } else {
           _lastBackPress = now;
           ScaffoldMessenger.of(context).showSnackBar(
@@ -63,7 +64,7 @@ class _SimpleHomeViewState extends State<SimpleHomeView> {
           onPageChanged: (index) {
             controller.currentIndex.value = index;
             if (index == 3 && Get.isRegistered<HotelsMapController>()) {
-              Get.find<HotelsMapController>().getCurrentLocation();
+              unawaited(Get.find<HotelsMapController>().getCurrentLocation());
             }
           },
           itemBuilder: (context, index) {
@@ -262,9 +263,9 @@ class _PremiumNavItemState extends State<_PremiumNavItem>
     super.didUpdateWidget(oldWidget);
     if (widget.isActive != oldWidget.isActive) {
       if (widget.isActive) {
-        _controller.forward(from: 0);
+        unawaited(_controller.forward(from: 0));
       } else {
-        _controller.reverse();
+        unawaited(_controller.reverse());
       }
     }
   }

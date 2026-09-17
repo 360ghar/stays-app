@@ -29,10 +29,10 @@ class SplashController extends BaseController {
         AppLogger.warning(
           'Splash watchdog triggered. Forcing navigation to login.',
         );
-        _navigateToNextScreen(forceLogin: true);
+        unawaited(_navigateToNextScreen(forceLogin: true));
       }
     });
-    _initializeApp();
+    unawaited(_initializeApp());
   }
 
   Future<void> _initializeApp() async {

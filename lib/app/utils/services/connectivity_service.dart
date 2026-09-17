@@ -155,7 +155,7 @@ class ConnectivityService extends GetxService {
 
   String _resolveApiHost() {
     try {
-      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      final uri = Uri.parse(AppConfig.I.api.apiBaseUrl);
       if (uri.host.isNotEmpty) return uri.host;
     } catch (_) {}
     return '';
@@ -163,7 +163,7 @@ class ConnectivityService extends GetxService {
 
   int _resolveHealthPort() {
     try {
-      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      final uri = Uri.parse(AppConfig.I.api.apiBaseUrl);
       if (uri.port > 0) return uri.port;
       return uri.scheme == 'http' ? 80 : 443;
     } catch (_) {

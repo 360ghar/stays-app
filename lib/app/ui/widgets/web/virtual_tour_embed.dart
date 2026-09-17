@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -64,11 +65,10 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
       },
     );
 
-    _controller
-      ..setBackgroundColor(Colors.transparent)
-      ..enableZoom(false);
+    unawaited(_controller.setBackgroundColor(Colors.transparent));
+    unawaited(_controller.enableZoom(false));
 
-    WebViewHelper.load(widget.tourUrl, _controller);
+    unawaited(WebViewHelper.load(widget.tourUrl, _controller));
   }
 
   Future<void> _reload() async {
@@ -105,7 +105,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
   }
 
   void _openFullscreen() {
-    Get.toNamed(Routes.tour, arguments: widget.tourUrl);
+    unawaited(Get.toNamed(Routes.tour, arguments: widget.tourUrl));
   }
 
   @override

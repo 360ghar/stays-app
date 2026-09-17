@@ -20,11 +20,13 @@ class LocateView extends GetView<HotelsMapController> {
   const LocateView({super.key});
 
   void _openSearchSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _LocateSearchSheet(controller: controller),
+    unawaited(
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => _LocateSearchSheet(controller: controller),
+      ),
     );
   }
 
@@ -1083,6 +1085,7 @@ class _LocateSearchSheet extends StatelessWidget {
                             title: Text(prediction.description),
                             onTap: () async {
                               await controller.selectPrediction(prediction);
+                              if (!context.mounted) return;
                               Navigator.of(context).pop();
                             },
                           );

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -22,7 +23,9 @@ class WebViewHelper {
         WebViewPlatform.instance ??= webview_android.AndroidWebViewPlatform();
         // Debug bridge must never ship in release builds.
         if (kDebugMode) {
-          webview_android.AndroidWebViewController.enableDebugging(true);
+          unawaited(
+            webview_android.AndroidWebViewController.enableDebugging(true),
+          );
         }
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         WebViewPlatform.instance ??= WebKitWebViewPlatform();
@@ -158,10 +161,10 @@ class WebViewHelper {
     final controller = WebViewController.fromPlatformCreationParams(
       _createParams(),
     );
-    controller
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(Colors.black)
-      ..setNavigationDelegate(
+    unawaited(controller.setJavaScriptMode(JavaScriptMode.unrestricted));
+    unawaited(controller.setBackgroundColor(Colors.black));
+    unawaited(
+      controller.setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: onPageStarted,
           onPageFinished: onPageFinished,
@@ -171,12 +174,13 @@ class WebViewHelper {
           // supply a custom one.
           onNavigationRequest: onNavigationRequest ?? defaultNavigationPolicy,
         ),
-      );
+      ),
+    );
 
     if (controller.platform is webview_android.AndroidWebViewController) {
       final androidController =
           controller.platform as webview_android.AndroidWebViewController;
-      androidController.setMediaPlaybackRequiresUserGesture(false);
+      unawaited(androidController.setMediaPlaybackRequiresUserGesture(false));
     }
 
     return controller;

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -39,7 +40,7 @@ class TourController extends GetxController {
         isLoading.value = false;
       },
     );
-    WebViewHelper.load(url, webViewController);
+    unawaited(WebViewHelper.load(url, webViewController));
   }
 
   void reload() {
@@ -52,7 +53,7 @@ class TourController extends GetxController {
     hasError.value = false;
     isLoading.value = true;
     progress.value = 0;
-    WebViewHelper.load(url, webViewController);
+    unawaited(WebViewHelper.load(url, webViewController));
   }
 
   void _resolveUrlFromArguments() {

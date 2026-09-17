@@ -161,6 +161,24 @@ Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET`
   - `/tour` (360° virtual tour), `/wishlist`
   - `/profile`, `/profile/edit`, `/profile/preferences`, `/profile/notifications`, `/profile/privacy`, `/profile/help`, `/profile/about`, `/profile/legal`, `/profile/feedback/bug`, `/profile/feedback/feature`, `/account-settings`, `/inquiries`
 
+### Canonical paths: `AppPaths` (V2) vs `Routes` (legacy)
+
+New code uses `AppPaths` (`lib/core/router/app_router.dart`, go_router + Riverpod). `Routes` (`lib/app/routes/app_routes.dart`, GetX) is legacy; its 12 aliases are deprecated since 1.0.1 and removed in 1.1.0.
+
+| V2 (`AppPaths`) | Legacy (`Routes`) | Notes |
+| --- | --- | --- |
+| `/explore` | `/home` | V2 shell hub; legacy bottom-nav host |
+| `/trips` | `/inquiries` (`trips`, `enquiries` aliases) | Same hub, renamed |
+| `/inquiry` | `/inquiry` (`enquiry`, `booking` aliases) | Booking flow entry |
+| `/inquiry-confirmation` | `/inquiry-confirmation` (`enquiryConfirmation`, `bookingConfirmation`) | Post-inquiry receipt |
+| `/listing/:id` | `/listing/:id` | Identical in both routers |
+| `/chat/:id` | `/chat/:conversationId` | Identical shape, param renamed |
+| `/login`, `/search`, `/search-results`, `/payment`, `/payment-methods`, `/inbox`, `/profile`, `/wishlist`, `/tour/:id` | Same literals | Pass through `mapLegacyPathToV2` unchanged |
+
+### V2 rollback
+
+The V2 boot is gated by `useV2Router` in `lib/core/router/app_router.dart` (currently `true`). Rollback to the legacy GetX boot: set `useV2Router = false` in that file and relaunch any entrypoint (`lib/main*.dart`); no other changes needed. Deep links keep working because `mapLegacyPathToV2` translates renamed hubs while concrete paths (`/listing/42`, `/chat/abc`) are identical in both routers.
+
 ## Testing
 
 ```

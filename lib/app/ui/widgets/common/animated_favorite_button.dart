@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/app_animations.dart';
@@ -72,9 +73,9 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton>
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isFavorite != widget.isFavorite) {
       if (widget.isFavorite) {
-        _controller.forward(from: 0);
+        unawaited(_controller.forward(from: 0));
       } else {
-        _controller.reverse(from: 1);
+        unawaited(_controller.reverse(from: 1));
       }
     }
   }

@@ -330,11 +330,7 @@ class AnalyticsService extends GetxService {
     log(
       AnalyticsEvent(
         name: AnalyticsEventNames.performance,
-        params: {
-          'metric': metric,
-          'value': value,
-          if (label != null) 'label': label,
-        },
+        params: {'metric': metric, 'value': value, 'label': ?label},
       ),
     );
   }

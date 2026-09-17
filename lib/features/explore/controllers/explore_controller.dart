@@ -125,7 +125,7 @@ class ExploreController extends BaseController
   }
 
   void navigateToSearch() {
-    Get.toNamed('/search');
+    unawaited(Get.toNamed('/search'));
   }
 
   Future<void> useMyLocation() async {
@@ -170,11 +170,11 @@ class ExploreController extends BaseController
         time: const Duration(milliseconds: 180),
       ),
     );
-    _fetchInitialData();
+    unawaited(_fetchInitialData());
     // Reload properties when user selects a new location
     trackWorker(
       ever<String>(_locationService.locationNameRx, (_) {
-        _reloadWithFilters();
+        unawaited(_reloadWithFilters());
       }),
     );
   }
@@ -422,9 +422,11 @@ class ExploreController extends BaseController
   }
 
   void navigateToPropertyDetail(Property property) {
-    Get.toNamed(
-      Routes.listingDetail.replaceAll(':id', '${property.id}'),
-      arguments: property,
+    unawaited(
+      Get.toNamed(
+        Routes.listingDetail.replaceAll(':id', '${property.id}'),
+        arguments: property,
+      ),
     );
 
     // Prefetch all images for the property detail view
@@ -485,14 +487,16 @@ class ExploreController extends BaseController
   void navigateToAllProperties(String categoryType) {
     final lat = _locationService.latitude;
     final lng = _locationService.longitude;
-    Get.toNamed(
-      Routes.searchResults,
-      arguments: {
-        'category': categoryType,
-        if (lat != null) 'lat': lat,
-        if (lng != null) 'lng': lng,
-        'radius_km': 100.0,
-      },
+    unawaited(
+      Get.toNamed(
+        Routes.searchResults,
+        arguments: {
+          'category': categoryType,
+          'lat': ?lat,
+          'lng': ?lng,
+          'radius_km': 100.0,
+        },
+      ),
     );
   }
 }

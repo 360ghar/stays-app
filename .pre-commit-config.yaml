@@ -1,0 +1,15 @@
+# Local git hooks. Mirrors the CI gate in .github/workflows/ci.yml
+# (dart format check + flutter analyze, error-only).
+repos:
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format check
+        entry: dart format --output=none --set-exit-if-changed .
+        language: system
+        pass_filenames: false
+      - id: flutter-analyze
+        name: flutter analyze (error-only, matches CI)
+        entry: flutter analyze --no-fatal-infos --no-fatal-warnings
+        language: system
+        pass_filenames: false

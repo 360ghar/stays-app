@@ -6,6 +6,12 @@ import 'app_text_styles.dart';
 
 /// Premium theme configuration inspired by top-tier apps.
 /// Features sophisticated shadows, smooth animations, and glassmorphism effects.
+///
+/// Canonical app [ThemeData], together with [StayTokens]
+/// (`lib/core/theme/tokens.dart`): use `StayTokens` for semantic
+/// colors/spacing/type in widgets, and this class for the Material 3
+/// [ThemeData] (`lightTheme`/`darkTheme`). The legacy constants in
+/// `lib/app/utils/theme.dart` are deprecated; do not use them in new code.
 class AppTheme {
   /// Light color scheme with premium shadows and surfaces
   static final ColorScheme _lightColorScheme =

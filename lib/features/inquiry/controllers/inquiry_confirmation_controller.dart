@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:get/get.dart';
@@ -35,12 +36,15 @@ class InquiryConfirmationController extends GetxController {
     ever<Property?>(property, (_) => _hydrateInitialState());
 
     if (property.value == null) {
-      Future.microtask(() {
-        AppSnackbar.warning(
-          title: 'Inquiry unavailable',
-          message: 'We could not load the property details. Please try again.',
-        );
-      });
+      unawaited(
+        Future.microtask(() {
+          AppSnackbar.warning(
+            title: 'Inquiry unavailable',
+            message:
+                'We could not load the property details. Please try again.',
+          );
+        }),
+      );
     }
   }
 

@@ -206,7 +206,9 @@ class ListingDetailController extends BaseController {
         url,
       ];
       final text = lines.join('\n');
-      await Share.share(text, subject: property.name);
+      await SharePlus.instance.share(
+        ShareParams(text: text, subject: property.name),
+      );
       if (Get.isRegistered<AnalyticsService>()) {
         Get.find<AnalyticsService>().logShare('listing', '$propertyId');
       }
@@ -226,7 +228,7 @@ class ListingDetailController extends BaseController {
         property.pricePerNight,
       );
     }
-    Get.toNamed(Routes.inquiryConfirmation, arguments: property);
+    unawaited(Get.toNamed(Routes.inquiryConfirmation, arguments: property));
   }
 
   void _logPropertyView(Property property) {

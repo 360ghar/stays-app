@@ -64,7 +64,8 @@ class AuthController extends BaseController {
   final RxBool isAppleSignInAvailable = false.obs;
 
   /// Whether native Google Sign-In is configured for this build.
-  bool get isGoogleSignInConfigured => AppConfig.I.isGoogleSignInConfigured;
+  bool get isGoogleSignInConfigured =>
+      AppConfig.I.auth.isGoogleSignInConfigured;
 
   // Backwards-compat alias used by phone-based views
   RxString get phoneError => emailOrPhoneError;
@@ -257,7 +258,7 @@ class AuthController extends BaseController {
   }
 
   // Update the remember-me flag and synchronise it to disk for future launches.
-  Future<void> setRememberMe(bool value) async {
+  Future<void> setRememberMe({required bool value}) async {
     await _ensureRememberMePreferenceReady();
     rememberMe.value = value;
     final service = await _resolveRememberMeService();
@@ -1005,7 +1006,7 @@ class AuthController extends BaseController {
       await _authRepository.logout();
       // Clear tokens from TokenService as well
       await _tokenService.clearTokens();
-      await setRememberMe(false);
+      await setRememberMe(value: false);
       currentUser.value = null;
       isAuthenticated.value = false;
 

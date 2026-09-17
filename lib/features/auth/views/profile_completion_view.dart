@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
@@ -81,18 +83,18 @@ class _ProfileCompletionViewState extends State<ProfileCompletionView> {
         // the loop by going to home.
         switch (stage) {
           case 'profile_completion':
-            Get.offAllNamed(Routes.home);
+            unawaited(Get.offAllNamed(Routes.home));
             break;
           case 'app_onboarding':
-            Get.offAllNamed(Routes.onboarding);
+            unawaited(Get.offAllNamed(Routes.onboarding));
             break;
           case 'active':
           default:
-            Get.offAllNamed(Routes.home);
+            unawaited(Get.offAllNamed(Routes.home));
         }
       } catch (_) {
         // If gate fails, default to home.
-        Get.offAllNamed(Routes.home);
+        unawaited(Get.offAllNamed(Routes.home));
       }
     } catch (e) {
       AppSnackbar.error(

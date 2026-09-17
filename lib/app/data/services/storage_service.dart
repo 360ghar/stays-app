@@ -117,8 +117,14 @@ class StorageService extends GetxService {
     }
   }
 
-  // User data management
+  // User data management. SECURITY CONTRACT: user-data is non-sensitive
+  // profile JSON only — tokens live exclusively in flutter_secure_storage via
+  // TokenService.storeTokens. The assert below enforces the separation.
   Future<void> saveUserData(Map<String, dynamic> userData) async {
+    assert(
+      !jsonEncode(userData).contains('accessToken'),
+      'saveUserData must never persist tokens; use TokenService.storeTokens instead',
+    );
     await _box.write(_userDataKey, jsonEncode(userData));
   }
 

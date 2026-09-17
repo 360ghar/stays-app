@@ -97,7 +97,7 @@ class NotificationsView extends GetView<NotificationsController> {
                 return CheckboxListTile(
                   value: controller.categories[key] ?? false,
                   onChanged: (value) =>
-                      controller.toggleCategory(key, value ?? false),
+                      controller.toggleCategory(key, enabled: value ?? false),
                   title: Text(label),
                 );
               }),

@@ -64,7 +64,10 @@ class CrashReportingService extends GetxService {
 
     // Set custom keys for debugging
     await _crashlytics!.setCustomKey('environment', AppConfig.I.environment);
-    await _crashlytics!.setCustomKey('api_base_url', AppConfig.I.apiBaseUrl);
+    await _crashlytics!.setCustomKey(
+      'api_base_url',
+      AppConfig.I.api.apiBaseUrl,
+    );
   }
 
   /// Set up Flutter error handling

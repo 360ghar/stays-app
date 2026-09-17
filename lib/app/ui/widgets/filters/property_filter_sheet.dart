@@ -468,18 +468,34 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     );
 
     final quickFilters = <_QuickFilterOption>[
-      _QuickFilterOption('Instant book', _instantBook, (value) {
-        setState(() => _instantBook = value);
-      }),
-      _QuickFilterOption('Self check-in', _selfCheckIn, (value) {
-        setState(() => _selfCheckIn = value);
-      }),
-      _QuickFilterOption('Pets allowed', _petsAllowed, (value) {
-        setState(() => _petsAllowed = value);
-      }),
-      _QuickFilterOption('Smoking allowed', _smokingAllowed, (value) {
-        setState(() => _smokingAllowed = value);
-      }),
+      _QuickFilterOption(
+        'Instant book',
+        value: _instantBook,
+        onChanged: (value) {
+          setState(() => _instantBook = value);
+        },
+      ),
+      _QuickFilterOption(
+        'Self check-in',
+        value: _selfCheckIn,
+        onChanged: (value) {
+          setState(() => _selfCheckIn = value);
+        },
+      ),
+      _QuickFilterOption(
+        'Pets allowed',
+        value: _petsAllowed,
+        onChanged: (value) {
+          setState(() => _petsAllowed = value);
+        },
+      ),
+      _QuickFilterOption(
+        'Smoking allowed',
+        value: _smokingAllowed,
+        onChanged: (value) {
+          setState(() => _smokingAllowed = value);
+        },
+      ),
     ];
 
     return Column(
@@ -575,7 +591,11 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
 }
 
 class _QuickFilterOption {
-  _QuickFilterOption(this.label, this.value, this.onChanged);
+  _QuickFilterOption(
+    this.label, {
+    required this.value,
+    required this.onChanged,
+  });
 
   final String label;
   final bool value;

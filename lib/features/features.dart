@@ -9,7 +9,7 @@ export 'inquiry/inquiry.dart';
 export 'listing/listing.dart';
 export 'messaging/messaging.dart';
 export 'payment/payment.dart';
-export 'profile/profile.dart' hide ProfileBinding;
+export 'profile/profile.dart';
 export 'settings/settings.dart';
 export 'splash/splash.dart';
 export 'tour/tour.dart';

@@ -63,10 +63,10 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
       - name: Lint (analyze)
-        # Error-only gate: the codebase carries ~590 pre-existing info/warning
-        # lints (legacy debt) which are logged but non-fatal; only analyzer
-        # errors fail CI. Re-enable --fatal-infos after a lint-cleanup PR.
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        # Full gate: zero infos, warnings, and errors. build/** (generated
+        # firebase examples) is excluded in analysis_options.yaml so only
+        # first-party code is graded. Do not re-add --no-fatal-* flags.
+        run: flutter analyze --fatal-infos --fatal-warnings
 
       - name: Run tests
         # Plain 'flutter test' runs the Dart unit/widget suite in test/; no
@@ -77,11 +77,56 @@ jobs:
       - name: Check for outdated dependencies (non-blocking report)
         run: flutter pub outdated --no-dev-dependencies || true
 
-      - name: Upload coverage to Codecov
+      - name: Coverage gate (60% line gate, non-blocking)
+        # TODO(enforce): flip continue-on-error to false once baseline exceeds 60%
         if: always()
+        continue-on-error: true
+        run: |-
+          if [ ! -f coverage/lcov.info ]; then
+            echo "No coverage/lcov.info found; skipping coverage report."
+            exit 0
+          fi
+          sf=$(grep -c '^SF:' coverage/lcov.info || true)
+          lf=$(awk -F: '/^LF:/{s+=$2} END{print s+0}' coverage/lcov.info)
+          lh=$(awk -F: '/^LH:/{s+=$2} END{print s+0}' coverage/lcov.info)
+          if [ "$lf" -gt 0 ]; then
+            covered_pct=$(awk "BEGIN{printf \"%.1f\", $lh*100/$lf}")
+          else
+            covered_pct="n/a"
+          fi
+          echo "Coverage summary: files=$sf lines_total=$lf lines_hit=$lh line_coverage=${covered_pct}%"
+          echo "Per-directory coverage (watchlist):"
+          for dir in lib/app/data/providers lib/features/auth lib/core/router; do
+            lf_d=$(awk -v d="$dir" 'BEGIN{FS=":"; hit=0} /^SF:/{hit=index($0,d)>0} /^LF:/{if(hit) s+=$2} END{print s+0}' coverage/lcov.info)
+            lh_d=$(awk -v d="$dir" 'BEGIN{FS=":"; hit=0} /^SF:/{hit=index($0,d)>0} /^LH:/{if(hit) s+=$2} END{print s+0}' coverage/lcov.info)
+            if [ "$lf_d" -gt 0 ]; then
+              pct_d=$(awk "BEGIN{printf \"%.1f\", $lh_d*100/$lf_d}")
+              status_d="OK"
+              if awk "BEGIN{exit !($pct_d < 60)}"; then status_d="BELOW 60%"; fi
+              echo "  $dir: lines_total=$lf_d lines_hit=$lh_d line_coverage=${pct_d}% [$status_d]"
+            else
+              echo "  $dir: no files in coverage report"
+            fi
+          done
+          if [ "$covered_pct" = "n/a" ]; then
+            echo "Coverage gate: no lines found; skipping."
+            exit 0
+          fi
+          if awk "BEGIN{exit !($covered_pct < 60)}"; then
+            echo "Coverage gate FAILED: ${covered_pct}% < 60% (non-blocking this week; blocks after TODO(enforce) flip)."
+            exit 1
+          else
+            echo "Coverage gate PASSED: ${covered_pct}% >= 60%."
+          fi
+
+      - name: Upload coverage to Codecov
+        # Strict upload, but only when a coverage file exists: the
+        # hashFiles guard skips the step (green) instead of failing when
+        # `flutter test --coverage` produced nothing.
+        if: always() && hashFiles('coverage/lcov.info') != ''
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           flags: unittests
-          fail_ci_if_error: false
+          fail_ci_if_error: true
