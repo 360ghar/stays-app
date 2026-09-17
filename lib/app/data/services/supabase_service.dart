@@ -22,9 +22,8 @@ class SupabaseService {
   /// Whether Supabase has been initialized successfully.
   bool get isReady => _initialized;
 
-  /// Optional shared init future. When the entry point sets this, the
-  /// `InitialBinding` registration awaits the same promise instead of
-  /// re-running `initialize()` (which would be a no-op but skip awaiting).
+  /// Optional shared init future. Set by the entry point; awaited before
+  /// `runApp` so `initialize()` is never run twice.
   static Future<void>? supabaseServiceReady;
 
   Future<void> initialize() async {

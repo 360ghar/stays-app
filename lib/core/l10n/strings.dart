@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:stays_app/core/providers/app_settings_providers.dart';
 import 'package:stays_app/l10n/localization_service.dart';
 
-/// V2 locale state. Seeded from the saved locale loaded at boot.
-final localeProvider = StateProvider<Locale>(
-  (_) => LocalizationService.initialLocale,
-);
+/// String helpers bound to the single app-wide locale.
+///
+/// The writable locale state lives in [localeProvider] ([LocaleNotifier] in
+/// `core/providers/app_settings_providers.dart`), which also drives
+/// `MaterialApp.router` locale and persists via `LocaleService`. This file
+/// holds no locale state of its own; [tr]/[trOf] simply read that notifier.
 
 /// Reads a localized string for the v2 locale. Falls back to English,
 /// then to the key itself when missing.

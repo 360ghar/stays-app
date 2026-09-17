@@ -8,9 +8,13 @@ import '../app/utils/logger/app_logger.dart';
 
 /// Static string tables loaded from JSON assets at boot.
 ///
-/// V2-only: locale state lives in `localeProvider` (seeded from
-/// [initialLocale] at startup). Changing language persists via
-/// [updateLocale]/[changeLocale] and the UI updates through the provider.
+/// The single writable locale state is [LocaleNotifier] (`localeProvider` in
+/// `core/providers/app_settings_providers.dart`), seeded from [initialLocale]
+/// at startup; it drives `MaterialApp.router` locale, `tr()`/`trOf()`, and
+/// persists via `LocaleService`. [updateLocale]/[changeLocale] below are
+/// persistence-only helpers that update [initialLocale] for pre-boot use —
+/// they do NOT notify the provider. Runtime language changes must go through
+/// `LocaleNotifier.updateLocale`/`changeLocaleByName`.
 class LocalizationService {
   // Supported locales
   static const fallbackLocale = Locale('en', 'US');
@@ -87,7 +91,9 @@ class LocalizationService {
     }
   }
 
-  // Change locale by language display name (e.g. 'English')
+  // Change locale by language display name (e.g. 'English').
+  // Persistence-only: updates [initialLocale] for pre-boot coherence.
+  // Runtime changes must go through LocaleNotifier instead.
   static Future<void> changeLocale(
     String lang,
     LocaleService localeService,
@@ -96,7 +102,9 @@ class LocalizationService {
     await _updateLocale(locale, localeService);
   }
 
-  // Change locale directly
+  // Change locale directly.
+  // Persistence-only: updates [initialLocale] for pre-boot coherence.
+  // Runtime changes must go through LocaleNotifier instead.
   static Future<void> updateLocale(
     Locale locale,
     LocaleService localeService,

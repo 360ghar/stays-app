@@ -3,10 +3,8 @@ import '../logger/app_logger.dart';
 
 class SecurityService {
 
-  /// Pure static validator: reads [AppConfig] only, never touches GetX, so
-  /// entry points can call it before any binding runs. Do not make this an
-  /// instance method — `SecurityService()` construction before
-  /// InitialBinding breaks the startup DI order.
+  /// Pure static validator: reads [AppConfig] only, so entry points can call
+  /// it before services initialize. Do not make this an instance method.
   static void validateApiKeys() {
     _validateKey('SUPABASE_URL', AppConfig.I.auth.supabaseUrl);
     _validateKey(
