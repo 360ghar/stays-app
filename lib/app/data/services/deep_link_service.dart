@@ -14,8 +14,7 @@ class DeepLinkService {
     unawaited(_initDeepLinks());
   }
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one deep-link subscription during migration.
+  // Shared instance so the whole app shares one deep-link subscription.
   static final DeepLinkService _shared = DeepLinkService._internal();
 
   StreamSubscription<Uri?>? _sub;

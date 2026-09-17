@@ -1,8 +1,7 @@
 /// Locale-layer slice of [AppConfig].
 ///
-/// Additive split: new code should read `AppConfig.I.locale.*` instead of the
-/// top-level fields. The dial-code map and fallback consts live here; the
-/// identical consts on `AppConfig` are kept for backward compatibility.
+/// Canonical phone-normalization API: read `AppConfig.I.locale.*`. The
+/// dial-code map and fallback consts live here only.
 class LocaleConfig {
   const LocaleConfig({this.defaultCountry = fallbackDefaultCountry});
 

@@ -12,7 +12,7 @@ class PerformanceMonitor {
   factory PerformanceMonitor() => _shared;
   PerformanceMonitor._internal();
 
-  // Shared instance so metrics accumulate app-wide across both DI graphs.
+  // Shared instance so metrics accumulate app-wide.
   static final PerformanceMonitor _shared = PerformanceMonitor._internal();
 
   static PerformanceMonitor get I => _shared;

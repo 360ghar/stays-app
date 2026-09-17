@@ -33,8 +33,7 @@ class RememberMeService {
   factory RememberMeService() => _shared;
   RememberMeService._internal();
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one preference state during migration.
+  // Shared instance so the whole app shares one preference state.
   static final RememberMeService _shared = RememberMeService._internal();
 
   static const String _rememberMeFlagKey = 'remember_me';

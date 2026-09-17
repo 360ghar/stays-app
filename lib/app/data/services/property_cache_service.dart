@@ -13,8 +13,7 @@ class PropertyCacheService {
   factory PropertyCacheService() => _shared;
   PropertyCacheService._internal();
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one cache during migration.
+  // Shared instance so the whole app shares one cache.
   static final PropertyCacheService _shared = PropertyCacheService._internal();
 
   static const String _keyPrefix = 'pc_';

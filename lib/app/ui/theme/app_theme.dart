@@ -10,8 +10,7 @@ import 'app_text_styles.dart';
 /// Canonical app [ThemeData], together with [StayTokens]
 /// (`lib/core/theme/tokens.dart`): use `StayTokens` for semantic
 /// colors/spacing/type in widgets, and this class for the Material 3
-/// [ThemeData] (`lightTheme`/`darkTheme`). The legacy constants in
-/// `lib/app/utils/theme.dart` are deprecated; do not use them in new code.
+/// [ThemeData] (`lightTheme`/`darkTheme`).
 class AppTheme {
   /// Light color scheme with premium shadows and surfaces
   static final ColorScheme _lightColorScheme =

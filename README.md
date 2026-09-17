@@ -7,22 +7,22 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 ## Features
 
 - Explore listings, view details, amenities, and pricing
-- Auth flow (login UI) wired with GetX state management
+- Auth flow (login UI) with Riverpod state management
 - Booking flow screens (skeleton) with date and guest inputs
 - Payment methods screen (add/remove, UI only)
-- Messaging (Inbox + Chat UI) with basic local state
+- Messaging (Inbox + Chat) with Riverpod state management
 - Bottom navigation shell (Explore, Trips, Inbox, Profile)
 - Location-aware explore + map view (Flutter Map markers, Google Places autocomplete)
 - **In-app update prompts** with optional and force update support ([docs](docs/app-updates.md))
 - Theming (Material 3), responsive helpers, reusable widgets
-- Localization (EN/HI) via GetX Translations (`l10n/en.json`, `l10n/hi.json`)
-- Clean, layered architecture (providers → repositories → controllers → views)
+- Localization (EN/HI) via JSON tables + Riverpod locale (`l10n/en.json`, `l10n/hi.json`)
+- Clean, layered architecture (providers → repositories → Riverpod providers → screens)
 
 ## Tech Stack
 
 - Flutter 3.35+, Dart 3.9+
-- GetX (routing, DI, state) + GetConnect for APIs
-- Supabase (service scaffolded), GetStorage (tokens/cache)
+- Riverpod (state) + go_router (routing) + Dio (APIs)
+- Supabase, flutter_secure_storage (tokens), SharedPreferences (prefs/cache)
 - Logger, intl, cached_network_image, shimmer
 
 ## Getting Started
@@ -38,22 +38,20 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 ```
 lib/
   config/                # AppConfig and env providers
+  core/                  # Router (AppPaths), theme tokens, Riverpod providers, boot
+  features/              # Screens (*_screen) + Riverpod providers per feature
   app/
-    bindings/            # GetX dependency bindings
-    controllers/         # GetX controllers (business logic)
     data/
       models/            # Models (POJOs)
-      providers/         # Network providers (GetConnect)
+      providers/         # Network providers (Dio)
       repositories/      # Repository layer
       services/          # External services (supabase, storage, etc.)
-    middlewares/         # Route guards
-    routes/              # Routes + pages
+    routes/              # Route literals
     ui/
       theme/             # Theme, colors, text styles
-      views/             # Screens
       widgets/           # Reusable widgets
     utils/               # Helpers, errors, logger, constants
-  l10n/                  # Translations + service
+  l10n/                  # JSON tables + loader
 main.dart                # Default entry (dev)
 main_dev.dart|main_staging.dart|main_prod.dart
 ```
@@ -143,41 +141,20 @@ Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET`
 
 ## Location & Maps
 
-- `LocateView` and explore map cards rely on `flutter_map`, `geolocator`, and the in-house `PlacesService` (Google Places REST).
+- Explore/search rely on `geolocator` and the in-house `PlacesService` (Google Places REST).
 - Make sure `GOOGLE_MAPS_API_KEY`/`GOOGLE_PLACES_API_KEY` is set; the key needs the **Places API** (Autocomplete & Details) enabled.
 - Android location permissions are already declared in `android/app/src/main/AndroidManifest.xml`; update rationale strings if needed.
 - iOS usage descriptions live in `ios/Runner/Info.plist` (`NSLocationWhenInUseUsageDescription`, `NSLocationAlwaysAndWhenInUseUsageDescription`, `NSLocationTemporaryUsageDescriptionDictionary`). Adjust the copy to match your release build.
 
 ## Navigation
 
-- Initial route: `/` (Splash) → middleware redirects to `/login` or `/home`
-- Bottom tabs available under `/home` (Explore, Trips, Inbox, Profile)
-- Other routes (canonical list in `lib/app/routes/app_routes.dart`):
-  - `/force-update`, `/onboarding`, `/login`, `/register`, `/verification`, `/reset-password`, `/set-password`, `/profile-completion`
-  - `/search-results`, `/listing/:id`, `/location-search`
+- Initial route: `/` (Splash) → redirects to `/login` or `/explore`
+- Canonical paths in `AppPaths` (`lib/core/router/app_router.dart`, go_router):
+  - `/login`, `/explore`, `/search`, `/search-results`, `/listing/:id`
   - `/inquiry`, `/inquiry-confirmation` (booking flow)
   - `/payment`, `/payment-methods`
-  - `/inbox`, `/chat/:conversationId`
-  - `/tour` (360° virtual tour), `/wishlist`
-  - `/profile`, `/profile/edit`, `/profile/preferences`, `/profile/notifications`, `/profile/privacy`, `/profile/help`, `/profile/about`, `/profile/legal`, `/profile/feedback/bug`, `/profile/feedback/feature`, `/account-settings`, `/inquiries`
-
-### Canonical paths: `AppPaths` (V2) vs `Routes` (legacy)
-
-New code uses `AppPaths` (`lib/core/router/app_router.dart`, go_router + Riverpod). `Routes` (`lib/app/routes/app_routes.dart`, GetX) is legacy; its 12 aliases are deprecated since 1.0.1 and removed in 1.1.0.
-
-| V2 (`AppPaths`) | Legacy (`Routes`) | Notes |
-| --- | --- | --- |
-| `/explore` | `/home` | V2 shell hub; legacy bottom-nav host |
-| `/trips` | `/inquiries` (`trips`, `enquiries` aliases) | Same hub, renamed |
-| `/inquiry` | `/inquiry` (`enquiry`, `booking` aliases) | Booking flow entry |
-| `/inquiry-confirmation` | `/inquiry-confirmation` (`enquiryConfirmation`, `bookingConfirmation`) | Post-inquiry receipt |
-| `/listing/:id` | `/listing/:id` | Identical in both routers |
-| `/chat/:id` | `/chat/:conversationId` | Identical shape, param renamed |
-| `/login`, `/search`, `/search-results`, `/payment`, `/payment-methods`, `/inbox`, `/profile`, `/wishlist`, `/tour/:id` | Same literals | Pass through `mapLegacyPathToV2` unchanged |
-
-### V2 rollback
-
-The V2 boot is gated by `useV2Router` in `lib/core/router/app_router.dart` (currently `true`). Rollback to the legacy GetX boot: set `useV2Router = false` in that file and relaunch any entrypoint (`lib/main*.dart`); no other changes needed. Deep links keep working because `mapLegacyPathToV2` translates renamed hubs while concrete paths (`/listing/42`, `/chat/abc`) are identical in both routers.
+  - `/trips`, `/wishlist`, `/inbox`, `/chat/:id`
+  - `/tour/:id` (360° virtual tour), `/profile`
 
 ## Testing
 
@@ -204,8 +181,9 @@ Recommended local checks before you push:
 
 ## Localization
 
-- GetX-based translations in `lib/l10n/localization_service.dart`
+- Static JSON tables loaded at boot in `lib/l10n/localization_service.dart`
 - Resource files in `l10n/en.json`, `l10n/hi.json` (EN + HI only)
+- Active locale in `localeProvider`; read strings with `tr(ref, key)` (`lib/core/l10n/strings.dart`)
 
 ## Notes & TODOs
 

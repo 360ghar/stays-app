@@ -30,8 +30,8 @@ import 'package:stays_app/app/utils/services/token_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ---------------------------------------------------------------------------
-// Services (shared singleton instances — same objects the legacy GetX graph
-// uses during migration, so there is exactly one of each stateful service).
+// Services (shared singleton instances, so there is exactly one of each
+// stateful service app-wide).
 // ---------------------------------------------------------------------------
 
 final storageServiceProvider =

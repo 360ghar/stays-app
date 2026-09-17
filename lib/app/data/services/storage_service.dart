@@ -8,8 +8,8 @@ class StorageService {
   factory StorageService() => _shared;
   StorageService._internal();
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph use the
-  // same backing store during migration. Use [StorageService()] everywhere.
+  // Shared instance so the whole app uses the same backing store.
+  // Use [StorageService()] everywhere.
   static final StorageService _shared = StorageService._internal();
 
   // Completes when initialize() finishes so dependents can await readiness

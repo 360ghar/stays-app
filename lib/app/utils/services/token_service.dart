@@ -73,8 +73,8 @@ class TokenService {
 
   factory TokenService.shared() => _shared;
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one refresh timer and one auth state during migration.
+  // Shared instance so the whole app shares one refresh timer and one auth
+  // state.
   static final TokenService _shared = TokenService();
 
   StorageService? _storageService;

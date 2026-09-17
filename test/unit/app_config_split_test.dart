@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stays_app/config/app_config.dart';
+import 'package:stays_app/config/locale_config.dart';
 
 void main() {
   group('AppConfig additive split', () {
@@ -26,10 +27,7 @@ void main() {
         config.isGoogleSignInConfigured,
       );
       expect(config.locale.defaultCountry, config.defaultCountry);
-      expect(
-        config.locale.defaultCountryDialCode,
-        config.defaultCountryDialCode,
-      );
+      expect(config.locale.defaultCountryDialCode, '+1');
     });
 
     test('google-disabled + unknown-country fallbacks mirror', () {
@@ -43,10 +41,9 @@ void main() {
 
       expect(config.isGoogleSignInConfigured, isFalse);
       expect(config.auth.isGoogleSignInConfigured, isFalse);
-      expect(config.defaultCountryDialCode, AppConfig.fallbackDefaultDialCode);
       expect(
         config.locale.defaultCountryDialCode,
-        AppConfig.fallbackDefaultDialCode,
+        LocaleConfig.fallbackDefaultDialCode,
       );
     });
   });

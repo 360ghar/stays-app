@@ -16,8 +16,7 @@ class ConnectivityService {
     unawaited(_initialize());
   }
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one connectivity subscription during migration.
+  // Shared instance so the whole app shares one connectivity subscription.
   static final ConnectivityService _shared = ConnectivityService._internal();
 
   static ConnectivityService get I => _shared;

@@ -33,8 +33,7 @@ class PlacesService extends BaseProvider {
         authHeader: false,
       );
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one Dio client during migration.
+  // Shared instance so the whole app shares one Dio client.
   static final PlacesService _shared = PlacesService._internal();
 
   String get _apiKey =>
