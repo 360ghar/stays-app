@@ -2,28 +2,21 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/app_config.dart';
 import 'core/boot/v2_boot.dart';
-import 'core/router/app_router.dart';
-import 'app/routes/app_pages.dart';
+import 'core/providers/app_settings_providers.dart';
 import 'l10n/localization_service.dart';
-import 'app/bindings/initial_binding.dart';
 import 'app/data/services/locale_service.dart';
-import 'app/ui/theme/app_theme.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/data/services/supabase_service.dart';
 import 'app/data/services/crash_reporting_service.dart';
 import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
 import 'app/utils/security/security_service.dart';
-import 'core/boot/common_boot.dart';
-import 'features/settings/controllers/theme_controller.dart';
 
 Future<void> main() async {
   await runZonedGuarded(
@@ -33,7 +26,6 @@ Future<void> main() async {
       // Default to dev if launched via lib/main.dart
       await dotenv.load(fileName: '.env.dev');
       AppConfig.setConfig(AppConfig.dev());
-      ensureCommonBindings();
       SecurityService.validateApiKeys();
 
       // Optional certificate pinning when API_CERT_SHA256 is provided
@@ -53,9 +45,7 @@ Future<void> main() async {
         }
       }
 
-      // Supabase is owned by InitialBinding.putAsync (single source of truth
-      // for the registered client). This entry point just kicks off init in
-      // parallel with the other services; the binding awaits the result.
+      // Supabase SDK init kicks off here and is awaited below before runApp.
       SupabaseService.supabaseServiceReady = SupabaseService(
         url: AppConfig.I.auth.supabaseUrl,
         publishableKey: AppConfig.I.auth.supabasePublishableKey,
@@ -66,8 +56,7 @@ Future<void> main() async {
       late LocaleService localeService;
 
       await Future.wait([
-        // Supabase initialization (critical) — the binding awaits this same
-        // future to avoid a second round-trip.
+        // Supabase initialization (critical).
         SupabaseService.supabaseServiceReady!,
         // Theme service initialization
         ThemeService().init().then((service) => themeService = service),
@@ -80,77 +69,45 @@ Future<void> main() async {
         ]),
       ]);
 
-      // Register services with GetX after initialization. Supabase is
-      // registered by InitialBinding — see notes at the top of this block.
-      Get.put<ThemeService>(themeService, permanent: true);
-      Get.put<LocaleService>(localeService, permanent: true);
+      // Theme/locale services are owned by Riverpod overrides below.
 
       // Load translations (depends on localeService)
       await LocalizationService.init(localeService);
-      unawaited(Get.updateLocale(LocalizationService.initialLocale));
 
-      Get.put<ThemeController>(
-        ThemeController(themeService: themeService),
-        permanent: true,
+      // V2 boot runs the canonical startup chain here.
+      await ensureV2Bindings();
+
+      runApp(
+        ProviderScope(
+          overrides: [
+            themeServiceProvider.overrideWithValue(themeService),
+            localeServiceProvider.overrideWithValue(localeService),
+          ],
+          child: const MyApp(),
+        ),
       );
-
-      // V2 boot has no GetMaterialApp to run InitialBinding, so run the
-      // canonical DI graph here. Legacy boot runs it via initialBinding.
-      if (useV2Router) {
-        ensureV2Bindings();
-      }
-
-      runApp(const ProviderScope(child: MyApp()));
     },
     (error, stackTrace) async {
       AppLogger.error('Uncaught zone error', error, stackTrace);
-      if (Get.isRegistered<CrashReportingService>()) {
-        await Get.find<CrashReportingService>().recordError(
-          error,
-          stackTrace: stackTrace,
-          fatal: true,
-        );
-      }
+      // Degrades to a log when crash reporting is disabled/uninitialized.
+      await CrashReportingService().recordError(
+        error,
+        stackTrace: stackTrace,
+        fatal: true,
+      );
     },
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    return Obx(() {
-      final currentLocale = Get.locale ?? LocalizationService.initialLocale;
-      if (useV2Router) {
-        return buildV2App(
-          title: '360ghar stays',
-          themeMode: themeController.themeMode.value,
-          locale: currentLocale,
-        );
-      }
-      return GetMaterialApp(
-        title: '360ghar stays',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: themeController.themeMode.value,
-        translations: LocalizationService(),
-        locale: currentLocale,
-        fallbackLocale: LocalizationService.fallbackLocale,
-        supportedLocales: LocalizationService.locales,
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        initialBinding: InitialBinding(),
-        initialRoute: AppPages.initial,
-        getPages: AppPages.routes,
-        debugShowCheckedModeBanner: false,
-        defaultTransition: Transition.cupertino,
-        transitionDuration: const Duration(milliseconds: 250),
-      );
-    });
+  Widget build(BuildContext context, WidgetRef ref) {
+    return buildV2App(
+      title: '360ghar stays',
+      themeMode: ref.watch(themeProvider),
+      locale: ref.watch(localeProvider),
+    );
   }
 }

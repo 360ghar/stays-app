@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:get/get.dart';
+import 'package:dio/dio.dart' show FormData, MultipartFile;
 
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/helpers/json_helpers.dart';
@@ -88,9 +88,9 @@ class UsersProvider extends BaseProvider {
         ? file.uri.pathSegments.last
         : 'avatar.jpg';
 
-    // GetConnect FormData sets multipart Content-Type + boundary itself.
-    final form = FormData({
-      'file': MultipartFile(file.path, filename: filename),
+    // Dio FormData sets multipart Content-Type + boundary itself.
+    final form = FormData.fromMap({
+      'file': await MultipartFile.fromFile(file.path, filename: filename),
     });
 
     final response = await post('/api/v1/users/me/avatar', form);
@@ -143,8 +143,8 @@ class UsersProvider extends BaseProvider {
     );
     if (!response.isOk) {
       throw ApiException(
-        message: response.statusText ?? 'Failed to register device token',
-        statusCode: response.statusCode ?? 500,
+        message: response.statusMessage ?? 'Failed to register device token',
+        statusCode: response.statusCode,
       );
     }
   }

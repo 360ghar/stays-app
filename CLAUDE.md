@@ -65,37 +65,35 @@ flutter build ios --flavor dev -t lib/main_dev.dart
 
 ## Architecture Overview
 
-The project follows a clean, layered GetX-based architecture:
+The project follows a clean, layered architecture built on Riverpod + go_router:
 
 ```
 lib/
-├── config/                 # AppConfig and environment providers
+├── config/                 # AppConfig and environment configuration
+├── core/
+│   ├── router/             # go_router setup (AppPaths, buildV2Router)
+│   ├── theme/              # Theme tokens
+│   ├── providers/          # Shared Riverpod providers (data_providers.dart graph, session, settings)
+│   ├── l10n/               # localeProvider + tr(ref, key) helpers
+│   ├── boot/               # App startup wiring
+│   └── ui/                 # Shared core widgets
+├── features/               # Feature slices: views/*_screen.dart + providers per feature
+│   ├── auth/              # Login screen + auth providers
+│   ├── explore/           # Explore screen + explore providers
+│   ├── listing/           # Search, search results, property detail
+│   ├── messaging/         # Inbox and chat
+│   ├── trips/             # Trips
+│   ├── payment/           # Payment screens
+│   └── ...
 ├── app/
-│   ├── bindings/           # GetX dependency injection bindings
-│   ├── controllers/        # GetX controllers (business logic)
-│   │   ├── auth/          # Authentication controllers
-│   │   ├── booking/       # Booking flow controllers
-│   │   ├── listing/       # Property listing controllers
-│   │   ├── messaging/     # Chat and inbox controllers
-│   │   ├── payment/       # Payment processing controllers
-│   │   └── ...
 │   ├── data/
 │   │   ├── models/        # Data models with JSON serialization
-│   │   ├── providers/     # Network providers (GetConnect)
+│   │   ├── providers/     # Dio API clients (BaseProvider, ApiResponse)
 │   │   ├── repositories/  # Repository pattern implementation
 │   │   └── services/      # External services (Supabase, storage)
-│   ├── middlewares/       # Route guards and middleware
-│   ├── routes/            # Route definitions and page bindings
+│   ├── routes/            # Route literals (Routes)
 │   ├── ui/
 │   │   ├── theme/         # Material 3 theming, colors, text styles
-│   │   ├── views/         # Screen implementations
-│   │   │   ├── auth/      # Login, registration screens
-│   │   │   ├── booking/   # Booking flow screens
-│   │   │   ├── home/      # Main app screens with bottom nav
-│   │   │   ├── listing/   # Property details and search
-│   │   │   ├── messaging/ # Chat and inbox screens
-│   │   │   ├── payment/   # Payment methods and processing
-│   │   │   └── ...
 │   │   └── widgets/       # Reusable UI components
 │   │       ├── common/    # Generic widgets
 │   │       ├── forms/     # Form components
@@ -106,20 +104,22 @@ lib/
 │       ├── exceptions/    # Custom exceptions
 │       ├── extensions/    # Dart extensions
 │       ├── helpers/       # Utility functions
-│       └── logger/        # Logging configuration
-├── l10n/                  # Localization (EN, HI)
+│       ├── logger/        # Logging configuration
+│       └── services/      # Shared services (token, error, connectivity)
+├── l10n/                  # Localization JSON tables (en.json, hi.json) + loader
 └── main*.dart             # Environment-specific entry points
 ```
 
 ## Key Technology Stack
 
 - **Framework**: Flutter 3.35+ with Dart 3.9+
-- **State Management**: GetX (routing, dependency injection, state management)
-- **Backend**: Supabase integration scaffolded
-- **Storage**: GetStorage for local data persistence
-- **Networking**: GetConnect for API communication
+- **State Management**: Riverpod (flutter_riverpod: NotifierProvider, StateProvider, StreamProvider, FutureProvider)
+- **Routing**: go_router (buildV2Router, AppPaths; StatefulShellRoute bottom navigation)
+- **Backend**: Supabase integration scaffolded (Supabase SDK is the session source of truth)
+- **Storage**: flutter_secure_storage for tokens/secrets, SharedPreferences for prefs/cache
+- **Networking**: Dio API clients (BaseProvider, ApiResponse)
 - **UI**: Material 3 theming with custom components
-- **Localization**: GetX Translations with JSON resource files
+- **Localization**: JSON tables in `l10n/` (`en.json`, `hi.json`) with `localeProvider` + `tr(ref, key)`
 - **Environment Management**: flutter_dotenv for configuration
 
 ## Environment Configuration
@@ -137,26 +137,32 @@ Required environment variables in `.env.*` files:
 
 ## Navigation Structure
 
-- **Initial Route**: `/` (Splash) → middleware redirects to `/login` or `/home`
-- **Bottom Navigation**: Available under `/home`
+- **Initial Route**: `/` (Splash) → go_router redirect checks the Supabase session and sends logged-out users to `/login` (preserving the target via `?from=`)
+- **Bottom Navigation**: `StatefulShellRoute.indexedStack` under the shell
   - Explore: Property search and listings
+  - Wishlist: Saved properties
   - Trips: User bookings and travel history
   - Inbox: Messaging with hosts/guests
   - Profile: User account management
 - **Additional Routes**:
-  - `/search`, `/search-results`: Search functionality
-  - `/listing/:id`: Property detail pages
-  - `/booking`: Booking flow screens
+  - `/search`, `/search-results`: Search functionality (location passed via `state.extra`)
+  - `/listing/:id`: Property detail pages (numeric id via `state.pathParameters`, optional property via `state.extra`)
+  - `/tour/:id`: 360° tour viewer
+  - `/inquiry`, `/inquiry-confirmation`: Inquiry flow screens (booking passed via `state.extra`)
   - `/payment`, `/payment-methods`: Payment processing
-  - `/chat/:conversationId`: Individual chat conversations
+  - `/chat/:id`: Individual chat conversations
 
 ## Development Guidelines
 
 ### State Management Pattern
-- Use GetX controllers for business logic
+- Put feature business logic in Riverpod Notifiers (`features/<name>/providers/*_providers.dart`); read state with `ref.watch`, trigger actions with `ref.read(<provider>.notifier)`
 - Implement repository pattern for data access
-- Controllers should not directly call providers; use repositories
-- Use GetX bindings for dependency injection
+- Notifiers should not directly call Dio providers; use repositories
+- Shared dependency graph lives in `lib/core/providers/data_providers.dart`: services → Dio API providers → repositories
+- Services are app-wide singletons via `factory .shared()` / static `I` accessors
+- Service-level observables use `ValueNotifier`, not reactive `Obx`-style widgets
+- Navigate with go_router (`context.push`/`context.go`, `AppPaths` literals; pass objects via `state.extra`, ids via `state.pathParameters`)
+- Surface errors with `ScaffoldMessenger`, dialogs with `showDialog`/`showModalBottomSheet`; style with `Theme.of`
 
 ### UI Development
 - Follow Material 3 design principles
@@ -170,14 +176,13 @@ Required environment variables in `.env.*` files:
 - Run code generation after modifying models
 
 ### Testing Approach
-- Widget tests for UI components
-- Unit tests for controllers and repositories
-- Integration tests for complete user flows
-- Use Mockito for mocking dependencies
+- Widget tests for UI components (plain `MaterialApp` under `flutter_test`)
+- Unit tests for notifiers/providers and repositories
+- Use Mockito for mocking dependencies (`@GenerateMocks` + build_runner)
 
 ## Current Implementation Status
 
-- ✅ Authentication flow with GetX state management
+- ✅ Authentication flow with Riverpod state management (Supabase session source of truth)
 - ✅ Bottom navigation shell architecture
 - ✅ Booking flow screens (UI skeleton)
 - ✅ Payment methods screen (UI only)
@@ -188,7 +193,7 @@ Required environment variables in `.env.*` files:
 - 🚧 API integration (providers scaffolded)
 - 🚧 Supabase service integration
 - ❌ 360° media viewer integration
-- ❌ Token refresh flow implementation
+- ✅ Token refresh flow (401 retry with Supabase session refresh in `BaseProvider`)
 
 ## Common Issues & Solutions
 
@@ -204,7 +209,6 @@ rm -rf /opt/homebrew/share/android-commandlinetools/ndk/27.0.12077973
 ## Important Notes
 
 - Always use the correct environment entry point for builds
-- API integration points are scaffolded but not fully wired
-- Token refresh flow needs implementation in `BaseProvider`
+- API integration points are scaffolded but not fully wired (401s retry once via Supabase session refresh)
 - Supabase configuration requires valid credentials in environment files
 - 360° viewer integration is not included and needs third-party solution

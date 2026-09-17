@@ -82,36 +82,6 @@ class AppConfig {
   /// with precedence: --dart-define > .env file > 'IN'.
   final String defaultCountry;
 
-  /// Built-in fallback ISO-3166 alpha-2 country used when neither
-  /// `--dart-define=DEFAULT_COUNTRY` nor the `.env` file provides one.
-  static const String fallbackDefaultCountry = 'IN';
-
-  /// Built-in fallback dial code used when [defaultCountry] is not present
-  /// in [defaultCountryDialCodes].
-  static const String fallbackDefaultDialCode = '+91';
-
-  /// Dial code for [defaultCountry] (e.g. `+91` for `IN`), used by phone
-  /// normalization as a fallback when no country is selected.
-  ///
-  /// The map below is intentionally tiny and is only a fallback; the source
-  /// of truth for supported countries/dial codes lives with the country
-  /// picker used by the auth flow.
-  static const Map<String, String> defaultCountryDialCodes = <String, String>{
-    'IN': '+91',
-    'US': '+1',
-    'GB': '+44',
-    'AE': '+971',
-    'SG': '+65',
-    'AU': '+61',
-    'CA': '+1',
-    'MY': '+60',
-  };
-
-  /// Dial code for [defaultCountry]. Falls back to [fallbackDefaultDialCode]
-  /// for countries not present in [defaultCountryDialCodes].
-  String get defaultCountryDialCode =>
-      defaultCountryDialCodes[defaultCountry] ?? fallbackDefaultDialCode;
-
   // ── Additive split: dipole views over the same fields ───────────────────
   // New code should prefer these sub-configs over the top-level fields:
   // - Network: `AppConfig.I.api` (ApiConfig: apiBaseUrl, enableAnalytics).
@@ -120,9 +90,7 @@ class AppConfig {
   //   supabasePublishableKey, googleWebClientId, googleIosClientId,
   //   isGoogleSignInConfigured). Deprecation target for the matching fields.
   // - Locale: `AppConfig.I.locale` (LocaleConfig: defaultCountry,
-  //   defaultCountryDialCode). Deprecation target for [defaultCountry] and
-  //   [defaultCountryDialCode]. No caller changes required; these getters
-  //   delegate to the existing fields.
+  //   defaultCountryDialCode). Canonical phone-normalization API.
 
   /// Network slice: mirrors [apiBaseUrl] and [enableAnalytics].
   ApiConfig get api =>
@@ -252,7 +220,7 @@ class AppConfig {
     final defaultCountry =
         (_define('DEFAULT_COUNTRY') ??
                 _nullIfEmpty(dotenv.env['DEFAULT_COUNTRY']) ??
-                fallbackDefaultCountry)
+                LocaleConfig.fallbackDefaultCountry)
             .toUpperCase();
 
     // Validate the EFFECTIVE values (define over dotenv), not the raw dotenv

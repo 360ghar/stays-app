@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeService extends GetxService {
-  static const String _boxName = 'theme_preferences';
+class ThemeService {
   static const String _themeModeKey = 'theme_mode';
 
-  late final GetStorage _box;
+  SharedPreferences? _prefs;
 
   Future<ThemeService> init() async {
-    await GetStorage.init(_boxName);
-    _box = GetStorage(_boxName);
+    _prefs ??= await SharedPreferences.getInstance();
     return this;
   }
 
   ThemeMode loadThemeMode() {
-    final stored = _box.read<String>(_themeModeKey);
-    switch (stored) {
+    switch (_prefs?.getString(_themeModeKey)) {
       case 'dark':
         return ThemeMode.dark;
       case 'system':
@@ -28,6 +24,7 @@ class ThemeService extends GetxService {
   }
 
   Future<void> saveThemeMode(ThemeMode mode) async {
-    await _box.write(_themeModeKey, mode.name);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, mode.name);
   }
 }

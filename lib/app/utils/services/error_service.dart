@@ -1,27 +1,32 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:get/get.dart';
-
+import '../../data/providers/base_provider.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/exceptions/network_exceptions.dart';
 import '../../utils/logger/app_logger.dart';
 
-class ErrorService extends GetxService {
-  static ErrorService get I => Get.find<ErrorService>();
+class ErrorService {
+  factory ErrorService() => _shared;
+  ErrorService._internal();
 
-  final RxList<String> _errorHistory = <String>[].obs;
+  // Shared instance so every provider reports into one debug history.
+  static final ErrorService _shared = ErrorService._internal();
+
+  static ErrorService get I => _shared;
+
+  final List<String> _errorHistory = <String>[];
 
   /// Get the list of recent errors for debugging
   List<String> get errorHistory => _errorHistory.toList();
 
-  ApiException toApiException(Response response) {
-    final int statusCode = response.statusCode ?? 500;
-    final body = response.body;
+  ApiException toApiException(ApiResponse response) {
+    final int statusCode = response.statusCode;
+    final body = response.data;
     final String message =
         _extractMessage(body) ??
-        response.bodyString ??
-        response.statusText ??
+        (response.bodyString.isNotEmpty ? response.bodyString : null) ??
+        response.statusMessage ??
         'An unknown error occurred.';
     AppLogger.error('API Error', 'Status: $statusCode, Message: $message');
     return ApiException(message: message, statusCode: statusCode);

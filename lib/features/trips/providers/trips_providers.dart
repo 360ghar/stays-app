@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
 import 'package:stays_app/app/data/models/booking_model.dart';
-import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 class TripsUiState {
   const TripsUiState({
@@ -47,15 +46,10 @@ class TripsNotifier extends Notifier<TripsUiState> {
       return;
     }
     state = state.copyWith(isLoading: true, error: '');
-    if (!Get.isRegistered<BookingRepository>()) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Trips service unavailable.',
-      );
-      return;
-    }
     try {
-      final bookings = await Get.find<BookingRepository>().fetchBookings();
+      final bookings = await ref
+          .watch(bookingRepositoryProvider)
+          .fetchBookings();
       bookings.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       state = TripsUiState(bookings: bookings);
     } catch (e, s) {

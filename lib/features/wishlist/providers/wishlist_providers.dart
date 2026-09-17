@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
-import 'package:stays_app/app/controllers/favorites_controller.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
+import 'package:stays_app/core/providers/favorites_provider.dart';
 
 class WishlistUiState {
   const WishlistUiState({
@@ -55,28 +55,15 @@ class WishlistNotifier extends Notifier<WishlistUiState> {
     return const WishlistUiState();
   }
 
-  WishlistRepository? get _repo => Get.isRegistered<WishlistRepository>()
-      ? Get.find<WishlistRepository>()
-      : null;
-
-  FavoritesController? get _favorites => Get.isRegistered<FavoritesController>()
-      ? Get.find<FavoritesController>()
-      : null;
+  WishlistRepository get _repo => ref.watch(wishlistRepositoryProvider);
 
   Future<void> load() async {
     state = state.copyWith(isLoading: true, error: '');
-    final repo = _repo;
-    if (repo == null) {
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Wishlist service unavailable.',
-        items: const [],
-      );
-      return;
-    }
     try {
-      final resp = await repo.listFavorites();
-      _favorites?.replaceAll(resp.items.map((p) => p.id));
+      final resp = await _repo.listFavorites();
+      ref
+          .read(favoritesProvider.notifier)
+          .replaceAll(resp.items.map((p) => p.id));
       state = WishlistUiState(
         items: List<Property>.from(resp.items),
         hasMore: resp.hasMore,
@@ -99,16 +86,15 @@ class WishlistNotifier extends Notifier<WishlistUiState> {
   }
 
   Future<void> loadMore() async {
-    final repo = _repo;
     final cursor = state.nextCursor;
-    if (repo == null || !state.hasMore || cursor == null) return;
+    if (!state.hasMore || cursor == null) return;
     // Scroll end fires repeatedly; one fetch per cursor (audit duplicate
     // inserts when the same page resolves twice).
     if (_pagingCursor == cursor) return;
     _pagingCursor = cursor;
     try {
-      final resp = await repo.listFavorites(cursor: cursor);
-      _favorites?.addAll(resp.items.map((p) => p.id));
+      final resp = await _repo.listFavorites(cursor: cursor);
+      ref.read(favoritesProvider.notifier).addAll(resp.items.map((p) => p.id));
       state = state.copyWith(
         items: [...state.items, ...resp.items],
         nextCursor: resp.nextCursor,
@@ -128,9 +114,9 @@ class WishlistNotifier extends Notifier<WishlistUiState> {
       final next = [...state.items]..removeAt(index);
       state = state.copyWith(items: next);
     }
-    _favorites?.removeFavorite(propertyId);
+    ref.read(favoritesProvider.notifier).removeFavorite(propertyId);
     try {
-      await _repo?.remove(propertyId);
+      await _repo.remove(propertyId);
     } catch (e, s) {
       AppLogger.error('Wishlist v2: remove failed', e, s);
       if (removed != null) {
@@ -138,18 +124,16 @@ class WishlistNotifier extends Notifier<WishlistUiState> {
         next.insert(index.clamp(0, next.length), removed);
         state = state.copyWith(items: next);
       }
-      _favorites?.addFavorite(propertyId);
+      ref.read(favoritesProvider.notifier).addFavorite(propertyId);
     }
   }
 
   Future<void> clearAll() async {
-    final repo = _repo;
-    if (repo == null) return;
     final ids = state.items.map((p) => p.id).toList();
     state = state.copyWith(items: const []);
-    _favorites?.clear();
+    ref.read(favoritesProvider.notifier).clear();
     try {
-      if (ids.isNotEmpty) await repo.clearAll(ids);
+      if (ids.isNotEmpty) await _repo.clearAll(ids);
     } catch (e, s) {
       AppLogger.error('Wishlist v2: clearAll failed', e, s);
       await load();

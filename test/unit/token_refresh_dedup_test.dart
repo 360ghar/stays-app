@@ -7,8 +7,11 @@ import 'package:stays_app/app/utils/services/token_service.dart';
 /// share one in-flight round-trip (dedup), while sequential refreshes each
 /// run. Supabase is never initialized here, so every refresh attempt fails
 /// locally with `false` — no real network, no timers.
-class _FakeStorage extends StorageService {
+class _FakeStorage implements StorageService {
   int clearCalls = 0;
+
+  @override
+  Future<StorageService> initialize() async => this as StorageService;
 
   @override
   Future<String?> getAccessToken() async => null;
@@ -18,6 +21,9 @@ class _FakeStorage extends StorageService {
 
   @override
   Future<String?> getTokenExpiration() async => null;
+
+  @override
+  Future<bool> hasAccessToken() async => false;
 
   @override
   Future<void> saveTokens({
@@ -30,11 +36,25 @@ class _FakeStorage extends StorageService {
   Future<void> clearTokens() async {
     clearCalls++;
   }
+
+  @override
+  Future<void> saveUserData(Map<String, dynamic> userData) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getUserData() async => null;
+
+  @override
+  Future<void> clearUserData() async {}
+
+  @override
+  Future<void> cache(String key, Map<String, dynamic> value) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getCached(String key) async => null;
 }
 
 Future<TokenService> _createService(_FakeStorage storage) async {
   final service = TokenService(storageService: storage);
-  service.onInit();
   await service.ready;
   return service;
 }
@@ -52,7 +72,7 @@ void main() {
     expect(results, [false, false]);
     // One underlying refresh => exactly one clearTokens side effect.
     expect(storage.clearCalls, 1);
-    service.onClose();
+    service.dispose();
   });
 
   test('sequential performTokenRefresh calls each run independently', () async {
@@ -62,7 +82,7 @@ void main() {
     expect(await service.performTokenRefresh(), isFalse);
     expect(await service.performTokenRefresh(), isFalse);
     expect(storage.clearCalls, 2);
-    service.onClose();
+    service.dispose();
   });
 
   test('refresh() alias dedups with performTokenRefresh', () async {
@@ -75,6 +95,6 @@ void main() {
 
     expect(results, [false, false]);
     expect(storage.clearCalls, 1);
-    service.onClose();
+    service.dispose();
   });
 }

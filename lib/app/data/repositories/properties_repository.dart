@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:get/get.dart';
-
 import '../providers/properties_provider.dart';
 import '../models/property_model.dart';
 import '../models/unified_property_response.dart';
@@ -11,34 +9,32 @@ import '../../utils/logger/app_logger.dart';
 import '../../utils/services/connectivity_service.dart';
 
 class PropertiesRepository {
-  PropertiesRepository({required PropertiesProvider provider})
-    : _provider = provider {
-    _initCache();
-  }
+  PropertiesRepository({
+    required PropertiesProvider provider,
+    PropertyCacheService? cacheService,
+    LocationService? locationService,
+    ConnectivityService? connectivityService,
+  }) : _provider = provider,
+       _cacheService = cacheService,
+       _locationService = locationService,
+       _connectivityService = connectivityService;
   final PropertiesProvider _provider;
   PropertyCacheService? _cacheService;
+  final LocationService? _locationService;
+  final ConnectivityService? _connectivityService;
 
   /// In-flight request dedupe: concurrent calls with the same key share one
   /// network request. Entries are removed when the future completes.
   final Map<String, Future<dynamic>> _inFlight = {};
 
-  void _initCache() {
-    if (Get.isRegistered<PropertyCacheService>()) {
-      _cacheService = Get.find<PropertyCacheService>();
-    }
+  /// Late-bound cache service for graphs that construct the repository
+  /// before the cache finishes initializing.
+  // ignore: use_setters_to_change_properties
+  void bindCacheService(PropertyCacheService cache) {
+    _cacheService ??= cache;
   }
 
-  /// Lazily re-resolves the cache service (cheap) so a late registration
-  /// (e.g. InitialBinding's putAsync completing after this repository was
-  /// constructed) is still picked up.
-  PropertyCacheService? _cache() {
-    final cached = _cacheService;
-    if (cached != null) return cached;
-    if (Get.isRegistered<PropertyCacheService>()) {
-      _cacheService = Get.find<PropertyCacheService>();
-    }
-    return _cacheService;
-  }
+  PropertyCacheService? _cache() => _cacheService;
 
   Future<UnifiedPropertyResponse> explore({
     double? lat,
@@ -54,12 +50,10 @@ class PropertiesRepository {
 
     double? la = lat;
     double? ln = lng;
-    if (la == null || ln == null) {
-      try {
-        final loc = Get.find<LocationService>();
-        la ??= loc.latitude;
-        ln ??= loc.longitude;
-      } catch (_) {}
+    final loc = _locationService;
+    if ((la == null || ln == null) && loc != null) {
+      la ??= loc.latitude;
+      ln ??= loc.longitude;
     }
     la ??= defaultLat;
     ln ??= defaultLng;
@@ -179,8 +173,8 @@ class PropertiesRepository {
     Map<String, dynamic> filters,
   ) async {
     try {
-      if (Get.isRegistered<ConnectivityService>() &&
-          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+      final connectivity = _connectivityService;
+      if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
       final response = await _provider.explore(
@@ -226,8 +220,8 @@ class PropertiesRepository {
 
   Future<void> _refreshDetailsInBackground(int id) async {
     try {
-      if (Get.isRegistered<ConnectivityService>() &&
-          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+      final connectivity = _connectivityService;
+      if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
       final property = await _provider.getDetails(id);
@@ -266,8 +260,8 @@ class PropertiesRepository {
 
   Future<void> _refreshRecommendationsInBackground(int limit) async {
     try {
-      if (Get.isRegistered<ConnectivityService>() &&
-          !Get.find<ConnectivityService>().isCurrentlyOnline) {
+      final connectivity = _connectivityService;
+      if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
       final properties = await _provider.recommendations(limit: limit);

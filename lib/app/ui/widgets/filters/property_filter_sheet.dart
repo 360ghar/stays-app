@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:stays_app/core/l10n/strings.dart';
 
 import '../../../data/models/listing_model.dart';
 import '../../../data/models/unified_filter_model.dart';
@@ -62,7 +64,7 @@ class _FilterSheetRoute extends PopupRoute<_FilterSheetRouteResult> {
   }
 }
 
-class _PropertyFilterSheet extends StatefulWidget {
+class _PropertyFilterSheet extends ConsumerStatefulWidget {
   const _PropertyFilterSheet({
     required this.initial,
     required this.animation,
@@ -74,10 +76,11 @@ class _PropertyFilterSheet extends StatefulWidget {
   final Curve curve;
 
   @override
-  State<_PropertyFilterSheet> createState() => _PropertyFilterSheetState();
+  ConsumerState<_PropertyFilterSheet> createState() =>
+      _PropertyFilterSheetState();
 }
 
-class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
+class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
   static const double _priceFloor = 0;
   static const double _priceCeil = 200000;
   // Single source of truth for the property-type filter strings, driven by
@@ -305,7 +308,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
           ),
           Expanded(
             child: Text(
-              'filters.title'.tr,
+              tr(ref, 'filters.title'),
               style: textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -334,7 +337,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('filters.price_per_night'.tr, style: labelStyle),
+        Text(tr(ref, 'filters.price_per_night'), style: labelStyle),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -343,7 +346,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 controller: _minPriceController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: priceDecoration('filters.min'.tr),
+                decoration: priceDecoration(tr(ref, 'filters.min')),
               ),
             ),
             const SizedBox(width: 12),
@@ -352,7 +355,7 @@ class _PropertyFilterSheetState extends State<_PropertyFilterSheet> {
                 controller: _maxPriceController,
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: priceDecoration('filters.max'.tr),
+                decoration: priceDecoration(tr(ref, 'filters.max')),
               ),
             ),
           ],

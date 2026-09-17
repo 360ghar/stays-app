@@ -7,8 +7,7 @@ import 'package:stays_app/app/ui/theme/app_colors.dart';
 /// Canonical design tokens, together with [AppTheme]
 /// (`lib/app/ui/theme/app_theme.dart`): import this file for semantic
 /// color/spacing/radius/type use in widgets. [AppColors] stays as the raw
-/// palette. The legacy constants in `lib/app/utils/theme.dart` are
-/// deprecated; do not use them in new code.
+/// palette.
 class StayTokens {
   StayTokens._();
 

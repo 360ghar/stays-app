@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 enum AuthStatus { idle, busy, error }
 
@@ -38,18 +38,9 @@ class AuthNotifier extends Notifier<AuthUiState> {
   @override
   AuthUiState build() => const AuthUiState();
 
-  AuthRepository? get _repo =>
-      Get.isRegistered<AuthRepository>() ? Get.find<AuthRepository>() : null;
+  AuthRepository get _repo => ref.watch(authRepositoryProvider);
 
   Future<bool> _run(Future<UserModel?> Function() action) async {
-    final repo = _repo;
-    if (repo == null) {
-      state = state.copyWith(
-        status: AuthStatus.error,
-        error: 'Auth service unavailable.',
-      );
-      return false;
-    }
     state = state.copyWith(status: AuthStatus.busy, error: '');
     try {
       final user = await action();
@@ -75,25 +66,25 @@ class AuthNotifier extends Notifier<AuthUiState> {
   Future<bool> login({required String identifier, required String password}) {
     final id = identifier.trim();
     if (id.contains('@')) {
-      return _run(() => _repo!.loginWithEmail(email: id, password: password));
+      return _run(() => _repo.loginWithEmail(email: id, password: password));
     }
-    return _run(() => _repo!.loginWithPhone(phone: id, password: password));
+    return _run(() => _repo.loginWithPhone(phone: id, password: password));
   }
 
   Future<bool> loginWithGoogle() {
     return _run(() async {
-      final result = await _repo!.signInWithGoogle();
+      final result = await _repo.signInWithGoogle();
       return result.user;
     });
   }
 
   Future<bool> loginWithApple() {
-    return _run(() => _repo!.signInWithApple());
+    return _run(() => _repo.signInWithApple());
   }
 
   Future<void> logout() async {
     try {
-      await _repo?.logout();
+      await _repo.logout();
     } catch (e, s) {
       AppLogger.error('Auth v2: logout failed', e, s);
     }

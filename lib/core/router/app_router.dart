@@ -24,45 +24,12 @@ import 'package:stays_app/features/tour/views/tour_viewer.dart';
 import 'package:stays_app/features/trips/views/trips_screen.dart';
 import 'package:stays_app/features/wishlist/views/wishlist_screen.dart';
 
-/// Strangler flag. `true` boots the Riverpod + go_router app.
-/// Rollback: set `false` to restore the legacy GetX boot.
-///
-/// REBUILD REQUIREMENT: this is a `const` evaluated at compile time. Toggling
-/// it needs a full restart (`flutter run` again / fresh build). Hot reload or
-/// hot restart alone will NOT switch routers; every entry point (`main*.dart`)
-/// branches on this value at startup via [v2RouterInstance].
-const bool useV2Router = true;
-
+/// V2 router. All primary routes are Riverpod screens.
 GoRouter? _sharedInstance;
 
 /// Shared v2 router. Built once Supabase is initialized; every entry point
 /// and every navigation bridge uses this instance so there is exactly one.
 GoRouter v2RouterInstance() => _sharedInstance ??= buildV2Router();
-
-/// Maps a legacy GetX path to its v2 equivalent. Concrete deep-link paths
-/// (`/listing/42`, `/chat/abc`) are identical in both routers and pass
-/// through; renamed hubs are translated.
-String mapLegacyPathToV2(String path) {
-  if (path == '/inquiries' ||
-      path == '/enquiries' ||
-      path == '/trips' ||
-      path == '/booking' ||
-      path == '/bookings') {
-    return AppPaths.trips;
-  }
-  if (path == '/enquiry' || path == '/inquiry') return AppPaths.inquiry;
-  if (path == '/enquiry-confirmation' ||
-      path == '/inquiry-confirmation' ||
-      path == '/booking-confirmation') {
-    return AppPaths.inquiryConfirmation;
-  }
-  if (path == '/payment-methods') return AppPaths.paymentMethods;
-  if (path == '/profile') return AppPaths.profile;
-  if (path == '/wishlist') return AppPaths.wishlist;
-  if (path == '/inbox') return AppPaths.inbox;
-  if (path == '/home' || path == '/explore') return AppPaths.explore;
-  return path;
-}
 
 /// V2 path table. Mirrors legacy `Routes` without the deprecated aliases.
 class AppPaths {

@@ -1,9 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:upgrader/upgrader.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,27 +15,28 @@ enum UpdateStatus { unknown, checking, available, notAvailable, error }
 /// Service for checking app updates using the upgrader package.
 ///
 /// Supports both forced updates (critical) and optional updates (dismissible).
-/// Uses GetStorage for persisting "remind me later" preferences.
-class AppUpdateService extends GetxService {
-  static const String _boxName = 'app_update_prefs';
-  static const String _lastDismissedKey = 'last_dismissed_at';
-  static const String _dismissedVersionKey = 'dismissed_version';
+/// Persists "remind me later" preferences in shared preferences.
+class AppUpdateService {
+  static const String _lastDismissedKey = 'au_last_dismissed_at';
+  static const String _dismissedVersionKey = 'au_dismissed_version';
   static const Duration _cooldownDuration = Duration(hours: 24);
   static const Duration _checkTimeout = Duration(seconds: 10);
 
-  late final GetStorage _storage;
+  SharedPreferences? _prefs;
   late final Upgrader _upgrader;
 
   String _currentVersion = '';
   String _currentBuildNumber = '';
 
   // Observable state
-  final Rx<UpdateStatus> status = UpdateStatus.unknown.obs;
-  final RxBool isUpdateAvailable = false.obs;
-  final RxBool isForceUpdate = false.obs;
-  final RxString storeVersion = ''.obs;
-  final RxString releaseNotes = ''.obs;
-  final RxString minAppVersion = ''.obs;
+  final ValueNotifier<UpdateStatus> status = ValueNotifier<UpdateStatus>(
+    UpdateStatus.unknown,
+  );
+  final ValueNotifier<bool> isUpdateAvailable = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isForceUpdate = ValueNotifier<bool>(false);
+  final ValueNotifier<String> storeVersion = ValueNotifier<String>('');
+  final ValueNotifier<String> releaseNotes = ValueNotifier<String>('');
+  final ValueNotifier<String> minAppVersion = ValueNotifier<String>('');
 
   /// Current app version
   String get currentVersion => _currentVersion;
@@ -50,9 +50,8 @@ class AppUpdateService extends GetxService {
   /// Initialize the service
   Future<AppUpdateService> init() async {
     try {
-      // Initialize storage
-      await GetStorage.init(_boxName);
-      _storage = GetStorage(_boxName);
+      // Shared preferences for dismissal state
+      _prefs ??= await SharedPreferences.getInstance();
 
       // Get current app version
       final packageInfo = await PackageInfo.fromPlatform();
@@ -141,8 +140,8 @@ class AppUpdateService extends GetxService {
     // Force updates always show
     if (isForceUpdate.value) return true;
 
-    final lastDismissed = _storage.read<int>(_lastDismissedKey);
-    final dismissedVersion = _storage.read<String>(_dismissedVersionKey);
+    final lastDismissed = _prefs?.getInt(_lastDismissedKey);
+    final dismissedVersion = _prefs?.getString(_dismissedVersionKey);
 
     // If never dismissed, show the prompt
     if (lastDismissed == null) return true;
@@ -159,11 +158,12 @@ class AppUpdateService extends GetxService {
 
   /// Record that the user dismissed the update prompt
   Future<void> recordDismissal() async {
-    await _storage.write(
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.setInt(
       _lastDismissedKey,
       DateTime.now().millisecondsSinceEpoch,
     );
-    await _storage.write(_dismissedVersionKey, storeVersion.value);
+    await prefs.setString(_dismissedVersionKey, storeVersion.value);
     AppLogger.info(
       'Update prompt dismissed for version: ${storeVersion.value}',
     );
@@ -244,7 +244,8 @@ class AppUpdateService extends GetxService {
 
   /// Clear all stored preferences (for testing)
   Future<void> clearPreferences() async {
-    await _storage.remove(_lastDismissedKey);
-    await _storage.remove(_dismissedVersionKey);
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    await prefs.remove(_lastDismissedKey);
+    await prefs.remove(_dismissedVersionKey);
   }
 }

@@ -4,12 +4,15 @@ import 'package:stays_app/app/data/services/storage_service.dart';
 import 'package:stays_app/app/utils/services/token_service.dart';
 
 /// Hand-written fake (no mockito) so this test file compiles fast.
-class _FakeStorage extends StorageService {
+class _FakeStorage implements StorageService {
   String? accessToken;
   String? refreshToken;
   String? expiresAt;
   int saveCalls = 0;
   int clearCalls = 0;
+
+  @override
+  Future<StorageService> initialize() async => this as StorageService;
 
   @override
   Future<String?> getAccessToken() async => accessToken;
@@ -19,6 +22,10 @@ class _FakeStorage extends StorageService {
 
   @override
   Future<String?> getTokenExpiration() async => expiresAt;
+
+  @override
+  Future<bool> hasAccessToken() async =>
+      (await getAccessToken())?.isNotEmpty ?? false;
 
   @override
   Future<void> saveTokens({
@@ -39,14 +46,28 @@ class _FakeStorage extends StorageService {
     refreshToken = null;
     expiresAt = null;
   }
+
+  @override
+  Future<void> saveUserData(Map<String, dynamic> userData) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getUserData() async => null;
+
+  @override
+  Future<void> clearUserData() async {}
+
+  @override
+  Future<void> cache(String key, Map<String, dynamic> value) async {}
+
+  @override
+  Future<Map<String, dynamic>?> getCached(String key) async => null;
 }
 
 void main() {
-  /// Creates the service AFTER the storage stubs are in place and drives its
-  /// lifecycle explicitly so initialization reads the intended state.
+  /// Creates the service AFTER the storage stubs are in place and awaits its
+  /// self-kicking initialization so it reads the intended state.
   Future<TokenService> createService(_FakeStorage storage) async {
     final service = TokenService(storageService: storage);
-    service.onInit();
     await service.ready;
     return service;
   }
@@ -56,7 +77,7 @@ void main() {
     final service = await createService(storage);
     expect(service.isAuthenticated.value, isFalse);
     expect(service.isReady, isTrue);
-    service.onClose();
+    service.dispose();
   });
 
   test('storeTokens persists tokens and flips auth state', () async {
@@ -73,7 +94,7 @@ void main() {
     expect(service.refreshToken, 'refresh-1');
     expect(storage.saveCalls, 1);
     expect(storage.accessToken, 'aaa.bbb.ccc');
-    service.onClose();
+    service.dispose();
   });
 
   test('clearTokens resets auth state and storage', () async {
@@ -90,7 +111,7 @@ void main() {
     expect(service.hasValidToken, isFalse);
     expect(storage.clearCalls, 1);
     expect(storage.accessToken, isNull);
-    service.onClose();
+    service.dispose();
   });
 
   test('loads a valid stored token on initialization', () async {
@@ -104,7 +125,7 @@ void main() {
     final service = await createService(storage);
     expect(service.isAuthenticated.value, isTrue);
     expect(service.accessToken, 'aaa.bbb.ccc');
-    service.onClose();
+    service.dispose();
   });
 
   test('rejects malformed stored tokens and clears them', () async {
@@ -113,7 +134,7 @@ void main() {
     final service = await createService(storage);
     expect(service.isAuthenticated.value, isFalse);
     expect(storage.clearCalls, 1);
-    service.onClose();
+    service.dispose();
   });
 
   group('TokenInfo', () {
@@ -146,6 +167,6 @@ void main() {
     expect(service.validateTokenFormat('not-a-token'), isFalse);
     expect(service.validateTokenFormat('a.b'), isFalse);
     expect(service.validateTokenFormat(null), isFalse);
-    service.onClose();
+    service.dispose();
   });
 }

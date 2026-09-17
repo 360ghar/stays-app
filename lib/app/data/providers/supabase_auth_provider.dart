@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:url_launcher/url_launcher.dart' show LaunchMode;
 
@@ -9,10 +8,10 @@ import '../services/apple_sign_in_service.dart';
 import 'auth/i_auth_provider.dart';
 import '../../utils/logger/app_logger.dart';
 
-class SupabaseAuthProvider extends GetxService implements IAuthProvider {
-  /// All dependencies are constructor-injected. The `Get.find` fallback lives
-  /// only in `InitialBinding` (the single registration site); this class never
-  /// calls `Get.find` itself so misconfigured DI fails loudly at the binding.
+class SupabaseAuthProvider implements IAuthProvider {
+  /// All dependencies are constructor-injected from Riverpod
+  /// `data_providers` (lib/core/providers/data_providers.dart); no fallbacks,
+  /// misconfiguration fails at provider construction.
   SupabaseAuthProvider({
     required supabase.SupabaseClient client,
     required StorageService storage,
@@ -26,8 +25,8 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   final supabase.SupabaseClient _supabase;
   final StorageService _storage;
 
-  // Registered once in InitialBinding (R7 DI consolidation); no local
-  // fallbacks — construction must fail loudly if DI is misconfigured.
+  // Provided by Riverpod data_providers; no local
+  // fallbacks — construction fails loudly if misconfigured.
   final GoogleSignInService _google;
   final AppleSignInService _apple;
 
