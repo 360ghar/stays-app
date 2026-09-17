@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:stays_app/config/app_config.dart';
@@ -21,7 +20,7 @@ class ConnectivityService {
   // one connectivity subscription during migration.
   static final ConnectivityService _shared = ConnectivityService._internal();
 
-  static ConnectivityService get I => Get.find<ConnectivityService>();
+  static ConnectivityService get I => _shared;
 
   final ValueNotifier<ConnectivityStatus> status =
       ValueNotifier<ConnectivityStatus>(ConnectivityStatus.disconnected);

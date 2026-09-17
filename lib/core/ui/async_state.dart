@@ -5,11 +5,8 @@ import 'package:stays_app/core/theme/tokens.dart';
 /// One loading / error / empty pattern for every rebuilt screen.
 ///
 /// Canonical async-state widget for V2 screens (Riverpod + go_router).
-/// Legacy GetX screens use [AsyncStateBuilder] in
-/// `lib/app/ui/widgets/common/async_state_builder.dart`, which is deprecated;
-/// do not use it in new V2 code.
 ///
-/// Replaces scattered spinners and bare Text errors in legacy views.
+/// Replaces scattered spinners and bare Text errors.
 class AsyncState extends StatelessWidget {
   const AsyncState.loading({super.key, this.message})
     : _kind = _Kind.loading,

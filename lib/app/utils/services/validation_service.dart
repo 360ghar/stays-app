@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 
 /// Validation rule interface for different field types
 abstract class ValidationRule {
@@ -200,7 +199,13 @@ class ValidationResult {
 
 /// Centralized validation service for all forms
 class ValidationService {
-  static ValidationService get I => Get.find<ValidationService>();
+  factory ValidationService() => _shared;
+  ValidationService._internal();
+
+  // Shared instance so form validators register app-wide.
+  static final ValidationService _shared = ValidationService._internal();
+
+  static ValidationService get I => _shared;
 
   final Map<String, FieldValidator> _validators = {};
 

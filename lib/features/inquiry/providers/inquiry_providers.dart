@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/booking_pricing_model.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 
 enum InquiryStatus { idle, pricing, submitting, success, error }
 
@@ -92,9 +92,7 @@ class InquiryFormNotifier extends AutoDisposeNotifier<InquiryFormState> {
   @override
   InquiryFormState build() => const InquiryFormState();
 
-  BookingRepository? get _repo => Get.isRegistered<BookingRepository>()
-      ? Get.find<BookingRepository>()
-      : null;
+  BookingRepository get _repo => ref.watch(bookingRepositoryProvider);
 
   void setDates(DateTime? checkIn, DateTime? checkOut) {
     state = state.copyWith(
@@ -131,8 +129,8 @@ class InquiryFormNotifier extends AutoDisposeNotifier<InquiryFormState> {
       DateTime(day.year, day.month, day.day).toIso8601String();
 
   Future<void> loadPricing(int propertyId) async {
+    if (!state.canPrice) return;
     final repo = _repo;
-    if (!state.canPrice || repo == null) return;
     state = state.copyWith(status: InquiryStatus.pricing, error: '');
     try {
       final pricing = await repo.calculatePricing(
@@ -161,7 +159,7 @@ class InquiryFormNotifier extends AutoDisposeNotifier<InquiryFormState> {
   Future<bool> submit(int propertyId) async {
     final repo = _repo;
     final pricing = state.pricing;
-    if (!state.canSubmit || repo == null || pricing == null) return false;
+    if (!state.canSubmit || pricing == null) return false;
     state = state.copyWith(status: InquiryStatus.submitting, error: '');
     try {
       final payload = buildInquiryPayload(

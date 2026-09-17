@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:go_router/go_router.dart';
 
 import 'package:stays_app/app/data/models/user_model.dart';
-import 'package:stays_app/app/data/repositories/auth_repository.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/features/auth/providers/auth_providers.dart';
@@ -12,9 +11,8 @@ import 'package:stays_app/features/auth/providers/auth_providers.dart';
 final _profileUserProvider = FutureProvider.autoDispose<UserModel?>((
   ref,
 ) async {
-  if (!Get.isRegistered<AuthRepository>()) return null;
   try {
-    return await Get.find<AuthRepository>().getCurrentUser();
+    return await ref.watch(authRepositoryProvider).getCurrentUser();
   } catch (_) {
     return null;
   }

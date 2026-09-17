@@ -4,13 +4,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
-import '../../../routes/app_routes.dart';
-import '../../../utils/helpers/webview_helper.dart';
+import 'package:stays_app/app/utils/helpers/webview_helper.dart';
+import 'package:stays_app/core/router/app_router.dart';
 
 class VirtualTourEmbed extends StatefulWidget {
   const VirtualTourEmbed({required this.tourUrl, super.key});
@@ -104,8 +104,13 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
     return WebViewWidget.fromPlatformCreationParams(params: params);
   }
 
-  void _openFullscreen() {
-    unawaited(Get.toNamed(Routes.tour, arguments: widget.tourUrl));
+  void _openFullscreen(BuildContext context) {
+    unawaited(
+      context.push(
+        AppPaths.tour('embed'),
+        extra: {'url': widget.tourUrl},
+      ),
+    );
   }
 
   @override
@@ -141,7 +146,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
                 IconButton(
                   tooltip: 'Full screen',
                   icon: const Icon(Icons.fullscreen, color: Colors.white),
-                  onPressed: _openFullscreen,
+                  onPressed: () => _openFullscreen(context),
                 ),
                 IconButton(
                   tooltip: 'Reload',

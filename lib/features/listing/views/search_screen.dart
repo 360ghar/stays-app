@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:get/get.dart' hide Response;
 import 'package:go_router/go_router.dart';
 
-import 'package:stays_app/app/data/services/location_service.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/features/listing/providers/search_providers.dart';
@@ -30,8 +29,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Future<void> _useMyLocation() async {
-    if (!Get.isRegistered<LocationService>()) return;
-    final location = Get.find<LocationService>();
+    final location = ref.read(locationServiceProvider);
     try {
       await location.updateLocation(ensurePrecise: true);
     } catch (_) {

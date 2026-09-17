@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -24,8 +23,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class PushNotificationService {
-  PushNotificationService(StorageService _);
+  PushNotificationService(StorageService _, {UsersProvider? usersProvider})
+    : _usersProvider = usersProvider ?? UsersProvider();
 
+  final UsersProvider _usersProvider;
   late FirebaseMessaging _messaging;
   bool _firebaseReady = false;
 
@@ -123,8 +124,7 @@ class PushNotificationService {
 
   Future<void> _registerTokenWithBackend(String token) async {
     try {
-      // Registered once in InitialBinding (R7 DI consolidation).
-      final provider = Get.find<UsersProvider>();
+      final provider = _usersProvider;
 
       String? appVersion;
       try {
@@ -134,7 +134,7 @@ class PushNotificationService {
         appVersion = null;
       }
 
-      final locale = Get.locale?.toLanguageTag();
+      final locale = PlatformDispatcher.instance.locale.toLanguageTag();
       final platform = kIsWeb
           ? 'web'
           : (defaultTargetPlatform == TargetPlatform.iOS ||
@@ -285,9 +285,7 @@ class PushNotificationService {
     } catch (_) {
       return null;
     }
-    return Get.isRegistered<DeepLinkService>()
-        ? Get.find<DeepLinkService>().mapToInternalPath(uri)
-        : null;
+    return DeepLinkService().mapToInternalPath(uri);
   }
 
   static String _redact(String input) {

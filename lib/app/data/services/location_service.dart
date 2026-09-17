@@ -2,9 +2,8 @@ import 'dart:async';
 
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class LocationService {
@@ -14,31 +13,32 @@ class LocationService {
     unawaited(_initLocationService());
   }
 
-  // Shared instance so the legacy GetX graph and the Riverpod graph share
-  // one permission flow and position stream during migration.
+  // Shared instance so the Riverpod graph shares one permission flow and
+  // position stream app-wide.
   static final LocationService _shared = LocationService._internal();
 
   // geocoding 5.x groups all functionality in the Geocoding class.
   final Geocoding _geocoding = Geocoding();
-  final _currentPosition = Rxn<Position>();
+  final ValueNotifier<Position?> _currentPosition =
+      ValueNotifier<Position?>(null);
   // Selected location overrides current GPS position for querying backend
-  final RxnDouble _selectedLat = RxnDouble();
-  final RxnDouble _selectedLng = RxnDouble();
-  final RxString _locationName = ''.obs; // Human-readable name for UI
-  final RxString _currentCity = ''.obs; // City-level name for grouping
-  final _isLocationEnabled = false.obs;
-  final _isLoadingLocation = false.obs;
-  final RxBool _isInitialized =
-      false.obs; // Track if location has been initialized
+  final ValueNotifier<double?> _selectedLat = ValueNotifier<double?>(null);
+  final ValueNotifier<double?> _selectedLng = ValueNotifier<double?>(null);
+  final ValueNotifier<String> _locationName =
+      ValueNotifier<String>(''); // Human-readable name for UI
+  final ValueNotifier<String> _currentCity =
+      ValueNotifier<String>(''); // City-level name for grouping
+  final ValueNotifier<bool> _isLocationEnabled = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isLoadingLocation = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> _isInitialized =
+      ValueNotifier<bool>(false); // Track if location has been initialized
   Completer<void>? _readyCompleter;
 
   Position? get currentPosition => _currentPosition.value;
   // UI-friendly name of location to display
   String get locationName => _locationName.value;
-  RxString get locationNameRx => _locationName;
   // City-level name derived from geocoding
   String get currentCity => _currentCity.value;
-  RxString get currentCityRx => _currentCity;
   bool get isLocationEnabled => _isLocationEnabled.value;
   bool get isLoadingLocation => _isLoadingLocation.value;
   bool get isInitialized => _isInitialized.value;
@@ -50,6 +50,17 @@ class LocationService {
   /// Completes when the location service has finished its initial setup.
   /// Callers can `await locationService.ready` instead of busy-wait polling.
   Future<void> get ready => _readyCompleter?.future ?? Future.value();
+
+  void dispose() {
+    _currentPosition.dispose();
+    _selectedLat.dispose();
+    _selectedLng.dispose();
+    _locationName.dispose();
+    _currentCity.dispose();
+    _isLocationEnabled.dispose();
+    _isLoadingLocation.dispose();
+    _isInitialized.dispose();
+  }
 
   Future<void> _initLocationService() async {
     try {
@@ -99,10 +110,8 @@ class LocationService {
 
       final bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        AppSnackbar.warning(
-          title: 'Location Services',
-          message:
-              'Please enable location services to get better recommendations',
+        AppLogger.warning(
+          'Location services disabled; skipping precise recommendations',
         );
         return null;
       }
@@ -116,10 +125,8 @@ class LocationService {
       }
 
       if (permission == LocationPermission.deniedForever) {
-        AppSnackbar.warning(
-          title: 'Location Permission',
-          message:
-              'Location permissions are permanently denied, please enable from settings',
+        AppLogger.warning(
+          'Location permission permanently denied; using last known area',
         );
         return null;
       }
