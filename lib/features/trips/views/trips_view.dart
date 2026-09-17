@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import 'package:stays_app/features/trips/controllers/trips_controller.dart';
 import 'package:stays_app/app/utils/helpers/currency_helper.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
 import 'package:stays_app/app/ui/widgets/common/location_filter_app_bar.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class TripsView extends GetView<TripsController> {
   const TripsView({super.key});
@@ -353,7 +355,7 @@ class TripsView extends GetView<TripsController> {
     final guests = booking['guests'];
     final rooms = booking['rooms'];
     final guestsLabel = "${guests ?? '-'} guests - ${rooms ?? '-'} room(s)";
-    final totalAmount = (booking['totalAmount'] as num?)?.toDouble() ?? 0;
+    final totalAmount = asDouble(booking['totalAmount']) ?? 0;
     final totalDisplay = CurrencyHelper.format(totalAmount);
     final dateRange =
         "${_formatDate(booking['checkIn'] ?? '')} - ${_formatDate(booking['checkOut'] ?? '')}";
@@ -506,7 +508,9 @@ class TripsView extends GetView<TripsController> {
                                       final bookingId = (booking['id'] ?? '')
                                           .toString();
                                       if (bookingId.isEmpty) return;
-                                      controller.cancelBooking(bookingId);
+                                      unawaited(
+                                        controller.cancelBooking(bookingId),
+                                      );
                                     },
                                     style: TextButton.styleFrom(
                                       foregroundColor: colors.error,
@@ -555,11 +559,14 @@ class TripsView extends GetView<TripsController> {
   }
 
   String _formatDate(String dateStr) {
+    // asDateTime never throws; null falls back to now, and any failure
+    // below returns the raw string so the UI never crashes on bad dates.
     try {
       final clean = dateStr.isEmpty
           ? DateTime.now().toIso8601String()
           : dateStr;
-      final date = DateTime.parse(clean);
+      final date = asDateTime(clean);
+      if (date == null) return dateStr;
       const months = [
         'Jan',
         'Feb',

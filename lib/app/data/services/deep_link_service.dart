@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/router/app_router.dart';
 
 class DeepLinkService extends GetxService {
   StreamSubscription<Uri?>? _sub;
@@ -26,12 +27,12 @@ class DeepLinkService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initDeepLinks();
+    unawaited(_initDeepLinks());
   }
 
   @override
   void onClose() {
-    _sub?.cancel();
+    unawaited(_sub?.cancel());
     super.onClose();
   }
 
@@ -136,6 +137,13 @@ class DeepLinkService extends GetxService {
     pendingDeepLink.value = path;
     await Future.delayed(const Duration(milliseconds: 500));
     try {
+      if (useV2Router) {
+        // The v2 guard preserves the target via ?from= when it bounces to
+        // login, so the pending link is always consumed here.
+        await v2RouterInstance().push(mapLegacyPathToV2(path));
+        pendingDeepLink.value = null;
+        return;
+      }
       await Get.toNamed(path);
       // If we actually landed on the target (an AuthMiddleware did not bounce
       // us to login), the pending link is consumed — clear it so it can't be
@@ -161,7 +169,11 @@ class DeepLinkService extends GetxService {
     final path = consumePendingDeepLink();
     if (path != null) {
       Future.delayed(const Duration(milliseconds: 300), () {
-        Get.toNamed(path);
+        if (useV2Router) {
+          unawaited(v2RouterInstance().push(mapLegacyPathToV2(path)));
+        } else {
+          unawaited(Get.toNamed(path));
+        }
       });
     }
   }

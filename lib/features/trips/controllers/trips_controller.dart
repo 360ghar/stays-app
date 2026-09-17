@@ -40,7 +40,7 @@ class TripsController extends BaseController {
       AppLogger.warning('PropertiesRepository not found for TripsController');
     }
     _initializeFilterSync();
-    loadPastBookings();
+    unawaited(loadPastBookings());
   }
 
   void _initializeFilterSync() {
@@ -363,12 +363,14 @@ class TripsController extends BaseController {
   }
 
   void viewBookingDetails(Map<String, dynamic> booking) {
-    Get.bottomSheet(
-      BookingDetailsSheet(
-        booking: booking,
-        onRebook: () => rebookHotel(booking),
+    unawaited(
+      Get.bottomSheet(
+        BookingDetailsSheet(
+          booking: booking,
+          onRebook: () => rebookHotel(booking),
+        ),
+        isScrollControlled: true,
       ),
-      isScrollControlled: true,
     );
   }
 

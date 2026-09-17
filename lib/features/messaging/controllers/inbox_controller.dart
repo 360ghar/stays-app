@@ -41,6 +41,6 @@ class InboxController extends BaseController {
   }
 
   void openConversation(String conversationId) {
-    Get.toNamed('/chat/$conversationId');
+    unawaited(Get.toNamed('/chat/$conversationId'));
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_animations.dart';
 
@@ -142,7 +143,7 @@ class _AnimatedToastState extends State<AnimatedToast>
       CurvedAnimation(parent: _controller, curve: AppAnimations.easeOutCubic),
     );
 
-    _controller.forward();
+    unawaited(_controller.forward());
 
     // Auto-dismiss after duration
     Future.delayed(widget.duration, () {
@@ -155,9 +156,11 @@ class _AnimatedToastState extends State<AnimatedToast>
   void _dismiss() {
     if (_isDismissed) return;
     _isDismissed = true;
-    _controller.reverse().then((_) {
-      widget.onDismiss?.call();
-    });
+    unawaited(
+      _controller.reverse().then((_) {
+        widget.onDismiss?.call();
+      }),
+    );
   }
 
   @override

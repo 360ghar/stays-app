@@ -11,34 +11,56 @@ class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     try {
-      // Check if AuthController exists and user is authenticated
-      if (Get.isRegistered<AuthController>()) {
-        final auth = Get.find<AuthController>();
-        if (auth.isAuthenticated.value) {
-          return null;
+      // DI lookups are guarded but still wrapped: a registration racing the
+      // guard throws, which is an internal ordering issue — not an auth
+      // failure — so it is caught and logged separately below.
+      AuthController? auth;
+      TokenService? tokenService;
+      try {
+        if (Get.isRegistered<AuthController>()) {
+          auth = Get.find<AuthController>();
         }
+        if (Get.isRegistered<TokenService>()) {
+          tokenService = Get.find<TokenService>();
+        }
+      } catch (e, s) {
+        AppLogger.error(
+          'AuthMiddleware DI error (service not registered)',
+          e,
+          s,
+        );
+        return const RouteSettings(name: Routes.login);
+      }
+      if (auth != null && auth.isAuthenticated.value) {
+        return null;
+      }
+      if (tokenService != null && tokenService.hasValidToken) {
+        return null;
       }
 
-      // Check TokenService for valid tokens (covers startup races)
-      if (Get.isRegistered<TokenService>()) {
-        final tokenService = Get.find<TokenService>();
-        if (tokenService.hasValidToken) {
-          return null;
+      // No in-memory auth state: fall back to the Supabase session. A throw
+      // here means the SDK isn't initialized (internal error), NOT "logged
+      // out" — logged distinctly from the no-session auth failure below.
+      try {
+        final session = Supabase.instance.client.auth.currentSession;
+        final hasSession = session != null && session.accessToken.isNotEmpty;
+        if (!hasSession) {
+          AppLogger.info('No token found, redirecting to login');
+          return const RouteSettings(name: Routes.login);
         }
-      }
-
-      // If controller doesn't exist, check Supabase session
-      final session = Supabase.instance.client.auth.currentSession;
-      final hasSession = session != null && session.accessToken.isNotEmpty;
-      if (!hasSession) {
-        AppLogger.info('No token found, redirecting to login');
+      } catch (e, s) {
+        AppLogger.error(
+          'AuthMiddleware internal error reading Supabase session',
+          e,
+          s,
+        );
         return const RouteSettings(name: Routes.login);
       }
 
       // Token exists, allow navigation (controller will be created by binding)
       return null;
-    } catch (e) {
-      AppLogger.error('Auth middleware error', e);
+    } catch (e, s) {
+      AppLogger.error('AuthMiddleware unexpected error', e, s);
       // If any error occurs, redirect to login
       return const RouteSettings(name: Routes.login);
     }

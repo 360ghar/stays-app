@@ -10,13 +10,26 @@ import 'auth/i_auth_provider.dart';
 import '../../utils/logger/app_logger.dart';
 
 class SupabaseAuthProvider extends GetxService implements IAuthProvider {
-  final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
-  final StorageService _storage = Get.find<StorageService>();
+  /// All dependencies are constructor-injected. The `Get.find` fallback lives
+  /// only in `InitialBinding` (the single registration site); this class never
+  /// calls `Get.find` itself so misconfigured DI fails loudly at the binding.
+  SupabaseAuthProvider({
+    required supabase.SupabaseClient client,
+    required StorageService storage,
+    required GoogleSignInService google,
+    required AppleSignInService apple,
+  }) : _supabase = client,
+       _storage = storage,
+       _google = google,
+       _apple = apple;
+
+  final supabase.SupabaseClient _supabase;
+  final StorageService _storage;
 
   // Registered once in InitialBinding (R7 DI consolidation); no local
   // fallbacks — construction must fail loudly if DI is misconfigured.
-  final GoogleSignInService _google = Get.find<GoogleSignInService>();
-  final AppleSignInService _apple = Get.find<AppleSignInService>();
+  final GoogleSignInService _google;
+  final AppleSignInService _apple;
 
   @override
   Future<ProviderAuthResult> loginWithEmail({
@@ -297,6 +310,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   String _ensureE164(String phone) {
     final trimmed = phone.replaceAll(RegExp(r'\s+'), '');
     if (trimmed.startsWith('+')) return trimmed;
-    return '${AppConfig.I.defaultCountryDialCode}$trimmed';
+    return '${AppConfig.I.locale.defaultCountryDialCode}$trimmed';
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/gestures.dart';
@@ -695,7 +696,7 @@ class _SignupViewState extends State<SignupView> {
         phone: phone,
         password: password,
       );
-      Get.toNamed(Routes.verification);
+      unawaited(Get.toNamed(Routes.verification));
     }
   }
 }

@@ -39,28 +39,52 @@ abstract class Routes {
 
   // Backwards compatibility aliases (deprecated; migrate to the canonical
   // constants above). Will be removed once consumers migrate.
-  @Deprecated('Use Routes.inquiry instead')
+  @Deprecated(
+    'Use Routes.inquiry instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const enquiry = inquiry; // British spelling alias
-  @Deprecated('Use Routes.inquiryConfirmation instead')
+  @Deprecated(
+    'Use Routes.inquiryConfirmation instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const enquiryConfirmation = inquiryConfirmation;
-  @Deprecated('Use Routes.inquiry instead')
+  @Deprecated(
+    'Use Routes.inquiry instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const booking = inquiry; // Legacy naming alias
-  @Deprecated('Use Routes.inquiryConfirmation instead')
+  @Deprecated(
+    'Use Routes.inquiryConfirmation instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const bookingConfirmation = inquiryConfirmation;
-  @Deprecated('Use Routes.inquiries instead')
+  @Deprecated(
+    'Use Routes.inquiries instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const enquiries = inquiries; // British spelling alias
-  @Deprecated('Use Routes.inquiries instead')
+  @Deprecated(
+    'Use Routes.inquiries instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const trips = inquiries;
-  @Deprecated('Use Routes.profileHelp instead')
+  @Deprecated(
+    'Use Routes.profileHelp instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const help = profileHelp;
-  @Deprecated('Use Routes.editProfile instead')
+  @Deprecated(
+    'Use Routes.editProfile instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const profileView = editProfile;
-  @Deprecated('Use Routes.profilePrivacy instead')
+  @Deprecated(
+    'Use Routes.profilePrivacy instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const privacySecurity = profilePrivacy;
-  @Deprecated('Use Routes.profileAbout instead')
+  @Deprecated(
+    'Use Routes.profileAbout instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const appInfo = profileAbout;
-  @Deprecated('Use Routes.profileLegal instead')
+  @Deprecated(
+    'Use Routes.profileLegal instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const legal = profileLegal;
-  @Deprecated('Use Routes.profilePrivacy instead')
+  @Deprecated(
+    'Use Routes.profilePrivacy instead (deprecated since 1.0.1, remove in 1.1.0)',
+  )
   static const privacy = profilePrivacy;
 }

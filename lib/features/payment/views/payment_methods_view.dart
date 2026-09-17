@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -108,111 +109,114 @@ class PaymentMethodsView extends GetView<PaymentMethodController> {
     String methodType = 'card';
     final formKey = GlobalKey<FormState>();
 
-    Get.bottomSheet(
-      StatefulBuilder(
-        builder: (context, setState) => SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-            ),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Add Payment Method',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: const Text('Card'),
-                        selected: methodType == 'card',
-                        onSelected: (_) => setState(() => methodType = 'card'),
-                      ),
-                      ChoiceChip(
-                        label: const Text('UPI'),
-                        selected: methodType == 'upi',
-                        onSelected: (_) => setState(() => methodType = 'upi'),
-                      ),
-                      ChoiceChip(
-                        label: const Text('Netbanking'),
-                        selected: methodType == 'netbanking',
-                        onSelected: (_) =>
-                            setState(() => methodType = 'netbanking'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (methodType == 'card') ...[
-                    TextFormField(
-                      controller: brandCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Brand (e.g. Visa)',
-                        border: OutlineInputBorder(),
-                      ),
+    unawaited(
+      Get.bottomSheet(
+        StatefulBuilder(
+          builder: (context, setState) => SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Add Payment Method',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Card'),
+                          selected: methodType == 'card',
+                          onSelected: (_) =>
+                              setState(() => methodType = 'card'),
+                        ),
+                        ChoiceChip(
+                          label: const Text('UPI'),
+                          selected: methodType == 'upi',
+                          onSelected: (_) => setState(() => methodType = 'upi'),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Netbanking'),
+                          selected: methodType == 'netbanking',
+                          onSelected: (_) =>
+                              setState(() => methodType = 'netbanking'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (methodType == 'card') ...[
+                      TextFormField(
+                        controller: brandCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Brand (e.g. Visa)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: last4Ctrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Last 4 digits',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        validator: (v) => (v == null || v.length != 4)
+                            ? 'Enter 4 digits'
+                            : null,
+                      ),
+                    ],
                     TextFormField(
-                      controller: last4Ctrl,
+                      controller: nicknameCtrl,
                       decoration: const InputDecoration(
-                        labelText: 'Last 4 digits',
+                        labelText: 'Nickname (optional)',
                         border: OutlineInputBorder(),
                       ),
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      validator: (v) => (v == null || v.length != 4)
-                          ? 'Enter 4 digits'
-                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () async {
+                        if (methodType == 'card' &&
+                            !(formKey.currentState?.validate() ?? false)) {
+                          return;
+                        }
+                        Get.back();
+                        await Get.find<PaymentMethodController>().addMethod(
+                          methodType: methodType,
+                          brand: brandCtrl.text.trim().isEmpty
+                              ? null
+                              : brandCtrl.text.trim(),
+                          last4: last4Ctrl.text.trim().isEmpty
+                              ? null
+                              : last4Ctrl.text.trim(),
+                          nickname: nicknameCtrl.text.trim().isEmpty
+                              ? null
+                              : nicknameCtrl.text.trim(),
+                        );
+                      },
+                      child: const Text('Save'),
                     ),
                   ],
-                  TextFormField(
-                    controller: nicknameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Nickname (optional)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () async {
-                      if (methodType == 'card' &&
-                          !(formKey.currentState?.validate() ?? false)) {
-                        return;
-                      }
-                      Get.back();
-                      await Get.find<PaymentMethodController>().addMethod(
-                        methodType: methodType,
-                        brand: brandCtrl.text.trim().isEmpty
-                            ? null
-                            : brandCtrl.text.trim(),
-                        last4: last4Ctrl.text.trim().isEmpty
-                            ? null
-                            : last4Ctrl.text.trim(),
-                        nickname: nicknameCtrl.text.trim().isEmpty
-                            ? null
-                            : nicknameCtrl.text.trim(),
-                      );
-                    },
-                    child: const Text('Save'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        isScrollControlled: true,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
       ),
     );
   }

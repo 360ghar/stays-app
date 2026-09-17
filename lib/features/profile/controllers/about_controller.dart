@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
@@ -28,7 +30,7 @@ class AboutController extends GetxController {
   void onInit() {
     super.onInit();
     environment.value = AppConfig.I.environment;
-    _loadPackageInfo();
+    unawaited(_loadPackageInfo());
   }
 
   Future<void> _loadPackageInfo() async {

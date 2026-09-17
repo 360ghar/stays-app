@@ -18,7 +18,7 @@ class PropertiesProvider extends BaseProvider {
     final query = <String, dynamic>{
       'lat': lat,
       'lng': lng,
-      if (effectiveCursor != null) 'cursor': effectiveCursor,
+      'cursor': ?effectiveCursor,
       'limit': limit,
       if (radiusKm > 0 && !(filters?.containsKey('radius') ?? false))
         'radius': radiusKm,

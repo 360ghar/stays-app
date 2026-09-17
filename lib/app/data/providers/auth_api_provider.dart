@@ -23,15 +23,18 @@ class AuthApiProvider extends BaseProvider {
 
   /// Records the last-used auth method for the authenticated user.
   /// Best-effort: failures are logged and swallowed so they never block login.
-  Future<void> recordLastMethod(String method) async {
+  /// Returns true on 200 OK, false when the write failed (caller decides).
+  Future<bool> recordLastMethod(String method) async {
     try {
       final response = await post('/api/v1/auth/last-method', {
         'method': method,
       });
       // 200 OK with JSON MessageResponse is success.
       handleResponse(response, (_) => null);
+      return true;
     } catch (e) {
       AppLogger.warning('Failed to record last auth method "$method": $e');
+      return false;
     }
   }
 
@@ -48,12 +51,15 @@ class AuthApiProvider extends BaseProvider {
   /// Marks the given app's onboarding as complete (sets
   /// `<app>_onboarding_completed = true` on the user). Best-effort: failures
   /// are logged and swallowed so they never block entry to the app.
-  Future<void> completeOnboarding({String app = 'stays'}) async {
+  /// Returns true on success, false when the write failed (caller decides).
+  Future<bool> completeOnboarding({String app = 'stays'}) async {
     try {
       final response = await post('/api/v1/users/me/onboarding?app=$app', {});
       handleResponse(response, (_) => null);
+      return true;
     } catch (e) {
       AppLogger.warning('Failed to mark onboarding complete (app=$app): $e');
+      return false;
     }
   }
 

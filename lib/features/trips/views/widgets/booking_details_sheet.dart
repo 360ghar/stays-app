@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 /// A bottom sheet widget displaying detailed booking/inquiry information.
 class BookingDetailsSheet extends StatelessWidget {
@@ -80,7 +81,7 @@ class BookingDetailsSheet extends StatelessWidget {
           _buildDetailRow(
             context,
             'Total Amount',
-            '\$${(booking['totalAmount'] as num?)?.toStringAsFixed(2) ?? '0.00'}',
+            '\$${(asDouble(booking['totalAmount']) ?? 0).toStringAsFixed(2)}',
           ),
           _buildDetailRow(
             context,
@@ -143,8 +144,11 @@ class BookingDetailsSheet extends StatelessWidget {
 
   String _formatDate(String dateStr) {
     if (dateStr.isEmpty) return '';
+    // asDateTime never throws; null returns the raw string so the
+    // sheet shows fallback text instead of crashing on bad dates.
     try {
-      final date = DateTime.parse(dateStr);
+      final date = asDateTime(dateStr);
+      if (date == null) return dateStr;
       const months = [
         'Jan',
         'Feb',

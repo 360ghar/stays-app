@@ -38,9 +38,7 @@ class SupabaseService {
       return;
     }
     try {
-      // ponytail: pin is supabase_flutter ^2.6.0; `publishableKey` is added in
-      // the v3.x major. Switch to `publishableKey:` on the next bump.
-      await Supabase.initialize(url: url, anonKey: publishableKey);
+      await Supabase.initialize(url: url, publishableKey: publishableKey);
       _initialized = true;
     } catch (e, st) {
       _initialized = false;

@@ -3,6 +3,11 @@ import 'package:get/get.dart';
 
 /// A reusable widget for handling async loading/error/data states.
 ///
+/// LEGACY GetX widget. V2 screens (Riverpod + go_router) use `AsyncState` in
+/// `lib/core/ui/async_state.dart` instead. This widget is deprecated and will
+/// be removed once the remaining legacy views migrate; do not use it in new
+/// code.
+///
 /// This widget provides a consistent pattern for displaying loading indicators,
 /// error states with retry functionality, and data content throughout the app.
 ///
@@ -16,6 +21,10 @@ import 'package:get/get.dart';
 ///   builder: (context, properties) => PropertyList(properties: properties),
 /// )
 /// ```
+@Deprecated(
+  'Legacy GetX widget. Use AsyncState (lib/core/ui/async_state.dart) in V2 '
+  'screens instead.',
+)
 class AsyncStateBuilder<T> extends StatelessWidget {
   const AsyncStateBuilder({
     required this.isLoading,
@@ -90,7 +99,14 @@ class AsyncStateBuilder<T> extends StatelessWidget {
   }
 }
 
-/// Variant for list data with built-in empty checking
+/// Variant for list data with built-in empty checking.
+///
+/// LEGACY GetX widget, deprecated alongside [AsyncStateBuilder]. V2 screens
+/// use `AsyncState` in `lib/core/ui/async_state.dart` instead.
+@Deprecated(
+  'Legacy GetX widget. Use AsyncState (lib/core/ui/async_state.dart) in V2 '
+  'screens instead.',
+)
 class AsyncListBuilder<T> extends StatelessWidget {
   const AsyncListBuilder({
     required this.isLoading,

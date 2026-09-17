@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -170,7 +171,7 @@ class LocationFilterAppBar extends StatelessWidget
 
   void _openLocationSearch() {
     if (Get.currentRoute == Routes.search) return;
-    Get.toNamed(Routes.search);
+    unawaited(Get.toNamed(Routes.search));
   }
 
   void _showFilterUnavailable(BuildContext context) {

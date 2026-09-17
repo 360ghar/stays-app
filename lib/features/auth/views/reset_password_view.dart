@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -314,9 +315,11 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
 
     if (hasError) return;
 
-    controller.resetPassword(
-      newPassword: password,
-      confirmPassword: confirmPassword,
+    unawaited(
+      controller.resetPassword(
+        newPassword: password,
+        confirmPassword: confirmPassword,
+      ),
     );
   }
 }

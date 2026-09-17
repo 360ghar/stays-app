@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:stays_app/app/controllers/base/base_controller.dart';
@@ -25,6 +26,19 @@ class WishlistController extends BaseController {
   final RxInt totalCount = 0.obs;
 
   UnifiedFilterModel _activeFilters = UnifiedFilterModel.empty;
+
+  /// Write-through mirror for the canonical id-set in [FavoritesController].
+  ///
+  /// This controller is the single backend-synced WRITER: every successful
+  /// server mutation is mirrored into the lightweight store so Explore,
+  /// Listing, and `FavoriteToggleMixin` readers see it via `isFavorite`
+  /// without touching [wishlistItems]. Sync points: [loadWishlist] calls
+  /// `replaceAll`, [loadMore] calls `addAll`, [addToWishlist] calls
+  /// `addFavorite`, [removeFromWishlist] calls `removeFavorite` (plus an
+  /// `addFavorite` rollback on failure), [clearWishlist] calls `clear`, and
+  /// [isInWishlist] reads `isFavorite` first. Nullable when
+  /// `FavoritesController` is not registered (see [_initializeServices]);
+  /// every write is a null-safe `?.` call so the wishlist still works alone.
   FavoritesController? _favoritesController;
 
   @override
@@ -32,14 +46,14 @@ class WishlistController extends BaseController {
     super.onInit();
     _initializeServices();
     _initializeFilterSync();
-    loadWishlist();
+    unawaited(loadWishlist());
   }
 
   @override
   void onReady() {
     super.onReady();
     // Ensure wishlist is refreshed when controller becomes active
-    loadWishlist(showLoader: false);
+    unawaited(loadWishlist(showLoader: false));
   }
 
   void _initializeServices() {
@@ -88,6 +102,10 @@ class WishlistController extends BaseController {
 
   /// Fresh fetch from the first page (cursor null). Replaces the current list
   /// and resets cursor pagination state.
+  ///
+  /// Write-through: on success mirrors the fetched ids into
+  /// `FavoritesController.replaceAll` so Explore/Listing/mixin readers stay
+  /// in sync. Failures clear the local list but leave the id-set untouched.
   Future<void> loadWishlist({bool showLoader = true}) async {
     if (_wishlistRepository == null) {
       errorMessage.value = 'Wishlist service unavailable';
@@ -132,6 +150,9 @@ class WishlistController extends BaseController {
 
   /// Loads the next page using the server-provided cursor. Appends to the
   /// current list. No-op when there is no more data or no cursor available.
+  ///
+  /// Write-through: on success mirrors the new page's ids into
+  /// `FavoritesController.addAll` (union, earlier ids kept).
   Future<void> loadMore() async {
     if (_wishlistRepository == null) return;
     if (isLoading.value || isRefreshing.value) return;
@@ -174,6 +195,11 @@ class WishlistController extends BaseController {
     await loadWishlist(showLoader: false);
   }
 
+  /// Adds [property] to the backend wishlist, then reloads the first page.
+  ///
+  /// Write-through: mirrors `property.id` into
+  /// `FavoritesController.addFavorite` after the backend `add` succeeds
+  /// (immediately when there is no repository: optimistic local path).
   Future<void> addToWishlist(Property property) async {
     if (isInWishlist(property.id)) return;
     if (_wishlistRepository == null) {
@@ -203,6 +229,12 @@ class WishlistController extends BaseController {
     }
   }
 
+  /// Removes [propertyId] from the backend wishlist with optimistic local
+  /// removal, then reloads the first page.
+  ///
+  /// Write-through: mirrors into `FavoritesController.removeFavorite` on the
+  /// optimistic removal, and rolls back with `addFavorite` if the backend
+  /// `remove` throws.
   Future<void> removeFromWishlist(int propertyId) async {
     final propertyIndex = wishlistItems.indexWhere(
       (property) => property.id == propertyId,
@@ -262,6 +294,9 @@ class WishlistController extends BaseController {
     }
   }
 
+  /// Read path: prefers the canonical `FavoritesController.isFavorite` id-set
+  /// and falls back to scanning [wishlistItems] when no favorites controller
+  /// is registered. Never writes.
   bool isInWishlist(int propertyId) =>
       _favoritesController?.isFavorite(propertyId) ??
       wishlistItems.any((p) => p.id == propertyId);
@@ -274,52 +309,61 @@ class WishlistController extends BaseController {
     }
   }
 
+  /// Clears the whole wishlist behind a confirm dialog (backend `clearAll`).
+  ///
+  /// Write-through: mirrors into `FavoritesController.clear` after the
+  /// backend batch succeeds (immediately when there is no repository).
   void clearWishlist() {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('Clear Wishlist'),
-        content: const Text(
-          'Are you sure you want to remove all items from your wishlist?',
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              if (_wishlistRepository != null) {
-                try {
-                  final ids = wishlistItems.map((p) => p.id).toList();
-                  // Single batch call instead of N sequential removes (audit UX #9).
-                  if (ids.isNotEmpty) {
-                    await _wishlistRepository!.clearAll(ids);
+    unawaited(
+      Get.dialog(
+        AlertDialog(
+          title: const Text('Clear Wishlist'),
+          content: const Text(
+            'Are you sure you want to remove all items from your wishlist?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Get.back();
+                if (_wishlistRepository != null) {
+                  try {
+                    final ids = wishlistItems.map((p) => p.id).toList();
+                    // Single batch call instead of N sequential removes (audit UX #9).
+                    if (ids.isNotEmpty) {
+                      await _wishlistRepository!.clearAll(ids);
+                    }
+                    _favoritesController?.clear();
+                    await loadWishlist();
+                    AppSnackbar.success(
+                      title: 'Wishlist Cleared',
+                      message: 'All items have been removed from your wishlist',
+                    );
+                  } catch (e) {
+                    AppLogger.error('Error clearing wishlist', e);
+                    AppSnackbar.error(
+                      title: 'Error',
+                      message: 'Failed to clear wishlist. Please try again.',
+                    );
                   }
+                } else {
+                  wishlistItems.clear();
                   _favoritesController?.clear();
-                  await loadWishlist();
+                  totalCount.value = 0;
                   AppSnackbar.success(
                     title: 'Wishlist Cleared',
                     message: 'All items have been removed from your wishlist',
                   );
-                } catch (e) {
-                  AppLogger.error('Error clearing wishlist', e);
-                  AppSnackbar.error(
-                    title: 'Error',
-                    message: 'Failed to clear wishlist. Please try again.',
-                  );
                 }
-              } else {
-                wishlistItems.clear();
-                _favoritesController?.clear();
-                totalCount.value = 0;
-                AppSnackbar.success(
-                  title: 'Wishlist Cleared',
-                  message: 'All items have been removed from your wishlist',
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Clear All'),
-          ),
-        ],
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Clear All'),
+            ),
+          ],
+        ),
       ),
     );
   }

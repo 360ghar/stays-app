@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -69,10 +70,12 @@ class _PrefetchScrollListenerState extends State<PrefetchScrollListener> {
 
     if (shouldPrefetch) {
       _lastPrefetchedIndex = currentIndex;
-      _prefetchService!.prefetchNextBatch(
-        widget.properties,
-        currentIndex + widget.visibleItemCount,
-        batchSize: widget.prefetchBatchSize,
+      unawaited(
+        _prefetchService!.prefetchNextBatch(
+          widget.properties,
+          currentIndex + widget.visibleItemCount,
+          batchSize: widget.prefetchBatchSize,
+        ),
       );
     }
   }
@@ -128,7 +131,9 @@ class _HorizontalPrefetchListState extends State<HorizontalPrefetchList> {
 
   void _prefetchInitialImages() {
     if (_prefetchService == null) return;
-    _prefetchService!.prefetchPropertyImages(widget.properties, limit: 5);
+    unawaited(
+      _prefetchService!.prefetchPropertyImages(widget.properties, limit: 5),
+    );
   }
 
   @override
@@ -148,10 +153,12 @@ class _HorizontalPrefetchListState extends State<HorizontalPrefetchList> {
     // Prefetch when scrolling past 2 more items
     if (currentIndex > _lastPrefetchedIndex + 2) {
       _lastPrefetchedIndex = currentIndex;
-      _prefetchService!.prefetchNextBatch(
-        widget.properties,
-        currentIndex + 3,
-        batchSize: 3,
+      unawaited(
+        _prefetchService!.prefetchNextBatch(
+          widget.properties,
+          currentIndex + 3,
+          batchSize: 3,
+        ),
       );
     }
   }

@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/ui/theme/theme_extensions.dart';
 import 'package:stays_app/app/ui/widgets/common/animated_widgets.dart';
 import 'package:stays_app/app/ui/widgets/common/animated_favorite_button.dart';
+import 'package:stays_app/app/ui/widgets/common/cached_image.dart';
 
 /// A large, prominent featured property card for the Explore page.
 /// Displays a full-width card with cinematic 16:9 aspect ratio, gradient overlay,
@@ -38,7 +40,8 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
     _shimmerController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat();
+    );
+    unawaited(_shimmerController.repeat());
   }
 
   @override
@@ -155,33 +158,10 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
 
   Widget _buildImage(BuildContext context) {
     final heroTag = '${widget.heroPrefix ?? 'featured'}-${widget.property.id}';
-    final colors = Theme.of(context).colorScheme;
-    final imageUrl = widget.property.displayImage;
 
-    Widget placeholder() {
-      return Container(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.hotel,
-          size: 56,
-          color: colors.onSurface.withValues(alpha: 0.4),
-        ),
-      );
-    }
-
-    final image = imageUrl != null && imageUrl.isNotEmpty
-        ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Shimmer.fromColors(
-              baseColor: colors.surfaceContainerHighest,
-              highlightColor: colors.surface,
-              child: Container(color: colors.surface),
-            ),
-            errorWidget: (_, _, _) => placeholder(),
-          )
-        : placeholder();
+    // Canonical image fallback lives in [CachedImage]; the local
+    // placeholder()/Shimmer blocks were removed in favor of it.
+    final image = CachedImage(imageUrl: widget.property.displayImage);
 
     return Hero(tag: heroTag, child: image);
   }
@@ -488,31 +468,11 @@ class _FeaturedStripImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     final heroTag = '${heroPrefix ?? 'featured_strip'}-${property.id}';
-    final imageUrl = property.displayImage;
 
-    Widget placeholder() {
-      return Container(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.hotel,
-          size: 32,
-          color: colors.onSurface.withValues(alpha: 0.5),
-        ),
-      );
-    }
-
-    final image = imageUrl != null && imageUrl.isNotEmpty
-        ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (_, _) =>
-                Container(color: colors.surfaceContainerHighest),
-            errorWidget: (_, _, _) => placeholder(),
-          )
-        : placeholder();
+    // Canonical image fallback lives in [CachedImage]; the local
+    // placeholder()/Shimmer blocks were removed in favor of it.
+    final image = CachedImage(imageUrl: property.displayImage);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),

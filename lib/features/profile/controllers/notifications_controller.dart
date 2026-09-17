@@ -150,7 +150,7 @@ class NotificationsController extends BaseController {
     }
   }
 
-  void toggleCategory(String key, bool enabled) {
+  void toggleCategory(String key, {required bool enabled}) {
     categories[key] = enabled;
   }
 }

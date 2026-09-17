@@ -465,13 +465,14 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
     return Obx(() {
       final rememberSelection = controller.rememberMe.value;
       return InkWell(
-        onTap: () => controller.setRememberMe(!rememberSelection),
+        onTap: () => controller.setRememberMe(value: !rememberSelection),
         borderRadius: BorderRadius.circular(8),
         child: Row(
           children: [
             Checkbox(
               value: rememberSelection,
-              onChanged: (value) => controller.setRememberMe(value ?? false),
+              onChanged: (value) =>
+                  controller.setRememberMe(value: value ?? false),
               activeColor: colors.primary,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,

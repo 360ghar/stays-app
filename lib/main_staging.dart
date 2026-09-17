@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/app_config.dart';
+import 'core/boot/v2_boot.dart';
+import 'core/router/app_router.dart';
 import 'app/bindings/initial_binding.dart';
 import 'app/routes/app_pages.dart';
 import 'l10n/localization_service.dart';
@@ -17,11 +19,9 @@ import 'app/data/services/theme_service.dart';
 import 'app/data/services/supabase_service.dart';
 import 'app/data/services/crash_reporting_service.dart';
 import 'features/settings/controllers/theme_controller.dart';
-import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
-import 'app/utils/performance/performance_monitor.dart';
 import 'app/utils/security/security_service.dart';
-import 'app/utils/services/error_service.dart';
+import 'core/boot/common_boot.dart';
 
 Future<void> main() async {
   await runZonedGuarded(
@@ -29,36 +29,18 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       await dotenv.load(fileName: '.env.staging');
       AppConfig.setConfig(AppConfig.staging());
-      if (!Get.isRegistered<ErrorService>()) {
-        Get.put<ErrorService>(ErrorService(), permanent: true);
-      }
-      if (!Get.isRegistered<PerformanceMonitor>()) {
-        Get.put<PerformanceMonitor>(PerformanceMonitor(), permanent: true);
-      }
-      SecurityService().validateApiKeys();
+      ensureCommonBindings();
+      SecurityService.validateApiKeys();
 
       // Supabase is owned by InitialBinding.putAsync (single source of truth
       // for the registered client). We publish the init future here so the
       // binding can await the same work, avoiding a double `Supabase.initialize`.
       SupabaseService.supabaseServiceReady = SupabaseService(
-        url: AppConfig.I.supabaseUrl,
-        publishableKey: AppConfig.I.supabasePublishableKey,
+        url: AppConfig.I.auth.supabaseUrl,
+        publishableKey: AppConfig.I.auth.supabasePublishableKey,
       ).initialize();
-      final pinsRaw = dotenv.env['API_CERT_SHA256'];
-      if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
-        final host = Uri.parse(AppConfig.I.apiBaseUrl).host;
-        final pins = pinsRaw
-            .split(',')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toSet();
-        if (pins.isNotEmpty) {
-          HttpOverrides.global = PinningHttpOverrides(
-            allowedPins: pins,
-            host: host,
-          );
-        }
-      }
+      // Optional certificate pinning (shared helper; see common_boot.dart).
+      applyCertPinning();
 
       // Parallelize initialization of independent services for faster startup
       late ThemeService themeService;
@@ -90,7 +72,12 @@ Future<void> main() async {
 
       await LocalizationService.init(localeService);
       unawaited(Get.updateLocale(LocalizationService.initialLocale));
-      runApp(const MyApp());
+
+      if (useV2Router) {
+        ensureV2Bindings();
+      }
+
+      runApp(const ProviderScope(child: MyApp()));
     },
     (error, stackTrace) async {
       AppLogger.error('Uncaught zone error', error, stackTrace);
@@ -113,6 +100,13 @@ class MyApp extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     return Obx(() {
       final currentLocale = Get.locale ?? LocalizationService.initialLocale;
+      if (useV2Router) {
+        return buildV2App(
+          title: '360ghar stays (Staging)',
+          themeMode: themeController.themeMode.value,
+          locale: currentLocale,
+        );
+      }
       return GetMaterialApp(
         title: '360ghar stays (Staging)',
         theme: AppTheme.lightTheme,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -171,7 +172,7 @@ class AppSnackbar {
   /// Dismiss current snackbar
   static void dismiss() {
     if (Get.isSnackbarOpen) {
-      Get.closeCurrentSnackbar();
+      unawaited(Get.closeCurrentSnackbar());
     }
   }
 }

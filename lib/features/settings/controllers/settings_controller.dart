@@ -61,8 +61,8 @@ class SettingsController extends GetxController {
     await _themeController.updateThemeMode(mode);
   }
 
-  Future<void> toggleDarkMode(bool isDark) async {
-    await _themeController.toggleDarkMode(isDark);
+  Future<void> toggleDarkMode({required bool isDark}) async {
+    await _themeController.toggleDarkMode(isDark: isDark);
   }
 
   // Language selection (driven by LocalizationService)

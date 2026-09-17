@@ -42,15 +42,15 @@ class GoogleSignInService {
 
   bool _initialized = false;
 
-  bool get isConfigured => AppConfig.I.isGoogleSignInConfigured;
+  bool get isConfigured => AppConfig.I.auth.isGoogleSignInConfigured;
 
   Future<void> _ensureInitialized({String? hashedNonce}) async {
     // The nonce must be supplied at initialize() time on the v7 API so it is
     // embedded into the issued ID token. We therefore re-initialize per
     // sign-in attempt with a fresh hashed nonce.
     await GoogleSignIn.instance.initialize(
-      clientId: AppConfig.I.googleIosClientId,
-      serverClientId: AppConfig.I.googleWebClientId,
+      clientId: AppConfig.I.auth.googleIosClientId,
+      serverClientId: AppConfig.I.auth.googleWebClientId,
       nonce: hashedNonce,
     );
     _initialized = true;

@@ -134,8 +134,8 @@ class UsersProvider extends BaseProvider {
     final payload = <String, dynamic>{
       'token': token,
       'platform': platform,
-      if (appVersion != null) 'app_version': appVersion,
-      if (locale != null) 'locale': locale,
+      'app_version': ?appVersion,
+      'locale': ?locale,
     };
     final response = await post(
       '/api/v1/notifications/devices/register',

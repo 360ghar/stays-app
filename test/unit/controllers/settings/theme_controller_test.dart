@@ -49,10 +49,10 @@ void main() {
       final service = _FakeThemeService();
       final controller = ThemeController(themeService: service)..onInit();
 
-      await controller.toggleDarkMode(true);
+      await controller.toggleDarkMode(isDark: true);
       expect(controller.themeMode.value, ThemeMode.dark);
 
-      await controller.toggleDarkMode(false);
+      await controller.toggleDarkMode(isDark: false);
       expect(controller.themeMode.value, ThemeMode.light);
     },
   );

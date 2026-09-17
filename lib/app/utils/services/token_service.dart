@@ -57,6 +57,15 @@ class TokenInfo {
 }
 
 class TokenService extends GetxService {
+  /// Canonical write path for tokens: every write (login, OTP verify,
+  /// BaseProvider authenticator refresh at base_provider.dart ~190-205) must
+  /// go through [storeTokens]. Never call `StorageService.saveTokens`
+  /// directly — the authenticator keeps a direct-storage fallback only for
+  /// the window where this service is not registered yet.
+  ///
+  /// Refresh dedup: concurrent refresh callers share one network round-trip
+  /// via [_inFlightRefresh]. External callers (authenticator, splash restore)
+  /// use the public [refresh] entry point, never the private [_refreshTokens].
   TokenService({StorageService? storageService})
     : _storageService = storageService;
 

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import 'package:stays_app/app/data/repositories/profile_repository.dart';
 import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/helpers/app_snackbar.dart';
 import 'package:stays_app/app/utils/helpers/booking_helpers.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 class ProfileController extends BaseController {
@@ -53,7 +55,7 @@ class ProfileController extends BaseController {
   void onInit() {
     super.onInit();
     _hydrateFromAuth();
-    loadProfile();
+    unawaited(loadProfile());
   }
 
   void _hydrateFromAuth() {
@@ -157,13 +159,9 @@ class ProfileController extends BaseController {
   }
 
   TripModel _mapBookingToTrip(Map<String, dynamic> booking) {
-    DateTime parseDate(dynamic value) {
-      if (value is DateTime) return value;
-      if (value is String) {
-        return DateTime.tryParse(value) ?? DateTime.now();
-      }
-      return DateTime.now();
-    }
+    // asDateTime never throws; null falls back to now so bad dates
+    // degrade to a placeholder instead of crashing the profile screen.
+    DateTime parseDate(dynamic value) => asDateTime(value) ?? DateTime.now();
 
     return TripModel(
       id: booking['id']?.toString() ?? UniqueKey().hashCode.toString(),
@@ -179,7 +177,7 @@ class ProfileController extends BaseController {
       ),
       status: booking['status']?.toString() ?? 'completed',
       propertyImage: booking['image']?.toString(),
-      totalCost: (booking['totalAmount'] as num?)?.toDouble(),
+      totalCost: asDouble(booking['totalAmount']),
       hostName: booking['hostName']?.toString(),
     );
   }
@@ -303,7 +301,7 @@ class ProfileController extends BaseController {
       isActionInProgress.value = true;
       await _authController.logout();
       user.value = null;
-      Get.offAllNamed(Routes.login);
+      unawaited(Get.offAllNamed(Routes.login));
       AppSnackbar.success(
         title: 'Signed out',
         message: 'You have been logged out safely.',

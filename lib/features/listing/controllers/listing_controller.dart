@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
@@ -7,6 +8,7 @@ import 'package:stays_app/app/data/models/unified_filter_model.dart';
 import 'package:stays_app/app/data/repositories/properties_repository.dart';
 import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/controllers/filter_controller.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 
 class ListingController extends BaseController {
   ListingController({required PropertiesRepository repository})
@@ -35,7 +37,7 @@ class ListingController extends BaseController {
     super.onInit();
     _initQueryFromArgsOrService();
     _attachFilterController();
-    fetch();
+    unawaited(fetch());
   }
 
   @override
@@ -48,11 +50,9 @@ class ListingController extends BaseController {
   void _initQueryFromArgsOrService() {
     final args = Get.arguments;
     if (args is Map<String, dynamic>) {
-      _queryLat =
-          (args['lat'] as num?)?.toDouble() ?? _locationService.latitude;
-      _queryLng =
-          (args['lng'] as num?)?.toDouble() ?? _locationService.longitude;
-      _radiusKm = (args['radius_km'] as num?)?.toDouble() ?? _radiusKm;
+      _queryLat = asDouble(args['lat']) ?? _locationService.latitude;
+      _queryLng = asDouble(args['lng']) ?? _locationService.longitude;
+      _radiusKm = asDouble(args['radius_km']) ?? _radiusKm;
       final rawFilters = args['filters'];
       if (rawFilters is Map<String, dynamic>) {
         _filtersFromArgs = Map<String, dynamic>.from(rawFilters)
@@ -198,10 +198,12 @@ class ListingController extends BaseController {
 
   void _scrollToTop() {
     if (!scrollController.hasClients) return;
-    scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 240),
-      curve: Curves.easeOut,
+    unawaited(
+      scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOut,
+      ),
     );
   }
 }

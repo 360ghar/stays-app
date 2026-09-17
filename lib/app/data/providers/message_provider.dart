@@ -171,7 +171,7 @@ class MessageProvider {
         .from('conversations')
         .insert({
           'property_id': propertyId,
-          if (bookingId != null) 'booking_id': bookingId,
+          'booking_id': ?bookingId,
           'guest_id': userId,
           'host_id': hostId,
         })

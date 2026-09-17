@@ -31,12 +31,21 @@ class GoogleLoginResult {
 }
 
 class AuthRepository {
-  AuthRepository({required IAuthProvider provider, AuthApiProvider? authApi})
-    : _provider = provider,
-      _authApi = authApi ?? AuthApiProvider();
+  /// All dependencies are constructor-injected. The `Get.find` fallback lives
+  /// only in `InitialBinding` (the single registration site); this class never
+  /// calls `Get.find` for its own fields so misconfigured DI fails loudly at
+  /// the binding. (`TokenService` is still resolved lazily inside methods via
+  /// `Get.find` because it boots asynchronously after this repository.)
+  AuthRepository({
+    required IAuthProvider provider,
+    required StorageService storage,
+    AuthApiProvider? authApi,
+  }) : _provider = provider,
+       _authApi = authApi ?? AuthApiProvider(),
+       _storage = storage;
   final IAuthProvider _provider;
   final AuthApiProvider _authApi;
-  final StorageService _storage = Get.find<StorageService>();
+  final StorageService _storage;
 
   Future<UserModel> loginWithEmail({
     required String email,
@@ -122,7 +131,8 @@ class AuthRepository {
   }
 
   /// Records the last-used auth method (best-effort, never throws).
-  Future<void> recordLastMethod(String method) =>
+  /// Returns true when the backend acknowledged the write.
+  Future<bool> recordLastMethod(String method) =>
       _authApi.recordLastMethod(method);
 
   /// Fetches the auth gate state from the backend.
@@ -130,8 +140,9 @@ class AuthRepository {
   Future<Map<String, dynamic>> getAuthGateState({String app = 'stays'}) =>
       _authApi.getAuthGateState(app: app);
 
-  /// Marks the given app's onboarding as complete. Best-effort.
-  Future<void> completeOnboarding({String app = 'stays'}) =>
+  /// Marks the given app's onboarding as complete. Best-effort, never throws.
+  /// Returns true when the backend acknowledged the write.
+  Future<bool> completeOnboarding({String app = 'stays'}) =>
       _authApi.completeOnboarding(app: app);
 
   // ---------------------------------------------------------------------------

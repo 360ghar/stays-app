@@ -40,7 +40,8 @@ class PrivacyView extends GetView<PrivacyController> {
                     'Allow hosts to view your public profile.',
                   ),
                   value: controller.profileVisible.value,
-                  onChanged: controller.setProfileVisible,
+                  onChanged: (value) =>
+                      controller.setProfileVisible(value: value),
                 ),
               ),
               Obx(
@@ -50,7 +51,8 @@ class PrivacyView extends GetView<PrivacyController> {
                     'Share your location to receive nearby stay suggestions.',
                   ),
                   value: controller.locationSharing.value,
-                  onChanged: controller.setLocationSharing,
+                  onChanged: (value) =>
+                      controller.setLocationSharing(value: value),
                 ),
               ),
               const SizedBox(height: 24),

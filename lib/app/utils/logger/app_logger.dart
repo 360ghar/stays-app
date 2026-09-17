@@ -3,6 +3,16 @@ import 'package:logger/logger.dart';
 import '../../../config/app_config.dart';
 
 class AppLogger {
+  // Log-level guide (pick the lowest level that fits):
+  // - debug: hot-loop detail (per-request/response, retries, timers, frames).
+  //   This is the ONLY level allowed in loops or per-request paths.
+  // - info: one-off lifecycle milestones (login, init done, navigation).
+  // - warning: recoverable trouble (transient refresh failure, fallback).
+  // - error: needs a human (auth-class failures, unhandled exceptions).
+  // Hot-loop rule: per-request logging (e.g. BaseProvider request/response
+  // modifiers, retry attempts) stays at debug — never info/warning — so
+  // production (level=warning) is not spammed. Correlation: pass runId
+  // (one operation) and/or userId (one user) to stitch related lines.
   static final Logger _logger = Logger(
     printer: PrettyPrinter(
       methodCount: 1,
@@ -24,22 +34,53 @@ class AppLogger {
     return Level.trace;
   }
 
-  static void debug(String message, [dynamic data]) =>
-      _logger.d(_fmt(message, data));
-  static void info(String message, [dynamic data]) =>
-      _logger.i(_fmt(message, data));
-  static void warning(String message, [dynamic data]) =>
-      _logger.w(_fmt(message, data));
-  static void error(String message, [dynamic error, StackTrace? stackTrace]) =>
-      _logger.e(_fmt(message, error), error: error, stackTrace: stackTrace);
+  static void debug(
+    String message, [
+    dynamic data,
+    String? runId,
+    String? userId,
+  ]) => _logger.d(_fmt(message, data, runId, userId));
+  static void info(
+    String message, [
+    dynamic data,
+    String? runId,
+    String? userId,
+  ]) => _logger.i(_fmt(message, data, runId, userId));
+  static void warning(
+    String message, [
+    dynamic data,
+    String? runId,
+    String? userId,
+  ]) => _logger.w(_fmt(message, data, runId, userId));
+  static void error(
+    String message, [
+    dynamic error,
+    StackTrace? stackTrace,
+    String? runId,
+    String? userId,
+  ]) => _logger.e(
+    _fmt(message, error, runId, userId),
+    error: error,
+    stackTrace: stackTrace,
+  );
 
-  static void logRequest(dynamic request) =>
-      _logger.d(_fmt('API Request', request));
-  static void logResponse(dynamic response) =>
-      _logger.d(_fmt('API Response', response));
+  static void logRequest(dynamic request, [String? runId, String? userId]) =>
+      _logger.d(_fmt('API Request', request, runId, userId));
+  static void logResponse(dynamic response, [String? runId, String? userId]) =>
+      _logger.d(_fmt('API Response', response, runId, userId));
 
-  static String _fmt(String message, [dynamic data]) {
-    if (data == null) return message;
+  static String _fmt(
+    String message, [
+    dynamic data,
+    String? runId,
+    String? userId,
+  ]) {
+    final ctx = [
+      if (runId != null && runId.isNotEmpty) 'run=$runId',
+      if (userId != null && userId.isNotEmpty) 'user=$userId',
+    ].join(' ');
+    String withCtx(String s) => ctx.isEmpty ? s : '$s | $ctx';
+    if (data == null) return withCtx(message);
     if (data is Map) {
       final kv = data.entries
           .map((e) => '${e.key}=${_stringify(e.value)}')

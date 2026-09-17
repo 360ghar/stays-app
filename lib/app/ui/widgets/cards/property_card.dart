@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/ui/widgets/common/cached_image.dart';
 
 import '../../theme/theme_extensions.dart';
 
@@ -97,33 +97,10 @@ class PropertyCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final imageUrl = property.displayImage;
-
-    final placeholder = Container(
-      color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.hotel,
-        size: 44,
-        color: colors.onSurface.withValues(alpha: 0.5),
-      ),
-    );
-
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return placeholder;
-    }
-
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Shimmer.fromColors(
-        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
-        child: Container(color: colors.surface),
-      ),
-      errorWidget: (context, url, error) => placeholder,
-    );
+    // Canonical image fallback: placeholder, shimmer, and error states all
+    // live in [CachedImage]. Do not re-add local placeholder()/Shimmer
+    // blocks here; fix them in cached_image.dart instead.
+    return CachedImage(imageUrl: property.displayImage);
   }
 
   Widget _buildGradientOverlay() {

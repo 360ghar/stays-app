@@ -100,7 +100,7 @@ class HotelsMapController extends GetxController {
       time: const Duration(milliseconds: 250),
     );
     _initializeFilterSync();
-    _requestLocationPermission();
+    unawaited(_requestLocationPermission());
     _refreshLocationLabel();
   }
 
@@ -164,7 +164,9 @@ class HotelsMapController extends GetxController {
   void _applyFilters({bool fromRemoteFetch = false}) {
     final desiredRadius = _activeFilters.radiusKm ?? 10;
     if (!fromRemoteFetch && (_lastRadius - desiredRadius).abs() > 0.5) {
-      _loadHotelsNearLocation(currentLocation.value, radiusKm: desiredRadius);
+      unawaited(
+        _loadHotelsNearLocation(currentLocation.value, radiusKm: desiredRadius),
+      );
       return;
     }
     if (_allHotels.isEmpty) {
@@ -214,18 +216,22 @@ class HotelsMapController extends GetxController {
 
   void _jumpToCard(int index, {bool animate = false}) {
     if (index < 0 || index >= hotels.length) return;
-    Future.microtask(() {
-      if (!cardsController.hasClients) return;
-      if (animate) {
-        cardsController.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-        );
-      } else {
-        cardsController.jumpToPage(index);
-      }
-    });
+    unawaited(
+      Future.microtask(() {
+        if (!cardsController.hasClients) return;
+        if (animate) {
+          unawaited(
+            cardsController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+            ),
+          );
+        } else {
+          cardsController.jumpToPage(index);
+        }
+      }),
+    );
   }
 
   void _centerOnHotel(HotelModel hotel) {
@@ -268,7 +274,7 @@ class HotelsMapController extends GetxController {
   }
 
   void openPropertyDetail(HotelModel hotel) {
-    Get.toNamed('/listing/${hotel.id}');
+    unawaited(Get.toNamed('/listing/${hotel.id}'));
   }
 
   double get activeRadiusKm => _activeFilters.radiusKm ?? _lastRadius;
@@ -366,7 +372,7 @@ class HotelsMapController extends GetxController {
 
   void _loadSampleHotels() {
     // Fallback: try to load from current location if service available
-    _loadHotelsNearLocation(currentLocation.value);
+    unawaited(_loadHotelsNearLocation(currentLocation.value));
   }
 
   void _updateMapMarkers() {

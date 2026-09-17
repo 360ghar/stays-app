@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
+import '../../utils/performance/performance_monitor.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/exceptions/network_exceptions.dart';
 import '../../utils/services/connectivity_service.dart';
@@ -112,7 +113,7 @@ abstract class BaseProvider extends GetConnect {
 
   @override
   void onInit() {
-    httpClient.baseUrl = AppConfig.I.apiBaseUrl;
+    httpClient.baseUrl = AppConfig.I.api.apiBaseUrl;
     httpClient.timeout = const Duration(seconds: 30);
 
     httpClient.addRequestModifier<Object?>((request) async {
@@ -131,9 +132,12 @@ abstract class BaseProvider extends GetConnect {
       // Lightweight request timing for performance monitoring
       request.headers['x-start-ms'] = DateTime.now().millisecondsSinceEpoch
           .toString();
+      // Never log headers: Authorization bearer tokens must stay out of logs.
+      // URLs are redacted (query + fragment stripped) like
+      // DeepLinkService._redact — query params may carry tokens.
       AppLogger.logRequest({
         'method': request.method,
-        'url': request.url.toString(),
+        'url': _redactUri(request.url).toString(),
       });
       return request;
     });
@@ -149,8 +153,8 @@ abstract class BaseProvider extends GetConnect {
       }
       AppLogger.logResponse({
         'status': response.statusCode,
-        'url': request.url.toString(),
-        if (elapsedMs != null) 'elapsed_ms': elapsedMs,
+        'url': _redactUri(request.url).toString(),
+        'elapsed_ms': ?elapsedMs,
       });
       // Passive handler: authenticator below will retry.
       return response;
@@ -160,7 +164,7 @@ abstract class BaseProvider extends GetConnect {
     httpClient.addAuthenticator<Object?>((request) async {
       // Skip auth endpoints to avoid loops
       if (_isAuthEndpoint(request.url)) return request;
-      AppLogger.info('Authenticator triggered for ${request.url}');
+      AppLogger.debug('Authenticator triggered for ${_redactUri(request.url)}');
       final client = Supabase.instance.client;
       try {
         final session = client.auth.currentSession;
@@ -191,7 +195,9 @@ abstract class BaseProvider extends GetConnect {
             );
           }
           request.headers['Authorization'] = 'Bearer $newToken';
-          AppLogger.info('Auth token refreshed; retrying ${request.url}');
+          AppLogger.debug(
+            'Auth token refreshed; retrying ${_redactUri(request.url)}',
+          );
           return request;
         }
         throw ApiException(
@@ -235,16 +241,18 @@ abstract class BaseProvider extends GetConnect {
 
   T handleResponse<T>(Response response, T Function(dynamic) parser) {
     final int statusCode = response.statusCode ?? 500;
+    // Redact query/fragment (may carry tokens); body only logged in dev.
+    final redactedUrl = response.request?.url == null
+        ? 'unknown'
+        : _redactUri(response.request!.url).toString();
 
     // Only log response body in dev to prevent leaking sensitive data
     if (AppConfig.isDev) {
       AppLogger.info(
-        'API Response [${response.request?.url}] - Status: $statusCode, Body: ${response.bodyString}',
+        'API Response [$redactedUrl] - Status: $statusCode, Body: ${response.bodyString}',
       );
     } else {
-      AppLogger.info(
-        'API Response [${response.request?.url}] - Status: $statusCode',
-      );
+      AppLogger.info('API Response [$redactedUrl] - Status: $statusCode');
     }
 
     if (response.isOk) {
@@ -267,6 +275,12 @@ abstract class BaseProvider extends GetConnect {
         url.path.contains('/login') ||
         url.path.contains('/register');
   }
+
+  /// Strips query and fragment before logging — mirrors
+  /// DeepLinkService._redact. Query params may carry tokens or PII that
+  /// should never be written to logs. Headers (esp. Authorization) are
+  /// never logged.
+  static Uri _redactUri(Uri uri) => uri.replace(query: '', fragment: '');
 
   /// True when [body] is missing or an empty string. A 200 OK with a blank
   /// payload (common when an endpoint transitions from 204 to 200) should be
@@ -452,65 +466,89 @@ abstract class BaseProvider extends GetConnect {
   }) async {
     int attempt = 0;
     Duration delay = _initialRetryDelay;
+    final stopwatch = Stopwatch()..start();
 
-    while (true) {
-      if (!await _hasNetworkConnection()) {
-        throw ApiException(
-          message:
-              'No internet connection. Please check your network and try again.',
-          statusCode: 0,
-        );
-      }
-      try {
-        final response = await operation();
-
-        // Server responded: retry only idempotent methods on transient codes.
-        final statusCode = response.statusCode ?? 0;
-        if (statusCode != 0 &&
-            shouldRetryRequest(
-              method: method,
-              statusCode: statusCode,
-              attempt: attempt,
-              transportFailure: TransportFailureKind.none,
-            )) {
-          attempt++;
-          final retryAfter = _retryAfterSeconds(response);
-          AppLogger.warning(
-            'Request failed with status $statusCode. Retry attempt $attempt/${_maxRetries - 1} after ${delay.inMilliseconds}ms',
-          );
-          await Future<void>.delayed(_nextDelay(delay, retryAfter));
-          delay = _nextBackoff(delay);
-          continue;
-        }
-
-        return response;
-      } catch (e) {
-        final failure = classifyTransportFailure(e);
-        if (failure != TransportFailureKind.none &&
-            shouldRetryRequest(
-              method: method,
-              attempt: attempt,
-              transportFailure: failure,
-            )) {
-          attempt++;
-          AppLogger.warning(
-            'Request failed with error: $e. Retry attempt $attempt/${_maxRetries - 1} after ${delay.inMilliseconds}ms',
-          );
-          await Future<void>.delayed(delay);
-          delay = _nextBackoff(delay);
-          continue;
-        }
-        if (failure != TransportFailureKind.none) {
-          AppLogger.warning(
-            'Network request failed after $attempt retries: $e',
-          );
+    try {
+      while (true) {
+        if (!await _hasNetworkConnection()) {
           throw ApiException(
-            message: _networkErrorMessage(e),
-            statusCode: 408,
-            transportFailure: failure,
+            message:
+                'No internet connection. Please check your network and try again.',
+            statusCode: 0,
           );
         }
-        rethrow;
+        try {
+          final response = await operation();
+
+          // Server responded: retry only idempotent methods on transient codes.
+          final statusCode = response.statusCode ?? 0;
+          try {
+            if (Get.isRegistered<PerformanceMonitor>()) {
+              PerformanceMonitor.I.recordCount('provider.$method.$statusCode');
+            }
+          } catch (_) {
+            // Never fail the request for metrics.
+          }
+          if (statusCode != 0 &&
+              shouldRetryRequest(
+                method: method,
+                statusCode: statusCode,
+                attempt: attempt,
+                transportFailure: TransportFailureKind.none,
+              )) {
+            attempt++;
+            final retryAfter = _retryAfterSeconds(response);
+            AppLogger.warning(
+              'Request failed with status $statusCode. Retry attempt $attempt/${_maxRetries - 1} after ${delay.inMilliseconds}ms',
+            );
+            await Future<void>.delayed(_nextDelay(delay, retryAfter));
+            delay = _nextBackoff(delay);
+            continue;
+          }
+
+          return response;
+        } catch (e) {
+          final failure = classifyTransportFailure(e);
+          if (failure != TransportFailureKind.none &&
+              shouldRetryRequest(
+                method: method,
+                attempt: attempt,
+                transportFailure: failure,
+              )) {
+            attempt++;
+            AppLogger.warning(
+              'Request failed with error: $e. Retry attempt $attempt/${_maxRetries - 1} after ${delay.inMilliseconds}ms',
+            );
+            await Future<void>.delayed(delay);
+            delay = _nextBackoff(delay);
+            continue;
+          }
+          if (failure != TransportFailureKind.none) {
+            AppLogger.warning(
+              'Network request failed after $attempt retries: $e',
+            );
+            throw ApiException(
+              message: _networkErrorMessage(e),
+              statusCode: 408,
+              transportFailure: failure,
+            );
+          }
+          rethrow;
+        }
+      }
+    } finally {
+      stopwatch.stop();
+      try {
+        if (Get.isRegistered<PerformanceMonitor>()) {
+          PerformanceMonitor.I.recordElapsed(
+            'provider.$method',
+            stopwatch.elapsedMilliseconds,
+          );
+          PerformanceMonitor.I.recordCount('provider.$method');
+        }
+      } catch (_) {
+        // PerformanceMonitor absent (e.g. unit tests without bindings):
+        // never fail the request for metrics.
       }
     }
   }
