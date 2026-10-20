@@ -1,0 +1,129 @@
+{
+  "AppKey": [
+    "ghar",
+    "estate",
+    "flatmates",
+    "stays"
+  ],
+  "AuthGateAction": [
+    "verify_identifier",
+    "set_password",
+    "complete_profile",
+    "complete_onboarding",
+    "grant_access"
+  ],
+  "AuthGateStage": [
+    "identifier_verification",
+    "password_setup",
+    "profile_completion",
+    "app_onboarding",
+    "active"
+  ],
+  "AuthMethod": [
+    "google",
+    "apple",
+    "email_password",
+    "phone_password",
+    "phone_otp",
+    "email_otp"
+  ],
+  "BookingStatus": [
+    "pending",
+    "confirmed",
+    "checked_in",
+    "checked_out",
+    "cancelled",
+    "completed"
+  ],
+  "BugSeverity": [
+    "low",
+    "medium",
+    "high",
+    "critical"
+  ],
+  "BugType": [
+    "ui_bug",
+    "functionality_bug",
+    "performance_issue",
+    "crash",
+    "feature_request",
+    "other"
+  ],
+  "DevicePlatform": [
+    "android",
+    "ios",
+    "web"
+  ],
+  "IdentifierChannel": [
+    "email",
+    "phone"
+  ],
+  "IdentifierNextStep": [
+    "password",
+    "otp"
+  ],
+  "ImageCategory": [
+    "room",
+    "hall",
+    "kitchen",
+    "bathroom",
+    "balcony",
+    "terrace",
+    "garden",
+    "parking",
+    "entrance",
+    "exterior",
+    "interior",
+    "others",
+    "floor_plan"
+  ],
+  "PaymentStatus": [
+    "pending",
+    "partial",
+    "paid",
+    "refunded",
+    "failed"
+  ],
+  "PropertyPurpose": [
+    "buy",
+    "rent",
+    "short_stay"
+  ],
+  "PropertyStatus": [
+    "available",
+    "sold",
+    "rented",
+    "under_offer",
+    "maintenance"
+  ],
+  "PropertyType": [
+    "house",
+    "apartment",
+    "builder_floor",
+    "room",
+    "villa",
+    "plot",
+    "condo",
+    "penthouse",
+    "studio",
+    "loft",
+    "pg",
+    "flatmate",
+    "office",
+    "shop",
+    "warehouse"
+  ],
+  "SortBy": [
+    "distance",
+    "price_low",
+    "price_high",
+    "newest",
+    "popular",
+    "relevance"
+  ],
+  "UserRole": [
+    "user",
+    "agent",
+    "admin"
+  ]
+}
