@@ -9,8 +9,7 @@ Hotels, Airbnbs, homestays—see the exact space before you arrive. Whether it�
 - Explore listings, view details, amenities, and pricing
 - Auth flow (login UI) with Riverpod state management
 - Booking flow screens (skeleton) with date and guest inputs
-- Payment methods screen (add/remove, UI only)
-- Messaging (Inbox + Chat) with Riverpod state management
+- Messaging (Inbox + Chat) with Riverpod state management. The chat of a stay is the thread of its booking (`GET|POST /api/v1/bookings/{id}/messages`).
 - Bottom navigation shell (Explore, Trips, Inbox, Profile)
 - Location-aware explore + map view (Flutter Map markers, Google Places autocomplete)
 - **In-app update prompts** with optional and force update support ([docs](docs/app-updates.md))
@@ -152,8 +151,7 @@ Note: `-t` selects the Dart entrypoint; schemes do not override `FLUTTER_TARGET`
 - Canonical paths in `AppPaths` (`lib/core/router/app_router.dart`, go_router):
   - `/login`, `/explore`, `/search`, `/search-results`, `/listing/:id`
   - `/inquiry`, `/inquiry-confirmation` (booking flow)
-  - `/payment`, `/payment-methods`
-  - `/trips`, `/wishlist`, `/inbox`, `/chat/:id`
+  - `/trips`, `/wishlist`, `/inbox`, `/chat/:bookingId`
   - `/tour/:id` (360° virtual tour), `/profile`
 
 ## Testing

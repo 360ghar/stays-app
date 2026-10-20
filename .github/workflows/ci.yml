@@ -59,6 +59,13 @@ jobs:
         # missing part files and undefined _<$Foo>{From,To}Json methods.
         run: dart run build_runner build --delete-conflicting-outputs
 
+      - name: Contract codegen matches the backend
+        # Reruns tool/gen_enums.py and tool/api_fixtures.py and fails when
+        # lib/app/data/models/wire_enums.dart or test/fixtures differ. It needs
+        # a backend checkout and uv: set GHAR_BACKEND_DIR to the checkout and
+        # pass --strict. With no checkout it prints a notice and skips.
+        run: tool/check_contract.sh
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
@@ -67,6 +74,9 @@ jobs:
         # firebase examples) is excluded in analysis_options.yaml so only
         # first-party code is graded. Do not re-add --no-fatal-* flags.
         run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: Contract tests
+        run: flutter test test/contract
 
       - name: Run tests
         # Plain 'flutter test' runs the Dart unit/widget suite in test/; no

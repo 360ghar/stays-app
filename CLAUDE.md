@@ -81,9 +81,8 @@ lib/
 │   ├── auth/              # Login screen + auth providers
 │   ├── explore/           # Explore screen + explore providers
 │   ├── listing/           # Search, search results, property detail
-│   ├── messaging/         # Inbox and chat
+│   ├── messaging/         # Inbox and chat (chat = the thread of a booking)
 │   ├── trips/             # Trips
-│   ├── payment/           # Payment screens
 │   └── ...
 ├── app/
 │   ├── data/
@@ -149,8 +148,7 @@ Required environment variables in `.env.*` files:
   - `/listing/:id`: Property detail pages (numeric id via `state.pathParameters`, optional property via `state.extra`)
   - `/tour/:id`: 360° tour viewer
   - `/inquiry`, `/inquiry-confirmation`: Inquiry flow screens (booking passed via `state.extra`)
-  - `/payment`, `/payment-methods`: Payment processing
-  - `/chat/:id`: Individual chat conversations
+  - `/chat/:bookingId`: Chat of one booking (`GET|POST /api/v1/bookings/{id}/messages`)
 
 ## Development Guidelines
 
@@ -179,14 +177,16 @@ Required environment variables in `.env.*` files:
 - Widget tests for UI components (plain `MaterialApp` under `flutter_test`)
 - Unit tests for notifiers/providers and repositories
 - Use Mockito for mocking dependencies (`@GenerateMocks` + build_runner)
+- Contract tests in `test/contract` parse backend-generated fixtures (`test/fixtures/api`) with the app models and check the requests the providers send. See `docs/api-contract.md`
+- `tool/check_contract.sh` regenerates the wire enums and fixtures from the backend and fails on drift (pre-commit hook `contract-codegen`, CI step; skips without a backend checkout)
+- A provider that holds one account's data watches `accountIdProvider` in `build()` so it resets on sign-out and on a change of user
 
 ## Current Implementation Status
 
 - ✅ Authentication flow with Riverpod state management (Supabase session source of truth)
 - ✅ Bottom navigation shell architecture
 - ✅ Booking flow screens (UI skeleton)
-- ✅ Payment methods screen (UI only)
-- ✅ Messaging UI with local state
+- ✅ Messaging on the backend booking-chat route (the open chat polls every 10 seconds)
 - ✅ Theming and responsive design system
 - ✅ Localization scaffolding
 - ✅ Clean architecture foundation
