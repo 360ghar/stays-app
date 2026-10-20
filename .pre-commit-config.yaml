@@ -1,5 +1,5 @@
 # Local git hooks. Mirrors the CI gate in .github/workflows/ci.yml
-# (dart format check + flutter analyze, error-only), plus the contract codegen
+# (dart format check + flutter analyze with fatal infos and warnings), plus the contract codegen
 # check (needs a backend checkout, skips without one).
 repos:
   - repo: local
@@ -10,8 +10,8 @@ repos:
         language: system
         pass_filenames: false
       - id: flutter-analyze
-        name: flutter analyze (error-only, matches CI)
-        entry: flutter analyze --no-fatal-infos --no-fatal-warnings
+        name: flutter analyze (matches CI)
+        entry: flutter analyze --fatal-infos --fatal-warnings
         language: system
         pass_filenames: false
       - id: contract-codegen

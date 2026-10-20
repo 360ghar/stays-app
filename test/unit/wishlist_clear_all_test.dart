@@ -49,6 +49,8 @@ void main() {
     await notifier.load();
     await pumpEventQueue();
     expect(container.read(wishlistProvider).hasMore, isTrue);
+    // A loaded list is not "loading": an empty one must show the empty state.
+    expect(container.read(wishlistProvider).isLoading, isFalse);
 
     await notifier.clearAll();
 

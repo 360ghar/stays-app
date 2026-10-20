@@ -41,15 +41,23 @@ class AuthNotifier extends Notifier<AuthUiState> {
 
   AuthRepository get _repo => ref.watch(authRepositoryProvider);
 
-  Future<bool> _run(Future<UserModel?> Function() action) async {
+  /// [silentNull]: a null user is not an error (the guest cancelled, or the
+  /// Google browser flow started and the session arrives later through the
+  /// auth state stream, which the router follows).
+  Future<bool> _run(
+    Future<UserModel?> Function() action, {
+    bool silentNull = false,
+  }) async {
     state = state.copyWith(status: AuthStatus.busy, error: '');
     try {
       final user = await action();
       if (user == null) {
-        state = state.copyWith(
-          status: AuthStatus.error,
-          error: 'Could not sign you in. Please try again.',
-        );
+        state = silentNull
+            ? const AuthUiState()
+            : state.copyWith(
+                status: AuthStatus.error,
+                error: 'Could not sign you in. Please try again.',
+              );
         return false;
       }
       state = AuthUiState(user: user);
@@ -72,15 +80,29 @@ class AuthNotifier extends Notifier<AuthUiState> {
     return _run(() => _repo.loginWithPhone(phone: id, password: password));
   }
 
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+  }) {
+    return _run(
+      () => _repo.register(
+        name: name.trim(),
+        email: email.trim(),
+        password: password,
+      ),
+    );
+  }
+
   Future<bool> loginWithGoogle() {
     return _run(() async {
       final result = await _repo.signInWithGoogle();
       return result.user;
-    });
+    }, silentNull: true);
   }
 
   Future<bool> loginWithApple() {
-    return _run(() => _repo.signInWithApple());
+    return _run(() => _repo.signInWithApple(), silentNull: true);
   }
 
   Future<void> logout() async {

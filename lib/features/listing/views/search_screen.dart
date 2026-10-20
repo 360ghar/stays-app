@@ -31,6 +31,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Future<void> _useMyLocation() async {
     final location = ref.read(locationServiceProvider);
     try {
+      // A place picked earlier would win over the device position.
+      location.clearSelectedLocation();
       await location.updateLocation(ensurePrecise: true);
     } catch (_) {
       // Fall through to whatever coordinates are available.
@@ -80,7 +82,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     ),
                   )
                 : ListView.separated(
-                    itemCount: state.predictions.length,
+                    // The previous query's predictions stay hidden while the
+                    // new query loads: a tap would open the wrong place.
+                    itemCount: state.isSearching ? 0 : state.predictions.length,
                     separatorBuilder: (_, _) =>
                         const Divider(height: 1, indent: 56),
                     itemBuilder: (context, i) {

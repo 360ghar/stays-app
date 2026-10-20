@@ -72,6 +72,7 @@ class _DetailBody extends ConsumerStatefulWidget {
 
 class _DetailBodyState extends ConsumerState<_DetailBody> {
   late bool _favorite;
+  bool _togglingFavorite = false;
 
   @override
   void initState() {
@@ -80,10 +81,15 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
   }
 
   Future<void> _toggleFavorite() async {
+    // One request at a time: two taps before the first answer could finish
+    // out of order and leave the heart and the server disagreeing.
+    if (_togglingFavorite) return;
+    _togglingFavorite = true;
     final id = widget.property.id;
-    setState(() => _favorite = !_favorite);
+    final favorites = ref.read(favoritesProvider.notifier);
+    final wasFavorite = _favorite;
+    setState(() => _favorite = !wasFavorite);
     try {
-      final favorites = ref.read(favoritesProvider.notifier);
       if (_favorite) {
         favorites.addFavorite(id);
         await ref.read(wishlistRepositoryProvider).add(id);
@@ -91,9 +97,16 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
         favorites.removeFavorite(id);
         await ref.read(wishlistRepositoryProvider).remove(id);
       }
-    } catch (e) {
-      AppLogger.error('Detail v2: favorite toggle failed', e);
-      if (mounted) setState(() => _favorite = !_favorite);
+    } catch (e, s) {
+      AppLogger.error('Detail v2: favorite toggle failed', e, s);
+      if (wasFavorite) {
+        favorites.addFavorite(id);
+      } else {
+        favorites.removeFavorite(id);
+      }
+      if (mounted) setState(() => _favorite = wasFavorite);
+    } finally {
+      _togglingFavorite = false;
     }
   }
 

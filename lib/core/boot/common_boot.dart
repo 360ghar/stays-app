@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-import '../../app/utils/logger/app_logger.dart';
-import '../../app/utils/security/cert_pinning.dart';
-import '../../config/app_config.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/security/cert_pinning.dart';
+import 'package:stays_app/config/app_config.dart';
 
 /// Shared boot helpers for all entry points
 /// (`main.dart`, `main_dev.dart`, `main_staging.dart`, `main_prod.dart`).

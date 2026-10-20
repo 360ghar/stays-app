@@ -112,8 +112,9 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
     );
   }
 
-  void setGuests(int guests) {
-    if (guests < 1) return;
+  /// [max] is the listing's guest limit when it has one.
+  void setGuests(int guests, {int? max}) {
+    if (guests < 1 || (max != null && guests > max)) return;
     state = state.copyWith(
       guests: guests,
       clearPricing: true,
@@ -150,13 +151,23 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
     if (!state.canPrice) return;
     final repo = _repo;
     state = state.copyWith(status: InquiryStatus.pricing, error: '');
+    final checkIn = state.checkIn!;
+    final checkOut = state.checkOut!;
+    final guests = state.guests;
+    // The guest may change dates or guests while the request runs. The
+    // answer then belongs to an old request and is dropped.
+    bool isCurrent() =>
+        state.checkIn == checkIn &&
+        state.checkOut == checkOut &&
+        state.guests == guests;
     try {
       final pricing = await repo.calculatePricing(
         propertyId: propertyId,
-        checkIn: _day(state.checkIn!),
-        checkOut: _day(state.checkOut!),
-        guests: state.guests,
+        checkIn: _day(checkIn),
+        checkOut: _day(checkOut),
+        guests: guests,
       );
+      if (!isCurrent()) return;
       if (!pricing.hasValidAmounts) {
         state = state.copyWith(
           status: InquiryStatus.error,
@@ -167,6 +178,7 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
       state = state.copyWith(status: InquiryStatus.idle, pricing: pricing);
     } catch (e, s) {
       AppLogger.error('Inquiry v2: pricing failed', e, s);
+      if (!isCurrent()) return;
       state = state.copyWith(
         status: InquiryStatus.error,
         error: _reasonOr(e, 'Pricing unavailable. Please try again.'),

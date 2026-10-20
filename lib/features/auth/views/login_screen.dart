@@ -19,12 +19,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _identifier = TextEditingController();
   final _password = TextEditingController();
+  final _name = TextEditingController();
   bool _obscured = true;
+  bool _creating = false;
 
   @override
   void dispose() {
     _identifier.dispose();
     _password.dispose();
+    _name.dispose();
     super.dispose();
   }
 
@@ -41,6 +44,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _submitLogin() {
+    if (_creating) {
+      ref
+          .read(authProvider.notifier)
+          .register(
+            name: _name.text,
+            email: _identifier.text,
+            password: _password.text,
+          )
+          .then(_goExplore)
+          .ignore();
+      return;
+    }
     ref
         .read(authProvider.notifier)
         .login(identifier: _identifier.text, password: _password.text)
@@ -82,13 +97,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               style: StayTokens.bodySecondary,
             ),
             const SizedBox(height: StayTokens.s32),
+            if (_creating) ...[
+              TextField(
+                controller: _name,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Full name',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                ),
+              ),
+              const SizedBox(height: StayTokens.s12),
+            ],
             TextField(
               controller: _identifier,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Email or phone',
-                prefixIcon: Icon(Icons.person_outline),
+              decoration: InputDecoration(
+                labelText: _creating ? 'Email' : 'Email or phone',
+                prefixIcon: const Icon(Icons.person_outline),
               ),
             ),
             const SizedBox(height: StayTokens.s12),
@@ -127,7 +154,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Log in'),
+                  : Text(_creating ? 'Create account' : 'Log in'),
+            ),
+            TextButton(
+              onPressed: busy
+                  ? null
+                  : () => setState(() => _creating = !_creating),
+              child: Text(
+                _creating
+                    ? 'Have an account? Log in'
+                    : 'New here? Create an account',
+              ),
             ),
             const SizedBox(height: StayTokens.s16),
             const Row(

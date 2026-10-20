@@ -71,6 +71,7 @@ class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
           .read(favoritesProvider.notifier)
           .replaceAll(resp.items.map((p) => p.id));
       state = WishlistUiState(
+        isLoading: false,
         items: List<Property>.from(resp.items),
         hasMore: resp.hasMore,
         nextCursor: resp.nextCursor,

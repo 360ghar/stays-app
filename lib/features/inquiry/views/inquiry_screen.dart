@@ -35,20 +35,32 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
   Future<void> _pickDate(bool isCheckIn) async {
     final form = ref.read(inquiryFormProvider);
     final now = DateTime.now();
+    // Check-out is at least one night after check-in. The initial date must
+    // lie inside [firstDate, lastDate] or the picker asserts.
+    final firstDate = isCheckIn
+        ? now
+        : (form.checkIn ?? now).add(const Duration(days: 1));
+    final lastDate = firstDate.isAfter(now.add(const Duration(days: 365)))
+        ? firstDate.add(const Duration(days: 1))
+        : now.add(const Duration(days: 365));
+    final wanted = isCheckIn ? form.checkIn : form.checkOut;
+    final initialDate = wanted == null || wanted.isBefore(firstDate)
+        ? firstDate
+        : (wanted.isAfter(lastDate) ? lastDate : wanted);
     final picked = await showDatePicker(
       context: context,
-      initialDate: isCheckIn
-          ? (form.checkIn ?? now)
-          : (form.checkOut ??
-                form.checkIn?.add(const Duration(days: 1)) ??
-                now.add(const Duration(days: 1))),
-      firstDate: isCheckIn ? now : (form.checkIn ?? now),
-      lastDate: now.add(const Duration(days: 365)),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
     if (picked == null) return;
     final notifier = ref.read(inquiryFormProvider.notifier);
     if (isCheckIn) {
-      notifier.setDates(picked, form.checkOut);
+      // A check-out on or before the new check-in is no longer valid.
+      final keepCheckOut =
+          form.checkOut != null && form.checkOut!.isAfter(picked);
+      notifier.setDates(picked, keepCheckOut ? form.checkOut : null);
+      if (!keepCheckOut) return;
     } else {
       notifier.setDates(form.checkIn, picked);
     }
@@ -56,6 +68,14 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
     if (property != null) {
       await ref.read(inquiryFormProvider.notifier).loadPricing(property.id);
     }
+  }
+
+  Future<void> _setGuests(int guests) async {
+    final notifier = ref.read(inquiryFormProvider.notifier);
+    notifier.setGuests(guests, max: widget.property?.maxGuests);
+    final property = widget.property;
+    // Changing the guests clears the price, so ask the server again.
+    if (property != null) await notifier.loadPricing(property.id);
   }
 
   Future<void> _submit() async {
@@ -117,12 +137,12 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
               const Text('Guests', style: StayTokens.title),
               const Spacer(),
               IconButton(
-                onPressed: () => notifier.setGuests(form.guests - 1),
+                onPressed: () => _setGuests(form.guests - 1),
                 icon: const Icon(Icons.remove_circle_outline),
               ),
               Text('${form.guests}', style: StayTokens.title),
               IconButton(
-                onPressed: () => notifier.setGuests(form.guests + 1),
+                onPressed: () => _setGuests(form.guests + 1),
                 icon: const Icon(Icons.add_circle_outline),
               ),
             ],
@@ -174,7 +194,12 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
           ],
           const SizedBox(height: StayTokens.s24),
           FilledButton(
-            onPressed: form.canSubmit && form.status != InquiryStatus.submitting
+            // Disabled after a successful submit too: a second tap on the
+            // same form would create a second booking.
+            onPressed:
+                form.canSubmit &&
+                    form.status != InquiryStatus.submitting &&
+                    form.status != InquiryStatus.success
                 ? _submit
                 : null,
             child: form.status == InquiryStatus.submitting

@@ -13,12 +13,6 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return client.auth.onAuthStateChange;
 });
 
-final isAuthenticatedProvider = Provider<bool>((ref) {
-  final client = ref.watch(supabaseClientProvider);
-  final session = client.auth.currentSession;
-  return session != null && session.accessToken.isNotEmpty;
-});
-
 /// Id of the signed-in user, or null when signed out.
 ///
 /// Every provider that holds one account's data watches it in `build()`, so

@@ -69,7 +69,7 @@ class AsyncState extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(StayTokens.s24),
             child: Text(
-              message!,
+              message ?? 'Nothing here yet.',
               style: StayTokens.bodySecondary,
               textAlign: TextAlign.center,
             ),

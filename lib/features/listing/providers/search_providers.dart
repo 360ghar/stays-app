@@ -64,9 +64,12 @@ class SearchNotifier extends Notifier<SearchUiState> {
           lat: _location.latitude,
           lng: _location.longitude,
         );
+        // The query moved on while the request ran: drop the old answer.
+        if (state.query != value) return;
         state = state.copyWith(predictions: results, isSearching: false);
-      } catch (e) {
-        AppLogger.error('Search v2: autocomplete failed', e);
+      } catch (e, s) {
+        AppLogger.error('Search v2: autocomplete failed', e, s);
+        if (state.query != value) return;
         state = state.copyWith(predictions: const [], isSearching: false);
       }
     });
@@ -84,8 +87,8 @@ class SearchNotifier extends Notifier<SearchUiState> {
         locationName: details.name,
       );
       return details;
-    } catch (e) {
-      AppLogger.error('Search v2: details failed', e);
+    } catch (e, s) {
+      AppLogger.error('Search v2: details failed', e, s);
       return null;
     }
   }

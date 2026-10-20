@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:stays_app/core/providers/favorites_provider.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/core/ui/async_state.dart';
@@ -19,6 +20,8 @@ class SearchResultsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(searchResultsProvider((lat: lat, lng: lng)));
     final exploreNotifier = ref.read(exploreProvider.notifier);
+    // Watched, so a heart repaints when the favorites change.
+    final favorites = ref.watch(favoritesProvider);
     return Scaffold(
       backgroundColor: StayTokens.paper,
       appBar: AppBar(title: const Text('Stays')),
@@ -48,7 +51,7 @@ class SearchResultsScreen extends ConsumerWidget {
                 return StayCard(
                   property: stay,
                   width: double.infinity,
-                  isFavorite: exploreNotifier.isFavorite(stay.id),
+                  isFavorite: favorites.contains(stay.id),
                   onFavoriteToggle: () => exploreNotifier.toggleFavorite(stay),
                   onTap: () =>
                       context.push(AppPaths.listing('${stay.id}'), extra: stay),

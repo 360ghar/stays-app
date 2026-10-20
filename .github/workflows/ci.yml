@@ -15,6 +15,9 @@ jobs:
   analyze_and_test:
     name: Lint, Format & Test
     runs-on: ubuntu-latest
+    env:
+      # Empty on forks and when the secret is not configured.
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v7
 
@@ -129,11 +132,15 @@ jobs:
             echo "Coverage gate PASSED: ${covered_pct}% >= 60%."
           fi
 
+      - name: Codecov token notice
+        if: env.CODECOV_TOKEN == ''
+        run: echo "::notice::CODECOV_TOKEN is not set; skipping the Codecov upload."
+
       - name: Upload coverage to Codecov
-        # Strict upload, but only when a coverage file exists: the
-        # hashFiles guard skips the step (green) instead of failing when
-        # `flutter test --coverage` produced nothing.
-        if: always() && hashFiles('coverage/lcov.info') != ''
+        # Strict upload, but only when a token and a coverage file exist: the
+        # guards skip the step (green) instead of failing when the secret is
+        # missing or `flutter test --coverage` produced nothing.
+        if: always() && env.CODECOV_TOKEN != '' && hashFiles('coverage/lcov.info') != ''
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

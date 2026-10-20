@@ -32,11 +32,15 @@ class ExploreScreen extends ConsumerWidget {
                 onTap: () => context.push(AppPaths.search),
                 onLocation: notifier.useMyLocation,
               ),
-              if (state.isLoading && state.popular.isEmpty)
+              if (state.isLoading &&
+                  state.popular.isEmpty &&
+                  state.nearby.isEmpty)
                 const SliverFillRemaining(
                   child: AsyncState.loading(message: 'Finding stays…'),
                 )
-              else if (state.error.isNotEmpty && state.popular.isEmpty)
+              else if (state.error.isNotEmpty &&
+                  state.popular.isEmpty &&
+                  state.nearby.isEmpty)
                 SliverFillRemaining(
                   child: AsyncState.error(
                     state.error,

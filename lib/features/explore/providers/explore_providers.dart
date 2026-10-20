@@ -221,8 +221,8 @@ class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
     try {
       location.clearSelectedLocation();
       await location.updateLocation(ensurePrecise: true);
-    } catch (e) {
-      AppLogger.error('Explore v2: location failed', e);
+    } catch (e, s) {
+      AppLogger.error('Explore v2: location failed', e, s);
     }
     await refresh();
   }
@@ -243,10 +243,15 @@ class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
         favorites.addFavorite(property.id);
         await wishlist.add(property.id);
       }
-    } catch (e) {
+    } catch (e, s) {
       if (!sameAccount()) return;
-      AppLogger.error('Explore v2: favorite toggle failed', e);
+      AppLogger.error('Explore v2: favorite toggle failed', e, s);
       _setLocalFavorite(property.id, nowFavorite);
+      if (nowFavorite) {
+        favorites.addFavorite(property.id);
+      } else {
+        favorites.removeFavorite(property.id);
+      }
     }
   }
 
