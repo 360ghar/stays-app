@@ -16,8 +16,6 @@ import 'package:stays_app/features/listing/views/search_results_screen.dart';
 import 'package:stays_app/features/listing/views/search_screen.dart';
 import 'package:stays_app/features/messaging/views/chat_screen.dart';
 import 'package:stays_app/features/messaging/views/inbox_screen.dart';
-import 'package:stays_app/features/payment/views/payment_methods_screen.dart';
-import 'package:stays_app/features/payment/views/payment_screen.dart';
 import 'package:stays_app/features/profile/views/profile_screen.dart';
 import 'package:stays_app/features/splash/views/splash_screen.dart';
 import 'package:stays_app/features/tour/views/tour_viewer.dart';
@@ -44,8 +42,6 @@ class AppPaths {
   static const String profile = '/profile';
   static const String search = '/search';
   static const String searchResults = '/search-results';
-  static const String payment = '/payment';
-  static const String paymentMethods = '/payment-methods';
   static const String inquiry = '/inquiry';
   static const String inquiryConfirmation = '/inquiry-confirmation';
 
@@ -187,36 +183,24 @@ GoRouter buildV2Router() {
         },
       ),
       GoRoute(
-        path: AppPaths.payment,
-        builder: (context, state) {
-          final extra = state.extra;
-          final map = extra is Map ? extra : null;
-          final bookingId = map?['bookingId'];
-          final amount = map?['amount'];
-          if (bookingId is! int || amount is! num) {
-            AppLogger.warning(
-              'v2 router: /payment missing valid bookingId/amount in extra; '
-              'showing error instead of silently falling back to 0.',
-              state.extra,
-            );
-            return const RouteErrorScreen(
-              message: 'Missing payment details. Please retry from your trips.',
-              recoveryLabel: 'Back to trips',
-              recoveryLocation: AppPaths.trips,
-            );
-          }
-          return PaymentScreen(bookingId: bookingId, amount: amount.toDouble());
-        },
-      ),
-      GoRoute(
-        path: AppPaths.paymentMethods,
-        builder: (_, _) => const PaymentMethodsScreen(),
-      ),
-      GoRoute(
         path: '/chat/:id',
         builder: (context, state) {
-          final id = state.pathParameters['id'] ?? '';
-          return ChatScreen(conversationId: id);
+          // The chat of a stay is the thread of its booking: the id is the
+          // booking id.
+          final rawId = state.pathParameters['id'] ?? '';
+          final id = int.tryParse(rawId);
+          if (id == null) {
+            AppLogger.warning(
+              'v2 router: /chat/$rawId is not a numeric booking id.',
+              state.uri.toString(),
+            );
+            return RouteErrorScreen(
+              message: 'Invalid chat id "$rawId".',
+              recoveryLabel: 'Back to inbox',
+              recoveryLocation: AppPaths.inbox,
+            );
+          }
+          return ChatScreen(bookingId: id);
         },
       ),
       StatefulShellRoute.indexedStack(

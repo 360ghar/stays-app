@@ -153,7 +153,7 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
           TextField(
             controller: _email,
             keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(labelText: 'Email (optional)'),
+            decoration: const InputDecoration(labelText: 'Email'),
             onChanged: (v) => notifier.setContact(email: v),
           ),
           const SizedBox(height: StayTokens.s12),
@@ -250,7 +250,7 @@ class _PricingCard extends StatelessWidget {
           _row('Base', pricing.baseAmount),
           _row('Taxes', pricing.taxesAmount),
           _row('Service charges', pricing.serviceCharges),
-          if (pricing.discountAmount != null)
+          if ((pricing.discountAmount ?? 0) > 0)
             _row('Discount', -pricing.discountAmount!),
           const Divider(),
           Row(

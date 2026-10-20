@@ -3,6 +3,10 @@ import '../../utils/extensions/http_extensions.dart';
 import '../models/unified_property_response.dart';
 
 class SwipesProvider extends BaseProvider {
+  SwipesProvider({super.dio});
+
+  /// `POST /api/v1/swipes`. The body is `{property_id, is_liked}` and the
+  /// answer is the saved swipe (`SwipeOut`).
   Future<void> swipe({required int propertyId, required bool isLiked}) async {
     final res = await post('/api/v1/swipes', {
       'property_id': propertyId,
@@ -11,11 +15,8 @@ class SwipesProvider extends BaseProvider {
     handleResponse(res, (json) => json);
   }
 
-  /// Lists swipes as a typed, cursor-paginated response.
-  ///
-  /// Items are normalized here (the swipes endpoint reports `base_price`
-  /// rather than `daily_rate` and may omit display defaults) so callers
-  /// receive ready-to-parse `Property` models.
+  /// Lists swipes as a typed, cursor-paginated response. Each item is a
+  /// `Property` with `liked` set. Send the same filters on every page.
   Future<UnifiedPropertyResponse> list({
     bool? isLiked,
     String? cursor,
@@ -29,42 +30,25 @@ class SwipesProvider extends BaseProvider {
       ...?filters,
     };
     final res = await get('/api/v1/swipes', query: query.asQueryParams());
-    return handleResponse(res, (json) {
-      final map = Map<String, dynamic>.from(json);
-      final rawItems = map['items'] as List?;
-      if (rawItems != null) {
-        map['items'] = rawItems.map(_normalizePropertyJson).toList();
-      }
-      return UnifiedPropertyResponse.fromJson(map);
-    });
+    return handleResponse(
+      res,
+      (json) => UnifiedPropertyResponse.fromJson(json, noStore: res.noStore),
+    );
   }
 
-  /// Remove many liked properties in a single backend call (audit UX #9).
+  /// Removes liked properties. `BatchRemoveRequest` takes at most 100 ids, so
+  /// a longer list goes out in chunks of 100.
   Future<void> batchRemove(List<int> propertyIds) async {
-    if (propertyIds.isEmpty) return;
-    final res = await post('/api/v1/swipes/batch-remove', {
-      'property_ids': propertyIds,
-    });
-    handleResponse(res, (json) => json);
+    for (var i = 0; i < propertyIds.length; i += _batchLimit) {
+      final end = i + _batchLimit < propertyIds.length
+          ? i + _batchLimit
+          : propertyIds.length;
+      final res = await post('/api/v1/swipes/batch-remove', {
+        'property_ids': propertyIds.sublist(i, end),
+      });
+      handleResponse(res, (json) => json);
+    }
   }
 
-  /// Shapes a raw swipe item into what [Property.fromJson] expects.
-  static Map<String, dynamic> _normalizePropertyJson(dynamic item) {
-    final map = Map<String, dynamic>.from(item);
-    if (map['daily_rate'] == null && map['base_price'] != null) {
-      final base = map['base_price'];
-      if (base is num) {
-        map['daily_rate'] = base;
-      } else if (base is String) {
-        final parsed = double.tryParse(base);
-        if (parsed != null) map['daily_rate'] = parsed;
-      }
-    }
-    map['purpose'] = map['purpose'] ?? 'short_stay';
-    map['currency'] = map['currency'] ?? 'INR';
-    map['title'] = map['title'] ?? map['name'] ?? 'Stay';
-    map['country'] = map['country'] ?? '';
-    map['city'] = map['city'] ?? '';
-    return map;
-  }
+  static const _batchLimit = 100;
 }

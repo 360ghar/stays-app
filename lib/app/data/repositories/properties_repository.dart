@@ -3,6 +3,7 @@ import 'dart:async';
 import '../providers/properties_provider.dart';
 import '../models/property_model.dart';
 import '../models/unified_property_response.dart';
+import '../models/wire_enums.dart';
 import '../services/location_service.dart';
 import '../services/property_cache_service.dart';
 import '../../utils/logger/app_logger.dart';
@@ -41,7 +42,7 @@ class PropertiesRepository {
     double? lng,
     String? cursor,
     int limit = 20,
-    double radiusKm = 10,
+    int radiusKm = 10,
     Map<String, dynamic>? filters,
     bool forceRefresh = false,
   }) {
@@ -61,7 +62,7 @@ class PropertiesRepository {
     final resolvedLng = ln;
     final queryFilters = <String, dynamic>{...?filters}
       ..removeWhere((key, value) => value == null);
-    queryFilters.putIfAbsent('purpose', () => 'short_stay');
+    queryFilters.putIfAbsent('purpose', () => PropertyPurpose.shortStay.wire);
 
     return _dedupe(
       'explore|$resolvedLat|$resolvedLng|$cursor|$limit|$radiusKm|${_stableFiltersHash(queryFilters)}',
@@ -82,10 +83,13 @@ class PropertiesRepository {
     double ln,
     String? cursor,
     int limit,
-    double radiusKm,
+    int radiusKm,
     Map<String, dynamic> queryFilters,
     bool forceRefresh,
   ) async {
+    // A page is cached under the filters, radius and page size it was read
+    // with, so a page of one filter set is never served for another.
+    final variant = _variant(limit, radiusKm, queryFilters);
     // Try cache first if not forcing refresh
     final cache = _cache();
     if (!forceRefresh && cache != null) {
@@ -93,6 +97,7 @@ class PropertiesRepository {
         lat: la,
         lng: ln,
         cursor: cursor,
+        variant: variant,
       );
       if (cached != null) {
         AppLogger.info(
@@ -122,13 +127,22 @@ class PropertiesRepository {
       filters: queryFilters,
     );
 
-    // Cache the response
+    // Cache the response. The cache skips a `Cache-Control: no-store` body.
     unawaited(
-      cache?.cacheExploreResults(response, lat: la, lng: ln, cursor: cursor),
+      cache?.cacheExploreResults(
+        response,
+        lat: la,
+        lng: ln,
+        cursor: cursor,
+        variant: variant,
+      ),
     );
 
     return response;
   }
+
+  String _variant(int limit, int radiusKm, Map<String, dynamic> filters) =>
+      '$limit|$radiusKm|${_stableFiltersHash(filters)}';
 
   /// Deterministic, order-independent fingerprint of the filters map so the
   /// dedupe key is stable across equivalent requests.
@@ -169,7 +183,7 @@ class PropertiesRepository {
     double lng,
     String? cursor,
     int limit,
-    double radiusKm,
+    int radiusKm,
     Map<String, dynamic> filters,
   ) async {
     try {
@@ -190,6 +204,7 @@ class PropertiesRepository {
         lat: lat,
         lng: lng,
         cursor: cursor,
+        variant: _variant(limit, radiusKm, filters),
       );
     } catch (e) {
       AppLogger.warning('Background refresh failed: $e');
@@ -213,9 +228,11 @@ class PropertiesRepository {
       }
     }
 
-    final property = await _provider.getDetails(id);
-    unawaited(cache?.cachePropertyDetails(property));
-    return property;
+    final result = await _provider.getDetails(id);
+    unawaited(
+      cache?.cachePropertyDetails(result.property, noStore: result.noStore),
+    );
+    return result.property;
   }
 
   Future<void> _refreshDetailsInBackground(int id) async {
@@ -224,8 +241,11 @@ class PropertiesRepository {
       if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
-      final property = await _provider.getDetails(id);
-      await _cache()?.cachePropertyDetails(property);
+      final result = await _provider.getDetails(id);
+      await _cache()?.cachePropertyDetails(
+        result.property,
+        noStore: result.noStore,
+      );
     } catch (e) {
       AppLogger.warning('Background details refresh failed: $e');
     }
@@ -253,9 +273,11 @@ class PropertiesRepository {
       }
     }
 
-    final properties = await _provider.recommendations(limit: limit);
-    unawaited(cache?.cacheRecommendations(properties));
-    return properties;
+    final response = await _provider.recommendations(limit: limit);
+    unawaited(
+      cache?.cacheRecommendations(response.items, noStore: response.noStore),
+    );
+    return response.items;
   }
 
   Future<void> _refreshRecommendationsInBackground(int limit) async {
@@ -264,8 +286,11 @@ class PropertiesRepository {
       if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
-      final properties = await _provider.recommendations(limit: limit);
-      await _cache()?.cacheRecommendations(properties);
+      final response = await _provider.recommendations(limit: limit);
+      await _cache()?.cacheRecommendations(
+        response.items,
+        noStore: response.noStore,
+      );
     } catch (e) {
       AppLogger.warning('Background recommendations refresh failed: $e');
     }
@@ -276,11 +301,18 @@ class PropertiesRepository {
     double? lat,
     double? lng,
     String? cursor,
+    int limit = 20,
+    int radiusKm = 10,
+    Map<String, dynamic>? filters,
   }) {
+    final queryFilters = <String, dynamic>{...?filters}
+      ..removeWhere((key, value) => value == null);
+    queryFilters.putIfAbsent('purpose', () => PropertyPurpose.shortStay.wire);
     return _cache()?.getCachedExploreResults(
       lat: lat,
       lng: lng,
       cursor: cursor,
+      variant: _variant(limit, radiusKm, queryFilters),
       ignoreExpiry: true,
     );
   }

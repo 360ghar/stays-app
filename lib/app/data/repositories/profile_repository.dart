@@ -11,49 +11,48 @@ class ProfileRepository {
   Future<UserModel> getProfile() => _provider.getProfile();
 
   Future<UserModel> updateProfile({
-    String? firstName,
-    String? lastName,
     String? fullName,
-    String? bio,
     String? phone,
     DateTime? dateOfBirth,
-    String? avatarUrl,
-    String? agentId,
   }) {
     return _provider.updateProfile(
-      firstName: firstName,
-      lastName: lastName,
       fullName: fullName,
-      bio: bio,
       phone: phone,
       dateOfBirth: dateOfBirth,
-      avatarUrl: avatarUrl,
-      agentId: agentId,
     );
   }
 
-  Future<UserModel> updatePreferences(Map<String, dynamic> preferences) {
+  Future<Map<String, dynamic>> updatePreferences(
+    Map<String, dynamic> preferences,
+  ) {
     return _provider.updatePreferences(preferences);
   }
 
-  Future<UserModel> updateNotificationSettings(Map<String, dynamic> settings) {
-    return _provider.updateNotificationSettings(settings);
+  Future<Map<String, dynamic>> updateNotificationSettings({
+    bool? pushNotifications,
+    bool? emailNotifications,
+    bool? smsNotifications,
+    bool? promotionalEmails,
+  }) {
+    return _provider.updateNotificationSettings(
+      pushNotifications: pushNotifications,
+      emailNotifications: emailNotifications,
+      smsNotifications: smsNotifications,
+      promotionalEmails: promotionalEmails,
+    );
   }
 
-  Future<UserModel> updatePrivacySettings(Map<String, dynamic> settings) {
+  Future<Map<String, dynamic>> updatePrivacySettings(
+    Map<String, dynamic> settings,
+  ) {
     return _provider.updatePrivacySettings(settings);
   }
 
-  Future<UserModel> updateLocation({
+  Future<UserLocation> updateLocation({
     required double latitude,
     required double longitude,
-    bool shareLocation = true,
   }) {
-    return _provider.updateLocation(
-      latitude: latitude,
-      longitude: longitude,
-      shareLocation: shareLocation,
-    );
+    return _provider.updateLocation(latitude: latitude, longitude: longitude);
   }
 
   Future<String> uploadAvatar(File file) => _provider.uploadAvatar(file);

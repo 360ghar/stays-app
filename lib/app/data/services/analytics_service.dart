@@ -198,11 +198,7 @@ class AnalyticsService {
     );
   }
 
-  void logBookingCompleted(
-    String bookingId,
-    double amount,
-    String paymentMethod,
-  ) {
+  void logBookingCompleted(String bookingId, double amount) {
     if (_analytics != null && enabled) {
       _runUnawaited(
         _analytics!.logPurchase(
@@ -217,11 +213,7 @@ class AnalyticsService {
     log(
       AnalyticsEvent(
         name: AnalyticsEventNames.bookingCompleted,
-        params: {
-          'booking_id': bookingId,
-          'amount': amount,
-          'payment_method': paymentMethod,
-        },
+        params: {'booking_id': bookingId, 'amount': amount},
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'package:stays_app/app/data/models/amenity_model.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/providers/data_providers.dart';
@@ -134,9 +135,10 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
   @override
   Widget build(BuildContext context) {
     final property = widget.property;
-    final amenities = (property.amenities ?? [])
-        .where((a) => a.trim().isNotEmpty)
-        .toList();
+    final amenities = [
+      for (final amenity in property.amenities ?? const <AmenityModel>[])
+        if (amenity.title.trim().isNotEmpty) amenity.title.trim(),
+    ];
     final features = (property.features ?? [])
         .where((f) => f.trim().isNotEmpty)
         .toList();
@@ -244,7 +246,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(property.displayPrice, style: StayTokens.price),
-                  const Text('per night', style: StayTokens.label),
+                  if (property.hasPrice)
+                    const Text('per night', style: StayTokens.label),
                 ],
               ),
               const Spacer(),

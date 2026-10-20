@@ -28,13 +28,6 @@ void main() {
         isNot('+919876543210'),
       );
     });
-
-    test('AuthMethods validation', () {
-      expect(AuthMethods.isValid('google'), isTrue);
-      expect(AuthMethods.isValid('email_password'), isTrue);
-      expect(AuthMethods.isValid('nonsense'), isFalse);
-      expect(AuthMethods.isValid(null), isFalse);
-    });
   });
 
   group('WebViewHelper navigation policy', () {

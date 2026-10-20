@@ -2,7 +2,6 @@ import '../../../config/app_config.dart';
 import '../logger/app_logger.dart';
 
 class SecurityService {
-
   /// Pure static validator: reads [AppConfig] only, so entry points can call
   /// it before services initialize. Do not make this an instance method.
   static void validateApiKeys() {

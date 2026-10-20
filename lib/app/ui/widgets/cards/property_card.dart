@@ -18,7 +18,6 @@ class PropertyCard extends StatelessWidget {
     this.width = 248,
     this.height = 184,
     this.showPrice = true,
-    this.showRating = false,
     this.heroPrefix,
     this.isFavorite = false,
   });
@@ -28,7 +27,6 @@ class PropertyCard extends StatelessWidget {
   final double width;
   final double height;
   final bool showPrice;
-  final bool showRating;
   final String? heroPrefix;
   final bool isFavorite;
 
@@ -45,7 +43,9 @@ class PropertyCard extends StatelessWidget {
     semanticLabel.write(property.name);
     semanticLabel.write(', ${property.fullAddress}');
     if (showPrice) {
-      semanticLabel.write(', ${property.displayPrice} per night');
+      semanticLabel.write(
+        ', ${property.displayPrice}${property.hasPrice ? ' per night' : ''}',
+      );
     }
     if (isFavorite) {
       semanticLabel.write(', saved to wishlist');
@@ -156,36 +156,12 @@ class PropertyCard extends StatelessWidget {
             children: [
               if (showPrice)
                 Text(
-                  '${property.displayPrice}/night',
+                  '${property.displayPrice}${property.hasPrice ? '/night' : ''}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-              if (showRating && property.rating != null)
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      property.ratingText,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (property.reviewsCount != null) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${property.reviewsCount})',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
                 ),
             ],
           ),

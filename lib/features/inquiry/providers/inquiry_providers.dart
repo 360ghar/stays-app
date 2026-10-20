@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stays_app/app/data/models/booking_model.dart';
 import 'package:stays_app/app/data/models/booking_pricing_model.dart';
+import 'package:stays_app/app/data/providers/base_provider.dart';
 import 'package:stays_app/app/data/repositories/booking_repository.dart';
+import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
+import 'package:stays_app/app/utils/helpers/json_helpers.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/providers/data_providers.dart';
 
@@ -42,10 +46,14 @@ class InquiryFormState {
       checkOut!.isAfter(checkIn!) &&
       guests > 0;
 
+  /// The backend requires a valid email for the primary guest.
+  bool get hasEmail => email.trim().contains('@');
+
   bool get canSubmit =>
       canPrice &&
       name.trim().isNotEmpty &&
       phone.trim().isNotEmpty &&
+      hasEmail &&
       pricing != null &&
       pricing!.hasValidAmounts;
 
@@ -125,8 +133,18 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
     state = state.copyWith(requests: requests);
   }
 
-  String _iso(DateTime day) =>
-      DateTime(day.year, day.month, day.day).toIso8601String();
+  /// Stay dates go on the wire as `YYYY-MM-DD`. The server reads them as
+  /// midnight UTC and counts nights on those dates.
+  String _day(DateTime day) => JsonHelpers.toDateOnly(day)!;
+
+  /// The server reason when there is one (for example `PRICING_UNAVAILABLE`),
+  /// else [fallback]. A retry with the same dates gets the same answer.
+  String _reasonOr(Object error, String fallback) {
+    if (error is ApiException && error.message.trim().isNotEmpty) {
+      return error.message;
+    }
+    return fallback;
+  }
 
   Future<void> loadPricing(int propertyId) async {
     if (!state.canPrice) return;
@@ -135,11 +153,11 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
     try {
       final pricing = await repo.calculatePricing(
         propertyId: propertyId,
-        checkInIso: _iso(state.checkIn!),
-        checkOutIso: _iso(state.checkOut!),
+        checkIn: _day(state.checkIn!),
+        checkOut: _day(state.checkOut!),
         guests: state.guests,
       );
-      if (pricing == null || !pricing.hasValidAmounts) {
+      if (!pricing.hasValidAmounts) {
         state = state.copyWith(
           status: InquiryStatus.error,
           error: 'Pricing unavailable. Please try again.',
@@ -151,108 +169,93 @@ class InquiryFormNotifier extends Notifier<InquiryFormState> {
       AppLogger.error('Inquiry v2: pricing failed', e, s);
       state = state.copyWith(
         status: InquiryStatus.error,
-        error: 'Pricing unavailable. Please try again.',
+        error: _reasonOr(e, 'Pricing unavailable. Please try again.'),
       );
     }
   }
 
+  // One key per request. A guest who taps Submit again after a failure sends
+  // the same request with the same key, so the server returns the first
+  // booking and does not create a second one. A changed request gets a new key.
+  String? _idempotencyKey;
+  String? _keyedRequest;
+
+  String _keyFor(Map<String, dynamic> payload) {
+    final request = jsonEncode(payload);
+    if (_idempotencyKey == null || _keyedRequest != request) {
+      _idempotencyKey = generateIdempotencyKey();
+      _keyedRequest = request;
+    }
+    return _idempotencyKey!;
+  }
+
   Future<bool> submit(int propertyId) async {
     final repo = _repo;
-    final pricing = state.pricing;
-    if (!state.canSubmit || pricing == null) return false;
+    if (!state.canSubmit) return false;
     state = state.copyWith(status: InquiryStatus.submitting, error: '');
     try {
       final payload = buildInquiryPayload(
-        pricing: pricing,
         propertyId: propertyId,
-        checkInIso: _iso(state.checkIn!),
-        checkOutIso: _iso(state.checkOut!),
+        checkIn: state.checkIn!,
+        checkOut: state.checkOut!,
         guests: state.guests,
         primaryGuestName: state.name.trim(),
         primaryGuestPhone: state.phone.trim(),
         primaryGuestEmail: state.email.trim(),
-        nights: state.nights,
         specialRequests: state.requests,
       );
-      final booking = await repo.createBooking(payload);
+      final booking = await repo.createBooking(
+        payload,
+        idempotencyKey: _keyFor(payload),
+      );
+      _idempotencyKey = null;
+      _keyedRequest = null;
       state = state.copyWith(status: InquiryStatus.success, booking: booking);
       return true;
     } catch (e, s) {
       AppLogger.error('Inquiry v2: submit failed', e, s);
       state = state.copyWith(
         status: InquiryStatus.error,
-        error: 'Could not submit inquiry. Please try again.',
+        error: _reasonOr(e, 'Could not submit inquiry. Please try again.'),
       );
       return false;
     }
   }
 }
 
-/// Builds the booking payload from server-authoritative [pricing].
+/// Builds the `POST /api/v1/bookings` body.
 ///
-/// Request contract (`Map<String, dynamic>`, wire format frozen):
-/// - `property_id` (int): target property.
-/// - `check_in_date` / `check_out_date` (String, ISO-8601 date): stay window.
-/// - `guests` (int): total guest count.
+/// The body carries only what the guest chose. The server prices the booking
+/// and sets its status, so no money, nights or status key is sent (the body
+/// rejects unknown keys).
+/// - `property_id` (int)
+/// - `check_in_date` / `check_out_date` (`YYYY-MM-DD`)
+/// - `guests` (int)
 /// - `primary_guest_name` / `primary_guest_phone` / `primary_guest_email`
-///   (String): contact details.
-/// - `guest_details` (Map, `{adults: int}`): guest breakdown.
-/// - `base_amount` / `taxes_amount` / `service_charges` / `total_amount`
-///   (num, from [BookingPricingModel]): server-authoritative money fields.
-/// - `discount_amount` (num?, only when non-null): applied discount.
-/// - `booking_status` / `payment_status` (String): always `'pending'` here.
-/// - `nights` (int?, when known): derived stay length.
-/// - `special_requests` (String?, trimmed, only when non-empty).
-///
-/// Money fields always originate from [BookingPricingModel];
-/// caller-supplied [additionalPayload] is applied FIRST so it can never
-/// override them. Throws [PricingUnavailableException] when invalid.
-/// Mirrors the legacy builder so both flows submit identical payloads.
+/// - `guest_details` (`{adults: int}`)
+/// - `special_requests` (trimmed, only when not empty)
 Map<String, dynamic> buildInquiryPayload({
-  required BookingPricingModel pricing,
   required int propertyId,
-  required String checkInIso,
-  required String checkOutIso,
+  required DateTime checkIn,
+  required DateTime checkOut,
   required int guests,
   required String primaryGuestName,
   required String primaryGuestPhone,
   required String primaryGuestEmail,
-  int? nights,
   String? specialRequests,
-  Map<String, dynamic>? additionalPayload,
 }) {
-  if (!pricing.hasValidAmounts) {
-    throw const PricingUnavailableException();
-  }
-  final payload = <String, dynamic>{...?additionalPayload};
-  // Wire format frozen: keys/types must match the backend contract above.
-  payload.addAll({
-    'property_id': propertyId, // int
-    'check_in_date': checkInIso, // String ISO-8601
-    'check_out_date': checkOutIso, // String ISO-8601
-    'guests': guests, // int
-    'primary_guest_name': primaryGuestName, // String
-    'primary_guest_phone': primaryGuestPhone, // String
-    'primary_guest_email': primaryGuestEmail, // String
-    'guest_details': {'adults': guests}, // Map<String, dynamic>
-    'base_amount': pricing.baseAmount, // num (server-authoritative)
-    'taxes_amount': pricing.taxesAmount, // num (server-authoritative)
-    'service_charges': pricing.serviceCharges, // num (server-authoritative)
-    if (pricing.discountAmount != null)
-      'discount_amount': pricing.discountAmount, // num? (server-authoritative)
-    'total_amount': pricing.totalAmount, // num (server-authoritative)
-    'booking_status': 'pending', // String
-    'payment_status': 'pending', // String
-  });
-
-  final resolvedNights = nights ?? pricing.nights;
-  if (resolvedNights != null) {
-    payload['nights'] = resolvedNights;
-  }
-
+  final payload = <String, dynamic>{
+    'property_id': propertyId,
+    'check_in_date': JsonHelpers.toDateOnly(checkIn),
+    'check_out_date': JsonHelpers.toDateOnly(checkOut),
+    'guests': guests,
+    'primary_guest_name': primaryGuestName,
+    'primary_guest_phone': primaryGuestPhone,
+    'primary_guest_email': primaryGuestEmail,
+    'guest_details': {'adults': guests},
+  };
   if (specialRequests != null && specialRequests.trim().isNotEmpty) {
     payload['special_requests'] = specialRequests.trim();
   }
-
   return payload;
 }

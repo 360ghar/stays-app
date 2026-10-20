@@ -55,87 +55,97 @@ void main() {
     });
   });
 
+  group('BookingPricingModel.fromMap', () {
+    test('reads every amount of BookingPricing', () {
+      final pricing = BookingPricingModel.fromMap(const {
+        'base_amount': 10500.0,
+        'taxes_amount': 1260.5,
+        'service_charges': 525,
+        'discount_amount': 0.0,
+        'total_amount': 12285.5,
+        'nights': 3,
+      });
+      expect(pricing.totalAmount, 12285.5);
+      expect(pricing.serviceCharges, 525.0);
+      expect(pricing.nights, 3);
+      expect(pricing.hasValidAmounts, isTrue);
+    });
+
+    test('a missing amount throws and is never read as 0', () {
+      expect(
+        () => BookingPricingModel.fromMap(const {
+          'base_amount': 10,
+          'taxes_amount': 1,
+          'service_charges': 1,
+          'discount_amount': 0,
+        }),
+        throwsFormatException,
+      );
+    });
+  });
+
   group('buildInquiryPayload', () {
-    test('builds a payload with server-authoritative money fields', () {
-      final payload = buildInquiryPayload(
-        pricing: validPricing,
+    Map<String, dynamic> build({String? specialRequests}) {
+      return buildInquiryPayload(
         propertyId: 42,
-        checkInIso: '2026-08-01T00:00:00Z',
-        checkOutIso: '2026-08-03T00:00:00Z',
+        checkIn: DateTime(2026, 8),
+        checkOut: DateTime(2026, 8, 3),
         guests: 2,
         primaryGuestName: 'Test User',
         primaryGuestPhone: '+919876543210',
         primaryGuestEmail: 'test@example.com',
+        specialRequests: specialRequests,
       );
+    }
 
-      expect(payload['property_id'], 42);
-      expect(payload['base_amount'], 1000.0);
-      expect(payload['taxes_amount'], 120.0);
-      expect(payload['service_charges'], 50.0);
-      expect(payload['total_amount'], 1170.0);
-      expect(payload['discount_amount'], 0);
-      expect(payload['nights'], 2);
-      expect(payload['booking_status'], 'pending');
-      expect(payload['payment_status'], 'pending');
+    test('sends stay dates as YYYY-MM-DD', () {
+      final payload = build();
+      expect(payload['check_in_date'], '2026-08-01');
+      expect(payload['check_out_date'], '2026-08-03');
     });
 
-    test('throws PricingUnavailableException for invalid pricing', () {
-      const invalid = BookingPricingModel(
-        baseAmount: 0,
-        taxesAmount: 0,
-        serviceCharges: 0,
-        totalAmount: 0,
+    test('sends only the keys BookingCreate declares', () {
+      final payload = build(specialRequests: 'late check-in');
+      expect(payload.keys.toSet(), {
+        'property_id',
+        'check_in_date',
+        'check_out_date',
+        'guests',
+        'primary_guest_name',
+        'primary_guest_phone',
+        'primary_guest_email',
+        'guest_details',
+        'special_requests',
+      });
+      expect(payload['property_id'], 42);
+      expect((payload['guest_details'] as Map)['adults'], 2);
+    });
+
+    test('sends no money, nights or status field', () {
+      final payload = build();
+      for (final key in const [
+        'base_amount',
+        'taxes_amount',
+        'service_charges',
+        'discount_amount',
+        'total_amount',
+        'nights',
+        'booking_status',
+        'payment_status',
+      ]) {
+        expect(payload.containsKey(key), isFalse, reason: key);
+      }
+    });
+
+    test('trims special requests and drops blanks', () {
+      expect(
+        build(specialRequests: '  late checkout  ')['special_requests'],
+        'late checkout',
       );
       expect(
-        () => buildInquiryPayload(
-          pricing: invalid,
-          propertyId: 1,
-          checkInIso: '2026-08-01T00:00:00Z',
-          checkOutIso: '2026-08-02T00:00:00Z',
-          guests: 1,
-          primaryGuestName: 'A',
-          primaryGuestPhone: '+911234567890',
-          primaryGuestEmail: 'a@b.com',
-        ),
-        throwsA(isA<PricingUnavailableException>()),
+        build(specialRequests: '   ').containsKey('special_requests'),
+        isFalse,
       );
-    });
-
-    test('additionalPayload can never override money fields', () {
-      final payload = buildInquiryPayload(
-        pricing: validPricing,
-        propertyId: 1,
-        checkInIso: '2026-08-01T00:00:00Z',
-        checkOutIso: '2026-08-02T00:00:00Z',
-        guests: 1,
-        primaryGuestName: 'A',
-        primaryGuestPhone: '+911234567890',
-        primaryGuestEmail: 'a@b.com',
-        additionalPayload: <String, dynamic>{
-          'total_amount': 1.0,
-          'base_amount': 1.0,
-          'property_title': 'My Stay',
-        },
-      );
-
-      expect(payload['total_amount'], 1170.0);
-      expect(payload['base_amount'], 1000.0);
-      expect(payload['property_title'], 'My Stay');
-    });
-
-    test('caller nights win over pricing nights when provided', () {
-      final payload = buildInquiryPayload(
-        pricing: validPricing,
-        propertyId: 1,
-        checkInIso: '2026-08-01T00:00:00Z',
-        checkOutIso: '2026-08-02T00:00:00Z',
-        guests: 1,
-        primaryGuestName: 'A',
-        primaryGuestPhone: '+911234567890',
-        primaryGuestEmail: 'a@b.com',
-        nights: 5,
-      );
-      expect(payload['nights'], 5);
     });
   });
 }

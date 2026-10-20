@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import 'package:stays_app/app/data/models/booking_model.dart';
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/core/router/app_router.dart';
 import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/core/ui/async_state.dart';
@@ -39,13 +40,34 @@ class TripsScreen extends ConsumerWidget {
           }
           return RefreshIndicator(
             onRefresh: notifier.refresh,
-            child: ListView.separated(
-              padding: const EdgeInsets.all(StayTokens.s16),
-              itemCount: state.bookings.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: StayTokens.s12),
-              itemBuilder: (context, i) =>
-                  _TripCard(booking: state.bookings[i]),
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (info) {
+                if (info.metrics.pixels >= info.metrics.maxScrollExtent - 400) {
+                  notifier.loadMore().ignore();
+                }
+                return false;
+              },
+              child: ListView.separated(
+                padding: const EdgeInsets.all(StayTokens.s16),
+                itemCount: state.bookings.length + (state.hasMore ? 1 : 0),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: StayTokens.s12),
+                itemBuilder: (context, i) {
+                  if (i >= state.bookings.length) {
+                    // The footer row: a spinner while the next page loads,
+                    // a button when the page failed to load.
+                    return Center(
+                      child: state.isLoadingMore
+                          ? const CircularProgressIndicator()
+                          : TextButton(
+                              onPressed: notifier.loadMore,
+                              child: const Text('Load more'),
+                            ),
+                    );
+                  }
+                  return _TripCard(booking: state.bookings[i]);
+                },
+              ),
             ),
           );
         },
@@ -108,7 +130,8 @@ class _TripCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        _StatusPill(status: booking.bookingStatus),
+                        if (booking.bookingStatus != null)
+                          _StatusPill(status: booking.bookingStatus!),
                       ],
                     ),
                     const SizedBox(height: StayTokens.s4),
@@ -136,17 +159,19 @@ class _TripCard extends StatelessWidget {
 
 class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.status});
-  final String status;
+  final BookingStatus status;
 
   @override
   Widget build(BuildContext context) {
-    final lower = status.toLowerCase();
     final Color bg;
     final Color fg;
-    if (lower.contains('confirm')) {
+    if (status == BookingStatus.confirmed ||
+        status == BookingStatus.checkedIn ||
+        status == BookingStatus.checkedOut ||
+        status == BookingStatus.completed) {
       bg = const Color(0xFFD1FAE5);
       fg = const Color(0xFF064E3B);
-    } else if (lower.contains('cancel')) {
+    } else if (status == BookingStatus.cancelled) {
       bg = const Color(0xFFFEE2E2);
       fg = const Color(0xFF7F1D1D);
     } else {
@@ -160,7 +185,7 @@ class _StatusPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(StayTokens.radiusPill),
       ),
       child: Text(
-        status,
+        status.wire.replaceAll('_', ' '),
         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: fg),
       ),
     );

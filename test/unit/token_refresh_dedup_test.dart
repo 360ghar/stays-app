@@ -38,12 +38,6 @@ class _FakeStorage implements StorageService {
   }
 
   @override
-  Future<void> saveUserData(Map<String, dynamic> userData) async {}
-
-  @override
-  Future<Map<String, dynamic>?> getUserData() async => null;
-
-  @override
   Future<void> clearUserData() async {}
 
   @override

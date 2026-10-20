@@ -262,29 +262,13 @@ class _FeaturedPropertyCardState extends State<FeaturedPropertyCard>
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    Text(
-                      ' / night',
-                      style: textStyles.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    if (widget.property.rating != null &&
-                        widget.property.rating! > 0) ...[
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 4),
+                    if (widget.property.hasPrice)
                       Text(
-                        widget.property.ratingText,
+                        ' / night',
                         style: textStyles.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
-                    ],
                   ],
                 ),
               ],

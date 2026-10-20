@@ -106,10 +106,7 @@ class _VirtualTourEmbedState extends State<VirtualTourEmbed> {
 
   void _openFullscreen(BuildContext context) {
     unawaited(
-      context.push(
-        AppPaths.tour('embed'),
-        extra: {'url': widget.tourUrl},
-      ),
+      context.push(AppPaths.tour('embed'), extra: {'url': widget.tourUrl}),
     );
   }
 

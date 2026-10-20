@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stays_app/core/l10n/strings.dart';
 
-import '../../../data/models/listing_model.dart';
 import '../../../data/models/unified_filter_model.dart';
+import '../../../data/models/wire_enums.dart';
 import '../../theme/app_animations.dart';
 
 Future<UnifiedFilterModel?> showPropertyFilterSheet({
@@ -83,11 +83,8 @@ class _PropertyFilterSheet extends ConsumerStatefulWidget {
 class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
   static const double _priceFloor = 0;
   static const double _priceCeil = 200000;
-  // Single source of truth for the property-type filter strings, driven by
-  // the [PropertyType] enum's canonical wire encoding.
-  static final List<String> _propertyTypeOptions = <String>[
-    for (final t in PropertyType.values) t.wireName,
-  ];
+  // The property types the backend knows, from the generated wire enum.
+  static const List<PropertyType> _propertyTypeOptions = PropertyType.values;
 
   late ThemeData _theme;
   late ColorScheme _colorScheme;
@@ -95,12 +92,7 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
   late Color _dividerColor;
 
   late RangeValues _priceRange;
-  late Set<String> _selectedTypes;
-  late double _minRating;
-  late bool _instantBook;
-  late bool _selfCheckIn;
-  late bool _petsAllowed;
-  late bool _smokingAllowed;
+  late Set<PropertyType> _selectedTypes;
   late final TextEditingController _minPriceController;
   late final TextEditingController _maxPriceController;
   bool _isUpdatingPriceFields = false;
@@ -111,11 +103,6 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
     final initial = widget.initial;
     _priceRange = _resolveRange(initial.minPrice, initial.maxPrice);
     _selectedTypes = initial.propertyTypes.toSet();
-    _minRating = initial.minRating ?? 0;
-    _instantBook = initial.instantBook ?? false;
-    _selfCheckIn = initial.selfCheckIn ?? false;
-    _petsAllowed = initial.petsAllowed ?? false;
-    _smokingAllowed = initial.smokingAllowed ?? false;
     _minPriceController = TextEditingController(
       text: _initialPriceText(initial.minPrice),
     )..addListener(_handleMinPriceInput);
@@ -265,10 +252,6 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
                               _buildPriceSection(context),
                               const SizedBox(height: 24),
                               _buildPropertyTypeSection(context),
-                              const SizedBox(height: 24),
-                              _buildRatingSection(context),
-                              const SizedBox(height: 24),
-                              _buildExperienceSection(context),
                             ],
                           ),
                         ),
@@ -403,7 +386,7 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
           children: _propertyTypeOptions.map((option) {
             final selected = _selectedTypes.contains(option);
             return FilterChip(
-              label: Text(_formatPropertyType(option)),
+              label: Text(_formatPropertyType(option.wire)),
               selected: selected,
               selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
               checkmarkColor: _colorScheme.onPrimaryContainer,
@@ -432,95 +415,6 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
               : '${word[0].toUpperCase()}${word.substring(1)}',
         )
         .join(' ');
-  }
-
-  Widget _buildRatingSection(BuildContext context) {
-    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-    final bodyStyle = _theme.textTheme.bodyMedium;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Guest rating', style: labelStyle),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Any', style: bodyStyle),
-            Text('${_minRating.toStringAsFixed(1)} ★', style: bodyStyle),
-            Text('5 ★', style: bodyStyle),
-          ],
-        ),
-        Slider(
-          value: _minRating,
-          max: 5,
-          divisions: 10,
-          activeColor: _colorScheme.primary,
-          inactiveColor: _colorScheme.primary.withValues(alpha: 0.15),
-          onChanged: (value) => setState(() => _minRating = value),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExperienceSection(BuildContext context) {
-    final labelStyle = _theme.textTheme.titleMedium?.copyWith(
-      fontWeight: FontWeight.w600,
-    );
-
-    final quickFilters = <_QuickFilterOption>[
-      _QuickFilterOption(
-        'Instant book',
-        value: _instantBook,
-        onChanged: (value) {
-          setState(() => _instantBook = value);
-        },
-      ),
-      _QuickFilterOption(
-        'Self check-in',
-        value: _selfCheckIn,
-        onChanged: (value) {
-          setState(() => _selfCheckIn = value);
-        },
-      ),
-      _QuickFilterOption(
-        'Pets allowed',
-        value: _petsAllowed,
-        onChanged: (value) {
-          setState(() => _petsAllowed = value);
-        },
-      ),
-      _QuickFilterOption(
-        'Smoking allowed',
-        value: _smokingAllowed,
-        onChanged: (value) {
-          setState(() => _smokingAllowed = value);
-        },
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Experience', style: labelStyle),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: quickFilters.map((option) {
-            return FilterChip(
-              label: Text(option.label),
-              selected: option.value,
-              selectedColor: _colorScheme.primary.withValues(alpha: 0.15),
-              checkmarkColor: _colorScheme.onPrimaryContainer,
-              onSelected: option.onChanged,
-            );
-          }).toList(),
-        ),
-      ],
-    );
   }
 
   Widget _buildFooter(BuildContext context) {
@@ -567,11 +461,6 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
     setState(() {
       _priceRange = const RangeValues(_priceFloor, _priceCeil);
       _selectedTypes.clear();
-      _minRating = 0;
-      _instantBook = false;
-      _selfCheckIn = false;
-      _petsAllowed = false;
-      _smokingAllowed = false;
     });
     _syncPriceControllers(_priceRange);
   }
@@ -583,24 +472,7 @@ class _PropertyFilterSheetState extends ConsumerState<_PropertyFilterSheet> {
       minPrice: min,
       maxPrice: max,
       propertyTypes: _selectedTypes.isEmpty ? null : _selectedTypes.toList(),
-      minRating: _minRating > 0 ? _minRating : null,
-      instantBook: _instantBook ? true : null,
-      selfCheckIn: _selfCheckIn ? true : null,
-      petsAllowed: _petsAllowed ? true : null,
-      smokingAllowed: _smokingAllowed ? true : null,
     );
     Navigator.of(context).pop(_FilterSheetRouteResult(filters: model));
   }
-}
-
-class _QuickFilterOption {
-  _QuickFilterOption(
-    this.label, {
-    required this.value,
-    required this.onChanged,
-  });
-
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
 }

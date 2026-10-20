@@ -216,7 +216,7 @@ class _Featured extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${property.displayPrice} / night',
+                        '${property.displayPrice}${property.priceUnit}',
                         style: StayTokens.price,
                       ),
                     ],

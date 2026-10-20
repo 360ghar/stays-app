@@ -20,16 +20,30 @@ class ErrorService {
   /// Get the list of recent errors for debugging
   List<String> get errorHistory => _errorHistory.toList();
 
+  /// Builds an [ApiException] from a non-2xx response.
+  ///
+  /// The backend sends every error as
+  /// `{"error": {"code", "message", "details"}}`. A 422 lists its field errors
+  /// in `details.fields` as `[{field, msg, type}]`. Nothing else is read: a
+  /// body of another shape (for example a gateway page) gives the status text.
   ApiException toApiException(ApiResponse response) {
     final int statusCode = response.statusCode;
-    final body = response.data;
+    final envelope = _readEnvelope(response.bodyAsMap());
+    final fields = envelope?.fields ?? const <FieldError>[];
     final String message =
-        _extractMessage(body) ??
-        (response.bodyString.isNotEmpty ? response.bodyString : null) ??
+        _composeMessage(envelope?.message, fields) ??
         response.statusMessage ??
         'An unknown error occurred.';
-    AppLogger.error('API Error', 'Status: $statusCode, Message: $message');
-    return ApiException(message: message, statusCode: statusCode);
+    AppLogger.error(
+      'API Error',
+      'Status: $statusCode, Code: ${envelope?.code}, Message: $message',
+    );
+    return ApiException(
+      message: message,
+      statusCode: statusCode,
+      code: envelope?.code,
+      fieldErrors: fields,
+    );
   }
 
   /// Get user-friendly error message from any error type
@@ -95,51 +109,47 @@ class ErrorService {
     return getErrorMessage(error);
   }
 
-  String? _extractMessage(dynamic body) {
-    if (body == null) return null;
-    if (body is Map) {
-      final map = body.cast<dynamic, dynamic>();
-      final detail = map['detail'];
-      if (detail is String && detail.trim().isNotEmpty) return detail.trim();
-      if (detail is List) {
-        final messages = <String>[];
-        for (final item in detail) {
-          if (item is Map) {
-            final msg = item['msg']?.toString() ?? item['message']?.toString();
-            final loc = item['loc'] is List
-                ? (item['loc'] as List).map((e) => e.toString()).toList()
-                : null;
-            final field = loc != null && loc.isNotEmpty
-                ? loc.last.toString()
-                : null;
-            if (msg != null && msg.isNotEmpty) {
-              messages.add(
-                field != null && field.isNotEmpty ? '$field: $msg' : msg,
-              );
-            }
-          } else if (item != null) {
-            messages.add(item.toString());
-          }
-        }
-        if (messages.isNotEmpty) return messages.join('; ');
-      }
-      if (detail is Map) {
-        final msg = detail['msg']?.toString() ?? detail['message']?.toString();
-        if (msg != null && msg.isNotEmpty) return msg;
-      }
-      final msg = map['message']?.toString();
-      final err = map['error']?.toString();
-      final errors = map['errors'];
-      if (msg != null && msg.isNotEmpty) return msg;
-      if (err != null && err.isNotEmpty) return err;
-      if (errors is List && errors.isNotEmpty) {
-        return errors.map((e) => e.toString()).join('; ');
-      }
-      if (errors is Map && errors.isNotEmpty) {
-        return errors.values.map((e) => e.toString()).join('; ');
-      }
-      return null;
-    }
-    return null;
+  _ErrorEnvelope? _readEnvelope(Map<String, dynamic> body) {
+    final error = body['error'];
+    if (error is! Map) return null;
+    final code = error['code'];
+    final message = error['message'];
+    final details = error['details'];
+    final rawFields = details is Map ? details['fields'] : null;
+    final fields = <FieldError>[
+      if (rawFields is List)
+        for (final item in rawFields)
+          if (item is Map && item['msg'] is String)
+            FieldError(
+              field: '${item['field'] ?? ''}',
+              msg: item['msg'] as String,
+              type: '${item['type'] ?? ''}',
+            ),
+    ];
+    return _ErrorEnvelope(
+      code: code is String ? code : null,
+      message: message is String && message.trim().isNotEmpty
+          ? message.trim()
+          : null,
+      fields: fields,
+    );
   }
+
+  /// A 422 reads as its field errors. Any other error reads as its message.
+  String? _composeMessage(String? message, List<FieldError> fields) {
+    if (fields.isEmpty) return message;
+    return fields.map((f) => '${f.name}: ${f.msg}').join('; ');
+  }
+}
+
+class _ErrorEnvelope {
+  const _ErrorEnvelope({
+    required this.code,
+    required this.message,
+    required this.fields,
+  });
+
+  final String? code;
+  final String? message;
+  final List<FieldError> fields;
 }

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:stays_app/core/providers/session_provider.dart';
+
 /// Canonical lightweight store of favorited property ids.
 ///
 /// Replaces the legacy GetX `FavoritesController`. Holds no [Property]
@@ -13,7 +15,11 @@ final favoritesProvider = NotifierProvider<FavoritesNotifier, Set<int>>(
 
 class FavoritesNotifier extends Notifier<Set<int>> {
   @override
-  Set<int> build() => <int>{};
+  Set<int> build() {
+    // The set belongs to one account. It starts empty for the next one.
+    ref.watch(accountIdProvider);
+    return <int>{};
+  }
 
   bool isFavorite(int propertyId) => state.contains(propertyId);
 

@@ -19,19 +19,23 @@ class LocationService {
 
   // geocoding 5.x groups all functionality in the Geocoding class.
   final Geocoding _geocoding = Geocoding();
-  final ValueNotifier<Position?> _currentPosition =
-      ValueNotifier<Position?>(null);
+  final ValueNotifier<Position?> _currentPosition = ValueNotifier<Position?>(
+    null,
+  );
   // Selected location overrides current GPS position for querying backend
   final ValueNotifier<double?> _selectedLat = ValueNotifier<double?>(null);
   final ValueNotifier<double?> _selectedLng = ValueNotifier<double?>(null);
-  final ValueNotifier<String> _locationName =
-      ValueNotifier<String>(''); // Human-readable name for UI
-  final ValueNotifier<String> _currentCity =
-      ValueNotifier<String>(''); // City-level name for grouping
+  final ValueNotifier<String> _locationName = ValueNotifier<String>(
+    '',
+  ); // Human-readable name for UI
+  final ValueNotifier<String> _currentCity = ValueNotifier<String>(
+    '',
+  ); // City-level name for grouping
   final ValueNotifier<bool> _isLocationEnabled = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _isLoadingLocation = ValueNotifier<bool>(false);
-  final ValueNotifier<bool> _isInitialized =
-      ValueNotifier<bool>(false); // Track if location has been initialized
+  final ValueNotifier<bool> _isInitialized = ValueNotifier<bool>(
+    false,
+  ); // Track if location has been initialized
   Completer<void>? _readyCompleter;
 
   Position? get currentPosition => _currentPosition.value;

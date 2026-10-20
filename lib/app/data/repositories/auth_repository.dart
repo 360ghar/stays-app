@@ -1,6 +1,7 @@
 import '../services/storage_service.dart';
 import '../../utils/services/token_service.dart';
 import '../models/user_model.dart';
+import '../models/wire_enums.dart';
 import '../../utils/logger/app_logger.dart';
 import '../../utils/helpers/supabase_auth_error_mapper.dart';
 import '../providers/auth/i_auth_provider.dart';
@@ -63,9 +64,7 @@ class AuthRepository {
         password: password,
       );
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e);
     }
@@ -81,9 +80,7 @@ class AuthRepository {
         password: password,
       );
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e);
     }
@@ -101,9 +98,7 @@ class AuthRepository {
         password: password,
       );
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e);
     }
@@ -136,19 +131,13 @@ class AuthRepository {
     }
   }
 
-  /// Records the last-used auth method (best-effort, never throws).
-  /// Returns true when the backend acknowledged the write.
-  Future<bool> recordLastMethod(String method) =>
-      _authApi.recordLastMethod(method);
-
   /// Fetches the auth gate state from the backend.
-  /// Returns a map with `stage`, `next_action`, and `missing_fields`.
-  Future<Map<String, dynamic>> getAuthGateState({String app = 'stays'}) =>
+  Future<AuthGateState> getAuthGateState({AppKey app = AppKey.stays}) =>
       _authApi.getAuthGateState(app: app);
 
   /// Marks the given app's onboarding as complete. Best-effort, never throws.
   /// Returns true when the backend acknowledged the write.
-  Future<bool> completeOnboarding({String app = 'stays'}) =>
+  Future<bool> completeOnboarding({AppKey app = AppKey.stays}) =>
       _authApi.completeOnboarding(app: app);
 
   // ---------------------------------------------------------------------------
@@ -166,7 +155,6 @@ class AuthRepository {
           final res = outcome.result!;
           await _persistTokens(res);
           final user = _mapUser(res.rawUser);
-          await _persistUserData(user);
           return GoogleLoginResult.session(user);
         case GoogleSignInStatus.redirectLaunched:
           return const GoogleLoginResult.redirectLaunched();
@@ -188,9 +176,7 @@ class AuthRepository {
       final res = await _provider.signInWithApple();
       if (res == null) return null;
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e);
     }
@@ -221,9 +207,7 @@ class AuthRepository {
     try {
       final res = await _provider.verifyEmailOtp(email: email, token: token);
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e, context: AuthErrorContext.otp);
     }
@@ -265,9 +249,7 @@ class AuthRepository {
         token: token,
       );
       await _persistTokens(res);
-      final user = _mapUser(res.rawUser);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(res.rawUser);
     } catch (e) {
       rethrowMappedAuthError(e, context: AuthErrorContext.otp);
     }
@@ -295,14 +277,10 @@ class AuthRepository {
   Future<UserModel?> getCurrentUser() async {
     final raw = await _provider.getCurrentUserRaw();
     if (raw != null) {
-      final user = _mapUser(raw);
-      await _persistUserData(user);
-      return user;
+      return _mapUser(raw);
     }
-    final userData = await _storage.getUserData();
-    if (userData != null) {
-      return UserModel.fromMap(userData);
-    }
+    // Signed out: there is no current user. A copy of the last account's
+    // profile is never read back, so one account cannot see another's data.
     return null;
   }
 
@@ -340,7 +318,4 @@ class AuthRepository {
       AppLogger.error('Failed to persist tokens', e);
     }
   }
-
-  Future<void> _persistUserData(UserModel user) =>
-      _storage.saveUserData(user.toMap());
 }

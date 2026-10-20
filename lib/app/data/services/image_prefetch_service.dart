@@ -15,8 +15,7 @@ class ImagePrefetchService {
   ImagePrefetchService._internal();
 
   // Shared instance so prefetch tracking is app-wide.
-  static final ImagePrefetchService _shared =
-      ImagePrefetchService._internal();
+  static final ImagePrefetchService _shared = ImagePrefetchService._internal();
 
   static ImagePrefetchService get I => _shared;
 

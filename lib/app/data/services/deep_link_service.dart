@@ -94,8 +94,17 @@ class DeepLinkService {
 
   static String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
 
+  /// The custom scheme of the app. The backend fallback page launches
+  /// `stays360://<entity>/<id>`, where the entity is the host. The same scheme
+  /// carries the sign-in callback `stays360://login-callback`, which maps to
+  /// nothing here.
+  static const String _customScheme = 'stays360';
+
   static String? _mapToInternalPath(Uri uri) {
-    var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    var segments = [
+      if (uri.scheme == _customScheme && uri.host.isNotEmpty) uri.host,
+      ...uri.pathSegments.where((s) => s.isNotEmpty),
+    ];
     if (segments.isEmpty) return null;
 
     // Links may be namespaced under a leading "stays" prefix
@@ -128,9 +137,11 @@ class DeepLinkService {
     return AppPaths.listing(listingId);
   }
 
-  static String? _buildChatPath(String conversationId) {
-    if (!_isValidRouteId(conversationId)) return null;
-    return AppPaths.chat(conversationId);
+  /// The chat of a stay is the thread of its booking, so the id is the
+  /// numeric booking id.
+  static String? _buildChatPath(String bookingId) {
+    if (!RegExp(r'^\d{1,18}$').hasMatch(bookingId)) return null;
+    return AppPaths.chat(bookingId);
   }
 
   Future<void> _navigateToPath(String path) async {
@@ -168,5 +179,5 @@ class DeepLinkService {
   static String listingUrl(String listingId) =>
       '$_baseUrl/stays/listing/$listingId';
 
-  static String chatUrl(String chatId) => '$_baseUrl/stays/chat/$chatId';
+  static String chatUrl(int bookingId) => '$_baseUrl/stays/chat/$bookingId';
 }

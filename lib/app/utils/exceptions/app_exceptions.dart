@@ -49,6 +49,26 @@ class NetworkException extends AppException {
   final TransportFailureKind? transportFailure;
 }
 
+/// One entry of `error.details.fields` on a 422: `{field, msg, type}`.
+/// `field` keeps its source prefix, for example `body.primary_guest_email`.
+class FieldError {
+  const FieldError({
+    required this.field,
+    required this.msg,
+    required this.type,
+  });
+
+  final String field;
+  final String msg;
+  final String type;
+
+  /// The field name without its `body.`, `query.` or `path.` prefix.
+  String get name {
+    final dot = field.indexOf('.');
+    return dot == -1 ? field : field.substring(dot + 1);
+  }
+}
+
 class ApiException extends NetworkException {
   ApiException({
     required super.message,
@@ -57,7 +77,11 @@ class ApiException extends NetworkException {
     super.transportFailure,
     super.component,
     super.operation,
+    this.fieldErrors = const <FieldError>[],
   });
+
+  /// Field errors of a 422 (`details.fields`). Empty for every other status.
+  final List<FieldError> fieldErrors;
 
   @override
   String toString() => statusCode != null

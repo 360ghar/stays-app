@@ -31,7 +31,7 @@ class StayCard extends StatelessWidget {
     return Semantics(
       label:
           '${property.name}, ${property.fullAddress}, '
-          '${property.displayPrice} per night',
+          '${property.displayPrice}${property.hasPrice ? ' per night' : ''}',
       button: true,
       child: GestureDetector(
         onTap: onTap,
@@ -92,18 +92,16 @@ class StayCard extends StatelessWidget {
                     const SizedBox(height: StayTokens.s8),
                     Row(
                       children: [
-                        Text(property.displayPrice, style: StayTokens.price),
-                        const Text(' / night', style: StayTokens.label),
-                        const Spacer(),
-                        if (property.rating != null) ...[
-                          const Icon(
-                            Icons.star,
-                            size: 14,
-                            color: StayTokens.star,
+                        Flexible(
+                          child: Text(
+                            property.displayPrice,
+                            style: StayTokens.price,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(width: 2),
-                          Text(property.ratingText, style: StayTokens.label),
-                        ],
+                        ),
+                        if (property.hasPrice)
+                          const Text(' / night', style: StayTokens.label),
                       ],
                     ),
                   ],

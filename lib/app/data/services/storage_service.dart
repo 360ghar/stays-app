@@ -28,6 +28,7 @@ class StorageService {
     try {
       _prefs ??= await SharedPreferences.getInstance();
       _secureStorage = const FlutterSecureStorage();
+      await clearUserData();
       _initialized = true;
       if (!_ready.isCompleted) {
         _ready.complete();
@@ -124,25 +125,10 @@ class StorageService {
     }
   }
 
-  // User data management. SECURITY CONTRACT: user-data is non-sensitive
-  // profile JSON only — tokens live exclusively in flutter_secure_storage via
-  // TokenService.storeTokens. The assert below enforces the separation.
-  Future<void> saveUserData(Map<String, dynamic> userData) async {
-    assert(
-      !jsonEncode(userData).contains('accessToken'),
-      'saveUserData must never persist tokens; use TokenService.storeTokens instead',
-    );
-    final prefs = _prefs ??= await SharedPreferences.getInstance();
-    await prefs.setString(_userDataKey, jsonEncode(userData));
-  }
-
-  Future<Map<String, dynamic>?> getUserData() async {
-    final prefs = _prefs ??= await SharedPreferences.getInstance();
-    final raw = prefs.getString(_userDataKey);
-    if (raw == null) return null;
-    return jsonDecode(raw) as Map<String, dynamic>;
-  }
-
+  // The profile of the signed-in user is read from the Supabase session, never
+  // from this store. Builds before this change kept a copy of it here under
+  // `user_data` (email and phone, with no account scope). It is removed at
+  // start-up and on sign-out.
   Future<void> clearUserData() async {
     final prefs = _prefs ??= await SharedPreferences.getInstance();
     await prefs.remove(_userDataKey);

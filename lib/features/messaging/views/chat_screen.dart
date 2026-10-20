@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:stays_app/app/data/models/message_model.dart';
 import 'package:stays_app/core/router/app_router.dart';
@@ -10,10 +9,11 @@ import 'package:stays_app/core/theme/tokens.dart';
 import 'package:stays_app/core/ui/async_state.dart';
 import 'package:stays_app/features/messaging/providers/chat_providers.dart';
 
-/// V2 chat. Realtime bubbles, optimistic send, read receipts.
+/// V2 chat of one booking. Optimistic send. The open chat reads the newest
+/// page every few seconds.
 class ChatScreen extends ConsumerStatefulWidget {
-  const ChatScreen({required this.conversationId, super.key});
-  final String conversationId;
+  const ChatScreen({required this.bookingId, super.key});
+  final int bookingId;
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -22,14 +22,6 @@ class ChatScreen extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
-
-  String get _me {
-    try {
-      return Supabase.instance.client.auth.currentUser?.id ?? '';
-    } catch (_) {
-      return '';
-    }
-  }
 
   @override
   void dispose() {
@@ -53,25 +45,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final text = _input.text;
     if (text.trim().isEmpty) return;
     _input.clear();
-    await ref
-        .read(chatProvider(widget.conversationId).notifier)
-        .send(widget.conversationId, text);
+    await ref.read(chatProvider(widget.bookingId).notifier).send(text);
     _scrollToEnd();
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(chatProvider(widget.conversationId));
-    final notifier = ref.read(chatProvider(widget.conversationId).notifier);
-    ref.listen(chatProvider(widget.conversationId), (_, next) {
-      if (next.messages.isNotEmpty) {
+    final state = ref.watch(chatProvider(widget.bookingId));
+    final notifier = ref.read(chatProvider(widget.bookingId).notifier);
+    ref.listen(chatProvider(widget.bookingId), (previous, next) {
+      // Scroll to the newest message, not when older ones are added on top.
+      final grew =
+          previous == null ||
+          next.messages.isEmpty ||
+          previous.messages.isEmpty ||
+          next.messages.last.id != previous.messages.last.id;
+      if (next.messages.isNotEmpty && grew) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToEnd());
       }
     });
     return Scaffold(
       backgroundColor: StayTokens.paper,
       appBar: AppBar(
-        title: const Text('Chat'),
+        title: Text(state.title, overflow: TextOverflow.ellipsis),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -94,7 +90,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 if (state.error.isNotEmpty && state.messages.isEmpty) {
                   return AsyncState.error(
                     state.error,
-                    onRetry: () => notifier.refresh(widget.conversationId),
+                    onRetry: notifier.refresh,
                   );
                 }
                 if (state.messages.isEmpty) {
@@ -102,14 +98,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     message: 'No messages yet. Say hello!',
                   );
                 }
+                final offset = state.hasOlder ? 1 : 0;
                 return ListView.builder(
                   controller: _scroll,
                   padding: const EdgeInsets.all(StayTokens.s16),
-                  itemCount: state.messages.length,
-                  itemBuilder: (context, i) => _Bubble(
-                    message: state.messages[i],
-                    mine: state.messages[i].senderId == _me,
-                  ),
+                  itemCount: state.messages.length + offset,
+                  itemBuilder: (context, i) {
+                    if (i < offset) {
+                      return Center(
+                        child: state.isLoadingOlder
+                            ? const Padding(
+                                padding: EdgeInsets.all(StayTokens.s8),
+                                child: CircularProgressIndicator(),
+                              )
+                            : TextButton(
+                                onPressed: notifier.loadOlder,
+                                child: const Text('Load earlier messages'),
+                              ),
+                      );
+                    }
+                    final message = state.messages[i - offset];
+                    return _Bubble(
+                      message: message,
+                      mine: message.senderId == state.myUserId,
+                    );
+                  },
                 );
               },
             ),
@@ -200,7 +213,7 @@ class _Bubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              message.content,
+              message.body,
               style: (mine ? StayTokens.body : StayTokens.body).copyWith(
                 color: mine ? Colors.white : StayTokens.ink,
               ),
@@ -210,7 +223,7 @@ class _Bubble extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  DateFormat.Hm().format(message.createdAt),
+                  DateFormat.Hm().format(message.createdAt.toLocal()),
                   style: TextStyle(
                     fontSize: 10,
                     color: mine ? Colors.white70 : StayTokens.inkTertiary,
@@ -219,7 +232,7 @@ class _Bubble extends StatelessWidget {
                 if (mine) ...[
                   const SizedBox(width: 4),
                   Icon(
-                    message.isRead ? Icons.done_all : Icons.done,
+                    message.pending ? Icons.schedule : Icons.done,
                     size: 12,
                     color: Colors.white70,
                   ),

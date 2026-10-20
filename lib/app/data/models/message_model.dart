@@ -1,84 +1,38 @@
 import '../../utils/helpers/json_helpers.dart';
 
+/// One chat message of a booking: `{id, sender_id, body, created_at}`.
+///
+/// The chat of a stay is the thread of its booking. The guest and the host
+/// are the only two senders.
 class MessageModel {
   const MessageModel({
     required this.id,
-    required this.conversationId,
     required this.senderId,
-    required this.content,
+    required this.body,
     required this.createdAt,
-    this.readAt,
+    this.pending = false,
   });
 
   factory MessageModel.fromMap(Map<String, dynamic> map) => MessageModel(
-    id: map['id']?.toString() ?? '',
-    conversationId:
-        map['conversation_id']?.toString() ??
-        map['conversationId']?.toString() ??
-        '',
-    senderId: map['sender_id']?.toString() ?? map['senderId']?.toString() ?? '',
-    content: JsonHelpers.getStringOrDefault(map['content']),
+    id: JsonHelpers.getInt(map['id']) ?? 0,
+    senderId: JsonHelpers.getInt(map['sender_id']),
+    body: JsonHelpers.getStringOrDefault(map['body']),
     createdAt:
-        JsonHelpers.getDateTime(map['created_at'] ?? map['createdAt']) ??
-        DateTime.now(),
-    readAt: (map['read_at'] == null || map['read_at'] == '')
-        ? null
-        : DateTime.tryParse(map['read_at'].toString()),
+        JsonHelpers.getDateTime(map['created_at']) ??
+        DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
   );
-  final String id;
-  final String conversationId;
-  final String senderId;
-  final String content;
+
+  final int id;
+
+  /// The sender's backend user id. Null for a sender that was removed.
+  final int? senderId;
+  final String body;
+
+  /// UTC instant. Convert to local time only for display.
   final DateTime createdAt;
-  final DateTime? readAt;
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'conversation_id': conversationId,
-    'sender_id': senderId,
-    'content': content,
-    'created_at': createdAt.toIso8601String(),
-    if (readAt != null) 'read_at': readAt!.toIso8601String(),
-  };
+  /// True for a message that was added on screen and is not saved yet.
+  final bool pending;
 
-  bool isMine(String currentUserId) => senderId == currentUserId;
-
-  bool get isRead => readAt != null;
-}
-
-/// A conversation summary for the inbox list.
-class ConversationModel {
-  const ConversationModel({
-    required this.id,
-    required this.guestId,
-    required this.hostId,
-    required this.createdAt,
-    this.propertyId,
-    this.bookingId,
-    this.lastMessage,
-    this.lastMessageAt,
-  });
-
-  factory ConversationModel.fromMap(Map<String, dynamic> map) =>
-      ConversationModel(
-        id: map['id']?.toString() ?? '',
-        propertyId: JsonHelpers.getInt(map['property_id']),
-        bookingId: JsonHelpers.getInt(map['booking_id']),
-        guestId: map['guest_id']?.toString() ?? '',
-        hostId: map['host_id']?.toString() ?? '',
-        lastMessage: JsonHelpers.getString(map['last_message']),
-        lastMessageAt:
-            (map['last_message_at'] == null || map['last_message_at'] == '')
-            ? null
-            : DateTime.tryParse(map['last_message_at'].toString()),
-        createdAt: JsonHelpers.getDateTime(map['created_at']) ?? DateTime.now(),
-      );
-  final String id;
-  final int? propertyId;
-  final int? bookingId;
-  final String guestId;
-  final String hostId;
-  final String? lastMessage;
-  final DateTime? lastMessageAt;
-  final DateTime createdAt;
+  bool isMine(int currentUserId) => senderId == currentUserId;
 }

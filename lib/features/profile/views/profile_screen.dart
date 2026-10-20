@@ -18,9 +18,46 @@ final _profileUserProvider = FutureProvider.autoDispose<UserModel?>((
   }
 });
 
-/// V2 profile. Header, shortcuts, logout.
+/// V2 profile. Header, shortcuts, logout, account deletion.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
+
+  /// Asks for a confirmation, then deletes the account (`DELETE
+  /// /api/v1/users/me`). On success the session ends and the app returns to
+  /// login. On a refusal the session stays and the reason is shown.
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialog) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'Your account and personal details are deleted. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialog).pop(true),
+            style: TextButton.styleFrom(foregroundColor: StayTokens.danger),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final deleted = await ref.read(authProvider.notifier).deleteAccount();
+    if (!context.mounted) return;
+    if (deleted) {
+      context.go(AppPaths.login);
+      return;
+    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(ref.read(authProvider).error)));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,11 +112,6 @@ class ProfileScreen extends ConsumerWidget {
             onTap: () => context.push(AppPaths.wishlist),
           ),
           _Row(
-            icon: Icons.credit_card_outlined,
-            label: 'Payment methods',
-            onTap: () => context.push(AppPaths.paymentMethods),
-          ),
-          _Row(
             icon: Icons.inbox_outlined,
             label: 'Inbox',
             onTap: () => context.push(AppPaths.inbox),
@@ -92,6 +124,12 @@ class ProfileScreen extends ConsumerWidget {
             },
             icon: const Icon(Icons.logout),
             label: const Text('Log out'),
+          ),
+          const SizedBox(height: StayTokens.s8),
+          TextButton(
+            onPressed: () => _deleteAccount(context, ref),
+            style: TextButton.styleFrom(foregroundColor: StayTokens.danger),
+            child: const Text('Delete account'),
           ),
         ],
       ),

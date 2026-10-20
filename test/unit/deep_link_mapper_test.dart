@@ -25,12 +25,41 @@ void main() {
       );
     });
 
-    test('chat URL maps to /chat/:conversationId', () {
+    test('chat URL maps to /chat/:bookingId', () {
       expect(
         DeepLinkService.mapToInternalPath(
-          Uri.parse('https://the360ghar.com/stays/chat/conv-1_X'),
+          Uri.parse('https://the360ghar.com/stays/chat/42'),
         ),
-        '/chat/conv-1_X',
+        '/chat/42',
+      );
+    });
+
+    test('custom-scheme links carry the entity as the host', () {
+      // The backend fallback page launches stays360://<entity>/<id>.
+      expect(
+        DeepLinkService.mapToInternalPath(Uri.parse('stays360://listing/42')),
+        '/listing/42',
+      );
+      expect(
+        DeepLinkService.mapToInternalPath(Uri.parse('stays360://chat/42')),
+        '/chat/42',
+      );
+    });
+
+    test('the sign-in callback maps to nothing', () {
+      expect(
+        DeepLinkService.mapToInternalPath(
+          Uri.parse('stays360://login-callback?code=abc'),
+        ),
+        isNull,
+      );
+    });
+
+    test('a link of another host keeps the https rules', () {
+      // A host is read as an entity for the app scheme only.
+      expect(
+        DeepLinkService.mapToInternalPath(Uri.parse('https://listing/42')),
+        isNull,
       );
     });
 
@@ -56,7 +85,9 @@ void main() {
 
     test('single-segment path returns null', () {
       expect(
-        DeepLinkService.mapToInternalPath(Uri.parse('https://the360ghar.com/stays')),
+        DeepLinkService.mapToInternalPath(
+          Uri.parse('https://the360ghar.com/stays'),
+        ),
         isNull,
       );
     });
@@ -101,10 +132,16 @@ void main() {
       );
     });
 
-    test('chat IDs are validated the same way', () {
+    test('chat IDs must be numeric booking ids', () {
       expect(
         DeepLinkService.mapToInternalPath(
           Uri.parse('https://the360ghar.com/stays/chat/evil!id'),
+        ),
+        isNull,
+      );
+      expect(
+        DeepLinkService.mapToInternalPath(
+          Uri.parse('https://the360ghar.com/stays/chat/conv-1_X'),
         ),
         isNull,
       );

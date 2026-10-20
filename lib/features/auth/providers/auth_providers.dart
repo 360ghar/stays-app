@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:stays_app/app/data/models/user_model.dart';
 import 'package:stays_app/app/data/repositories/auth_repository.dart';
+import 'package:stays_app/app/utils/exceptions/app_exceptions.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/providers/data_providers.dart';
 
@@ -83,6 +84,34 @@ class AuthNotifier extends Notifier<AuthUiState> {
   }
 
   Future<void> logout() async {
+    // The unregister route needs the session, so it runs before the sign-out.
+    await ref.read(pushNotificationServiceProvider).unregisterDevice();
+    await _endSession();
+  }
+
+  /// Deletes the account on the backend (`DELETE /api/v1/users/me`), then ends
+  /// the local session. Returns false, with [AuthUiState.error] set, when the
+  /// backend refuses. The session is kept in that case.
+  Future<bool> deleteAccount() async {
+    state = state.copyWith(status: AuthStatus.busy, error: '');
+    try {
+      await ref.read(pushNotificationServiceProvider).unregisterDevice();
+      await _repo.deleteAccount();
+    } catch (e, s) {
+      AppLogger.error('Auth v2: delete account failed', e, s);
+      state = state.copyWith(
+        status: AuthStatus.error,
+        error: e is ApiException && e.message.trim().isNotEmpty
+            ? e.message
+            : 'Could not delete your account. Please try again.',
+      );
+      return false;
+    }
+    await _endSession();
+    return true;
+  }
+
+  Future<void> _endSession() async {
     try {
       await _repo.logout();
     } catch (e, s) {

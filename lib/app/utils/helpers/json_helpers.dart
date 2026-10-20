@@ -246,35 +246,6 @@ class JsonHelpers {
     return null;
   }
 
-  // ===== Response Unwrapping =====
-
-  /// Unwraps a standard API response to get the data field.
-  /// Handles: { data: {...} } or { data: [...] } or direct data.
-  static dynamic unwrapData(dynamic response) {
-    if (response == null) return null;
-    if (response is Map<String, dynamic>) {
-      // Try common envelope patterns
-      if (response.containsKey('data')) {
-        return response['data'];
-      }
-      if (response.containsKey('result')) {
-        return response['result'];
-      }
-      if (response.containsKey('results')) {
-        return response['results'];
-      }
-      // Return the map itself if no envelope
-      return response;
-    }
-    return response;
-  }
-
-  /// Unwraps a cursor-paginated response and returns the items plus cursor
-  /// metadata. (Helper removed — was added in the diff with no callers. Use
-  /// `UnifiedPropertyResponse.fromJson` directly when the migration lands.)
-  // ponytail: helper intentionally deleted; revive only when the first caller
-  // arrives, and model the result as a class so the contract is self-describing.
-
   // ===== ID Helpers =====
 
   /// Safely extracts an ID that could be int or String.

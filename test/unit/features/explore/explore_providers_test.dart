@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/features/explore/providers/explore_providers.dart';
 
 Property _stay({
@@ -11,7 +12,7 @@ Property _stay({
   return Property(
     id: id,
     name: '$name $id',
-    propertyType: 'hotel',
+    propertyType: PropertyType.villa,
     city: city,
     country: 'India',
     pricePerNight: 1000,

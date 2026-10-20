@@ -5,9 +5,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stays_app/config/app_config.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/router/app_router.dart';
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/app/data/providers/users_provider.dart';
 import 'package:stays_app/app/data/services/deep_link_service.dart';
 import 'storage_service.dart';
@@ -22,13 +24,50 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   AppLogger.info('FCM background message: ${message.messageId}');
 }
 
+/// Push registration for this device.
+///
+/// Rules this service keeps once it is started with [init]:
+/// - The token is registered with `app_key=stays` at start-up, whenever FCM
+///   rotates it ([FirebaseMessaging.onTokenRefresh]) and whenever the user
+///   signs in, so the token is bound to the signed-in account.
+/// - [unregisterDevice] unbinds it. Call it BEFORE the sign-out: the route
+///   needs the session of the caller.
+/// - A push opens only the routes the stays app has: a listing and a booking
+///   chat (see [DeepLinkService.mapToInternalPath]).
+///
+/// Nothing constructs and starts this service yet. The backend sends no push
+/// to `app_key=stays` (`app_key_for_type` returns ghar or flatmates, and the
+/// booking chat sends none), so a token would only add a permission prompt.
+/// Call `PushNotificationService.shared.init()` from `ensureV2Bindings` when a
+/// stays notification type exists.
 class PushNotificationService {
   PushNotificationService(StorageService _, {UsersProvider? usersProvider})
     : _usersProvider = usersProvider ?? UsersProvider();
 
+  /// The one instance the app uses.
+  static final PushNotificationService shared = PushNotificationService(
+    StorageService(),
+  );
+
+  /// Android channel the backend puts on every stays push
+  /// (`APP_CHANNEL_IDS["stays"]`). The app creates it, so a push that the
+  /// system shows in the background lands in a channel that exists.
+  static const AndroidNotificationChannel _androidChannel =
+      AndroidNotificationChannel(
+        'high_importance_channel',
+        'Notifications',
+        importance: Importance.high,
+      );
+
+  /// How long a sign-out waits for the unregister call.
+  static const Duration unregisterTimeout = Duration(seconds: 5);
+
   final UsersProvider _usersProvider;
   late FirebaseMessaging _messaging;
   bool _firebaseReady = false;
+  bool _messagingReady = false;
+  StreamSubscription<String>? _tokenRefreshSub;
+  StreamSubscription<AuthState>? _authSub;
 
   Future<PushNotificationService> init() async {
     await _initFirebase();
@@ -80,19 +119,22 @@ class PushNotificationService {
       // Request permissions (iOS/macOS)
       await _messaging.requestPermission();
 
-      // Fetch token for diagnostics
-      try {
-        final token = await _messaging.getToken();
-        if (token != null) {
-          // Only log token in dev environment to prevent leaking in production
-          if (AppConfig.isDev) {
-            AppLogger.info('FCM Token: $token');
-          }
-          await _registerTokenWithBackend(token);
+      _messagingReady = true;
+      await _ensureLocalNotificationsInitialized();
+
+      // Register the token now, again when FCM rotates it, and again when the
+      // user signs in (a token registered before sign-in has no account).
+      await _registerCurrentToken();
+      _tokenRefreshSub ??= _messaging.onTokenRefresh.listen(
+        (token) => unawaited(_registerTokenWithBackend(token)),
+      );
+      _authSub ??= Supabase.instance.client.auth.onAuthStateChange.listen((
+        state,
+      ) {
+        if (state.event == AuthChangeEvent.signedIn) {
+          unawaited(_registerCurrentToken());
         }
-      } catch (e) {
-        AppLogger.warning('Unable to retrieve FCM token: $e');
-      }
+      });
 
       // Foreground messages: show a local notification so the user is aware,
       // and route taps via the same deep-link resolver.
@@ -122,6 +164,46 @@ class PushNotificationService {
     }
   }
 
+  Future<void> _registerCurrentToken() async {
+    try {
+      final token = await _messaging.getToken();
+      if (token == null) return;
+      // Only log token in dev environment to prevent leaking in production
+      if (AppConfig.isDev) {
+        AppLogger.info('FCM Token: $token');
+      }
+      await _registerTokenWithBackend(token);
+    } catch (e) {
+      AppLogger.warning('Unable to retrieve FCM token: $e');
+    }
+  }
+
+  /// Unbinds this device from the signed-in user
+  /// (`DELETE /api/v1/notifications/devices/unregister`). Best effort: it never
+  /// throws and gives up after [unregisterTimeout], so a sign-out is never
+  /// blocked. Call it before the session ends.
+  Future<void> unregisterDevice() async {
+    if (!_messagingReady) return;
+    try {
+      final token = await _messaging.getToken();
+      if (token == null) return;
+      await _usersProvider
+          .unregisterDeviceToken(token)
+          .timeout(unregisterTimeout);
+      AppLogger.info('Device token unregistered from backend');
+    } catch (e) {
+      AppLogger.warning('Failed to unregister device token: $e');
+    }
+  }
+
+  /// Stops listening for token refreshes and sign-ins.
+  void dispose() {
+    unawaited(_tokenRefreshSub?.cancel());
+    unawaited(_authSub?.cancel());
+    _tokenRefreshSub = null;
+    _authSub = null;
+  }
+
   Future<void> _registerTokenWithBackend(String token) async {
     try {
       final provider = _usersProvider;
@@ -136,11 +218,11 @@ class PushNotificationService {
 
       final locale = PlatformDispatcher.instance.locale.toLanguageTag();
       final platform = kIsWeb
-          ? 'web'
+          ? DevicePlatform.web
           : (defaultTargetPlatform == TargetPlatform.iOS ||
                 defaultTargetPlatform == TargetPlatform.macOS)
-          ? 'ios'
-          : 'android';
+          ? DevicePlatform.ios
+          : DevicePlatform.android;
 
       await provider.registerDeviceToken(
         token: token,
@@ -175,6 +257,11 @@ class PushNotificationService {
           }
         },
       );
+      await _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(_androidChannel);
       _localNotificationsInitialized = true;
     } catch (e) {
       AppLogger.warning('Local notifications init failed: $e');
@@ -193,14 +280,14 @@ class PushNotificationService {
         id: DateTime.now().millisecondsSinceEpoch.remainder(100000),
         title: title,
         body: body,
-        notificationDetails: const NotificationDetails(
+        notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            'default_channel',
-            'Notifications',
+            _androidChannel.id,
+            _androidChannel.name,
             importance: Importance.high,
             priority: Priority.high,
           ),
-          iOS: DarwinNotificationDetails(),
+          iOS: const DarwinNotificationDetails(),
         ),
         payload: payload,
       );
@@ -217,13 +304,15 @@ class PushNotificationService {
   }
 
   /// Routes the user to a specific screen based on FCM `data`.
-  /// Supported keys: `type` (booking|message|listing) + `id`, or `deep_link`.
+  /// Supported keys: `type` (booking|message|listing) + `id`, or `route`
+  /// (older builds of the backend sent `deep_link`).
   /// `deep_link` payloads are validated against the same allowlist used by
   /// [DeepLinkService.mapToInternalPath] so an attacker-controlled FCM message
   /// cannot navigate the user to an arbitrary in-app route.
   void _routeFromNotificationData(Map<String, dynamic> data) {
     try {
-      final deepLink = data['deep_link']?.toString();
+      // The backend puts the target in `route`. `deep_link` is the old key.
+      final deepLink = (data['route'] ?? data['deep_link'])?.toString();
       if (deepLink != null && deepLink.isNotEmpty) {
         // Ponytail: only allow the same listing/chat paths the deep-link
         // service permits. Anything else is dropped and logged.
@@ -248,7 +337,8 @@ class PushNotificationService {
           break;
         case 'message':
         case 'chat':
-          if (_isValidRouteId(id)) {
+          // The chat of a stay is the thread of its booking: a numeric id.
+          if (id != null && int.tryParse(id) != null) {
             final path = '/chat/$id';
             unawaited(v2RouterInstance().push(path));
           } else {
@@ -275,11 +365,13 @@ class PushNotificationService {
   /// Returns the allowlisted internal path for a server-pushed deep link, or
   /// null if the link targets anything outside the allowlist (listing/chat).
   String? _resolveAllowlistedDeepLink(String deepLink) {
-    // Accept both bare paths ("/listing/42") and absolute URLs
-    // ("https://the360ghar.com/stays/listing/42"). Anything else is rejected.
+    // Accept bare paths ("/stays/listing/42") and absolute URLs, on https
+    // ("https://the360ghar.com/stays/listing/42") or on the app scheme
+    // ("stays360://listing/42"). The mapper below allows only a listing and a
+    // booking chat, so every other route is dropped.
     final Uri uri;
     try {
-      uri = deepLink.startsWith('http')
+      uri = deepLink.contains('://')
           ? Uri.parse(deepLink)
           : Uri.parse('https://the360ghar.com$deepLink');
     } catch (_) {

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/app/data/providers/auth/i_auth_provider.dart';
 
 /// State-machine tests for the identifier-first login flow
@@ -29,8 +30,8 @@ void main() {
       expect(status.exists, isTrue);
       expect(status.verified, isTrue);
       expect(status.hasPassword, isTrue);
-      expect(status.channel, 'email');
-      expect(status.nextStep, 'password');
+      expect(status.channel, IdentifierChannel.email);
+      expect(status.nextStep, IdentifierNextStep.password);
       expect(status.isPasswordStep, isTrue);
       expect(status.isOtpStep, isFalse);
       expect(status.isEmail, isTrue);
@@ -48,14 +49,23 @@ void main() {
       expect(status.isPhone, isTrue);
     });
 
-    test('missing keys default to channel=email, next_step=otp', () {
-      final status = IdentifierStatus.fromJson({});
-      expect(status.exists, isFalse);
-      expect(status.verified, isFalse);
-      expect(status.hasPassword, isFalse);
-      expect(status.channel, 'email');
-      expect(status.nextStep, 'otp');
-      expect(status.isOtpStep, isTrue);
+    test('missing or unknown channel and next_step read as null', () {
+      final empty = IdentifierStatus.fromJson({});
+      expect(empty.exists, isFalse);
+      expect(empty.verified, isFalse);
+      expect(empty.hasPassword, isFalse);
+      expect(empty.channel, isNull);
+      expect(empty.nextStep, isNull);
+      expect(empty.isOtpStep, isFalse);
+      expect(empty.isPasswordStep, isFalse);
+
+      final unknown = IdentifierStatus.fromJson({
+        'exists': true,
+        'channel': 'carrier_pigeon',
+        'next_step': 'magic',
+      });
+      expect(unknown.channel, isNull);
+      expect(unknown.nextStep, isNull);
     });
   });
 
@@ -129,8 +139,8 @@ void main() {
             exists: true,
             verified: true,
             hasPassword: false,
-            channel: 'email',
-            nextStep: 'password',
+            channel: IdentifierChannel.email,
+            nextStep: IdentifierNextStep.password,
           ),
         ),
         'otp',

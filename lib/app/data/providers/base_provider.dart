@@ -118,6 +118,16 @@ TransportFailureKind classifyTransportFailure(Object error) {
   return TransportFailureKind.possiblySent;
 }
 
+/// A new random `Idempotency-Key`: 32 hex characters (the backend allows 128).
+///
+/// A caller that must make a retry by hand safe, such as booking create, keeps
+/// one key per request and sends it again on every retry of that request.
+String generateIdempotencyKey() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+}
+
 /// Minimal HTTP response shape. Replaces the GetConnect `Response` type so
 /// providers stay transport-agnostic.
 class ApiResponse {
@@ -138,6 +148,11 @@ class ApiResponse {
   final Uri? uri;
 
   bool get isOk => statusCode >= 200 && statusCode < 300;
+
+  /// True when the response says `Cache-Control: no-store`. Such a body must
+  /// not be written to any local cache.
+  bool get noStore =>
+      (headers['cache-control'] ?? '').toLowerCase().contains('no-store');
 
   /// Safely coerce the body into a JSON map. Returns empty map if missing
   /// or not decodable.
@@ -173,7 +188,9 @@ abstract class BaseProvider {
     PerformanceMonitor? performance,
     ErrorService? errorService,
     bool authHeader = true,
-  }) : _baseUrlOverride = baseUrl ?? '',
+    Dio? dio,
+  }) : _dio = dio,
+       _baseUrlOverride = baseUrl ?? '',
        _timeout = timeout,
        _connectivityOverride = connectivity,
        _tokensOverride = tokens,
@@ -204,6 +221,8 @@ abstract class BaseProvider {
   PerformanceMonitor get _performance =>
       _performanceOverride ?? PerformanceMonitor();
 
+  /// Built on first use. A test passes its own client (with a fake adapter),
+  /// which then carries no auth interceptor.
   Dio? _dio;
 
   Dio get _client {
@@ -238,8 +257,8 @@ abstract class BaseProvider {
           }
           options.headers['Accept'] = 'application/json';
           // Lightweight request timing for performance monitoring
-          options.extra['start-ms'] =
-              DateTime.now().millisecondsSinceEpoch.toString();
+          options.extra['start-ms'] = DateTime.now().millisecondsSinceEpoch
+              .toString();
           // Never log headers: Authorization bearer tokens must stay out of
           // logs. URLs are redacted (query + fragment stripped) — query
           // params may carry tokens.
@@ -270,9 +289,8 @@ abstract class BaseProvider {
     return _dio = dio;
   }
 
-  String get _baseUrl => _baseUrlOverride.isEmpty
-      ? AppConfig.I.api.apiBaseUrl
-      : _baseUrlOverride;
+  String get _baseUrl =>
+      _baseUrlOverride.isEmpty ? AppConfig.I.api.apiBaseUrl : _baseUrlOverride;
 
   /// True when a refresh failure means the session itself is unusable
   /// (as opposed to a transient network problem).
@@ -315,16 +333,30 @@ abstract class BaseProvider {
       return parser(response.data);
     } else {
       // Delegate to central error service
-      throw _errorService.toApiException(response);
+      final error = _errorService.toApiException(response);
+      if (error.statusCode == 403 && error.code == 'USER_INACTIVE') {
+        // The account is deactivated: end the session. The router listens to
+        // the auth state and returns to login.
+        unawaited(_endSession());
+      }
+      throw error;
     }
   }
 
-  /// Check if the current request is for auth endpoints
-  bool _isAuthEndpoint(Uri url) {
-    return url.path.contains('/auth') ||
-        url.path.contains('/login') ||
-        url.path.contains('/register');
+  Future<void> _endSession() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+    } catch (e) {
+      AppLogger.warning('Sign-out after USER_INACTIVE failed: $e');
+    }
   }
+
+  /// True for the backend auth routes (the `auth` path segment). A 401 there is a
+  /// credential answer, not an expired session, so it is not retried after a
+  /// token refresh. Other routes whose name holds "auth" or "register", such as
+  /// `/users/me/auth-state` and `/notifications/devices/register`, need a valid
+  /// session and are retried.
+  bool _isAuthEndpoint(Uri url) => url.pathSegments.contains('auth');
 
   /// Strips query and fragment before logging — mirrors
   /// DeepLinkService._redact. Query params may carry tokens or PII that
@@ -367,7 +399,13 @@ abstract class BaseProvider {
   }) async {
     final effectiveHeaders = _withIdempotencyKey(headers, 'POST');
     return _executeWithRetry(
-      () => _request('POST', url, data: body, headers: effectiveHeaders, query: query),
+      () => _request(
+        'POST',
+        url,
+        data: body,
+        headers: effectiveHeaders,
+        query: query,
+      ),
       method: 'POST',
     );
   }
@@ -381,20 +419,34 @@ abstract class BaseProvider {
   }) async {
     final effectiveHeaders = _withIdempotencyKey(headers, 'PUT');
     return _executeWithRetry(
-      () => _request('PUT', url, data: body, headers: effectiveHeaders, query: query),
+      () => _request(
+        'PUT',
+        url,
+        data: body,
+        headers: effectiveHeaders,
+        query: query,
+      ),
       method: 'PUT',
     );
   }
 
   /// Execute a DELETE request with automatic retry for transient failures.
+  /// A route that takes a JSON body on DELETE gets it through [body].
   Future<ApiResponse> deleteWithRetry(
     String url, {
+    dynamic body,
     Map<String, String>? headers,
     Map<String, dynamic>? query,
   }) async {
     final effectiveHeaders = _withIdempotencyKey(headers, 'DELETE');
     return _executeWithRetry(
-      () => _request('DELETE', url, headers: effectiveHeaders, query: query),
+      () => _request(
+        'DELETE',
+        url,
+        data: body,
+        headers: effectiveHeaders,
+        query: query,
+      ),
       method: 'DELETE',
     );
   }
@@ -421,9 +473,10 @@ abstract class BaseProvider {
 
   Future<ApiResponse> delete(
     String url, {
+    dynamic body,
     Map<String, String>? headers,
     Map<String, dynamic>? query,
-  }) => deleteWithRetry(url, headers: headers, query: query);
+  }) => deleteWithRetry(url, body: body, headers: headers, query: query);
 
   Future<ApiResponse> _request(
     String method,
@@ -437,7 +490,12 @@ abstract class BaseProvider {
         url ?? '',
         data: data,
         queryParameters: query,
-        options: Options(method: method, headers: headers),
+        // A list query value is sent as repeated keys: `a=1&a=2`.
+        options: Options(
+          method: method,
+          headers: headers,
+          listFormat: ListFormat.multi,
+        ),
       );
       return _toApiResponse(response);
     } on DioException catch (e) {
@@ -636,14 +694,8 @@ abstract class BaseProvider {
   ) {
     if (_isIdempotentMethod(method)) return headers;
     final merged = {...?headers};
-    merged.putIfAbsent('Idempotency-Key', _generateIdempotencyKey);
+    merged.putIfAbsent('Idempotency-Key', generateIdempotencyKey);
     return merged;
-  }
-
-  String _generateIdempotencyKey() {
-    final random = Random.secure();
-    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
-    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
   /// Backoff delay with ±20% jitter, overridden by `Retry-After` when present.

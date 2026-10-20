@@ -1,16 +1,6 @@
-/// Thrown when server-authoritative pricing could not be obtained or is
-/// invalid. Booking submission must never proceed without it.
-class PricingUnavailableException implements Exception {
-  const PricingUnavailableException([
-    this.message = 'Pricing unavailable. Please try again.',
-  ]);
-
-  final String message;
-
-  @override
-  String toString() => message;
-}
-
+/// Server-authoritative price quote from `POST /api/v1/bookings/calculate-pricing`.
+/// It is shown to the guest. It is never sent back: the booking request carries
+/// no money fields, and the server prices the booking again.
 class BookingPricingModel {
   const BookingPricingModel({
     required this.baseAmount,
@@ -21,13 +11,15 @@ class BookingPricingModel {
     this.nights,
   });
 
+  /// Reads `BookingPricing`. Every amount is required. A missing or
+  /// non-numeric amount throws a [FormatException]. It is never read as 0.
   factory BookingPricingModel.fromMap(Map<String, dynamic> map) {
     return BookingPricingModel(
-      baseAmount: _numToDouble(map['base_amount']),
-      taxesAmount: _numToDouble(map['taxes_amount']),
-      serviceCharges: _numToDouble(map['service_charges']),
-      discountAmount: _optionalDouble(map['discount_amount']),
-      totalAmount: _numToDouble(map['total_amount']),
+      baseAmount: _requiredAmount(map, 'base_amount'),
+      taxesAmount: _requiredAmount(map, 'taxes_amount'),
+      serviceCharges: _requiredAmount(map, 'service_charges'),
+      discountAmount: _requiredAmount(map, 'discount_amount'),
+      totalAmount: _requiredAmount(map, 'total_amount'),
       nights: _optionalInt(map['nights']),
     );
   }
@@ -39,9 +31,8 @@ class BookingPricingModel {
   final double totalAmount;
   final int? nights;
 
-  /// True when every required amount is present, finite, non-negative and the
-  /// total is positive. The only gate for including money fields in a booking
-  /// payload — client-computed or defaulted values must never pass.
+  /// True when every amount is finite and non-negative and the total is
+  /// positive. The inquiry form submits only with a valid quote.
   bool get hasValidAmounts {
     bool valid(double value) => !value.isNaN && !value.isInfinite && value >= 0;
     return valid(baseAmount) &&
@@ -52,20 +43,10 @@ class BookingPricingModel {
         totalAmount > 0;
   }
 
-  static double _numToDouble(dynamic value) {
+  static double _requiredAmount(Map<String, dynamic> map, String key) {
+    final value = map[key];
     if (value is num) return value.toDouble();
-    if (value is String) {
-      final parsed = double.tryParse(value);
-      if (parsed != null) return parsed;
-    }
-    return 0.0;
-  }
-
-  static double? _optionalDouble(dynamic value) {
-    if (value == null) return null;
-    if (value is num) return value.toDouble();
-    if (value is String) return double.tryParse(value);
-    return null;
+    throw FormatException('Pricing has no numeric $key.');
   }
 
   static int? _optionalInt(dynamic value) {
@@ -75,4 +56,32 @@ class BookingPricingModel {
     if (value is String) return int.tryParse(value);
     return null;
   }
+}
+
+/// Result of `POST /api/v1/bookings/check-availability`. The check covers the
+/// guest count only. An unknown property is a 404 `PROPERTY_NOT_FOUND`.
+class BookingOccupancy {
+  const BookingOccupancy({
+    required this.occupancyOk,
+    this.reason,
+    this.maxOccupancy,
+  });
+
+  factory BookingOccupancy.fromMap(Map<String, dynamic> map) {
+    final ok = map['occupancy_ok'];
+    if (ok is! bool) {
+      throw const FormatException('The result has no occupancy_ok.');
+    }
+    final reason = map['reason'];
+    final max = map['max_occupancy'];
+    return BookingOccupancy(
+      occupancyOk: ok,
+      reason: reason is String ? reason : null,
+      maxOccupancy: max is num ? max.toInt() : null,
+    );
+  }
+
+  final bool occupancyOk;
+  final String? reason;
+  final int? maxOccupancy;
 }

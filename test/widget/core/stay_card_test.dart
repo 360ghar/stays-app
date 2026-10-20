@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/core/ui/stay_card.dart';
 
-Property _stay({int id = 1, String? tourUrl}) {
+Property _stay({int id = 1, String? tourUrl, double? price = 2500}) {
   return Property(
     id: id,
     name: 'Sea View $id',
-    propertyType: 'hotel',
+    propertyType: PropertyType.villa,
     city: 'Goa',
     country: 'India',
-    pricePerNight: 2500,
+    pricePerNight: price,
     virtualTourUrl: tourUrl,
   );
 }
@@ -24,6 +25,22 @@ void main() {
     await tester.pumpWidget(_wrap(StayCard(property: _stay(), onTap: () {})));
     expect(find.text('Sea View 1'), findsOneWidget);
     expect(find.textContaining('2500'), findsOneWidget);
+  });
+
+  testWidgets('shows a plain notice and no unit without a nightly rate', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(StayCard(property: _stay(price: null), onTap: () {})),
+    );
+    expect(find.text('Price on request'), findsOneWidget);
+    expect(find.textContaining('/ night'), findsNothing);
+  });
+
+  testWidgets('never shows a rating (the backend sends none)', (tester) async {
+    await tester.pumpWidget(_wrap(StayCard(property: _stay(), onTap: () {})));
+    expect(find.byIcon(Icons.star), findsNothing);
+    expect(find.text('New'), findsNothing);
   });
 
   testWidgets('shows 360 badge only with tour url', (tester) async {

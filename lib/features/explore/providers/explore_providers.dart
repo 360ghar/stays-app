@@ -9,6 +9,7 @@ import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/providers/data_providers.dart';
 import 'package:stays_app/core/providers/favorites_provider.dart';
+import 'package:stays_app/core/providers/session_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Pure helpers (unit-testable, no GetX / no Flutter)
@@ -130,9 +131,12 @@ final exploreProvider = NotifierProvider<ExploreNotifier, ExploreUiState>(
   ExploreNotifier.new,
 );
 
-class ExploreNotifier extends Notifier<ExploreUiState> {
+class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
   @override
   ExploreUiState build() {
+    // Signed out: nothing to load. A new account starts from an empty state
+    // (the results carry per-account like flags).
+    if (watchAccount() == null) return const ExploreUiState(isLoading: false);
     unawaited(Future(() => refresh()));
     return const ExploreUiState();
   }
@@ -152,11 +156,14 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
   }
 
   Future<void> refresh() async {
+    final sameAccount = accountGuard();
     state = state.copyWith(isLoading: true, error: '');
     try {
       final resp = await _repo.explore(limit: 30, radiusKm: 100);
+      if (!sameAccount()) return;
       _applyProps(resp.items, cached: false);
     } catch (e, s) {
+      if (!sameAccount()) return;
       AppLogger.error('Explore v2: load failed', e, s);
       final cached = _cachedFallback();
       if (cached != null && cached.isNotEmpty) {
@@ -181,6 +188,8 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
           .getOfflineExploreResults(
             lat: location.latitude,
             lng: location.longitude,
+            limit: 30,
+            radiusKm: 100,
           )
           ?.items;
     } catch (_) {
@@ -218,10 +227,10 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
     await refresh();
   }
 
-  bool isFavorite(int id) =>
-      ref.watch(favoritesProvider).contains(id);
+  bool isFavorite(int id) => ref.watch(favoritesProvider).contains(id);
 
   Future<void> toggleFavorite(Property property) async {
+    final sameAccount = accountGuard();
     final favorites = ref.read(favoritesProvider.notifier);
     final wishlist = _wishlist;
     final nowFavorite = favorites.isFavorite(property.id);
@@ -235,6 +244,7 @@ class ExploreNotifier extends Notifier<ExploreUiState> {
         await wishlist.add(property.id);
       }
     } catch (e) {
+      if (!sameAccount()) return;
       AppLogger.error('Explore v2: favorite toggle failed', e);
       _setLocalFavorite(property.id, nowFavorite);
     }

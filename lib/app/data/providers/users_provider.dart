@@ -5,80 +5,94 @@ import 'package:dio/dio.dart' show FormData, MultipartFile;
 import '../../utils/exceptions/app_exceptions.dart';
 import '../../utils/helpers/json_helpers.dart';
 import '../models/user_model.dart';
+import '../models/wire_enums.dart';
 import 'base_provider.dart';
 
+/// The saved location of the user: `{current_latitude, current_longitude}`.
+typedef UserLocation = ({double? latitude, double? longitude});
+
 class UsersProvider extends BaseProvider {
+  UsersProvider({super.dio});
+
   Future<UserModel> getProfile() async {
     final response = await get('/api/v1/users/profile');
     return handleResponse(response, _parseUser);
   }
 
+  /// `PUT /api/v1/users/profile`. The body accepts `full_name`, `phone`,
+  /// `date_of_birth`, `current_latitude`, `current_longitude`,
+  /// `notification_settings` and `privacy_settings`. It rejects any other key
+  /// with 422. First name, last name, bio, agent and avatar URL are not
+  /// accepted: the avatar goes through [uploadAvatar].
   Future<UserModel> updateProfile({
-    String? firstName,
-    String? lastName,
     String? fullName,
-    String? bio,
     String? phone,
     DateTime? dateOfBirth,
-    String? avatarUrl,
-    String? agentId,
   }) async {
     final payload = <String, dynamic>{};
-
-    if (firstName != null) payload['first_name'] = firstName.trim();
-    if (lastName != null) payload['last_name'] = lastName.trim();
-
     final trimmedFull = (fullName ?? '').trim();
-    if (trimmedFull.isNotEmpty) {
-      payload['full_name'] = trimmedFull;
-    } else {
-      final parts = <String>[(firstName ?? '').trim(), (lastName ?? '').trim()]
-        ..removeWhere((value) => value.isEmpty);
-      if (parts.isNotEmpty) {
-        payload['full_name'] = parts.join(' ');
-      }
+    if (trimmedFull.isNotEmpty) payload['full_name'] = trimmedFull;
+    if (phone != null && phone.trim().isNotEmpty) {
+      payload['phone'] = phone.trim();
     }
-
-    if (bio != null) payload['bio'] = bio;
-    if (phone != null) payload['phone'] = phone;
     if (dateOfBirth != null) {
       payload['date_of_birth'] = JsonHelpers.toDateOnly(dateOfBirth);
     }
-    if (avatarUrl != null) payload['profile_image_url'] = avatarUrl;
-    if (agentId != null) payload['agent_id'] = agentId;
 
     final response = await put('/api/v1/users/profile', payload);
     return handleResponse(response, _parseUser);
   }
 
-  Future<UserModel> updatePreferences(Map<String, dynamic> preferences) async {
+  /// `PUT /api/v1/users/preferences`. The answer is the stored preferences.
+  Future<Map<String, dynamic>> updatePreferences(
+    Map<String, dynamic> preferences,
+  ) async {
     final response = await put('/api/v1/users/preferences', preferences);
-    return handleResponse(response, _parseUser);
+    return handleResponse(response, _asMap);
   }
 
-  Future<UserModel> updateNotificationSettings(
+  /// `PUT /api/v1/users/notifications`. The body takes only these four keys.
+  /// An unsent key keeps its value. The answer is the stored settings.
+  Future<Map<String, dynamic>> updateNotificationSettings({
+    bool? pushNotifications,
+    bool? emailNotifications,
+    bool? smsNotifications,
+    bool? promotionalEmails,
+  }) async {
+    final response = await put('/api/v1/users/notifications', {
+      'push_notifications': ?pushNotifications,
+      'email_notifications': ?emailNotifications,
+      'sms_notifications': ?smsNotifications,
+      'promotional_emails': ?promotionalEmails,
+    });
+    return handleResponse(response, _asMap);
+  }
+
+  /// `PUT /api/v1/users/privacy-settings`. An unsent key keeps its value. The
+  /// answer is the stored settings.
+  Future<Map<String, dynamic>> updatePrivacySettings(
     Map<String, dynamic> settings,
   ) async {
-    final response = await put('/api/v1/users/notifications', settings);
-    return handleResponse(response, _parseUser);
+    final response = await put('/api/v1/users/privacy-settings', settings);
+    return handleResponse(response, _asMap);
   }
 
-  Future<UserModel> updatePrivacySettings(Map<String, dynamic> settings) async {
-    final response = await put('/api/v1/users/privacy', settings);
-    return handleResponse(response, _parseUser);
-  }
-
-  Future<UserModel> updateLocation({
+  /// `PUT /api/v1/users/location`. The body is `{latitude, longitude}` only.
+  Future<UserLocation> updateLocation({
     required double latitude,
     required double longitude,
-    bool shareLocation = true,
   }) async {
     final response = await put('/api/v1/users/location', {
       'latitude': latitude,
       'longitude': longitude,
-      'share_location': shareLocation,
     });
-    return handleResponse(response, _parseUser);
+    return handleResponse(response, (body) {
+      final map = _asMap(body);
+      return (
+        latitude: JsonHelpers.getDouble(map['current_latitude']),
+        longitude: JsonHelpers.getDouble(map['current_longitude']),
+      );
+    });
   }
 
   /// Multipart avatar upload matching backend `POST /api/v1/users/me/avatar`
@@ -95,20 +109,8 @@ class UsersProvider extends BaseProvider {
 
     final response = await post('/api/v1/users/me/avatar', form);
     return handleResponse(response, (body) {
-      if (body is Map) {
-        final map = Map<String, dynamic>.from(body);
-        final data = map['data'] is Map
-            ? Map<String, dynamic>.from(map['data'] as Map)
-            : map;
-        final url =
-            data['profile_image_url'] ??
-            data['avatar_url'] ??
-            data['url'] ??
-            map['profile_image_url'] ??
-            map['url'];
-        if (url is String && url.isNotEmpty) return url;
-      }
-      if (body is String && body.isNotEmpty) return body;
+      final url = _asMap(body)['profile_image_url'];
+      if (url is String && url.isNotEmpty) return url;
       throw ApiException(
         message: 'Avatar upload succeeded but no image URL was returned',
         statusCode: 500,
@@ -125,15 +127,18 @@ class UsersProvider extends BaseProvider {
     );
   }
 
+  /// `POST /api/v1/notifications/devices/register`. The body takes `token`,
+  /// `platform`, `app_key` and, optionally, `app_version` and `locale`.
   Future<void> registerDeviceToken({
     required String token,
-    required String platform,
+    required DevicePlatform platform,
     String? appVersion,
     String? locale,
   }) async {
     final payload = <String, dynamic>{
       'token': token,
-      'platform': platform,
+      'platform': platform.wire,
+      'app_key': AppKey.stays.wire,
       'app_version': ?appVersion,
       'locale': ?locale,
     };
@@ -141,31 +146,25 @@ class UsersProvider extends BaseProvider {
       '/api/v1/notifications/devices/register',
       payload,
     );
-    if (!response.isOk) {
-      throw ApiException(
-        message: response.statusMessage ?? 'Failed to register device token',
-        statusCode: response.statusCode,
-      );
-    }
+    handleResponse(response, (_) => null);
   }
 
-  UserModel _parseUser(dynamic body) {
-    if (body == null) {
-      throw ApiException(
-        message: 'Empty response body received',
-        statusCode: 500,
-      );
-    }
-    if (body is Map<String, dynamic>) {
-      final data = body['data'];
-      if (data is Map<String, dynamic>) {
-        return UserModel.fromJson(Map<String, dynamic>.from(data));
-      }
-      return UserModel.fromJson(Map<String, dynamic>.from(body));
-    }
-    throw ApiException(
-      message: 'Invalid user payload received',
-      statusCode: 500,
+  /// `DELETE /api/v1/notifications/devices/unregister`. The token goes in a
+  /// JSON body (never in the URL). The caller must still be signed in: only
+  /// the caller's own token changes. The answer is 204 with no body.
+  Future<void> unregisterDeviceToken(String token) async {
+    final response = await delete(
+      '/api/v1/notifications/devices/unregister',
+      body: {'token': token},
     );
+    handleResponse(response, (_) => null);
+  }
+
+  /// The self routes answer with the user itself (`SelfUser`).
+  UserModel _parseUser(dynamic body) => UserModel.fromJson(_asMap(body));
+
+  Map<String, dynamic> _asMap(dynamic body) {
+    if (body is Map) return Map<String, dynamic>.from(body);
+    throw ApiException(message: 'Invalid payload received', statusCode: 500);
   }
 }
