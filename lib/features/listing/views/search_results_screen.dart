@@ -39,8 +39,8 @@ class SearchResultsScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () async =>
-                ref.invalidate(searchResultsProvider((lat: lat, lng: lng))),
+            onRefresh: () =>
+                ref.refresh(searchResultsProvider((lat: lat, lng: lng)).future),
             child: ListView.separated(
               padding: const EdgeInsets.all(StayTokens.s16),
               itemCount: stays.length,

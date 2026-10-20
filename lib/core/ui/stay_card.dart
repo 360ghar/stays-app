@@ -16,18 +16,20 @@ class StayCard extends StatelessWidget {
     super.key,
     this.onFavoriteToggle,
     this.width = 248,
-    this.isFavorite = false,
+    this.isFavorite,
   });
   final Property property;
   final VoidCallback onTap;
   final VoidCallback? onFavoriteToggle;
   final double width;
-  final bool isFavorite;
+
+  /// The caller's state wins. Null falls back to the model flag.
+  final bool? isFavorite;
 
   @override
   Widget build(BuildContext context) {
     final imageUrl = property.displayImage;
-    final fav = isFavorite || property.isFavorite;
+    final fav = isFavorite ?? property.isFavorite;
     return Semantics(
       label:
           '${property.name}, ${property.fullAddress}, '

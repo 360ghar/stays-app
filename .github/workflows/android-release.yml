@@ -116,6 +116,8 @@ jobs:
         # runner image does not ship. Package is named android-37.0.
         run: |-
           SDKMANAGER="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          # The runner tool list may not know API 37 yet: refresh it first.
+          yes | "$SDKMANAGER" --update
           yes | "$SDKMANAGER" "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Install dependencies

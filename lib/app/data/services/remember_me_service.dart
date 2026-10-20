@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/app/utils/storage/legacy_get_storage.dart';
 
 /// Manages the "Remember Me" preference.
 ///
@@ -16,6 +17,7 @@ class RememberMeService {
   static final RememberMeService _shared = RememberMeService._internal();
 
   static const String _rememberMeFlagKey = 'remember_me';
+  static const String _legacyBox = 'auth_preferences';
 
   SharedPreferences? _prefs;
   final ValueNotifier<bool> isEnabled = ValueNotifier<bool>(false);
@@ -25,7 +27,15 @@ class RememberMeService {
   /// controllers during startup).
   Future<RememberMeService> init() async {
     if (_initialized) return this;
-    _prefs ??= await SharedPreferences.getInstance();
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    // One-time move of the flag an older build kept with GetStorage. The old
+    // box may also hold plaintext tokens (`remembered_*_token`); it is
+    // deleted whole, never read for tokens.
+    if (!prefs.containsKey(_rememberMeFlagKey)) {
+      final old = (await LegacyGetStorage.read(_legacyBox))[_rememberMeFlagKey];
+      if (old is bool) await prefs.setBool(_rememberMeFlagKey, old);
+    }
+    await LegacyGetStorage.delete(_legacyBox);
     isEnabled.value = _prefs?.getBool(_rememberMeFlagKey) ?? false;
     _initialized = true;
     AppLogger.info(

@@ -44,6 +44,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Future<void> _send() async {
     final text = _input.text;
     if (text.trim().isEmpty) return;
+    // A send in flight or the first load rejects a new message: keep the text.
+    final chat = ref.read(chatProvider(widget.bookingId));
+    if (chat.isSending || chat.isLoading) return;
     _input.clear();
     await ref.read(chatProvider(widget.bookingId).notifier).send(text);
     _scrollToEnd();
@@ -164,7 +167,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   const SizedBox(width: StayTokens.s8),
                   IconButton.filled(
-                    onPressed: state.isSending ? null : _send,
+                    onPressed: state.isSending || state.isLoading
+                        ? null
+                        : _send,
                     icon: state.isSending
                         ? const SizedBox(
                             width: 18,

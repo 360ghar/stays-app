@@ -24,6 +24,7 @@ void main() {
   testWidgets('shows name, address, price', (tester) async {
     await tester.pumpWidget(_wrap(StayCard(property: _stay(), onTap: () {})));
     expect(find.text('Sea View 1'), findsOneWidget);
+    expect(find.textContaining('Goa, India'), findsOneWidget);
     expect(find.textContaining('2500'), findsOneWidget);
   });
 

@@ -39,7 +39,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     }
     final lat = location.latitude;
     final lng = location.longitude;
-    if (lat == null || lng == null || !mounted) return;
+    if (!mounted) return;
+    if (lat == null || lng == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not get your location. Turn on location services and '
+            'allow access, or search by place.',
+          ),
+        ),
+      );
+      return;
+    }
     await _openResults(lat, lng);
   }
 

@@ -85,9 +85,9 @@ class AppLogger {
       final kv = data.entries
           .map((e) => '${e.key}=${_stringify(e.value)}')
           .join(' ');
-      return '$message | $kv';
+      return withCtx('$message | $kv');
     }
-    return '$message | ${_stringify(data)}';
+    return withCtx('$message | ${_stringify(data)}');
   }
 
   /// Stringifies a log value, truncating long strings so a single log line

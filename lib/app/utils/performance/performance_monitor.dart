@@ -50,6 +50,10 @@ class PerformanceMonitor {
   /// honest about retries and failures. Suggested buckets when exporting:
   /// `<100ms`, `<300ms`, `<1s`, `<3s`, `>=3s`. Read back via [elapsedSummary].
   void recordElapsed(String operation, int elapsedMs) {
+    if (!_elapsedMsByOperation.containsKey(operation) &&
+        _elapsedMsByOperation.length >= _maxCountedOperations) {
+      _elapsedMsByOperation.remove(_elapsedMsByOperation.keys.first);
+    }
     final samples = _elapsedMsByOperation.putIfAbsent(operation, () => []);
     samples.add(elapsedMs);
     if (samples.length > _maxSamplesPerOperation) {

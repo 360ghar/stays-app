@@ -37,8 +37,21 @@ class WishlistScreen extends ConsumerWidget {
             return AsyncState.error(state.error, onRetry: notifier.load);
           }
           if (state.items.isEmpty) {
-            return const AsyncState.empty(
-              message: 'No saved stays yet. Tap a heart to save one.',
+            // Scrollable, so a pull reads the wishlist again after a heart
+            // was tapped on another screen.
+            return RefreshIndicator(
+              onRefresh: notifier.refresh,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 320,
+                    child: AsyncState.empty(
+                      message: 'No saved stays yet. Tap a heart to save one.',
+                    ),
+                  ),
+                ],
+              ),
             );
           }
           return RefreshIndicator(

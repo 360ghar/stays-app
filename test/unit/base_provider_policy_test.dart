@@ -124,13 +124,6 @@ void main() {
       }
     });
 
-    test('refreshed requests re-attach the token as a Bearer header', () {
-      const newToken = 'aaa.bbb.ccc';
-      final headers = <String, String>{};
-      headers['Authorization'] = 'Bearer $newToken';
-      expect(headers['Authorization'], 'Bearer aaa.bbb.ccc');
-    });
-
     test('transport failures surface as 408 ApiExceptions with a kind', () {
       final e = ApiException(
         message: 'Request timed out. Please try again.',

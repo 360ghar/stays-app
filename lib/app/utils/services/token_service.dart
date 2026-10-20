@@ -57,15 +57,13 @@ class TokenInfo {
 }
 
 class TokenService {
-  /// Canonical write path for tokens: every write (login, OTP verify,
-  /// BaseProvider authenticator refresh at base_provider.dart ~190-205) must
-  /// go through [storeTokens]. Never call `StorageService.saveTokens`
-  /// directly — the authenticator keeps a direct-storage fallback only for
-  /// the window where this service is not registered yet.
+  /// Canonical write path for tokens: every write (login, OTP verify, the
+  /// BaseProvider authenticator after a Supabase refresh) goes through
+  /// [storeTokens]. Never call `StorageService.saveTokens` directly.
   ///
-  /// Refresh dedup: concurrent refresh callers share one network round-trip
-  /// via [_inFlightRefresh]. External callers (authenticator, splash restore)
-  /// use the public [refresh] entry point, never the private [_refreshTokens].
+  /// Refresh dedup: callers of the public [refresh] share one network
+  /// round-trip via [_inFlightRefresh]. The BaseProvider authenticator
+  /// refreshes through Supabase directly and does not use it.
   TokenService({StorageService? storageService})
     : _storageService = storageService {
     unawaited(_initialize());

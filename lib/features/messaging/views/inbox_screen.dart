@@ -45,6 +45,7 @@ class InboxScreen extends ConsumerWidget {
                 return false;
               },
               child: ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: state.bookings.length,
                 separatorBuilder: (_, _) =>
                     const Divider(height: 1, indent: 72),

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
@@ -32,7 +33,8 @@ class CrashReportingService {
 
     try {
       // Enable in production and staging, disable in development
-      isEnabled.value = !AppConfig.isDev;
+      // Crashlytics needs a Firebase app; only the prod entry point makes one.
+      isEnabled.value = !AppConfig.isDev && Firebase.apps.isNotEmpty;
 
       if (isEnabled.value) {
         _crashlytics = FirebaseCrashlytics.instance;

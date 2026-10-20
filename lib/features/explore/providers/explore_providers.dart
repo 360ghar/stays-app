@@ -9,6 +9,7 @@ import 'package:stays_app/app/data/services/location_service.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
 import 'package:stays_app/core/providers/data_providers.dart';
 import 'package:stays_app/core/providers/favorites_provider.dart';
+import 'package:stays_app/features/wishlist/providers/wishlist_providers.dart';
 import 'package:stays_app/core/providers/session_provider.dart';
 
 // ---------------------------------------------------------------------------
@@ -243,6 +244,8 @@ class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
         favorites.addFavorite(property.id);
         await wishlist.add(property.id);
       }
+      // The wishlist screen keeps its state; make it read the server again.
+      ref.invalidate(wishlistProvider);
     } catch (e, s) {
       if (!sameAccount()) return;
       AppLogger.error('Explore v2: favorite toggle failed', e, s);

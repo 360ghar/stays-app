@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'package:stays_app/app/data/services/crash_reporting_service.dart';
+import 'package:stays_app/app/data/services/deep_link_service.dart';
 import 'package:stays_app/app/data/services/image_prefetch_service.dart';
 import 'package:stays_app/app/data/services/property_cache_service.dart';
 import 'package:stays_app/app/data/services/remember_me_service.dart';
@@ -21,6 +22,9 @@ import 'package:stays_app/l10n/localization_service.dart';
 /// construct on first use, so there is no DI graph to install.
 Future<void> ensureV2Bindings() async {
   await StorageService().initialize();
+  // Constructing the shared service starts the cold-start and live deep-link
+  // listeners. Nothing else reads it, so without this no link is handled.
+  DeepLinkService();
   unawaited(CrashReportingService().init());
   unawaited(RememberMeService().init());
   unawaited(PropertyCacheService().init());

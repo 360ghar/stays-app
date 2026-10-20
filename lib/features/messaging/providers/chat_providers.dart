@@ -165,7 +165,8 @@ class ChatNotifier extends Notifier<ChatUiState> {
 
   Future<void> send(String content) async {
     final text = content.trim();
-    if (text.isEmpty || state.isSending) return;
+    // While the first page loads, a sent message would be replaced by it.
+    if (text.isEmpty || state.isSending || state.isLoading) return;
     if (text.length > maxMessageLength) {
       state = state.copyWith(
         error: 'A message can have at most $maxMessageLength characters.',

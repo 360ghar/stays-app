@@ -69,9 +69,14 @@ bool _isAuthenticated() {
 /// Refreshes go_router redirect when Supabase auth changes.
 class _AuthListenable extends ChangeNotifier {
   _AuthListenable() {
-    _sub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
-      notifyListeners();
-    });
+    try {
+      _sub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+        notifyListeners();
+      });
+    } catch (_) {
+      // Supabase failed to initialize: the router still builds, nobody is
+      // signed in, and there is no auth stream to follow.
+    }
   }
   StreamSubscription<AuthState>? _sub;
 
@@ -96,7 +101,14 @@ GoRouter buildV2Router() {
         final from = Uri.encodeComponent(state.uri.toString());
         return '${AppPaths.login}?from=$from';
       }
-      if (authed && path == AppPaths.login) return AppPaths.explore;
+      if (authed && path == AppPaths.login) {
+        // Resume the pre-login target. Only internal paths, no open redirect.
+        final from = state.uri.queryParameters['from'];
+        if (from != null && from.startsWith('/') && !from.startsWith('//')) {
+          return from;
+        }
+        return AppPaths.explore;
+      }
       return null;
     },
     routes: [

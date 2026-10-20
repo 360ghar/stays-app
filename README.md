@@ -45,7 +45,6 @@ lib/
       providers/         # Network providers (Dio)
       repositories/      # Repository layer
       services/          # External services (supabase, storage, etc.)
-    routes/              # Route literals
     ui/
       theme/             # Theme, colors, text styles
       widgets/           # Reusable widgets

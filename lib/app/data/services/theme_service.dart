@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:stays_app/app/utils/storage/legacy_get_storage.dart';
+
 class ThemeService {
   static const String _themeModeKey = 'theme_mode';
+  static const String _legacyBox = 'theme_preferences';
 
   SharedPreferences? _prefs;
 
   Future<ThemeService> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
+    final prefs = _prefs ??= await SharedPreferences.getInstance();
+    // One-time move of the choice an older build kept with GetStorage.
+    if (!prefs.containsKey(_themeModeKey)) {
+      final old = (await LegacyGetStorage.read(_legacyBox))[_themeModeKey];
+      if (old is String) await prefs.setString(_themeModeKey, old);
+    }
+    await LegacyGetStorage.delete(_legacyBox);
     return this;
   }
 

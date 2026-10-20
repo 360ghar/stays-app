@@ -15,6 +15,7 @@ import 'package:stays_app/core/ui/tour_hero.dart';
 import 'package:stays_app/features/listing/widgets/amenities_list.dart';
 import 'package:stays_app/features/listing/widgets/detail_facts.dart';
 import 'package:stays_app/features/listing/widgets/host_card.dart';
+import 'package:stays_app/features/wishlist/providers/wishlist_providers.dart';
 
 /// V2 listing detail. Composes [TourHero] + pure sections + one CTA.
 ///
@@ -97,6 +98,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
         favorites.removeFavorite(id);
         await ref.read(wishlistRepositoryProvider).remove(id);
       }
+      // The wishlist screen keeps its state; make it read the server again.
+      ref.invalidate(wishlistProvider);
     } catch (e, s) {
       AppLogger.error('Detail v2: favorite toggle failed', e, s);
       if (wasFavorite) {

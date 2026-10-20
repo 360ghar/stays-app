@@ -233,6 +233,7 @@ abstract class BaseProvider {
         baseUrl: _baseUrl.isEmpty ? AppConfig.I.api.apiBaseUrl : _baseUrl,
         connectTimeout: _timeout,
         receiveTimeout: _timeout,
+        sendTimeout: _timeout,
         // Every HTTP status returns normally; transport errors throw.
         // Retry/auth logic below inspects statuses itself.
         validateStatus: (_) => true,
@@ -550,7 +551,10 @@ abstract class BaseProvider {
           var response = await operation();
 
           // Retry once on 401 by attempting token refresh via Supabase.
+          // Only for requests that carry the app session: a 401 from another
+          // host must not refresh or end the Supabase session.
           if (response.statusCode == 401 &&
+              _authHeader &&
               !authRetried &&
               !_isAuthEndpoint(response.uri ?? Uri())) {
             authRetried = true;
@@ -648,18 +652,10 @@ abstract class BaseProvider {
       final newRefresh = client.auth.currentSession?.refreshToken;
       if (newToken != null) {
         // Keep TokenService + storage in sync via service layer
-        try {
-          await _tokens.storeTokens(
-            accessToken: newToken,
-            refreshToken: newRefresh,
-          );
-        } catch (_) {
-          // Fallback to direct storage if TokenService not available
-          await _storage.saveTokens(
-            accessToken: newToken,
-            refreshToken: newRefresh,
-          );
-        }
+        await _tokens.storeTokens(
+          accessToken: newToken,
+          refreshToken: newRefresh,
+        );
         AppLogger.debug(
           'Auth token refreshed; retrying ${_redactUri(response.uri ?? Uri())}',
         );

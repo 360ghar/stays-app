@@ -60,8 +60,9 @@ class _TourViewerState extends State<TourViewer> {
       onPageFinished: (_) {
         unawaited(WebViewHelper.injectResponsiveStyles(controller));
       },
-      onWebResourceError: (_) {
-        if (!mounted) return;
+      onWebResourceError: (error) {
+        // A failed iframe or image must not replace the whole viewer.
+        if (!mounted || error.isForMainFrame == false) return;
         setState(() => _hasError = true);
       },
     );
