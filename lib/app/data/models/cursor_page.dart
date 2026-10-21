@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:stays_app/app/utils/logger/app_logger.dart';
 
 /// One page of a backend list: `{items, next_cursor, has_more, limit, total}`.
 ///
@@ -46,13 +46,15 @@ class CursorPage<T> {
     T Function(Map<String, dynamic> item) parse,
   ) {
     if (item is! Map) {
-      debugPrint('CursorPage: skipped a list item that is not an object');
+      AppLogger.warning(
+        'CursorPage: skipped a list item that is not an object',
+      );
       return null;
     }
     try {
       return parse(Map<String, dynamic>.from(item));
     } catch (error) {
-      debugPrint('CursorPage: skipped a malformed list item: $error');
+      AppLogger.warning('CursorPage: skipped a malformed list item: $error');
       return null;
     }
   }

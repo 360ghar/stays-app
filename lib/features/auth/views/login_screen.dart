@@ -47,8 +47,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _submitLogin() {
+    // Done on the keyboard fires even while the button is disabled.
+    if (ref.read(authProvider).status == AuthStatus.busy) return;
     if (_creating) {
       final notifier = ref.read(authProvider.notifier);
+      // The backend sets the password after the code. Check it in both steps.
+      if (_password.text.length < 8) {
+        notifier.showError('Use a password of at least 8 characters.');
+        return;
+      }
       if (_codeSent) {
         notifier
             .completeSignup(
@@ -58,10 +65,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             )
             .then(_goExplore)
             .ignore();
-      } else if (_password.text.length < 8) {
-        // The backend sets the password after the code; reject a short one
-        // before an email is sent.
-        notifier.showError('Use a password of at least 8 characters.');
       } else {
         notifier
             .startSignup(
@@ -168,6 +171,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ],
+            if (_creating && _codeSent)
+              TextButton(
+                onPressed: busy
+                    ? null
+                    : () => ref
+                          .read(authProvider.notifier)
+                          .startSignup(
+                            name: _name.text,
+                            email: _identifier.text,
+                            password: _password.text,
+                          )
+                          .ignore(),
+                child: const Text('Send the code again'),
+              ),
             if (state.error.isNotEmpty) ...[
               const SizedBox(height: StayTokens.s12),
               Text(

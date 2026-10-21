@@ -66,11 +66,20 @@ class AuthNotifier extends Notifier<AuthUiState> {
       AppLogger.error('Auth v2 failed', e, s);
       state = state.copyWith(
         status: AuthStatus.error,
-        error: 'Could not sign you in. Check your details and try again.',
+        error: _messageOr(
+          e,
+          'Could not sign you in. Check your details and try again.',
+        ),
       );
       return false;
     }
   }
+
+  /// The server's reason (rate limit, wrong code) when there is one.
+  String _messageOr(Object error, String fallback) =>
+      error is ApiException && error.message.trim().isNotEmpty
+      ? error.message
+      : fallback;
 
   Future<bool> login({required String identifier, required String password}) {
     final id = identifier.trim();
@@ -104,7 +113,10 @@ class AuthNotifier extends Notifier<AuthUiState> {
       AppLogger.error('Auth v2: signup code failed', e, s);
       state = state.copyWith(
         status: AuthStatus.error,
-        error: 'Could not send the code. Check the email and try again.',
+        error: _messageOr(
+          e,
+          'Could not send the code. Check the email and try again.',
+        ),
       );
       return false;
     }
@@ -121,7 +133,14 @@ class AuthNotifier extends Notifier<AuthUiState> {
         email: email.trim(),
         token: code.trim(),
       );
-      await _repo.updatePassword(newPassword: password);
+      // The code already opened the session and the router has left the
+      // login screen, so a failure here cannot be shown on it. The account
+      // exists and is signed in; it can sign in again with a code.
+      try {
+        await _repo.updatePassword(newPassword: password);
+      } catch (e, s) {
+        AppLogger.error('Auth v2: password after signup failed', e, s);
+      }
       return user;
     });
   }
