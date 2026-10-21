@@ -782,15 +782,6 @@
       "422"
     ]
   },
-  "GET /api/v1/bugs/{bug_id}": {
-    "body": null,
-    "headers": [],
-    "query": {},
-    "responses": [
-      "200",
-      "422"
-    ]
-  },
   "GET /api/v1/capture-sessions": {
     "body": null,
     "headers": [],
@@ -1733,15 +1724,6 @@
         "type": "integer"
       }
     },
-    "responses": [
-      "200",
-      "422"
-    ]
-  },
-  "GET /api/v1/pages/{unique_name}": {
-    "body": null,
-    "headers": [],
-    "query": {},
     "responses": [
       "200",
       "422"
@@ -3682,6 +3664,15 @@
       "422"
     ]
   },
+  "POST /api/v1/ai/tours/{tour_id}/connect-spatial": {
+    "body": null,
+    "headers": [],
+    "query": {},
+    "responses": [
+      "200",
+      "422"
+    ]
+  },
   "POST /api/v1/ai/tours/{tour_id}/descriptions": {
     "body": "",
     "headers": [],
@@ -4434,6 +4425,15 @@
     "query": {},
     "responses": [
       "201",
+      "422"
+    ]
+  },
+  "POST /api/v1/tours/{tour_id}/floor-plans/generate": {
+    "body": null,
+    "headers": [],
+    "query": {},
+    "responses": [
+      "200",
       "422"
     ]
   },
