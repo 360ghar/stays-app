@@ -71,6 +71,10 @@ class _InquiryScreenState extends ConsumerState<InquiryScreen> {
   }
 
   Future<void> _setGuests(int guests) async {
+    // A submit in flight owns the form: a change would re-enable Submit.
+    if (ref.read(inquiryFormProvider).status == InquiryStatus.submitting) {
+      return;
+    }
     final notifier = ref.read(inquiryFormProvider.notifier);
     notifier.setGuests(guests, max: widget.property?.maxGuests);
     final property = widget.property;
@@ -276,7 +280,7 @@ class _PricingCard extends StatelessWidget {
           _row('Taxes', pricing.taxesAmount),
           _row('Service charges', pricing.serviceCharges),
           if ((pricing.discountAmount ?? 0) > 0)
-            _row('Discount', -pricing.discountAmount!),
+            _row('Discount', pricing.discountAmount!),
           const Divider(),
           Row(
             children: [

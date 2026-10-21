@@ -109,6 +109,11 @@ class PropertyCacheService {
     }
   }
 
+  /// The account the cache is scoped to now. A caller reads it before a
+  /// request and passes it back as `scope`: the write is dropped when the
+  /// account changed while the request ran.
+  String get scope => accountScope();
+
   String get _scopePrefix => '$_keyPrefix${accountScope()}_';
   String get _exploreKey => '${_scopePrefix}explore';
   String get _detailsPrefix => '${_scopePrefix}property_';
@@ -123,9 +128,10 @@ class PropertyCacheService {
     double? lng,
     String? cursor,
     String variant = '',
+    String? scope,
   }) async {
     _ensureInitialized();
-    if (response.noStore) return;
+    if (response.noStore || (scope != null && scope != this.scope)) return;
     try {
       final key = _buildExploreKey(lat, lng, cursor, variant);
       final data = {
@@ -192,9 +198,10 @@ class PropertyCacheService {
   Future<void> cachePropertyDetails(
     Property property, {
     bool noStore = false,
+    String? scope,
   }) async {
     _ensureInitialized();
-    if (noStore) return;
+    if (noStore || (scope != null && scope != this.scope)) return;
     try {
       await _evictOldPropertiesIfNeeded();
       final key = '$_detailsPrefix${property.id}';
@@ -244,9 +251,10 @@ class PropertyCacheService {
   Future<void> cacheRecommendations(
     List<Property> properties, {
     bool noStore = false,
+    String? scope,
   }) async {
     _ensureInitialized();
-    if (noStore) return;
+    if (noStore || (scope != null && scope != this.scope)) return;
     try {
       final data = {
         'schema_version': recommendationsSchemaVersion,

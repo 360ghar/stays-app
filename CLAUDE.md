@@ -90,7 +90,6 @@ lib/
 │   │   ├── providers/     # Dio API clients (BaseProvider, ApiResponse)
 │   │   ├── repositories/  # Repository pattern implementation
 │   │   └── services/      # External services (Supabase, storage)
-│   ├── routes/            # Route literals (Routes)
 │   ├── ui/
 │   │   ├── theme/         # Material 3 theming, colors, text styles
 │   │   └── widgets/       # Reusable UI components
@@ -148,7 +147,7 @@ Required environment variables in `.env.*` files:
   - `/listing/:id`: Property detail pages (numeric id via `state.pathParameters`, optional property via `state.extra`)
   - `/tour/:id`: 360° tour viewer
   - `/inquiry`, `/inquiry-confirmation`: Inquiry flow screens (booking passed via `state.extra`)
-  - `/chat/:bookingId`: Chat of one booking (`GET|POST /api/v1/bookings/{id}/messages`)
+  - `/chat/:id`: Chat of one booking (`GET|POST /api/v1/bookings/{id}/messages`)
 
 ## Development Guidelines
 
@@ -157,7 +156,7 @@ Required environment variables in `.env.*` files:
 - Implement repository pattern for data access
 - Notifiers should not directly call Dio providers; use repositories
 - Shared dependency graph lives in `lib/core/providers/data_providers.dart`: services → Dio API providers → repositories
-- Services are app-wide singletons via `factory .shared()` / static `I` accessors
+- Most services are app-wide singletons via `factory .shared()` / static `I` accessors (the Google and Apple sign-in services are plain instances built by the auth providers)
 - Service-level observables use `ValueNotifier`, not reactive `Obx`-style widgets
 - Navigate with go_router (`context.push`/`context.go`, `AppPaths` literals; pass objects via `state.extra`, ids via `state.pathParameters`)
 - Surface errors with `ScaffoldMessenger`, dialogs with `showDialog`/`showModalBottomSheet`; style with `Theme.of`
@@ -179,7 +178,7 @@ Required environment variables in `.env.*` files:
 - Use Mockito for mocking dependencies (`@GenerateMocks` + build_runner)
 - Contract tests in `test/contract` parse backend-generated fixtures (`test/fixtures/api`) with the app models and check the requests the providers send. See `docs/api-contract.md`
 - `tool/check_contract.sh` regenerates the wire enums and fixtures from the backend and fails on drift (pre-commit hook `contract-codegen`, CI step; skips without a backend checkout)
-- A provider that holds one account's data watches `accountIdProvider` in `build()` so it resets on sign-out and on a change of user
+- The providers that hold one account's lists (`tripsProvider`, `wishlistProvider`, `favoritesProvider`, `exploreProvider`) watch `accountIdProvider` in `build()` so they reset on sign-out and on a change of user
 
 ## Current Implementation Status
 

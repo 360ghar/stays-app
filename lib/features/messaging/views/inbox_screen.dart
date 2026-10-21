@@ -27,7 +27,10 @@ class InboxScreen extends ConsumerWidget {
             return const AsyncState.loading(message: 'Loading inbox…');
           }
           if (state.error.isNotEmpty && state.bookings.isEmpty) {
-            return AsyncState.error(state.error, onRetry: notifier.refresh);
+            return AsyncState.error(
+              'Could not load your conversations. Pull to retry.',
+              onRetry: notifier.refresh,
+            );
           }
           if (state.bookings.isEmpty) {
             return const AsyncState.empty(
@@ -39,18 +42,35 @@ class InboxScreen extends ConsumerWidget {
             onRefresh: notifier.refresh,
             child: NotificationListener<ScrollNotification>(
               onNotification: (info) {
-                if (info.metrics.pixels >= info.metrics.maxScrollExtent - 400) {
+                if (!state.loadMoreFailed &&
+                    info.metrics.pixels >= info.metrics.maxScrollExtent - 400) {
                   notifier.loadMore().ignore();
                 }
                 return false;
               },
               child: ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: state.bookings.length,
+                itemCount: state.bookings.length + (state.hasMore ? 1 : 0),
                 separatorBuilder: (_, _) =>
                     const Divider(height: 1, indent: 72),
-                itemBuilder: (context, i) =>
-                    _ConversationRow(booking: state.bookings[i]),
+                itemBuilder: (context, i) {
+                  if (i >= state.bookings.length) {
+                    // A spinner while the next page loads, a button when it
+                    // failed (and for a first page that does not scroll).
+                    return Padding(
+                      padding: const EdgeInsets.all(StayTokens.s12),
+                      child: Center(
+                        child: state.isLoadingMore
+                            ? const CircularProgressIndicator()
+                            : TextButton(
+                                onPressed: notifier.loadMore,
+                                child: const Text('Load more'),
+                              ),
+                      ),
+                    );
+                  }
+                  return _ConversationRow(booking: state.bookings[i]);
+                },
               ),
             ),
           );

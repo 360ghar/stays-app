@@ -230,7 +230,12 @@ class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
 
   bool isFavorite(int id) => ref.watch(favoritesProvider).contains(id);
 
+  final Set<int> _togglingFavorites = <int>{};
+
   Future<void> toggleFavorite(Property property) async {
+    // One request per property at a time: two failing taps would otherwise
+    // roll back to different states.
+    if (!_togglingFavorites.add(property.id)) return;
     final sameAccount = accountGuard();
     final favorites = ref.read(favoritesProvider.notifier);
     final wishlist = _wishlist;
@@ -255,6 +260,8 @@ class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
       } else {
         favorites.removeFavorite(property.id);
       }
+    } finally {
+      _togglingFavorites.remove(property.id);
     }
   }
 

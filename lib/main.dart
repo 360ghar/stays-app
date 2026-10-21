@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -14,9 +13,9 @@ import 'app/data/services/locale_service.dart';
 import 'app/data/services/theme_service.dart';
 import 'app/data/services/supabase_service.dart';
 import 'app/data/services/crash_reporting_service.dart';
-import 'app/utils/security/cert_pinning.dart';
 import 'app/utils/logger/app_logger.dart';
 import 'app/utils/security/security_service.dart';
+import 'core/boot/common_boot.dart';
 
 Future<void> main() async {
   await runZonedGuarded(
@@ -28,22 +27,8 @@ Future<void> main() async {
       AppConfig.setConfig(AppConfig.dev());
       SecurityService.validateApiKeys();
 
-      // Optional certificate pinning when API_CERT_SHA256 is provided
-      final pinsRaw = dotenv.env['API_CERT_SHA256'];
-      if (pinsRaw != null && pinsRaw.trim().isNotEmpty) {
-        final host = Uri.parse(AppConfig.I.api.apiBaseUrl).host;
-        final pins = pinsRaw
-            .split(',')
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toSet();
-        if (pins.isNotEmpty) {
-          HttpOverrides.global = PinningHttpOverrides(
-            allowedPins: pins,
-            host: host,
-          );
-        }
-      }
+      // Optional certificate pinning (shared helper; see common_boot.dart).
+      applyCertPinning();
 
       // Supabase SDK init kicks off here and is awaited below before runApp.
       SupabaseService.supabaseServiceReady = SupabaseService(

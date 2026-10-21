@@ -101,6 +101,7 @@ class ChatNotifier extends Notifier<ChatUiState> {
         repo.getBooking(bookingId),
         repo.listMessages(bookingId),
       ).wait;
+      if (!ref.mounted) return;
       state = state.copyWith(
         messages: page.items.reversed.toList(),
         isLoading: false,
@@ -112,6 +113,7 @@ class ChatNotifier extends Notifier<ChatUiState> {
       );
       _poll ??= Timer.periodic(chatPollInterval, (_) => unawaited(_refresh()));
     } catch (e, s) {
+      if (!ref.mounted) return;
       AppLogger.error('Chat: load failed', e, s);
       state = state.copyWith(
         isLoading: false,
@@ -129,6 +131,7 @@ class ChatNotifier extends Notifier<ChatUiState> {
   Future<void> _refresh() async {
     try {
       final page = await _repo.listMessages(bookingId);
+      if (!ref.mounted) return;
       final known = {for (final m in state.messages) m.id};
       final fresh = page.items.reversed.where((m) => !known.contains(m.id));
       if (fresh.isEmpty) return;
@@ -146,6 +149,7 @@ class ChatNotifier extends Notifier<ChatUiState> {
     state = state.copyWith(isLoadingOlder: true);
     try {
       final page = await _repo.listMessages(bookingId, cursor: cursor);
+      if (!ref.mounted) return;
       final known = {for (final m in state.messages) m.id};
       final older = page.items.reversed.where((m) => !known.contains(m.id));
       state = state.copyWith(
@@ -167,7 +171,8 @@ class ChatNotifier extends Notifier<ChatUiState> {
     final text = content.trim();
     // While the first page loads, a sent message would be replaced by it.
     if (text.isEmpty || state.isSending || state.isLoading) return;
-    if (text.length > maxMessageLength) {
+    // The backend counts characters, not UTF-16 units.
+    if (text.runes.length > maxMessageLength) {
       state = state.copyWith(
         error: 'A message can have at most $maxMessageLength characters.',
       );
@@ -185,6 +190,7 @@ class ChatNotifier extends Notifier<ChatUiState> {
     state = state.copyWith(messages: [...state.messages, optimistic]);
     try {
       final sent = await repo.sendMessage(bookingId, text);
+      if (!ref.mounted) return;
       // A poll may have added the saved message already.
       final alreadySaved = state.messages.any((m) => m.id == sent.id);
       final next = [

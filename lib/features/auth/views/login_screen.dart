@@ -21,13 +21,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _password = TextEditingController();
   final _name = TextEditingController();
   bool _obscured = true;
+  final _code = TextEditingController();
   bool _creating = false;
+  bool _codeSent = false;
 
   @override
   void dispose() {
     _identifier.dispose();
     _password.dispose();
     _name.dispose();
+    _code.dispose();
     super.dispose();
   }
 
@@ -45,15 +48,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _submitLogin() {
     if (_creating) {
-      ref
-          .read(authProvider.notifier)
-          .register(
-            name: _name.text,
-            email: _identifier.text,
-            password: _password.text,
-          )
-          .then(_goExplore)
-          .ignore();
+      final notifier = ref.read(authProvider.notifier);
+      if (_codeSent) {
+        notifier
+            .completeSignup(
+              email: _identifier.text,
+              code: _code.text,
+              password: _password.text,
+            )
+            .then(_goExplore)
+            .ignore();
+      } else if (_password.text.length < 8) {
+        // The backend sets the password after the code; reject a short one
+        // before an email is sent.
+        notifier.showError('Use a password of at least 8 characters.');
+      } else {
+        notifier
+            .startSignup(
+              name: _name.text,
+              email: _identifier.text,
+              password: _password.text,
+            )
+            .then((sent) {
+              if (sent && mounted) setState(() => _codeSent = true);
+            })
+            .ignore();
+      }
       return;
     }
     ref
@@ -135,6 +155,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ),
+            if (_creating && _codeSent) ...[
+              const SizedBox(height: StayTokens.s12),
+              TextField(
+                controller: _code,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submitLogin(),
+                decoration: const InputDecoration(
+                  labelText: 'Code from your email',
+                  prefixIcon: Icon(Icons.pin_outlined),
+                ),
+              ),
+            ],
             if (state.error.isNotEmpty) ...[
               const SizedBox(height: StayTokens.s12),
               Text(
@@ -154,12 +187,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text(_creating ? 'Create account' : 'Log in'),
+                  : Text(
+                      !_creating
+                          ? 'Log in'
+                          : (_codeSent
+                                ? 'Verify and create account'
+                                : 'Send code'),
+                    ),
             ),
             TextButton(
               onPressed: busy
                   ? null
-                  : () => setState(() => _creating = !_creating),
+                  : () => setState(() {
+                      _creating = !_creating;
+                      _codeSent = false;
+                    }),
               child: Text(
                 _creating
                     ? 'Have an account? Log in'

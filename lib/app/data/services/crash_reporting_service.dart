@@ -32,7 +32,6 @@ class CrashReportingService {
     if (_isInitialized) return this;
 
     try {
-      // Enable in production and staging, disable in development
       // Crashlytics needs a Firebase app; only the prod entry point makes one.
       isEnabled.value = !AppConfig.isDev && Firebase.apps.isNotEmpty;
 

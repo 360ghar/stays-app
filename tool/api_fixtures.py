@@ -8,7 +8,7 @@ Operation fixtures come from `360ghar-backend/docs/openapi.json`.
 
 Run from the app root with the backend environment:
 
-    uv run --project /Users/sakshammittal/Documents/360ghar/github/360ghar/360ghar-backend \
+    uv run --project "$GHAR_BACKEND_DIR" \
         python tool/api_fixtures.py
 
 It imports schemas only: no app start-up, no database, no network. `tool/gen_enums.py` writes

@@ -15,6 +15,7 @@ class TripsUiState {
     this.error = '',
     this.nextCursor,
     this.hasMore = false,
+    this.loadMoreFailed = false,
   });
   final List<Booking> bookings;
   final bool isLoading;
@@ -25,6 +26,10 @@ class TripsUiState {
   final String? nextCursor;
   final bool hasMore;
 
+  /// The last next-page request failed. Scrolling does not retry it; the
+  /// footer button does.
+  final bool loadMoreFailed;
+
   bool get canLoadMore => hasMore && nextCursor != null && !isLoadingMore;
 
   TripsUiState copyWith({
@@ -34,6 +39,7 @@ class TripsUiState {
     String? error,
     String? nextCursor,
     bool? hasMore,
+    bool? loadMoreFailed,
   }) {
     return TripsUiState(
       bookings: bookings ?? this.bookings,
@@ -42,6 +48,7 @@ class TripsUiState {
       error: error ?? this.error,
       nextCursor: nextCursor ?? this.nextCursor,
       hasMore: hasMore ?? this.hasMore,
+      loadMoreFailed: loadMoreFailed ?? this.loadMoreFailed,
     );
   }
 }
@@ -92,12 +99,14 @@ class TripsNotifier extends Notifier<TripsUiState> with AccountBound {
     final sameAccount = accountGuard();
     final cursor = state.nextCursor;
     if (!state.canLoadMore || cursor == null) return;
-    state = state.copyWith(isLoadingMore: true);
+    state = state.copyWith(isLoadingMore: true, loadMoreFailed: false);
     try {
       final page = await ref
           .watch(bookingRepositoryProvider)
           .fetchBookings(cursor: cursor);
       if (!sameAccount()) return;
+      // A refresh finished meanwhile: this page belongs to the old list.
+      if (state.nextCursor != cursor) return;
       state = TripsUiState(
         bookings: [...state.bookings, ...page.items],
         isLoading: false,
@@ -107,7 +116,7 @@ class TripsNotifier extends Notifier<TripsUiState> with AccountBound {
     } catch (e, s) {
       if (!sameAccount()) return;
       AppLogger.error('Trips v2: loadMore failed', e, s);
-      state = state.copyWith(isLoadingMore: false);
+      state = state.copyWith(isLoadingMore: false, loadMoreFailed: true);
     }
   }
 

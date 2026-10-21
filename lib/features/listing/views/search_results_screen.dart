@@ -39,8 +39,16 @@ class SearchResultsScreen extends ConsumerWidget {
             );
           }
           return RefreshIndicator(
-            onRefresh: () =>
-                ref.refresh(searchResultsProvider((lat: lat, lng: lng)).future),
+            onRefresh: () async {
+              try {
+                final reloaded = ref.refresh(
+                  searchResultsProvider((lat: lat, lng: lng)).future,
+                );
+                await reloaded;
+              } catch (_) {
+                // The error view comes from async.when; a failed pull is not fatal.
+              }
+            },
             child: ListView.separated(
               padding: const EdgeInsets.all(StayTokens.s16),
               itemCount: stays.length,

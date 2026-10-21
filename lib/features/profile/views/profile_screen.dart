@@ -48,6 +48,8 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true || !context.mounted) return;
+    // One delete at a time.
+    if (ref.read(authProvider).status == AuthStatus.busy) return;
     final deleted = await ref.read(authProvider.notifier).deleteAccount();
     if (!context.mounted) return;
     if (deleted) {
@@ -127,7 +129,9 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: StayTokens.s8),
           TextButton(
-            onPressed: () => _deleteAccount(context, ref),
+            onPressed: ref.watch(authProvider).status == AuthStatus.busy
+                ? null
+                : () => _deleteAccount(context, ref),
             style: TextButton.styleFrom(foregroundColor: StayTokens.danger),
             child: const Text('Delete account'),
           ),

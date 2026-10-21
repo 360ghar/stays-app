@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show debugPrint;
+
 /// One page of a backend list: `{items, next_cursor, has_more, limit, total}`.
 ///
 /// `next_cursor` is opaque. Send it back unchanged, with the same filters, to
@@ -26,8 +28,7 @@ class CursorPage<T> {
     return CursorPage<T>(
       items: [
         if (rawItems is List)
-          for (final item in rawItems)
-            if (item is Map) parse(Map<String, dynamic>.from(item)),
+          for (final item in rawItems) ?_parseItem(item, parse),
       ],
       nextCursor: nextCursor is String && nextCursor.isNotEmpty
           ? nextCursor
@@ -36,6 +37,24 @@ class CursorPage<T> {
       limit: limit is num ? limit.toInt() : 0,
       total: total is num ? total.toInt() : null,
     );
+  }
+
+  /// A row that is not an object, or that fails to parse, is skipped and
+  /// reported: one bad row must not fail the whole page.
+  static T? _parseItem<T>(
+    Object? item,
+    T Function(Map<String, dynamic> item) parse,
+  ) {
+    if (item is! Map) {
+      debugPrint('CursorPage: skipped a list item that is not an object');
+      return null;
+    }
+    try {
+      return parse(Map<String, dynamic>.from(item));
+    } catch (error) {
+      debugPrint('CursorPage: skipped a malformed list item: $error');
+      return null;
+    }
   }
 
   final List<T> items;

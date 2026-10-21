@@ -94,7 +94,7 @@ void main() {
     expect(cache.getCachedExploreResults(lat: 15.5, lng: 73.7), isNull);
     expect(cache.getCachedPropertyDetails(1), isNull);
     expect(cache.getCachedRecommendations(), isNull);
-    // Even an offline read ignores the scope check only for expiry.
+    // An offline read (`ignoreExpiry`) still honours the account scope.
     expect(
       cache.getCachedExploreResults(lat: 15.5, lng: 73.7, ignoreExpiry: true),
       isNull,

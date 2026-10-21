@@ -346,6 +346,15 @@ abstract class BaseProvider {
 
   Future<void> _endSession() async {
     try {
+      // Leave no local session data behind, as logout() does.
+      await _storage.clearTokens();
+      await _storage.clearUserData();
+    } catch (e) {
+      AppLogger.warning(
+        'Clearing local session after USER_INACTIVE failed: $e',
+      );
+    }
+    try {
       await Supabase.instance.client.auth.signOut();
     } catch (e) {
       AppLogger.warning('Sign-out after USER_INACTIVE failed: $e');

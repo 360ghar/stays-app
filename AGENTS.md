@@ -3,7 +3,7 @@
 > **Canonical guide: [CLAUDE.md](./CLAUDE.md).** Read it first for stack, structure, commands, and conventions.
 
 ## Project Structure & Module Organization
-Flutter source is split across `lib/core/` (go_router router + `AppPaths`, theme tokens, Riverpod providers including the `data_providers.dart` graph, boot, l10n helpers), `lib/features/` (per-feature `views/*_screen.dart` screens plus `providers/` Riverpod state), and `lib/app/` (Dio data providers, repositories, services, route literals, theme, widgets, utilities). Configuration resides in `lib/config/` with environment-specific settings under `environments/`. Localization strings are JSON tables in `l10n/` (`en.json`, `hi.json`) with the loader in `lib/l10n/` plus `localeProvider`/`tr` helpers in `lib/core/l10n/`. Entrypoints select flavors via `lib/main_dev.dart`, `lib/main_staging.dart`, and `lib/main_prod.dart`. Tests mirror the structure in `test/unit` and `test/widget`, keeping `_test.dart` suffixes aligned with source paths.
+Flutter source is split across `lib/core/` (go_router router + `AppPaths`, theme tokens, Riverpod providers including the `data_providers.dart` graph, boot, l10n helpers), `lib/features/` (per-feature `views/*_screen.dart` screens plus `providers/` Riverpod state), and `lib/app/` (Dio data providers, repositories, services, route literals, theme, widgets, utilities). Configuration resides in `lib/config/` with environment-specific settings under `environments/`. Localization strings are JSON tables in `l10n/` (`en.json`, `hi.json`) with the loader in `lib/l10n/`. `localeProvider` lives in `lib/core/providers/` and the `tr`/`trOf` helpers in `lib/core/l10n/`. Entrypoints select flavors via `lib/main_dev.dart`, `lib/main_staging.dart`, and `lib/main_prod.dart`. Tests mirror the structure in `test/unit` and `test/widget`, keeping `_test.dart` suffixes aligned with source paths.
 
 ## Build, Test, and Development Commands
 - `flutter pub get`: Install or refresh package dependencies.
@@ -15,7 +15,7 @@ Flutter source is split across `lib/core/` (go_router router + `AppPaths`, theme
 - `flutter test`: Run all tests.
 - `flutter test --coverage`: Execute full test suite with coverage metrics.
 - `flutter test test/unit/token_service_test.dart`: Run a single test file.
-- `flutter test test/unit/token_service_test.dart -t "starts unauthenticated"`: Run a specific test by name.
+- `flutter test test/unit/token_service_test.dart --plain-name "starts unauthenticated"`: Run a specific test by name.
 - `flutter test --update-goldens`: Update widget test golden files.
 - `flutter test --coverage --coverage-path=coverage/lcov.info`: Generate coverage in lcov format.
 - `flutter build apk --flavor prod -t lib/main_prod.dart`: Produce a production Android build.

@@ -27,7 +27,7 @@ void main() {
     await tester.pump();
     expect(find.text('Full name'), findsOneWidget);
     expect(find.text('Email'), findsOneWidget);
-    expect(find.text('Create account'), findsOneWidget);
+    expect(find.text('Send code'), findsOneWidget);
 
     await tester.tap(find.text('Have an account? Log in'));
     await tester.pump();

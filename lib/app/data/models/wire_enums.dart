@@ -16,7 +16,7 @@ T? _decode<T extends WireEnum>(List<T> members, Object? value, String type) {
   for (final member in members) {
     if (member.wire == value) return member;
   }
-  AppLogger.warning('Unknown wire value read as null', type);
+  AppLogger.warning('Unknown wire value read as null', '$type: $value');
   return null;
 }
 

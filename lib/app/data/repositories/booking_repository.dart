@@ -46,9 +46,9 @@ class BookingRepository {
     return _provider.checkOccupancy(propertyId: propertyId, guests: guests);
   }
 
-  /// Returns the server quote. A pricing error is an [ApiException] with the
-  /// server reason (`PRICING_UNAVAILABLE`, `INVALID_DATE_RANGE`,
-  /// `PROPERTY_NOT_FOUND`). [checkIn] and [checkOut] are `YYYY-MM-DD`.
+  /// Returns the server quote. A pricing error is an [ApiException]; the
+  /// reason code (`PRICING_UNAVAILABLE`, `INVALID_DATE_RANGE`,
+  /// `PROPERTY_NOT_FOUND`) is in `ApiException.code`, the text in `message`. [checkIn] and [checkOut] are `YYYY-MM-DD`.
   Future<BookingPricingModel> calculatePricing({
     required int propertyId,
     required String checkIn,

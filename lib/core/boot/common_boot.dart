@@ -18,7 +18,7 @@ import 'package:stays_app/config/app_config.dart';
 /// Cert pinning stays opt-in via the `API_CERT_SHA256` env var in every
 /// flavor; see [applyCertPinning].
 /// Opt-in certificate pinning from `API_CERT_SHA256` (comma-separated
-/// base64 SPKI pins). No-op when unset/empty. Pure w.r.t. DI: touches only
+/// base64 SHA-256 digests of the DER-encoded certificate). No-op when unset/empty. Pure w.r.t. DI: touches only
 /// [HttpOverrides.global], never GetX.
 void applyCertPinning({bool log = false}) {
   final pinsRaw = dotenv.env['API_CERT_SHA256'];

@@ -59,7 +59,8 @@ class TokenInfo {
 class TokenService {
   /// Canonical write path for tokens: every write (login, OTP verify, the
   /// BaseProvider authenticator after a Supabase refresh) goes through
-  /// [storeTokens]. Never call `StorageService.saveTokens` directly.
+  /// [storeTokens]. Never call `StorageService.saveTokens` directly. A
+  /// `storeTokens` failure ends that refresh; there is no storage fallback.
   ///
   /// Refresh dedup: callers of the public [refresh] share one network
   /// round-trip via [_inFlightRefresh]. The BaseProvider authenticator

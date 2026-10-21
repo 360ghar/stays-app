@@ -128,13 +128,19 @@ def render(values: dict[str, list[str]]) -> str:
         "  for (final member in members) {",
         "    if (member.wire == value) return member;",
         "  }",
-        "  AppLogger.warning('Unknown wire value read as null', type);",
+        "  AppLogger.warning('Unknown wire value read as null', '$type: $value');",
         "  return null;",
         "}",
         "",
     ]
     for key, dart in WIRE_ENUMS:
         members = [(member_name(w), w) for w in values[key]]
+        names = [name for name, _ in members]
+        if len(set(names)) != len(names):
+            raise SystemExit(
+                f"{key}: two wire values map to one Dart name: "
+                f"{sorted({n for n in names if names.count(n) > 1})}"
+            )
         lines.append(f"/// Wire values of `{key}`.")
         lines.append(f"enum {dart} implements WireEnum {{")
         for index, (name, wire) in enumerate(members):

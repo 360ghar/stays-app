@@ -19,7 +19,6 @@ const _calls = <String>[
   'POST /api/v1/bookings',
   'GET /api/v1/bookings/{booking_id}',
   'POST /api/v1/bookings/cancel',
-  'POST /api/v1/bookings/review',
   'POST /api/v1/bookings/calculate-pricing',
   'POST /api/v1/bookings/check-availability',
   'GET /api/v1/bookings/{booking_id}/messages',
@@ -35,8 +34,6 @@ const _calls = <String>[
   'GET /api/v1/users/me/auth-state',
   'POST /api/v1/users/me/onboarding',
   'POST /api/v1/auth/identifier-status',
-  'POST /api/v1/auth/last-method',
-  'POST /api/v1/bugs',
   'POST /api/v1/notifications/devices/register',
   'DELETE /api/v1/notifications/devices/unregister',
 ];

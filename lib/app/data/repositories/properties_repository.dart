@@ -118,6 +118,7 @@ class PropertiesRepository {
       }
     }
 
+    final scope = cache?.scope;
     final response = await _provider.explore(
       lat: la,
       lng: ln,
@@ -127,7 +128,8 @@ class PropertiesRepository {
       filters: queryFilters,
     );
 
-    // Cache the response. The cache skips a `Cache-Control: no-store` body.
+    // Cache the response. The cache skips a `Cache-Control: no-store` body and
+    // a response whose account changed while it was in flight.
     unawaited(
       cache?.cacheExploreResults(
         response,
@@ -135,6 +137,7 @@ class PropertiesRepository {
         lng: ln,
         cursor: cursor,
         variant: variant,
+        scope: scope,
       ),
     );
 
@@ -191,6 +194,7 @@ class PropertiesRepository {
       if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
+      final scope = _cacheService?.scope;
       final response = await _provider.explore(
         lat: lat,
         lng: lng,
@@ -205,6 +209,7 @@ class PropertiesRepository {
         lng: lng,
         cursor: cursor,
         variant: _variant(limit, radiusKm, filters),
+        scope: scope,
       );
     } catch (e) {
       AppLogger.warning('Background refresh failed: $e');
@@ -228,9 +233,14 @@ class PropertiesRepository {
       }
     }
 
+    final scope = cache?.scope;
     final result = await _provider.getDetails(id);
     unawaited(
-      cache?.cachePropertyDetails(result.property, noStore: result.noStore),
+      cache?.cachePropertyDetails(
+        result.property,
+        noStore: result.noStore,
+        scope: scope,
+      ),
     );
     return result.property;
   }
@@ -241,10 +251,12 @@ class PropertiesRepository {
       if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
+      final scope = _cache()?.scope;
       final result = await _provider.getDetails(id);
       await _cache()?.cachePropertyDetails(
         result.property,
         noStore: result.noStore,
+        scope: scope,
       );
     } catch (e) {
       AppLogger.warning('Background details refresh failed: $e');
@@ -273,9 +285,14 @@ class PropertiesRepository {
       }
     }
 
+    final scope = cache?.scope;
     final response = await _provider.recommendations(limit: limit);
     unawaited(
-      cache?.cacheRecommendations(response.items, noStore: response.noStore),
+      cache?.cacheRecommendations(
+        response.items,
+        noStore: response.noStore,
+        scope: scope,
+      ),
     );
     return response.items;
   }
@@ -286,10 +303,12 @@ class PropertiesRepository {
       if (connectivity != null && !connectivity.isCurrentlyOnline) {
         return;
       }
+      final scope = _cache()?.scope;
       final response = await _provider.recommendations(limit: limit);
       await _cache()?.cacheRecommendations(
         response.items,
         noStore: response.noStore,
+        scope: scope,
       );
     } catch (e) {
       AppLogger.warning('Background recommendations refresh failed: $e');

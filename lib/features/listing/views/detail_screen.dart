@@ -88,6 +88,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     _togglingFavorite = true;
     final id = widget.property.id;
     final favorites = ref.read(favoritesProvider.notifier);
+    // The screen may be popped during the request, after which `ref` is gone.
+    final container = ref.container;
     final wasFavorite = _favorite;
     setState(() => _favorite = !wasFavorite);
     try {
@@ -99,7 +101,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
         await ref.read(wishlistRepositoryProvider).remove(id);
       }
       // The wishlist screen keeps its state; make it read the server again.
-      ref.invalidate(wishlistProvider);
+      container.invalidate(wishlistProvider);
     } catch (e, s) {
       AppLogger.error('Detail v2: favorite toggle failed', e, s);
       if (wasFavorite) {

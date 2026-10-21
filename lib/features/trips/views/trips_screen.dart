@@ -42,7 +42,8 @@ class TripsScreen extends ConsumerWidget {
             onRefresh: notifier.refresh,
             child: NotificationListener<ScrollNotification>(
               onNotification: (info) {
-                if (info.metrics.pixels >= info.metrics.maxScrollExtent - 400) {
+                if (!state.loadMoreFailed &&
+                    info.metrics.pixels >= info.metrics.maxScrollExtent - 400) {
                   notifier.loadMore().ignore();
                 }
                 return false;

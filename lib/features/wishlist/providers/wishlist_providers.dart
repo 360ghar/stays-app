@@ -50,6 +50,10 @@ final wishlistProvider = NotifierProvider<WishlistNotifier, WishlistUiState>(
 
 class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
   String? _pagingCursor;
+
+  /// Bumped by clearAll: a load that started before it must not repopulate
+  /// the cleared list.
+  int _clearGeneration = 0;
   @override
   WishlistUiState build() {
     _pagingCursor = null;
@@ -63,10 +67,11 @@ class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
 
   Future<void> load() async {
     final sameAccount = accountGuard();
+    final generation = _clearGeneration;
     state = state.copyWith(isLoading: true, error: '');
     try {
       final resp = await _repo.listFavorites();
-      if (!sameAccount()) return;
+      if (!sameAccount() || generation != _clearGeneration) return;
       ref
           .read(favoritesProvider.notifier)
           .replaceAll(resp.items.map((p) => p.id));
@@ -95,6 +100,7 @@ class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
 
   Future<void> loadMore() async {
     final sameAccount = accountGuard();
+    final generation = _clearGeneration;
     final cursor = state.nextCursor;
     if (!state.hasMore || cursor == null) return;
     // Scroll end fires repeatedly; one fetch per cursor (audit duplicate
@@ -103,7 +109,7 @@ class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
     _pagingCursor = cursor;
     try {
       final resp = await _repo.listFavorites(cursor: cursor);
-      if (!sameAccount()) return;
+      if (!sameAccount() || generation != _clearGeneration) return;
       ref.read(favoritesProvider.notifier).addAll(resp.items.map((p) => p.id));
       state = state.copyWith(
         items: [...state.items, ...resp.items],
@@ -144,6 +150,7 @@ class WishlistNotifier extends Notifier<WishlistUiState> with AccountBound {
   /// `next_cursor` to collect the ids that are not loaded yet.
   Future<void> clearAll() async {
     final sameAccount = accountGuard();
+    _clearGeneration++;
     final ids = state.items.map((p) => p.id).toList();
     var cursor = state.hasMore ? state.nextCursor : null;
     state = const WishlistUiState(isLoading: false);

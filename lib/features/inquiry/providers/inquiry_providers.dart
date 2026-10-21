@@ -47,7 +47,14 @@ class InquiryFormState {
       guests > 0;
 
   /// The backend requires a valid email for the primary guest.
-  bool get hasEmail => email.trim().contains('@');
+  bool get hasEmail {
+    final parts = email.trim().split('@');
+    return parts.length == 2 &&
+        parts[0].isNotEmpty &&
+        parts[1].contains('.') &&
+        !parts[1].startsWith('.') &&
+        !parts[1].endsWith('.');
+  }
 
   bool get canSubmit =>
       canPrice &&

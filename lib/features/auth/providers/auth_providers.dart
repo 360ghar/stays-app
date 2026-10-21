@@ -80,18 +80,50 @@ class AuthNotifier extends Notifier<AuthUiState> {
     return _run(() => _repo.loginWithPhone(phone: id, password: password));
   }
 
-  Future<bool> register({
+  void showError(String message) {
+    state = state.copyWith(status: AuthStatus.error, error: message);
+  }
+
+  /// Step 1 of account creation: the backend emails a 6-digit code. Returns
+  /// true when the code was sent. No session exists yet.
+  Future<bool> startSignup({
     required String name,
     required String email,
     required String password,
-  }) {
-    return _run(
-      () => _repo.register(
+  }) async {
+    state = state.copyWith(status: AuthStatus.busy, error: '');
+    try {
+      await _repo.register(
         name: name.trim(),
         email: email.trim(),
         password: password,
-      ),
-    );
+      );
+      state = const AuthUiState();
+      return true;
+    } catch (e, s) {
+      AppLogger.error('Auth v2: signup code failed', e, s);
+      state = state.copyWith(
+        status: AuthStatus.error,
+        error: 'Could not send the code. Check the email and try again.',
+      );
+      return false;
+    }
+  }
+
+  /// Step 2: the code opens the session, then the chosen password is set.
+  Future<bool> completeSignup({
+    required String email,
+    required String code,
+    required String password,
+  }) {
+    return _run(() async {
+      final user = await _repo.verifyEmailOtp(
+        email: email.trim(),
+        token: code.trim(),
+      );
+      await _repo.updatePassword(newPassword: password);
+      return user;
+    });
   }
 
   Future<bool> loginWithGoogle() {
