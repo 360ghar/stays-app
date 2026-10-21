@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:get/get.dart';
 
 import '../../utils/logger/app_logger.dart';
 
-class AnalyticsService extends GetxService {
+class AnalyticsService {
   AnalyticsService({required this.enabled}) {
     _initializeFirebaseAnalytics();
     if (enabled) {
@@ -22,8 +21,6 @@ class AnalyticsService extends GetxService {
 
   /// Get the Firebase Analytics observer for navigation tracking
   FirebaseAnalyticsObserver? get observer => _observer;
-
-  static AnalyticsService get I => Get.find<AnalyticsService>();
 
   void _runUnawaited(Future<void> future, String operation) {
     unawaited(
@@ -201,11 +198,7 @@ class AnalyticsService extends GetxService {
     );
   }
 
-  void logBookingCompleted(
-    String bookingId,
-    double amount,
-    String paymentMethod,
-  ) {
+  void logBookingCompleted(String bookingId, double amount) {
     if (_analytics != null && enabled) {
       _runUnawaited(
         _analytics!.logPurchase(
@@ -220,11 +213,7 @@ class AnalyticsService extends GetxService {
     log(
       AnalyticsEvent(
         name: AnalyticsEventNames.bookingCompleted,
-        params: {
-          'booking_id': bookingId,
-          'amount': amount,
-          'payment_method': paymentMethod,
-        },
+        params: {'booking_id': bookingId, 'amount': amount},
       ),
     );
   }
@@ -330,11 +319,7 @@ class AnalyticsService extends GetxService {
     log(
       AnalyticsEvent(
         name: AnalyticsEventNames.performance,
-        params: {
-          'metric': metric,
-          'value': value,
-          if (label != null) 'label': label,
-        },
+        params: {'metric': metric, 'value': value, 'label': ?label},
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_animations.dart';
 
@@ -101,20 +102,20 @@ class _AnimatedScaleWrapperState extends State<AnimatedScaleWrapper>
   void _handleTapDown(TapDownDetails details) {
     if (!widget.enabled) return;
     setState(() => _isPressed = true);
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (_isPressed) {
       setState(() => _isPressed = false);
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
   void _handleTapCancel() {
     if (_isPressed) {
       setState(() => _isPressed = false);
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
@@ -291,8 +292,8 @@ class _AnimatedPulseState extends State<AnimatedPulse>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(duration: widget.duration, vsync: this)
-      ..repeat(reverse: true);
+    _controller = AnimationController(duration: widget.duration, vsync: this);
+    unawaited(_controller.repeat(reverse: true));
 
     _scaleAnimation = Tween<double>(
       begin: widget.minScale,
@@ -349,7 +350,8 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
-    )..repeat();
+    );
+    unawaited(_controller.repeat());
 
     _animation = Tween<double>(begin: -2, end: 2).animate(_controller);
   }

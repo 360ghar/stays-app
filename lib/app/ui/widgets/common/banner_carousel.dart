@@ -33,10 +33,12 @@ class _BannerCarouselState extends State<BannerCarousel> {
       _timer = Timer.periodic(widget.autoPlayInterval, (_) {
         if (!mounted) return;
         final next = (_current + 1) % widget.imageUrls.length;
-        _pageController.animateToPage(
-          next,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
+        unawaited(
+          _pageController.animateToPage(
+            next,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+          ),
         );
       });
     }

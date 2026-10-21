@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:stays_app/config/app_config.dart';
@@ -10,29 +10,33 @@ import '../logger/app_logger.dart';
 
 enum ConnectivityStatus { connected, disconnected, mobile, wifi }
 
-class ConnectivityService extends GetxService {
-  static ConnectivityService get I => Get.find<ConnectivityService>();
+class ConnectivityService {
+  factory ConnectivityService() => _shared;
+  ConnectivityService._internal() {
+    unawaited(_initialize());
+  }
 
-  final Rx<ConnectivityStatus> status = ConnectivityStatus.disconnected.obs;
-  final RxBool isOnline = false.obs;
+  // Shared instance so the whole app shares one connectivity subscription.
+  static final ConnectivityService _shared = ConnectivityService._internal();
+
+  static ConnectivityService get I => _shared;
+
+  final ValueNotifier<ConnectivityStatus> status =
+      ValueNotifier<ConnectivityStatus>(ConnectivityStatus.disconnected);
+  final ValueNotifier<bool> isOnline = ValueNotifier<bool>(false);
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
   final _connectionChangeController = StreamController<bool>.broadcast();
   Stream<bool> get onConnectionChanged => _connectionChangeController.stream;
 
-  @override
-  void onInit() {
-    super.onInit();
-    unawaited(_initialize());
-  }
-
-  @override
-  void onClose() {
+  /// Call when the owner (DI scope) is disposed.
+  void dispose() {
     if (_subscription != null) {
       unawaited(_subscription!.cancel());
     }
     unawaited(_connectionChangeController.close());
-    super.onClose();
+    status.dispose();
+    isOnline.dispose();
   }
 
   Future<void> _initialize() async {
@@ -155,7 +159,7 @@ class ConnectivityService extends GetxService {
 
   String _resolveApiHost() {
     try {
-      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      final uri = Uri.parse(AppConfig.I.api.apiBaseUrl);
       if (uri.host.isNotEmpty) return uri.host;
     } catch (_) {}
     return '';
@@ -163,7 +167,7 @@ class ConnectivityService extends GetxService {
 
   int _resolveHealthPort() {
     try {
-      final uri = Uri.parse(AppConfig.I.apiBaseUrl);
+      final uri = Uri.parse(AppConfig.I.api.apiBaseUrl);
       if (uri.port > 0) return uri.port;
       return uri.scheme == 'http' ? 80 : 443;
     } catch (_) {

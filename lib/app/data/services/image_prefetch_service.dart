@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
@@ -11,8 +10,14 @@ import '../models/property_image_model.dart';
 
 /// Service for prefetching images to improve perceived performance.
 /// Preloads property images before they're displayed to eliminate loading delays.
-class ImagePrefetchService extends GetxService {
-  static ImagePrefetchService get I => Get.find<ImagePrefetchService>();
+class ImagePrefetchService {
+  factory ImagePrefetchService() => _shared;
+  ImagePrefetchService._internal();
+
+  // Shared instance so prefetch tracking is app-wide.
+  static final ImagePrefetchService _shared = ImagePrefetchService._internal();
+
+  static ImagePrefetchService get I => _shared;
 
   final DefaultCacheManager _cacheManager = DefaultCacheManager();
 
@@ -187,31 +192,5 @@ class ImagePrefetchService extends GetxService {
   String _truncateUrl(String url) {
     if (url.length <= 50) return url;
     return '${url.substring(0, 30)}...${url.substring(url.length - 17)}';
-  }
-}
-
-/// Mixin for controllers that want to prefetch images
-mixin ImagePrefetchMixin {
-  ImagePrefetchService? _imagePrefetchService;
-
-  ImagePrefetchService get imagePrefetchService {
-    _imagePrefetchService ??= Get.find<ImagePrefetchService>();
-    return _imagePrefetchService!;
-  }
-
-  /// Prefetch images for properties
-  void prefetchImages(List<Property> properties, {int limit = 10}) {
-    if (Get.isRegistered<ImagePrefetchService>()) {
-      unawaited(
-        imagePrefetchService.prefetchPropertyImages(properties, limit: limit),
-      );
-    }
-  }
-
-  /// Prefetch detail images for a property the user might tap
-  void prefetchDetailImages(Property property) {
-    if (Get.isRegistered<ImagePrefetchService>()) {
-      unawaited(imagePrefetchService.prefetchPropertyDetailImages(property));
-    }
   }
 }

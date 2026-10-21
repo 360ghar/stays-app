@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/ui/widgets/common/cached_image.dart';
 
 import '../../theme/theme_extensions.dart';
 
@@ -18,7 +18,6 @@ class PropertyCard extends StatelessWidget {
     this.width = 248,
     this.height = 184,
     this.showPrice = true,
-    this.showRating = false,
     this.heroPrefix,
     this.isFavorite = false,
   });
@@ -28,7 +27,6 @@ class PropertyCard extends StatelessWidget {
   final double width;
   final double height;
   final bool showPrice;
-  final bool showRating;
   final String? heroPrefix;
   final bool isFavorite;
 
@@ -45,7 +43,9 @@ class PropertyCard extends StatelessWidget {
     semanticLabel.write(property.name);
     semanticLabel.write(', ${property.fullAddress}');
     if (showPrice) {
-      semanticLabel.write(', ${property.displayPrice} per night');
+      semanticLabel.write(
+        ', ${property.displayPrice}${property.hasPrice ? ' per night' : ''}',
+      );
     }
     if (isFavorite) {
       semanticLabel.write(', saved to wishlist');
@@ -97,33 +97,10 @@ class PropertyCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final imageUrl = property.displayImage;
-
-    final placeholder = Container(
-      color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-      alignment: Alignment.center,
-      child: Icon(
-        Icons.hotel,
-        size: 44,
-        color: colors.onSurface.withValues(alpha: 0.5),
-      ),
-    );
-
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return placeholder;
-    }
-
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => Shimmer.fromColors(
-        baseColor: colors.surfaceContainerHighest.withValues(alpha: 0.4),
-        highlightColor: colors.surfaceContainerHighest.withValues(alpha: 0.15),
-        child: Container(color: colors.surface),
-      ),
-      errorWidget: (context, url, error) => placeholder,
-    );
+    // Canonical image fallback: placeholder, shimmer, and error states all
+    // live in [CachedImage]. Do not re-add local placeholder()/Shimmer
+    // blocks here; fix them in cached_image.dart instead.
+    return CachedImage(imageUrl: property.displayImage);
   }
 
   Widget _buildGradientOverlay() {
@@ -179,36 +156,12 @@ class PropertyCard extends StatelessWidget {
             children: [
               if (showPrice)
                 Text(
-                  '${property.displayPrice}/night',
+                  '${property.displayPrice}${property.hasPrice ? '/night' : ''}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
-                ),
-              if (showRating && property.rating != null)
-                Row(
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 16),
-                    const SizedBox(width: 4),
-                    Text(
-                      property.ratingText,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (property.reviewsCount != null) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '(${property.reviewsCount})',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ],
                 ),
             ],
           ),

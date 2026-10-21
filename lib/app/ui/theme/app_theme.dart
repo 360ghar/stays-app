@@ -6,6 +6,11 @@ import 'app_text_styles.dart';
 
 /// Premium theme configuration inspired by top-tier apps.
 /// Features sophisticated shadows, smooth animations, and glassmorphism effects.
+///
+/// Dark [ThemeData] of the app (`darkTheme`). Light mode uses
+/// `StayTokens.lightTheme()` (`lib/core/theme/tokens.dart`); `lightTheme`
+/// here is kept for reference and is not wired in. Widgets read semantic
+/// colors, spacing and type from `StayTokens`.
 class AppTheme {
   /// Light color scheme with premium shadows and surfaces
   static final ColorScheme _lightColorScheme =

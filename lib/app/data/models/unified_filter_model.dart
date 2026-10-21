@@ -1,46 +1,41 @@
 import 'property_model.dart';
+import 'wire_enums.dart';
 
 /// Immutable filter state that can be shared across multiple property flows.
 ///
-/// The fields intentionally mirror the backend query parameters so the model
-/// can be serialized directly when hitting the unified properties endpoint.
+/// Every field maps to a query key that `GET /api/v1/properties` declares.
+/// The backend answers 422 to a key it does not declare, so a filter the
+/// backend has no key for (rating, instant book, self check-in, pets,
+/// smoking) is not part of this model.
 class UnifiedFilterModel {
   UnifiedFilterModel({
     this.minPrice,
     this.maxPrice,
-    List<String>? propertyTypes,
+    List<PropertyType>? propertyTypes,
     this.minBedrooms,
     this.maxBedrooms,
     this.minBathrooms,
     this.maxBathrooms,
-    this.minRating,
     this.sortBy,
-    this.instantBook,
-    this.selfCheckIn,
-    this.petsAllowed,
-    this.smokingAllowed,
     this.city,
     this.radiusKm,
   }) : propertyTypes = propertyTypes == null
            ? const []
-           : List.unmodifiable(
-               propertyTypes.map((type) => type.toLowerCase().trim()),
-             );
+           : List.unmodifiable(propertyTypes);
   final double? minPrice;
   final double? maxPrice;
-  final List<String> propertyTypes;
+  final List<PropertyType> propertyTypes;
   final int? minBedrooms;
   final int? maxBedrooms;
   final int? minBathrooms;
   final int? maxBathrooms;
-  final double? minRating;
-  final String? sortBy;
-  final bool? instantBook;
-  final bool? selfCheckIn;
-  final bool? petsAllowed;
-  final bool? smokingAllowed;
+
+  /// One of the backend `SortBy` values.
+  final SortBy? sortBy;
   final String? city;
-  final double? radiusKm;
+
+  /// Search radius in whole kilometres, 1 to 100 (`radius` is an integer).
+  final int? radiusKm;
 
   static final UnifiedFilterModel empty = UnifiedFilterModel();
 
@@ -53,31 +48,21 @@ class UnifiedFilterModel {
       maxBedrooms != null ||
       minBathrooms != null ||
       maxBathrooms != null ||
-      minRating != null ||
       sortBy != null ||
-      instantBook != null ||
-      selfCheckIn != null ||
-      petsAllowed != null ||
-      smokingAllowed != null ||
       (city != null && city!.trim().isNotEmpty) ||
       radiusKm != null;
 
   UnifiedFilterModel copyWith({
     double? minPrice,
     double? maxPrice,
-    List<String>? propertyTypes,
+    List<PropertyType>? propertyTypes,
     int? minBedrooms,
     int? maxBedrooms,
     int? minBathrooms,
     int? maxBathrooms,
-    double? minRating,
-    String? sortBy,
-    bool? instantBook,
-    bool? selfCheckIn,
-    bool? petsAllowed,
-    bool? smokingAllowed,
+    SortBy? sortBy,
     String? city,
-    double? radiusKm,
+    int? radiusKm,
   }) {
     return UnifiedFilterModel(
       minPrice: minPrice ?? this.minPrice,
@@ -87,12 +72,7 @@ class UnifiedFilterModel {
       maxBedrooms: maxBedrooms ?? this.maxBedrooms,
       minBathrooms: minBathrooms ?? this.minBathrooms,
       maxBathrooms: maxBathrooms ?? this.maxBathrooms,
-      minRating: minRating ?? this.minRating,
       sortBy: sortBy ?? this.sortBy,
-      instantBook: instantBook ?? this.instantBook,
-      selfCheckIn: selfCheckIn ?? this.selfCheckIn,
-      petsAllowed: petsAllowed ?? this.petsAllowed,
-      smokingAllowed: smokingAllowed ?? this.smokingAllowed,
       city: city ?? this.city,
       radiusKm: radiusKm ?? this.radiusKm,
     );
@@ -110,12 +90,7 @@ class UnifiedFilterModel {
       maxBedrooms: other.maxBedrooms ?? maxBedrooms,
       minBathrooms: other.minBathrooms ?? minBathrooms,
       maxBathrooms: other.maxBathrooms ?? maxBathrooms,
-      minRating: other.minRating ?? minRating,
       sortBy: other.sortBy ?? sortBy,
-      instantBook: other.instantBook ?? instantBook,
-      selfCheckIn: other.selfCheckIn ?? selfCheckIn,
-      petsAllowed: other.petsAllowed ?? petsAllowed,
-      smokingAllowed: other.smokingAllowed ?? smokingAllowed,
       city: other.city ?? city,
       radiusKm: other.radiusKm ?? radiusKm,
     );
@@ -123,35 +98,32 @@ class UnifiedFilterModel {
 
   Map<String, dynamic> toJson() => toQueryParameters();
 
+  /// Query keys for `GET /api/v1/properties`. A list value stays a list: it is
+  /// sent as repeated keys (`property_type=villa&property_type=house`).
   Map<String, dynamic> toQueryParameters() => {
     if (minPrice != null) 'price_min': minPrice,
     if (maxPrice != null) 'price_max': maxPrice,
-    if (propertyTypes.isNotEmpty) 'property_type': propertyTypes,
+    if (propertyTypes.isNotEmpty)
+      'property_type': [for (final type in propertyTypes) type.wire],
     if (minBedrooms != null) 'bedrooms_min': minBedrooms,
     if (maxBedrooms != null) 'bedrooms_max': maxBedrooms,
     if (minBathrooms != null) 'bathrooms_min': minBathrooms,
     if (maxBathrooms != null) 'bathrooms_max': maxBathrooms,
-    if (minRating != null) 'rating_min': minRating,
-    if (sortBy != null) 'sort_by': sortBy,
-    if (instantBook != null) 'instant_book': instantBook,
-    if (selfCheckIn != null) 'self_check_in': selfCheckIn,
-    if (petsAllowed != null) 'pets_allowed': petsAllowed,
-    if (smokingAllowed != null) 'smoking_allowed': smokingAllowed,
+    if (sortBy != null) 'sort_by': sortBy!.wire,
     if (city != null && city!.trim().isNotEmpty) 'city': city,
-    if (radiusKm != null) 'radius': radiusKm,
+    if (radiusKm != null) 'radius': radiusKm!.clamp(1, 100),
   };
 
   bool matchesProperty(Property property) {
-    if (minPrice != null && property.pricePerNight < minPrice!) {
+    final price = property.pricePerNight;
+    if (minPrice != null && (price == null || price < minPrice!)) {
       return false;
     }
-    if (maxPrice != null && property.pricePerNight > maxPrice!) {
+    if (maxPrice != null && (price == null || price > maxPrice!)) {
       return false;
     }
     if (propertyTypes.isNotEmpty &&
-        !propertyTypes
-            .map((type) => type.toLowerCase())
-            .contains(property.propertyType.toLowerCase())) {
+        !propertyTypes.contains(property.propertyType)) {
       return false;
     }
     if (minBedrooms != null) {
@@ -167,10 +139,6 @@ class UnifiedFilterModel {
     }
     if (maxBathrooms != null && property.bathrooms != null) {
       if (property.bathrooms! > maxBathrooms!) return false;
-    }
-    if (minRating != null) {
-      final rating = property.rating ?? 0;
-      if (rating < minRating!) return false;
     }
     if (city != null && city!.trim().isNotEmpty) {
       final cityVal = property.city.toLowerCase().trim();
@@ -195,21 +163,6 @@ class UnifiedFilterModel {
     return true;
   }
 
-  bool matchesHotel({
-    required double price,
-    double? rating,
-    String? propertyType,
-  }) {
-    if (minPrice != null && price < minPrice!) return false;
-    if (maxPrice != null && price > maxPrice!) return false;
-    if (minRating != null && (rating ?? 0) < minRating!) return false;
-    if (propertyTypes.isNotEmpty && propertyType != null) {
-      final normalized = propertyType.toLowerCase();
-      if (!propertyTypes.contains(normalized)) return false;
-    }
-    return true;
-  }
-
   List<String> activeTags() {
     final tags = <String>[];
     if (minPrice != null || maxPrice != null) {
@@ -218,17 +171,10 @@ class UnifiedFilterModel {
       tags.add('Rs $min - Rs $max');
     }
     if (propertyTypes.isNotEmpty) {
-      tags.addAll(propertyTypes.map((e) => e.replaceAll('_', ' ')));
-    }
-    if (minRating != null) {
-      tags.add('${minRating!.toStringAsFixed(1)}+ stars');
+      tags.addAll(propertyTypes.map((e) => e.wire.replaceAll('_', ' ')));
     }
     if (minBedrooms != null) tags.add('${minBedrooms!}+ beds');
     if (minBathrooms != null) tags.add('${minBathrooms!}+ baths');
-    if (instantBook == true) tags.add('Instant book');
-    if (selfCheckIn == true) tags.add('Self check-in');
-    if (petsAllowed == true) tags.add('Pets allowed');
-    if (smokingAllowed == true) tags.add('Smoking');
     if (city != null && city!.trim().isNotEmpty) tags.add(city!.trim());
     return tags;
   }
@@ -244,12 +190,7 @@ class UnifiedFilterModel {
         maxBedrooms == other.maxBedrooms &&
         minBathrooms == other.minBathrooms &&
         maxBathrooms == other.maxBathrooms &&
-        minRating == other.minRating &&
         sortBy == other.sortBy &&
-        instantBook == other.instantBook &&
-        selfCheckIn == other.selfCheckIn &&
-        petsAllowed == other.petsAllowed &&
-        smokingAllowed == other.smokingAllowed &&
         city == other.city &&
         radiusKm == other.radiusKm;
   }
@@ -263,17 +204,12 @@ class UnifiedFilterModel {
     maxBedrooms,
     minBathrooms,
     maxBathrooms,
-    minRating,
     sortBy,
-    instantBook,
-    selfCheckIn,
-    petsAllowed,
-    smokingAllowed,
     city,
     radiusKm,
   );
 
-  static bool _listEquals(List<String> a, List<String> b) {
+  static bool _listEquals(List<PropertyType> a, List<PropertyType> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
       if (a[i] != b[i]) return false;

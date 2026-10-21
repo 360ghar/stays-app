@@ -1,5 +1,40 @@
-import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/models/wire_enums.dart';
 import 'package:stays_app/app/utils/helpers/json_helpers.dart';
+
+/// The property a booking is for: `{id, title, city, country, cover_image_url}`.
+class BookingPropertySummary {
+  const BookingPropertySummary({
+    required this.id,
+    required this.title,
+    this.city,
+    this.country,
+    this.coverImageUrl,
+  });
+
+  factory BookingPropertySummary.fromJson(Map<String, dynamic> json) {
+    return BookingPropertySummary(
+      id: JsonHelpers.getInt(json['id']) ?? 0,
+      title: JsonHelpers.getStringOrDefault(json['title']),
+      city: JsonHelpers.getString(json['city']),
+      country: JsonHelpers.getString(json['country']),
+      coverImageUrl: JsonHelpers.getString(json['cover_image_url']),
+    );
+  }
+
+  final int id;
+  final String title;
+  final String? city;
+  final String? country;
+  final String? coverImageUrl;
+
+  Map<String, dynamic> toMap() => {
+    'id': id,
+    'title': title,
+    'city': city,
+    'country': country,
+    'cover_image_url': coverImageUrl,
+  };
+}
 
 class Booking {
   Booking({
@@ -12,74 +47,59 @@ class Booking {
     required this.guests,
     required this.nights,
     required this.totalAmount,
-    required this.bookingStatus,
-    required this.paymentStatus,
     required this.createdAt,
+    this.bookingStatus,
+    this.paymentStatus,
     this.property,
-    this.propertyTitle,
-    this.propertyCity,
-    this.propertyCountry,
-    this.propertyImageUrl,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
     final checkIn =
-        JsonHelpers.getDateTime(json['check_in_date']) ?? DateTime.now();
+        stayDate(json['check_in_date']) ??
+        (throw const FormatException('A booking needs check_in_date.'));
     final checkOut =
-        JsonHelpers.getDateTime(json['check_out_date']) ??
-        checkIn.add(const Duration(days: 1));
+        stayDate(json['check_out_date']) ??
+        (throw const FormatException('A booking needs check_out_date.'));
     final propertyData = json['property'];
-    Property? property;
-    if (propertyData is Map) {
-      property = _safePropertyFromJson(propertyData);
-    } else if (propertyData is List && propertyData.isNotEmpty) {
-      final first = propertyData.first;
-      if (first is Map) {
-        property = _safePropertyFromJson(first);
-      }
-    }
-
-    final propertyTitleSource =
-        json['property_title'] ??
-        _readPropertyField(propertyData, ['title', 'name']);
-    final propertyCitySource =
-        json['property_city'] ?? _readPropertyField(propertyData, ['city']);
-    final propertyCountrySource =
-        json['property_country'] ??
-        _readPropertyField(propertyData, ['country']);
-    final propertyImageSource =
-        json['property_image_url'] ??
-        json['property_main_image'] ??
-        _readPropertyField(propertyData, [
-          'property_image_url',
-          'main_image_url',
-          'coverImage',
-          'image_url',
-        ]);
-
     return Booking(
-      id: _parseInt(json['id']),
-      propertyId: _parseInt(json['property_id']),
-      userId: _parseInt(json['user_id']),
-      bookingReference: json['booking_reference']?.toString() ?? 'N/A',
+      id: JsonHelpers.getInt(json['id']) ?? 0,
+      propertyId: JsonHelpers.getInt(json['property_id']) ?? 0,
+      userId: JsonHelpers.getInt(json['user_id']) ?? 0,
+      bookingReference: JsonHelpers.getStringOrDefault(
+        json['booking_reference'],
+      ),
       checkInDate: checkIn,
       checkOutDate: checkOut,
-      guests: _parseInt(json['guests'], fallback: 1),
-      nights: _parseInt(
-        json['nights'],
-        fallback: checkOut.difference(checkIn).inDays.clamp(1, 365),
-      ),
-      totalAmount: _parseDouble(json['total_amount']),
-      bookingStatus: json['booking_status']?.toString() ?? 'pending',
-      paymentStatus: json['payment_status']?.toString() ?? 'pending',
-      createdAt: JsonHelpers.getDateTime(json['created_at']) ?? DateTime.now(),
-      property: property,
-      propertyTitle: _stringOrNull(propertyTitleSource),
-      propertyCity: _stringOrNull(propertyCitySource),
-      propertyCountry: _stringOrNull(propertyCountrySource),
-      propertyImageUrl: _stringOrNull(propertyImageSource),
+      guests: JsonHelpers.getInt(json['guests']) ?? 1,
+      nights:
+          JsonHelpers.getInt(json['nights']) ??
+          checkOut.difference(checkIn).inDays,
+      totalAmount: JsonHelpers.getDouble(json['total_amount']) ?? 0,
+      // An unknown status reads as null (and is logged). It is not turned
+      // into a real status.
+      bookingStatus: BookingStatus.fromJson(json['booking_status']),
+      paymentStatus: PaymentStatus.fromJson(json['payment_status']),
+      createdAt:
+          JsonHelpers.getDateTime(json['created_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      property: propertyData is Map
+          ? BookingPropertySummary.fromJson(
+              Map<String, dynamic>.from(propertyData),
+            )
+          : null,
     );
   }
+
+  /// A stay date. The backend keeps it as midnight UTC. The calendar date is
+  /// the value, so it is read from the UTC date and not shifted by the
+  /// device time zone.
+  static DateTime? stayDate(Object? value) {
+    final parsed = JsonHelpers.getDateTime(value);
+    if (parsed == null) return null;
+    final utc = parsed.toUtc();
+    return DateTime(utc.year, utc.month, utc.day);
+  }
+
   final int id;
   final int propertyId;
   final int userId;
@@ -89,33 +109,27 @@ class Booking {
   final int guests;
   final int nights;
   final double totalAmount;
-  final String bookingStatus;
-  final String paymentStatus;
+  final BookingStatus? bookingStatus;
+  final PaymentStatus? paymentStatus;
   final DateTime createdAt;
-  final Property? property;
-  final String? propertyTitle;
-  final String? propertyCity;
-  final String? propertyCountry;
-  final String? propertyImageUrl;
+  final BookingPropertySummary? property;
 
-  String get displayTitle => property?.name ?? propertyTitle ?? 'Stay';
+  String get displayTitle {
+    final title = property?.title ?? '';
+    return title.isEmpty ? 'Stay' : title;
+  }
 
-  String get displayImage => property?.displayImage ?? propertyImageUrl ?? '';
+  String get displayImage => property?.coverImageUrl ?? '';
 
   String get displayLocation {
-    final city = property?.city ?? propertyCity;
-    final country = property?.country ?? propertyCountry;
-    if ((city == null || city.isEmpty) &&
-        (country == null || country.isEmpty)) {
-      return '';
-    }
-    if (city != null &&
-        city.isNotEmpty &&
-        country != null &&
-        country.isNotEmpty) {
-      return '$city, $country';
-    }
-    return (city ?? country) ?? '';
+    final city = property?.city;
+    final country = property?.country;
+    final hasCity = city != null && city.isNotEmpty;
+    final hasCountry = country != null && country.isNotEmpty;
+    if (hasCity && hasCountry) return '$city, $country';
+    if (hasCity) return city;
+    if (hasCountry) return country;
+    return '';
   }
 
   Map<String, dynamic> toMap() {
@@ -129,63 +143,10 @@ class Booking {
       'guests': guests,
       'nights': nights,
       'total_amount': totalAmount,
-      'booking_status': bookingStatus,
-      'payment_status': paymentStatus,
+      'booking_status': bookingStatus?.wire,
+      'payment_status': paymentStatus?.wire,
       'created_at': JsonHelpers.toUtcIso8601(createdAt),
-      'property_title': propertyTitle,
-      'property_city': propertyCity,
-      'property_country': propertyCountry,
-      'property_image_url': propertyImageUrl,
-      if (property != null) 'property': property!.toJson(),
+      if (property != null) 'property': property!.toMap(),
     };
-  }
-
-  static Property? _safePropertyFromJson(Map<dynamic, dynamic> value) {
-    try {
-      final mapped = value.map((key, val) => MapEntry(key.toString(), val));
-      return Property.fromJson(Map<String, dynamic>.from(mapped));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  static String? _stringOrNull(dynamic value) {
-    if (value == null) return null;
-    if (value is String) return value;
-    if (value is num || value is bool) return value.toString();
-    if (value is List) {
-      return value.whereType<String>().join(', ');
-    }
-    return value.toString();
-  }
-
-  static dynamic _readPropertyField(dynamic source, List<String> keys) {
-    if (source is List && source.isNotEmpty) {
-      return _readPropertyField(source.first, keys);
-    }
-    if (source is Map) {
-      for (final key in keys) {
-        if (source.containsKey(key) && source[key] != null) {
-          return source[key];
-        }
-      }
-    }
-    return null;
-  }
-
-  static int _parseInt(dynamic value, {int fallback = 0}) {
-    if (value == null) return fallback;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    final parsed = int.tryParse(value.toString());
-    return parsed ?? fallback;
-  }
-
-  static double _parseDouble(dynamic value, {double fallback = 0}) {
-    if (value == null) return fallback;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    final parsed = double.tryParse(value.toString());
-    return parsed ?? fallback;
   }
 }

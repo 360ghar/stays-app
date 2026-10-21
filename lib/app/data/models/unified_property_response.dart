@@ -1,12 +1,14 @@
+import 'cursor_page.dart';
 import 'property_model.dart';
 
-/// Cursor-paginated response envelope.
+/// One page of properties from `GET /api/v1/properties` or `GET /api/v1/swipes`.
 ///
 /// Backend contract (source of truth):
-///   {items: [...], next_cursor: base64-or-null, has_more: bool, limit: int}
+///   {items: [...], next_cursor: string-or-null, has_more: bool, limit: int,
+///    total: int-or-null}
 ///
 /// `next_cursor` is null on the terminal page. End-of-list is detected via
-/// `has_more == false`. Cursor tokens are opaque base64; never decode them.
+/// `has_more == false`. Cursor tokens are opaque; never decode them.
 class UnifiedPropertyResponse {
   UnifiedPropertyResponse({
     required this.items,
@@ -14,38 +16,35 @@ class UnifiedPropertyResponse {
     required this.hasMore,
     required this.limit,
     this.total,
-    this.filters,
+    this.noStore = false,
   });
 
-  factory UnifiedPropertyResponse.fromJson(Map<String, dynamic> json) {
-    final rawItems = json['items'] as List?;
-    final props =
-        rawItems
-            ?.map((e) => Property.fromJson(Map<String, dynamic>.from(e)))
-            .toList() ??
-        <Property>[];
-    final nextCursor = json['next_cursor'] as String?;
-    final hasMore = (json['has_more'] as bool?) ?? (nextCursor != null);
-    final resolvedLimit = (json['limit'] as num?)?.toInt() ?? 20;
-    final resolvedTotal = json['total'] as int?;
-    final filtersApplied = json['filters_applied'] ?? json['filters'];
+  /// Reads a `CursorPage[Property]` body. [noStore] is true when the response
+  /// said `Cache-Control: no-store`.
+  factory UnifiedPropertyResponse.fromJson(
+    Object? json, {
+    bool noStore = false,
+  }) {
+    final page = CursorPage.fromJson(json, Property.fromJson);
     return UnifiedPropertyResponse(
-      items: props,
-      nextCursor: nextCursor,
-      hasMore: hasMore,
-      limit: resolvedLimit,
-      total: resolvedTotal,
-      filters: filtersApplied is Map
-          ? Map<String, dynamic>.from(filtersApplied)
-          : null,
+      items: page.items,
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore,
+      limit: page.limit,
+      total: page.total,
+      noStore: noStore,
     );
   }
+
   final List<Property> items;
   final String? nextCursor;
   final bool hasMore;
   final int limit;
   final int? total;
-  final Map<String, dynamic>? filters;
+
+  /// True when the response said `Cache-Control: no-store`. It must not be
+  /// written to a local cache.
+  final bool noStore;
 
   /// True when the server indicates more pages exist and a cursor is
   /// available. Both flags must agree before paging: [hasMore] is the
@@ -53,13 +52,4 @@ class UnifiedPropertyResponse {
   /// the server expects on the next call. If they disagree, treat it as
   /// "end of list" rather than risk an infinite loop or a missed page.
   bool get hasNextPage => hasMore && nextCursor != null;
-
-  Map<String, dynamic> toJson() => {
-    'items': items.map((e) => e.toJson()).toList(),
-    'next_cursor': nextCursor,
-    'has_more': hasMore,
-    'limit': limit,
-    if (total != null) 'total': total,
-    if (filters != null) 'filters': filters,
-  };
 }

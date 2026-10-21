@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../data/models/property_model.dart';
 import '../../theme/theme_extensions.dart';
 import '../common/animated_widgets.dart';
 import '../common/animated_favorite_button.dart';
+import '../common/cached_image.dart';
 
 class PropertyGridCard extends StatelessWidget {
   const PropertyGridCard({
@@ -113,44 +112,13 @@ class PropertyGridCard extends StatelessWidget {
 
   Widget _buildImage(BuildContext context) {
     final heroTag = '${heroPrefix ?? 'grid'}-${property.id}';
-    final colors = Theme.of(context).colorScheme;
-    final imageUrl = property.displayImage;
     final overlayInset = isCompact ? 12.0 : 14.0;
     // Use 4/3 ratio for larger images instead of 3/2
     final aspectRatio = isCompact ? 1.9 : 4 / 3;
 
-    Widget placeholder() {
-      return Container(
-        color: colors.surfaceContainerHighest.withValues(alpha: 0.35),
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.hotel,
-          size: 48,
-          color: colors.onSurface.withValues(alpha: 0.5),
-        ),
-      );
-    }
-
-    final image = imageUrl != null && imageUrl.isNotEmpty
-        ? CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Shimmer.fromColors(
-              baseColor: colors.surfaceContainerHighest,
-              highlightColor: colors.surface,
-              child: Container(color: colors.surface),
-            ),
-            errorWidget: (_, _, _) => Container(
-              color: colors.surfaceContainerHighest,
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.photo,
-                color: colors.onSurface.withValues(alpha: 0.5),
-                size: 32,
-              ),
-            ),
-          )
-        : placeholder();
+    // Canonical image fallback lives in [CachedImage]; the local
+    // placeholder()/Shimmer/errorWidget blocks were removed in favor of it.
+    final image = CachedImage(imageUrl: property.displayImage);
 
     return ClipRRect(
       borderRadius: BorderRadius.only(

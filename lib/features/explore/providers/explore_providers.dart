@@ -1,0 +1,277 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:stays_app/app/data/models/property_model.dart';
+import 'package:stays_app/app/data/repositories/properties_repository.dart';
+import 'package:stays_app/app/data/repositories/wishlist_repository.dart';
+import 'package:stays_app/app/data/services/location_service.dart';
+import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/providers/data_providers.dart';
+import 'package:stays_app/core/providers/favorites_provider.dart';
+import 'package:stays_app/features/wishlist/providers/wishlist_providers.dart';
+import 'package:stays_app/core/providers/session_provider.dart';
+
+// ---------------------------------------------------------------------------
+// Pure helpers (unit-testable, no GetX / no Flutter)
+// ---------------------------------------------------------------------------
+
+String normalizeCity(String value) => value.toLowerCase().trim();
+
+String greetingFor(DateTime now) {
+  final hour = now.hour;
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+Property? nearestOf(List<Property> props) {
+  Property? nearest;
+  double minDistance = double.infinity;
+  for (final property in props) {
+    final distance = property.distanceKm;
+    if (distance != null && distance < minDistance) {
+      minDistance = distance;
+      nearest = property;
+    }
+  }
+  return nearest;
+}
+
+({List<Property> inCity, List<Property> nearby}) partitionExplore(
+  List<Property> props,
+  String selectedCity,
+) {
+  final target = normalizeCity(selectedCity);
+  final inCity = <Property>[];
+  final nearby = <Property>[];
+  for (final property in props) {
+    if (normalizeCity(property.city) == target) {
+      inCity.add(property);
+    } else {
+      nearby.add(property);
+    }
+  }
+  int byDistance(Property a, Property b) {
+    final da = a.distanceKm ?? double.maxFinite;
+    final db = b.distanceKm ?? double.maxFinite;
+    return da.compareTo(db);
+  }
+
+  inCity.sort(byDistance);
+  nearby.sort(byDistance);
+  return (inCity: inCity, nearby: nearby);
+}
+
+// ---------------------------------------------------------------------------
+// UI state
+// ---------------------------------------------------------------------------
+
+class ExploreUiState {
+  const ExploreUiState({
+    this.popular = const [],
+    this.nearby = const [],
+    this.isLoading = true,
+    this.error = '',
+    this.isOffline = false,
+    this.showingCached = false,
+    this.locationName = '',
+    this.city = '',
+  });
+  final List<Property> popular;
+  final List<Property> nearby;
+  final bool isLoading;
+  final String error;
+  final bool isOffline;
+  final bool showingCached;
+  final String locationName;
+  final String city;
+
+  Property? get featured => nearestOf([...popular, ...nearby]);
+
+  List<Property> get popularExcludingFeatured {
+    final featuredId = featured?.id;
+    if (featuredId == null) return popular;
+    return popular.where((p) => p.id != featuredId).toList();
+  }
+
+  List<Property> get nearbyExcludingFeatured {
+    final featuredId = featured?.id;
+    if (featuredId == null) return nearby;
+    return nearby.where((p) => p.id != featuredId).toList();
+  }
+
+  ExploreUiState copyWith({
+    List<Property>? popular,
+    List<Property>? nearby,
+    bool? isLoading,
+    String? error,
+    bool? isOffline,
+    bool? showingCached,
+    String? locationName,
+    String? city,
+  }) {
+    return ExploreUiState(
+      popular: popular ?? this.popular,
+      nearby: nearby ?? this.nearby,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
+      isOffline: isOffline ?? this.isOffline,
+      showingCached: showingCached ?? this.showingCached,
+      locationName: locationName ?? this.locationName,
+      city: city ?? this.city,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Notifier
+// ---------------------------------------------------------------------------
+
+final exploreProvider = NotifierProvider<ExploreNotifier, ExploreUiState>(
+  ExploreNotifier.new,
+);
+
+class ExploreNotifier extends Notifier<ExploreUiState> with AccountBound {
+  @override
+  ExploreUiState build() {
+    // Signed out: nothing to load. A new account starts from an empty state
+    // (the results carry per-account like flags).
+    if (watchAccount() == null) return const ExploreUiState(isLoading: false);
+    unawaited(Future(() => refresh()));
+    return const ExploreUiState();
+  }
+
+  PropertiesRepository get _repo => ref.watch(propertiesRepositoryProvider);
+
+  LocationService get _location => ref.watch(locationServiceProvider);
+
+  WishlistRepository get _wishlist => ref.watch(wishlistRepositoryProvider);
+
+  String get _selectedCity {
+    final location = _location;
+    final city = location.currentCity.isNotEmpty
+        ? location.currentCity
+        : location.locationName.split(',').last;
+    return city.trim();
+  }
+
+  Future<void> refresh() async {
+    final sameAccount = accountGuard();
+    state = state.copyWith(isLoading: true, error: '');
+    try {
+      final resp = await _repo.explore(limit: 30, radiusKm: 100);
+      if (!sameAccount()) return;
+      _applyProps(resp.items, cached: false);
+    } catch (e, s) {
+      if (!sameAccount()) return;
+      AppLogger.error('Explore v2: load failed', e, s);
+      final cached = _cachedFallback();
+      if (cached != null && cached.isNotEmpty) {
+        _applyProps(cached, cached: true);
+        state = state.copyWith(
+          error: 'Could not refresh. Showing saved stays.',
+        );
+        return;
+      }
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Unable to load stays. Pull down to retry.',
+        isOffline: true,
+      );
+    }
+  }
+
+  List<Property>? _cachedFallback() {
+    try {
+      final location = _location;
+      return _repo
+          .getOfflineExploreResults(
+            lat: location.latitude,
+            lng: location.longitude,
+            limit: 30,
+            radiusKm: 100,
+          )
+          ?.items;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _applyProps(List<Property> props, {required bool cached}) {
+    ref
+        .read(favoritesProvider.notifier)
+        .addAll(
+          props.where((p) => p.isFavorite || p.liked == true).map((p) => p.id),
+        );
+    final parts = partitionExplore(props, _selectedCity);
+    final location = _location;
+    state = ExploreUiState(
+      popular: parts.inCity,
+      nearby: parts.nearby,
+      isLoading: false,
+      showingCached: cached,
+      locationName: location.locationName,
+      city: _selectedCity,
+    );
+  }
+
+  Future<void> useMyLocation() async {
+    final location = _location;
+    state = state.copyWith(isLoading: true);
+    try {
+      location.clearSelectedLocation();
+      await location.updateLocation(ensurePrecise: true);
+    } catch (e, s) {
+      AppLogger.error('Explore v2: location failed', e, s);
+    }
+    await refresh();
+  }
+
+  bool isFavorite(int id) => ref.watch(favoritesProvider).contains(id);
+
+  final Set<int> _togglingFavorites = <int>{};
+
+  Future<void> toggleFavorite(Property property) async {
+    // One request per property at a time: two failing taps would otherwise
+    // roll back to different states.
+    if (!_togglingFavorites.add(property.id)) return;
+    final sameAccount = accountGuard();
+    final favorites = ref.read(favoritesProvider.notifier);
+    final wishlist = _wishlist;
+    final nowFavorite = favorites.isFavorite(property.id);
+    _setLocalFavorite(property.id, !nowFavorite);
+    try {
+      if (nowFavorite) {
+        favorites.removeFavorite(property.id);
+        await wishlist.remove(property.id);
+      } else {
+        favorites.addFavorite(property.id);
+        await wishlist.add(property.id);
+      }
+      // The wishlist screen keeps its state; make it read the server again.
+      ref.invalidate(wishlistProvider);
+    } catch (e, s) {
+      if (!sameAccount()) return;
+      AppLogger.error('Explore v2: favorite toggle failed', e, s);
+      _setLocalFavorite(property.id, nowFavorite);
+      if (nowFavorite) {
+        favorites.addFavorite(property.id);
+      } else {
+        favorites.removeFavorite(property.id);
+      }
+    } finally {
+      _togglingFavorites.remove(property.id);
+    }
+  }
+
+  void _setLocalFavorite(int id, bool favorite) {
+    List<Property> mark(List<Property> list) => list
+        .map((p) => p.id == id ? p.copyWith(isFavorite: favorite) : p)
+        .toList();
+    state = state.copyWith(
+      popular: mark(state.popular),
+      nearby: mark(state.nearby),
+    );
+  }
+}

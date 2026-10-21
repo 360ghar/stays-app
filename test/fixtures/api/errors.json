@@ -1,0 +1,73 @@
+{
+  "invalid_date_range": {
+    "error": {
+      "code": "INVALID_DATE_RANGE",
+      "details": {},
+      "message": "The stay must cover at least one night."
+    }
+  },
+  "not_found": {
+    "error": {
+      "code": "PROPERTY_NOT_FOUND",
+      "details": {},
+      "message": "Property not found."
+    }
+  },
+  "pricing_unavailable": {
+    "error": {
+      "code": "PRICING_UNAVAILABLE",
+      "details": {},
+      "message": "This stay has no nightly rate."
+    }
+  },
+  "rate_limited": {
+    "error": {
+      "code": "RATE_LIMIT_EXCEEDED",
+      "details": {},
+      "message": "Too many requests."
+    }
+  },
+  "server": {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "details": {},
+      "message": "An unexpected error occurred"
+    }
+  },
+  "unauthorized": {
+    "error": {
+      "code": "TOKEN_INVALID",
+      "details": {},
+      "message": "The token is not valid."
+    }
+  },
+  "validation": {
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "details": {
+        "fields": [
+          {
+            "field": "body.primary_guest_email",
+            "msg": "value is not a valid email address",
+            "type": "value_error"
+          },
+          {
+            "field": "query.radius",
+            "msg": "Input should be a valid integer",
+            "type": "int_parsing"
+          }
+        ]
+      },
+      "message": "Request validation failed"
+    }
+  },
+  "validation_no_fields": {
+    "error": {
+      "code": "INVALID_CURSOR",
+      "details": {
+        "fields": []
+      },
+      "message": "Cursor does not match"
+    }
+  }
+}

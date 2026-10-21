@@ -4,14 +4,21 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:get/get.dart';
-import 'package:stays_app/app/routes/app_routes.dart';
 import 'package:stays_app/app/utils/logger/app_logger.dart';
+import 'package:stays_app/core/router/app_router.dart';
 
-class DeepLinkService extends GetxService {
+class DeepLinkService {
+  factory DeepLinkService() => _shared;
+  DeepLinkService._internal() {
+    unawaited(_initDeepLinks());
+  }
+
+  // Shared instance so the whole app shares one deep-link subscription.
+  static final DeepLinkService _shared = DeepLinkService._internal();
+
   StreamSubscription<Uri?>? _sub;
   final AppLinks _appLinks = AppLinks();
-  final Rxn<String> pendingDeepLink = Rxn<String>();
+  final ValueNotifier<String?> pendingDeepLink = ValueNotifier<String?>(null);
   String? _lastHandledUri;
   DateTime? _lastHandledAt;
 
@@ -23,16 +30,10 @@ class DeepLinkService extends GetxService {
 
   static const String _baseUrl = 'https://the360ghar.com';
 
-  @override
-  void onInit() {
-    super.onInit();
-    _initDeepLinks();
-  }
-
-  @override
-  void onClose() {
-    _sub?.cancel();
-    super.onClose();
+  /// Call when the owner (DI scope) is disposed.
+  void dispose() {
+    unawaited(_sub?.cancel());
+    pendingDeepLink.dispose();
   }
 
   Future<void> _initDeepLinks() async {
@@ -91,10 +92,19 @@ class DeepLinkService extends GetxService {
   /// tokens or other sensitive data that should never be written to the logs.
   static Uri _redact(Uri uri) => uri.replace(query: '', fragment: '');
 
-  String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
+  static String? mapToInternalPath(Uri uri) => _mapToInternalPath(uri);
 
-  String? _mapToInternalPath(Uri uri) {
-    var segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  /// The custom scheme of the app. The backend fallback page launches
+  /// `stays360://<entity>/<id>`, where the entity is the host. The same scheme
+  /// carries the sign-in callback `stays360://login-callback`, which maps to
+  /// nothing here.
+  static const String _customScheme = 'stays360';
+
+  static String? _mapToInternalPath(Uri uri) {
+    var segments = [
+      if (uri.scheme == _customScheme && uri.host.isNotEmpty) uri.host,
+      ...uri.pathSegments.where((s) => s.isNotEmpty),
+    ];
     if (segments.isEmpty) return null;
 
     // Links may be namespaced under a leading "stays" prefix
@@ -122,27 +132,27 @@ class DeepLinkService extends GetxService {
     return RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id);
   }
 
-  String? _buildListingPath(String listingId) {
+  static String? _buildListingPath(String listingId) {
     if (!_isValidRouteId(listingId)) return null;
-    return Routes.listingDetail.replaceAll(':id', listingId);
+    return AppPaths.listing(listingId);
   }
 
-  String? _buildChatPath(String conversationId) {
-    if (!_isValidRouteId(conversationId)) return null;
-    return Routes.chat.replaceAll(':conversationId', conversationId);
+  /// The chat of a stay is the thread of its booking, so the id is the
+  /// numeric booking id.
+  static String? _buildChatPath(String bookingId) {
+    if (!RegExp(r'^\d{1,18}$').hasMatch(bookingId)) return null;
+    return AppPaths.chat(bookingId);
   }
 
   Future<void> _navigateToPath(String path) async {
     pendingDeepLink.value = path;
     await Future.delayed(const Duration(milliseconds: 500));
     try {
-      await Get.toNamed(path);
-      // If we actually landed on the target (an AuthMiddleware did not bounce
-      // us to login), the pending link is consumed — clear it so it can't be
-      // replayed later. On an auth redirect it is intentionally left set.
-      if (Get.currentRoute == path) {
-        pendingDeepLink.value = null;
-      }
+      // The v2 guard preserves the target via ?from= when it bounces to
+      // login, so the pending link is always consumed here.
+      await v2RouterInstance().push(path);
+      pendingDeepLink.value = null;
+      return;
     } catch (e) {
       AppLogger.error('🔗 Failed to navigate to deep link path: $path', e);
     }
@@ -161,7 +171,7 @@ class DeepLinkService extends GetxService {
     final path = consumePendingDeepLink();
     if (path != null) {
       Future.delayed(const Duration(milliseconds: 300), () {
-        Get.toNamed(path);
+        unawaited(v2RouterInstance().push(path));
       });
     }
   }
@@ -169,5 +179,5 @@ class DeepLinkService extends GetxService {
   static String listingUrl(String listingId) =>
       '$_baseUrl/stays/listing/$listingId';
 
-  static String chatUrl(String chatId) => '$_baseUrl/stays/chat/$chatId';
+  static String chatUrl(int bookingId) => '$_baseUrl/stays/chat/$bookingId';
 }

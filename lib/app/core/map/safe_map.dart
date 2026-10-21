@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+export 'package:stays_app/app/utils/helpers/json_helpers.dart'
+    show asDouble, asInt, asDateTime;
+
 /// Whether `maplibre_gl` can actually render on the current platform.
 ///
 /// MapLibre GL supports Android, iOS and Web. It does NOT support Windows,

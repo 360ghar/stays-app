@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:get/get.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/services/storage_service.dart';
@@ -56,17 +56,31 @@ class TokenInfo {
   }
 }
 
-class TokenService extends GetxService {
+class TokenService {
+  /// Canonical write path for tokens: every write (login, OTP verify, the
+  /// BaseProvider authenticator after a Supabase refresh) goes through
+  /// [storeTokens]. Never call `StorageService.saveTokens` directly. A
+  /// `storeTokens` failure ends that refresh; there is no storage fallback.
+  ///
+  /// Refresh dedup: callers of the public [refresh] share one network
+  /// round-trip via [_inFlightRefresh]. The BaseProvider authenticator
+  /// refreshes through Supabase directly and does not use it.
   TokenService({StorageService? storageService})
-    : _storageService = storageService;
+    : _storageService = storageService {
+    unawaited(_initialize());
+  }
 
-  static TokenService get I => Get.find<TokenService>();
+  factory TokenService.shared() => _shared;
+
+  // Shared instance so the whole app shares one refresh timer and one auth
+  // state.
+  static final TokenService _shared = TokenService();
 
   StorageService? _storageService;
 
   TokenInfo? _currentToken;
   Timer? _refreshTimer;
-  final RxBool isAuthenticated = false.obs;
+  final ValueNotifier<bool> isAuthenticated = ValueNotifier<bool>(false);
   final Completer<void> _ready = Completer<void>();
   Future<bool>? _inFlightRefresh;
   bool _initializationComplete = false;
@@ -85,16 +99,10 @@ class TokenService extends GetxService {
   /// Use this for synchronous checks when you need to know if the service is ready.
   bool get isReady => _initializationComplete && _initializationError == null;
 
-  @override
-  void onInit() {
-    super.onInit();
-    unawaited(_initialize());
-  }
-
-  @override
-  void onClose() {
+  /// Call when the owner (DI scope) is disposed. Stops the refresh timer.
+  void dispose() {
     _refreshTimer?.cancel();
-    super.onClose();
+    isAuthenticated.dispose();
   }
 
   Future<void> storeTokens({
@@ -258,10 +266,12 @@ class TokenService extends GetxService {
   Future<void> _initialize() async {
     try {
       if (_storageService == null) {
+        // Real boot path: default to the shared store and wait for its async
+        // init. An explicitly injected store (tests, scoped graphs) is
+        // assumed ready by its owner.
+        _storageService = StorageService();
         await StorageService.ready;
-        _storageService = Get.find<StorageService>();
       }
-
       await _loadStoredTokens();
 
       if (isAuthenticated.value) {

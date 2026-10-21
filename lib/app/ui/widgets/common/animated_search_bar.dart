@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_animations.dart';
 
@@ -83,13 +84,13 @@ class _AnimatedSearchBarState extends State<AnimatedSearchBar>
     super.didUpdateWidget(oldWidget);
     if (widget.isExpanded != oldWidget.isExpanded) {
       if (widget.isExpanded) {
-        _controller.forward();
+        unawaited(_controller.forward());
         // Auto-focus when expanded
         Future.delayed(const Duration(milliseconds: 100), () {
           _focusNode.requestFocus();
         });
       } else {
-        _controller.reverse();
+        unawaited(_controller.reverse());
         _focusNode.unfocus();
         _textController.clear();
       }
@@ -266,7 +267,7 @@ class _AnimatedClearButtonState extends State<_AnimatedClearButton>
       CurvedAnimation(parent: _controller, curve: AppAnimations.easeOut),
     );
 
-    _controller.forward();
+    unawaited(_controller.forward());
   }
 
   @override
@@ -284,10 +285,12 @@ class _AnimatedClearButtonState extends State<_AnimatedClearButton>
         child: IconButton(
           icon: const Icon(Icons.close_rounded),
           onPressed: () {
-            _controller.reverse().then((_) {
-              widget.onPressed();
-              _controller.forward();
-            });
+            unawaited(
+              _controller.reverse().then((_) {
+                widget.onPressed();
+                unawaited(_controller.forward());
+              }),
+            );
           },
           iconSize: 20,
           padding: EdgeInsets.zero,
@@ -355,9 +358,9 @@ class _ExpandingSearchFieldState extends State<ExpandingSearchField>
     setState(() {
       _isExpanded = !_isExpanded;
       if (_isExpanded) {
-        _controller.forward();
+        unawaited(_controller.forward());
       } else {
-        _controller.reverse();
+        unawaited(_controller.reverse());
         widget.onClose?.call();
       }
     });

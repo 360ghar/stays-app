@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:get_storage/get_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/property_model.dart';
 import '../models/unified_property_response.dart';
@@ -9,20 +10,38 @@ import '../../utils/logger/app_logger.dart';
 
 /// Service for caching property data locally for offline access.
 /// Uses a stale-while-revalidate pattern.
+///
+/// Rules this cache keeps:
+/// - It never holds an owner contact number: [Property.toJson] leaves
+///   `owner_contact` out.
+/// - Each store has its own schema version. An entry of another version is
+///   ignored.
+/// - Every key carries the signed-in account. One account never reads the
+///   entries of another.
+/// - The whole cache is purged when the user signs out.
+/// - A response that says `Cache-Control: no-store` is not written (the
+///   caller checks `noStore`).
 class PropertyCacheService {
-  static const String _boxName = 'property_cache';
-  static const String _exploreKey = 'explore_results';
-  static const String _detailsPrefix = 'property_';
-  static const String _recommendationsKey = 'recommendations';
+  factory PropertyCacheService() => _shared;
+  PropertyCacheService._internal();
+
+  // Shared instance so the whole app shares one cache.
+  static final PropertyCacheService _shared = PropertyCacheService._internal();
+
+  /// Prefix of every key of this cache. Builds before the account scope
+  /// wrote `pc_` keys that could hold owner contact numbers. [init] removes
+  /// them.
+  static const String _legacyPrefix = 'pc_';
+  static const String _keyPrefix = 'pcache_';
   static const String _timestampSuffix = '_timestamp';
-  static const String _accessOrderKey = '_lru_access_order';
 
   /// Cache expiry duration (2 hours)
   static const Duration cacheExpiry = Duration(hours: 2);
 
-  /// Bump when the cached payload shape changes; old-shape entries are
-  /// ignored rather than misparsed.
-  static const int schemaVersion = 2;
+  /// Schema version of each store. Bump the one whose payload shape changes.
+  static const int exploreSchemaVersion = 3;
+  static const int detailsSchemaVersion = 2;
+  static const int recommendationsSchemaVersion = 2;
 
   /// Maximum number of cached property details (LRU eviction)
   static const int maxCachedProperties = 100;
@@ -30,47 +49,101 @@ class PropertyCacheService {
   /// Maximum number of cached explore pages
   static const int maxCachedExplorePages = 10;
 
-  late final GetStorage _storage;
+  SharedPreferences? _prefs;
   bool _isInitialized = false;
+  StreamSubscription<AuthState>? _authSub;
+
+  /// The signed-in account, or `anon`. Tests replace it.
+  String Function() accountScope = _supabaseAccount;
+
+  static String _supabaseAccount() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id ?? 'anon';
+    } catch (_) {
+      return 'anon';
+    }
+  }
 
   /// Initialize the cache storage
   Future<void> init() async {
     if (_isInitialized) return;
-    await GetStorage.init(_boxName);
-    _storage = GetStorage(_boxName);
+    _prefs ??= await SharedPreferences.getInstance();
     _isInitialized = true;
+    await _removeLegacyKeys();
+    _authSub ??= _listenForSignOut();
     AppLogger.info('PropertyCacheService initialized');
   }
 
+  /// Stops watching the auth state.
+  void dispose() {
+    unawaited(_authSub?.cancel());
+    _authSub = null;
+  }
+
   void _ensureInitialized() {
-    if (!_isInitialized) {
+    if (!_isInitialized || _prefs == null) {
       throw StateError(
         'PropertyCacheService not initialized. Call init() first.',
       );
     }
   }
 
-  /// Cache explore results
+  Future<void> _removeLegacyKeys() async {
+    final legacy = _prefs!.getKeys().where((k) => k.startsWith(_legacyPrefix));
+    for (final key in legacy.toList()) {
+      await _prefs!.remove(key);
+    }
+  }
+
+  /// Purges the whole cache when the user signs out.
+  StreamSubscription<AuthState>? _listenForSignOut() {
+    try {
+      return Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+        if (state.event == AuthChangeEvent.signedOut) {
+          unawaited(clearAll());
+        }
+      });
+    } catch (e) {
+      AppLogger.warning('Property cache could not watch sign-out: $e');
+      return null;
+    }
+  }
+
+  /// The account the cache is scoped to now. A caller reads it before a
+  /// request and passes it back as `scope`: the write is dropped when the
+  /// account changed while the request ran.
+  String get scope => accountScope();
+
+  String get _scopePrefix => '$_keyPrefix${accountScope()}_';
+  String get _exploreKey => '${_scopePrefix}explore';
+  String get _detailsPrefix => '${_scopePrefix}property_';
+  String get _recommendationsKey => '${_scopePrefix}recommendations';
+  String get _accessOrderKey => '${_scopePrefix}lru_access_order';
+
+  /// Cache explore results. [variant] names the filters, radius and page size
+  /// of the request, so a page of one filter set is never read for another.
   Future<void> cacheExploreResults(
     UnifiedPropertyResponse response, {
     double? lat,
     double? lng,
     String? cursor,
+    String variant = '',
+    String? scope,
   }) async {
     _ensureInitialized();
+    if (response.noStore || (scope != null && scope != this.scope)) return;
     try {
-      final key = _buildExploreKey(lat, lng, cursor);
+      final key = _buildExploreKey(lat, lng, cursor, variant);
       final data = {
-        'schema_version': schemaVersion,
+        'schema_version': exploreSchemaVersion,
         'items': response.items.map((p) => p.toJson()).toList(),
         'nextCursor': response.nextCursor,
         'hasMore': response.hasMore,
         'limit': response.limit,
         if (response.total != null) 'total': response.total,
-        if (response.filters != null) 'filters': response.filters,
       };
-      await _storage.write(key, jsonEncode(data));
-      await _storage.write(
+      await _prefs!.setString(key, jsonEncode(data));
+      await _prefs!.setString(
         '$key$_timestampSuffix',
         DateTime.now().toIso8601String(),
       );
@@ -87,26 +160,26 @@ class PropertyCacheService {
     double? lat,
     double? lng,
     String? cursor,
+    String variant = '',
     bool ignoreExpiry = false,
   }) {
     _ensureInitialized();
     try {
-      final key = _buildExploreKey(lat, lng, cursor);
+      final key = _buildExploreKey(lat, lng, cursor, variant);
 
       if (!ignoreExpiry && _isCacheExpired(key)) {
         return null;
       }
 
-      final jsonStr = _storage.read<String>(key);
+      final jsonStr = _prefs!.getString(key);
       if (jsonStr == null) return null;
 
       final data = jsonDecode(jsonStr) as Map<String, dynamic>;
-      // Ignore entries written by an older schema version.
-      if (data['schema_version'] != schemaVersion) return null;
+      // Ignore entries written by another schema version.
+      if (data['schema_version'] != exploreSchemaVersion) return null;
       final items = (data['items'] as List)
           .map((json) => Property.fromJson(json as Map<String, dynamic>))
           .toList();
-      final rawFilters = data['filters'];
 
       return UnifiedPropertyResponse(
         items: items,
@@ -114,9 +187,6 @@ class PropertyCacheService {
         hasMore: (data['hasMore'] as bool?) ?? false,
         limit: (data['limit'] as num?)?.toInt() ?? items.length,
         total: (data['total'] as num?)?.toInt(),
-        filters: rawFilters is Map
-            ? Map<String, dynamic>.from(rawFilters)
-            : null,
       );
     } catch (e) {
       AppLogger.warning('Failed to read cached explore results: $e');
@@ -125,13 +195,24 @@ class PropertyCacheService {
   }
 
   /// Cache property details
-  Future<void> cachePropertyDetails(Property property) async {
+  Future<void> cachePropertyDetails(
+    Property property, {
+    bool noStore = false,
+    String? scope,
+  }) async {
     _ensureInitialized();
+    if (noStore || (scope != null && scope != this.scope)) return;
     try {
       await _evictOldPropertiesIfNeeded();
       final key = '$_detailsPrefix${property.id}';
-      await _storage.write(key, jsonEncode(property.toJson()));
-      await _storage.write(
+      await _prefs!.setString(
+        key,
+        jsonEncode({
+          'schema_version': detailsSchemaVersion,
+          'property': property.toJson(),
+        }),
+      );
+      await _prefs!.setString(
         '$key$_timestampSuffix',
         DateTime.now().toIso8601String(),
       );
@@ -152,12 +233,14 @@ class PropertyCacheService {
         return null;
       }
 
-      final jsonStr = _storage.read<String>(key);
+      final jsonStr = _prefs!.getString(key);
       if (jsonStr == null) return null;
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      if (data['schema_version'] != detailsSchemaVersion) return null;
       // Update access order asynchronously (fire-and-forget)
       unawaited(_updateAccessOrder(id));
 
-      return Property.fromJson(jsonDecode(jsonStr) as Map<String, dynamic>);
+      return Property.fromJson(data['property'] as Map<String, dynamic>);
     } catch (e) {
       AppLogger.warning('Failed to read cached property details: $e');
       return null;
@@ -165,12 +248,20 @@ class PropertyCacheService {
   }
 
   /// Cache recommendations
-  Future<void> cacheRecommendations(List<Property> properties) async {
+  Future<void> cacheRecommendations(
+    List<Property> properties, {
+    bool noStore = false,
+    String? scope,
+  }) async {
     _ensureInitialized();
+    if (noStore || (scope != null && scope != this.scope)) return;
     try {
-      final data = properties.map((p) => p.toJson()).toList();
-      await _storage.write(_recommendationsKey, jsonEncode(data));
-      await _storage.write(
+      final data = {
+        'schema_version': recommendationsSchemaVersion,
+        'items': properties.map((p) => p.toJson()).toList(),
+      };
+      await _prefs!.setString(_recommendationsKey, jsonEncode(data));
+      await _prefs!.setString(
         '$_recommendationsKey$_timestampSuffix',
         DateTime.now().toIso8601String(),
       );
@@ -188,11 +279,12 @@ class PropertyCacheService {
         return null;
       }
 
-      final jsonStr = _storage.read<String>(_recommendationsKey);
+      final jsonStr = _prefs!.getString(_recommendationsKey);
       if (jsonStr == null) return null;
 
-      final data = jsonDecode(jsonStr) as List;
-      return data
+      final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+      if (data['schema_version'] != recommendationsSchemaVersion) return null;
+      return (data['items'] as List)
           .map((json) => Property.fromJson(json as Map<String, dynamic>))
           .toList();
     } catch (e) {
@@ -201,25 +293,33 @@ class PropertyCacheService {
     }
   }
 
-  /// Clear all cached data
+  /// Clear all cached data of every account (only keys owned by this service).
   Future<void> clearAll() async {
     _ensureInitialized();
-    await _storage.erase();
+    for (final key
+        in _prefs!.getKeys().where((k) => k.startsWith(_keyPrefix)).toList()) {
+      await _prefs!.remove(key);
+    }
     AppLogger.info('Property cache cleared');
   }
 
   /// Clear expired cache entries
   Future<void> clearExpired() async {
     _ensureInitialized();
-    final allKeys = _storage.getKeys();
-    final keyList = allKeys is Iterable
-        ? allKeys.whereType<String>().toList()
-        : <String>[];
+    final keyList = _prefs!
+        .getKeys()
+        .where(
+          (k) =>
+              k.startsWith(_keyPrefix) &&
+              !k.endsWith(_timestampSuffix) &&
+              !k.endsWith('lru_access_order'),
+        )
+        .toList();
     if (keyList.isEmpty) return;
     for (final key in keyList) {
-      if (!key.endsWith(_timestampSuffix) && _isCacheExpired(key)) {
-        await _storage.remove(key);
-        await _storage.remove('$key$_timestampSuffix');
+      if (_isCacheExpired(key)) {
+        await _prefs!.remove(key);
+        await _prefs!.remove('$key$_timestampSuffix');
       }
     }
     AppLogger.info('Cleared expired cache entries');
@@ -237,13 +337,13 @@ class PropertyCacheService {
 
       for (final id in idsToRemove) {
         final key = '$_detailsPrefix$id';
-        await _storage.remove(key);
-        await _storage.remove('$key$_timestampSuffix');
+        await _prefs!.remove(key);
+        await _prefs!.remove('$key$_timestampSuffix');
       }
 
       // Update access order
       final newOrder = accessOrder.skip(toEvict).toList();
-      await _storage.write(_accessOrderKey, jsonEncode(newOrder));
+      await _prefs!.setString(_accessOrderKey, jsonEncode(newOrder));
 
       AppLogger.info('Evicted $toEvict old property cache entries');
     } catch (e) {
@@ -258,7 +358,7 @@ class PropertyCacheService {
       // Remove if exists and add to end (most recently accessed)
       accessOrder.remove(propertyId);
       accessOrder.add(propertyId);
-      await _storage.write(_accessOrderKey, jsonEncode(accessOrder));
+      await _prefs!.setString(_accessOrderKey, jsonEncode(accessOrder));
     } catch (e) {
       AppLogger.warning('Failed to update access order: $e');
     }
@@ -267,7 +367,7 @@ class PropertyCacheService {
   /// Get current LRU access order
   List<int> _getAccessOrder() {
     try {
-      final jsonStr = _storage.read<String>(_accessOrderKey);
+      final jsonStr = _prefs?.getString(_accessOrderKey);
       if (jsonStr == null) return [];
       final list = jsonDecode(jsonStr) as List;
       return list.map((e) => e as int).toList();
@@ -279,10 +379,7 @@ class PropertyCacheService {
   /// Get cache statistics for debugging/monitoring
   Map<String, dynamic> getCacheStats() {
     _ensureInitialized();
-    final allKeys = _storage.getKeys();
-    final keyList = allKeys is Iterable
-        ? allKeys.whereType<String>().toList()
-        : <String>[];
+    final keyList = _prefs!.getKeys().toList();
     final propertyKeys = keyList
         .where(
           (k) => k.startsWith(_detailsPrefix) && !k.endsWith(_timestampSuffix),
@@ -301,19 +398,24 @@ class PropertyCacheService {
     };
   }
 
-  String _buildExploreKey(double? lat, double? lng, String? cursor) {
+  String _buildExploreKey(
+    double? lat,
+    double? lng,
+    String? cursor,
+    String variant,
+  ) {
     final roundedLat = lat != null ? (lat * 100).round() / 100 : 'null';
     final roundedLng = lng != null ? (lng * 100).round() / 100 : 'null';
-    // Cursor tokens are opaque base64; hash them so the cache key stays short
+    // Cursor tokens are opaque; hash them so the cache key stays short
     // and stable. A null cursor represents the first page.
     final cursorKey = (cursor == null || cursor.isEmpty)
         ? 'first'
         : 'c${cursor.hashCode}';
-    return '${_exploreKey}_${roundedLat}_${roundedLng}_$cursorKey';
+    return '${_exploreKey}_${roundedLat}_${roundedLng}_${variant.hashCode}_$cursorKey';
   }
 
   bool _isCacheExpired(String key) {
-    final timestampStr = _storage.read<String>('$key$_timestampSuffix');
+    final timestampStr = _prefs!.getString('$key$_timestampSuffix');
     if (timestampStr == null) return true;
 
     try {

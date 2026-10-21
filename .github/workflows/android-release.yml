@@ -22,7 +22,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.2'
+          flutter-version: '3.47.4'
           channel: 'stable'
           cache: true
 
@@ -79,7 +79,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.2'
+          flutter-version: '3.47.4'
           channel: 'stable'
           cache: true
 
@@ -110,6 +110,15 @@ jobs:
       - name: Create key.properties
         run: >-
           echo -e "storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}\nkeyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}\nkeyAlias=${{ secrets.ANDROID_KEY_ALIAS }}\nstoreFile=keystore.jks" > android/key.properties
+
+      - name: Install Android API 37 platform
+        # permission_handler_android 14 compiles against API 37, which the
+        # runner image does not ship. Package is named android-37.0.
+        run: |-
+          SDKMANAGER="${ANDROID_HOME:-$ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager"
+          # The runner tool list may not know API 37 yet: refresh it first.
+          yes | "$SDKMANAGER" --update
+          yes | "$SDKMANAGER" "platforms;android-37.0" "build-tools;37.0.0"
 
       - name: Install dependencies
         run: flutter pub get

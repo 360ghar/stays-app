@@ -1,3 +1,29 @@
+/// Canonical safe-cast API. All dynamic JSON/nav-arg parsing goes through
+/// here so call sites never hand-cast (`(x as num?)?.toDouble()`) and never
+/// throw on malformed input.
+///
+/// - [asDouble] accepts num + numeric strings, else null.
+/// - [asInt] accepts num + numeric strings (via `int.tryParse`), else null.
+/// - [asDateTime] accepts ISO-8601 strings, epoch seconds/ms, DateTime;
+///   returns null instead of throwing. Callers show fallback UI on null.
+///
+/// Nullable returns keep caller-supplied fallbacks flexible:
+/// `asDouble(args['lat']) ?? serviceLat`, `asInt(x) ?? 0`.
+double? asDouble(dynamic value) => JsonHelpers.getDouble(value);
+
+/// See [asDouble]. Accepts num + numeric strings, else null.
+int? asInt(dynamic value) => JsonHelpers.getInt(value);
+
+/// See [asDouble]. Never throws: wraps parsing in try/catch, returns null
+/// on failure so the caller can render fallback UI.
+DateTime? asDateTime(dynamic value) {
+  try {
+    return JsonHelpers.getDateTime(value);
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Utility class for safe JSON parsing and serialization.
 ///
 /// Provides type-safe methods to extract values from JSON maps, with proper
@@ -132,7 +158,7 @@ class JsonHelpers {
 
   // ===== List Helpers =====
 
-  /// Safely extracts a List<String> from a JSON value.
+  /// Safely extracts a `List<String>` from a JSON value.
   /// Handles: List, comma-separated String, or single String.
   static List<String>? getStringList(dynamic value) {
     if (value == null) return null;
@@ -152,7 +178,7 @@ class JsonHelpers {
     return null;
   }
 
-  /// Safely extracts a List<int> from a JSON value.
+  /// Safely extracts a `List<int>` from a JSON value.
   static List<int>? getIntList(dynamic value) {
     if (value == null) return null;
     if (value is List) {
@@ -168,7 +194,7 @@ class JsonHelpers {
     return null;
   }
 
-  /// Safely extracts a List<Map<String, dynamic>> from a JSON value.
+  /// Safely extracts a `List<Map<String, dynamic>>` from a JSON value.
   static List<Map<String, dynamic>>? getMapList(dynamic value) {
     if (value == null) return null;
     if (value is List) {
@@ -196,7 +222,7 @@ class JsonHelpers {
 
   // ===== Map Helpers =====
 
-  /// Safely extracts a Map<String, dynamic> from a JSON value.
+  /// Safely extracts a `Map<String, dynamic>` from a JSON value.
   static Map<String, dynamic>? getMap(dynamic value) {
     if (value == null) return null;
     if (value is Map<String, dynamic>) return value;
@@ -219,35 +245,6 @@ class JsonHelpers {
     if (current is T) return current;
     return null;
   }
-
-  // ===== Response Unwrapping =====
-
-  /// Unwraps a standard API response to get the data field.
-  /// Handles: { data: {...} } or { data: [...] } or direct data.
-  static dynamic unwrapData(dynamic response) {
-    if (response == null) return null;
-    if (response is Map<String, dynamic>) {
-      // Try common envelope patterns
-      if (response.containsKey('data')) {
-        return response['data'];
-      }
-      if (response.containsKey('result')) {
-        return response['result'];
-      }
-      if (response.containsKey('results')) {
-        return response['results'];
-      }
-      // Return the map itself if no envelope
-      return response;
-    }
-    return response;
-  }
-
-  /// Unwraps a cursor-paginated response and returns the items plus cursor
-  /// metadata. (Helper removed — was added in the diff with no callers. Use
-  /// `UnifiedPropertyResponse.fromJson` directly when the migration lands.)
-  // ponytail: helper intentionally deleted; revive only when the first caller
-  // arrives, and model the result as a class so the contract is self-describing.
 
   // ===== ID Helpers =====
 

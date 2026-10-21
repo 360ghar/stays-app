@@ -2,99 +2,85 @@ import 'base_provider.dart';
 import '../../utils/exceptions/app_exceptions.dart';
 import '../models/booking_model.dart';
 import '../models/booking_pricing_model.dart';
+import '../models/cursor_page.dart';
+import '../models/message_model.dart';
 
 /// Typed client for the bookings API.
 ///
-/// Backend envelope contract: `{data: {...}}` or `{items: [...]}` — handled
-/// here so repositories and controllers never re-parse raw maps.
+/// Every success body is the resource itself and every list is a
+/// `CursorPage`. Errors reach the caller as an [ApiException] that carries the
+/// envelope `code`, for example `PRICING_UNAVAILABLE` or `PROPERTY_NOT_FOUND`.
 class BookingsProvider extends BaseProvider {
-  Future<Map<String, dynamic>> checkAvailability({
+  BookingsProvider({super.dio});
+
+  /// Checks the guest count against the property. Stay dates are not part of
+  /// the check, because overlapping bookings are allowed.
+  Future<BookingOccupancy> checkOccupancy({
     required int propertyId,
-    required String checkInIso,
-    required String checkOutIso,
     required int guests,
   }) async {
     final res = await post('/api/v1/bookings/check-availability', {
       'property_id': propertyId,
-      'check_in_date': checkInIso,
-      'check_out_date': checkOutIso,
       'guests': guests,
     });
-    return handleResponse(res, _unwrapDataMap);
+    return handleResponse(
+      res,
+      (json) => BookingOccupancy.fromMap(_asMap(json)),
+    );
   }
 
+  /// [checkIn] and [checkOut] are `YYYY-MM-DD`.
   Future<BookingPricingModel> calculatePricing({
     required int propertyId,
-    required String checkInIso,
-    required String checkOutIso,
+    required String checkIn,
+    required String checkOut,
     required int guests,
   }) async {
     final res = await post('/api/v1/bookings/calculate-pricing', {
       'property_id': propertyId,
-      'check_in_date': checkInIso,
-      'check_out_date': checkOutIso,
+      'check_in_date': checkIn,
+      'check_out_date': checkOut,
       'guests': guests,
     });
-    return handleResponse(res, (json) {
-      final map = _unwrapDataMap(json);
-      return BookingPricingModel.fromMap(map);
-    });
+    return handleResponse(
+      res,
+      (json) => BookingPricingModel.fromMap(_asMap(json)),
+    );
   }
 
-  Future<Booking> createBooking(Map<String, dynamic> payload) async {
-    final res = await post('/api/v1/bookings', payload);
-    return handleResponse(res, (json) {
-      final map = _unwrapDataMap(json);
-      final bookingMap = map['booking'];
-      return Booking.fromJson(
-        bookingMap is Map
-            ? Map<String, dynamic>.from(bookingMap)
-            : Map<String, dynamic>.from(map),
-      );
-    });
+  /// Creates a booking. A repeated [idempotencyKey] from the same caller
+  /// returns the first booking, so reuse the key when the guest retries the
+  /// same request by hand.
+  Future<Booking> createBooking(
+    Map<String, dynamic> payload, {
+    required String idempotencyKey,
+  }) async {
+    final res = await post(
+      '/api/v1/bookings',
+      payload,
+      headers: {'Idempotency-Key': idempotencyKey},
+    );
+    return handleResponse(res, (json) => Booking.fromJson(_asMap(json)));
   }
 
-  Future<List<Booking>> listBookings({String? cursor, int limit = 20}) async {
+  Future<CursorPage<Booking>> listBookings({
+    String? cursor,
+    int limit = 20,
+  }) async {
     final query = <String, dynamic>{
       if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
       'limit': '$limit',
     };
     final res = await get('/api/v1/bookings', query: query);
-    return handleResponse(res, (json) {
-      final map = _unwrapDataMap(json);
-      final candidates = map['items'] ?? map['data'];
-      final rawList = candidates is List ? candidates : <dynamic>[];
-      return rawList
-          .whereType<Map>()
-          .map((item) => Booking.fromJson(Map<String, dynamic>.from(item)))
-          .toList();
-    });
+    return handleResponse(
+      res,
+      (json) => CursorPage.fromJson(json, Booking.fromJson),
+    );
   }
 
   Future<Booking> getBooking(int id) async {
     final res = await get('/api/v1/bookings/$id');
-    return handleResponse(res, (json) {
-      final map = _unwrapDataMap(json);
-      final bookingMap = map['booking'];
-      return Booking.fromJson(
-        bookingMap is Map
-            ? Map<String, dynamic>.from(bookingMap)
-            : Map<String, dynamic>.from(map),
-      );
-    });
-  }
-
-  Future<Booking> updateBooking(int id, Map<String, dynamic> update) async {
-    final res = await put('/api/v1/bookings/$id', update);
-    return handleResponse(res, (json) {
-      final map = _unwrapDataMap(json);
-      final bookingMap = map['booking'];
-      return Booking.fromJson(
-        bookingMap is Map
-            ? Map<String, dynamic>.from(bookingMap)
-            : Map<String, dynamic>.from(map),
-      );
-    });
+    return handleResponse(res, (json) => Booking.fromJson(_asMap(json)));
   }
 
   Future<void> cancelBooking({
@@ -108,17 +94,38 @@ class BookingsProvider extends BaseProvider {
     handleResponse(res, (_) => null);
   }
 
-  /// Unwraps the common `{data: {...}}` envelope, returning the inner map.
-  Map<String, dynamic> _unwrapDataMap(dynamic json) {
+  /// Chat of a booking, newest first. Only the guest and the host can read it.
+  Future<CursorPage<MessageModel>> listMessages(
+    int bookingId, {
+    String? cursor,
+    int limit = 50,
+  }) async {
+    final query = <String, dynamic>{
+      if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
+      'limit': '$limit',
+    };
+    final res = await get('/api/v1/bookings/$bookingId/messages', query: query);
+    return handleResponse(
+      res,
+      (json) => CursorPage.fromJson(json, MessageModel.fromMap),
+    );
+  }
+
+  /// Sends one message. [body] is 1 to 2000 characters after trimming.
+  Future<MessageModel> sendMessage(int bookingId, String body) async {
+    final res = await post('/api/v1/bookings/$bookingId/messages', {
+      'body': body,
+    });
+    return handleResponse(res, (json) => MessageModel.fromMap(_asMap(json)));
+  }
+
+  Map<String, dynamic> _asMap(dynamic json) {
     if (json is! Map) {
       throw ApiException(
         message: 'Unexpected bookings response shape',
         statusCode: 500,
       );
     }
-    final map = Map<String, dynamic>.from(json);
-    final data = map['data'];
-    if (data is Map) return Map<String, dynamic>.from(data);
-    return map;
+    return Map<String, dynamic>.from(json);
   }
 }

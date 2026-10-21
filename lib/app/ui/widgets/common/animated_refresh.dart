@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 // ===============================================
@@ -43,7 +44,7 @@ class _AnimatedRefreshIconState extends State<AnimatedRefreshIcon>
       ),
     ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
-    _controller.repeat();
+    unawaited(_controller.repeat());
   }
 
   @override

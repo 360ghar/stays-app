@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_animations.dart';
@@ -79,7 +80,7 @@ class _SwipeableItemState extends State<SwipeableItem>
       });
 
       // Haptic feedback
-      HapticFeedback.mediumImpact();
+      unawaited(HapticFeedback.mediumImpact());
       return;
     }
 
@@ -90,7 +91,7 @@ class _SwipeableItemState extends State<SwipeableItem>
     });
 
     // Haptic feedback
-    HapticFeedback.heavyImpact();
+    unawaited(HapticFeedback.heavyImpact());
 
     await _controller.forward();
 
@@ -105,7 +106,7 @@ class _SwipeableItemState extends State<SwipeableItem>
   void _cancelDelete() {
     if (_isConfirmingDelete) {
       setState(() => _isConfirmingDelete = false);
-      HapticFeedback.lightImpact();
+      unawaited(HapticFeedback.lightImpact());
     }
   }
 
@@ -130,7 +131,7 @@ class _SwipeableItemState extends State<SwipeableItem>
           if (widget.confirmBeforeDelete && !_isConfirmingDelete) {
             setState(() => _isConfirmingDelete = true);
 
-            HapticFeedback.mediumImpact();
+            unawaited(HapticFeedback.mediumImpact());
 
             // Wait for confirmation
             await Future.delayed(widget.deleteConfirmDuration);
@@ -142,7 +143,7 @@ class _SwipeableItemState extends State<SwipeableItem>
             return false;
           }
 
-          HapticFeedback.heavyImpact();
+          unawaited(HapticFeedback.heavyImpact());
           return true;
         },
         background: _buildBackground(context),

@@ -1,3 +1,5 @@
+import '../../models/wire_enums.dart';
+
 class ProviderAuthResult {
   ProviderAuthResult({this.accessToken, this.refreshToken, this.rawUser});
   final String? accessToken;
@@ -32,8 +34,8 @@ class IdentifierStatus {
     required this.exists,
     required this.verified,
     required this.hasPassword,
-    required this.channel,
-    required this.nextStep,
+    this.channel,
+    this.nextStep,
   });
 
   factory IdentifierStatus.fromJson(Map<String, dynamic> json) {
@@ -41,8 +43,9 @@ class IdentifierStatus {
       exists: json['exists'] == true,
       verified: json['verified'] == true,
       hasPassword: json['has_password'] == true,
-      channel: (json['channel'] as String?) ?? 'email',
-      nextStep: (json['next_step'] as String?) ?? 'otp',
+      // An unknown value reads as null. It is not turned into a real step.
+      channel: IdentifierChannel.fromJson(json['channel']),
+      nextStep: IdentifierNextStep.fromJson(json['next_step']),
     );
   }
 
@@ -55,16 +58,45 @@ class IdentifierStatus {
   /// Whether the account has a password set.
   final bool hasPassword;
 
-  /// "email" or "phone" — channel detected for the identifier.
-  final String channel;
+  /// Channel detected for the identifier. Null for an unknown value.
+  final IdentifierChannel? channel;
 
-  /// "password" or "otp" — the next step the client should take.
-  final String nextStep;
+  /// The next step the client should take. Null for an unknown value.
+  final IdentifierNextStep? nextStep;
 
-  bool get isPasswordStep => nextStep == 'password';
-  bool get isOtpStep => nextStep == 'otp';
-  bool get isEmail => channel == 'email';
-  bool get isPhone => channel == 'phone';
+  bool get isPasswordStep => nextStep == IdentifierNextStep.password;
+  bool get isOtpStep => nextStep == IdentifierNextStep.otp;
+  bool get isEmail => channel == IdentifierChannel.email;
+  bool get isPhone => channel == IdentifierChannel.phone;
+}
+
+/// `GET /api/v1/users/me/auth-state`: where the user is in the sign-in gate.
+class AuthGateState {
+  const AuthGateState({
+    this.stage,
+    this.nextAction,
+    this.missingFields = const <String>[],
+  });
+
+  factory AuthGateState.fromJson(Map<String, dynamic> json) {
+    final missing = json['missing_fields'];
+    return AuthGateState(
+      stage: AuthGateStage.fromJson(json['stage']),
+      nextAction: AuthGateAction.fromJson(json['next_action']),
+      missingFields: [
+        if (missing is List)
+          for (final field in missing)
+            if (field is String) field,
+      ],
+    );
+  }
+
+  /// Null for an unknown value.
+  final AuthGateStage? stage;
+
+  /// Null for an unknown value.
+  final AuthGateAction? nextAction;
+  final List<String> missingFields;
 }
 
 abstract class IAuthProvider {

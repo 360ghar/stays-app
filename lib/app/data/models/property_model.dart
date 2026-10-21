@@ -1,5 +1,7 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'amenity_model.dart';
 import 'property_image_model.dart';
+import 'wire_enums.dart';
 import '../../utils/constants/app_constants.dart';
 
 part 'property_model.g.dart';
@@ -9,12 +11,12 @@ class Property {
   Property({
     required this.id,
     required this.name,
-    required this.propertyType,
     required this.city,
     required this.country,
-    required this.pricePerNight,
+    this.propertyType,
+    this.pricePerNight,
     this.description,
-    this.purpose = 'short_stay',
+    this.purpose,
     this.address,
     this.state,
     this.latitude,
@@ -42,16 +44,12 @@ class Property {
     this.viewCount,
     this.likeCount,
     this.interestCount,
-    this.rating,
-    this.reviewsCount,
     this.ownerId,
     this.ownerName,
-    this.ownerContact,
     this.builderName,
     this.images,
     this.coverImage,
     this.virtualTourUrl,
-    this.has360View,
     this.features,
     this.amenities,
     this.tags,
@@ -79,13 +77,17 @@ class Property {
   @JsonKey(name: 'title')
   final String name;
   final String? description;
+  @PropertyTypeConverter()
   @JsonKey(name: 'property_type')
-  final String propertyType;
-  final String purpose;
+  final PropertyType? propertyType;
+  @PropertyPurposeConverter()
+  final PropertyPurpose? purpose;
 
   // Location
   @JsonKey(name: 'full_address')
   final String? address;
+  // `city` is null on the wire for a listing without one.
+  @JsonKey(fromJson: _cityFromJson)
   final String city;
   final String? state;
   final String country;
@@ -98,9 +100,11 @@ class Property {
   final String? subLocality;
   final String? landmark;
 
-  // Pricing
-  @JsonKey(name: 'daily_rate')
-  final double pricePerNight;
+  // Pricing. `nightly_rate` is the per-night price of a short stay and null
+  // for any other listing. It is never rebuilt from `base_price` (a monthly
+  // anchor) or `monthly_rent`.
+  @JsonKey(name: 'nightly_rate')
+  final double? pricePerNight;
   final String currency;
   @JsonKey(name: 'base_price')
   final double? basePrice;
@@ -139,16 +143,15 @@ class Property {
   final int? likeCount;
   @JsonKey(name: 'interest_count')
   final int? interestCount;
-  final double? rating;
-  final int? reviewsCount;
 
   // Owner information
   @JsonKey(name: 'owner_id')
   final int? ownerId;
   @JsonKey(name: 'owner_name')
   final String? ownerName;
-  @JsonKey(name: 'owner_contact')
-  final String? ownerContact;
+
+  // No `owner_contact` field: the app shows no contact number, so no cache
+  // can hold one. The parser skips the key.
   @JsonKey(name: 'builder_name')
   final String? builderName;
 
@@ -159,15 +162,16 @@ class Property {
   final String? coverImage;
   @JsonKey(name: 'virtual_tour_url')
   final String? virtualTourUrl;
-  final bool? has360View;
 
   bool get hasVirtualTour => virtualTourUrl?.isNotEmpty == true;
 
   // Features and amenities
   @JsonKey(fromJson: _stringListFromJson)
   final List<String>? features;
-  @JsonKey(fromJson: _stringListFromJson)
-  final List<String>? amenities;
+
+  /// Amenity objects `{id, title, icon, category}`.
+  @JsonKey(fromJson: _amenitiesFromJson)
+  final List<AmenityModel>? amenities;
   @JsonKey(fromJson: _stringListFromJson)
   final List<String>? tags;
 
@@ -176,7 +180,8 @@ class Property {
   final bool? available;
   @JsonKey(name: 'available_from')
   final DateTime? availableFrom;
-  final String? status;
+  @PropertyStatusConverter()
+  final PropertyStatus? status;
   @JsonKey(name: 'calendar_data')
   final Map<String, dynamic>? calendarData;
 
@@ -209,6 +214,16 @@ class Property {
     return null;
   }
 
+  static String _cityFromJson(Object? value) => value is String ? value : '';
+
+  static List<AmenityModel>? _amenitiesFromJson(Object? value) {
+    if (value is! List) return null;
+    return [
+      for (final item in value)
+        if (item is Map) AmenityModel.fromJson(Map<String, dynamic>.from(item)),
+    ];
+  }
+
   static List<String>? _stringListFromJson(dynamic value) {
     try {
       if (value is List) {
@@ -235,8 +250,17 @@ class Property {
     return null;
   }
 
-  String get displayPrice =>
-      '${AppConstants.defaultCurrencySymbol}${pricePerNight.toStringAsFixed(0)}';
+  /// True when the listing has a per-night price.
+  bool get hasPrice => pricePerNight != null;
+
+  /// The amount, or a plain notice when the listing has no nightly rate.
+  /// Pair it with [priceUnit].
+  String get displayPrice => hasPrice
+      ? '${AppConstants.defaultCurrencySymbol}${pricePerNight!.toStringAsFixed(0)}'
+      : 'Price on request';
+
+  /// ` / night` when [hasPrice], else empty.
+  String get priceUnit => hasPrice ? ' / night' : '';
 
   String get fullAddress => [
     if (locality != null) locality,
@@ -246,21 +270,10 @@ class Property {
     country,
   ].where((s) => s != null && s.isNotEmpty).join(', ');
 
-  String get ratingText {
-    if (rating == null) return 'New';
-    return rating!.toStringAsFixed(1);
-  }
-
-  String get reviewsText {
-    if (likeCount == null || likeCount == 0) return 'No likes';
-    if (likeCount == 1) return '1 like';
-    return '$likeCount likes';
-  }
-
   bool get hasLocation => latitude != null && longitude != null;
 
   String get propertyTypeDisplay {
-    final normalized = propertyType.trim();
+    final normalized = propertyType?.wire.trim() ?? '';
     if (normalized.isEmpty) return 'Property';
     return normalized
         .replaceAll('_', ' ')
@@ -307,16 +320,12 @@ class Property {
       viewCount: viewCount,
       likeCount: likeCount,
       interestCount: interestCount,
-      rating: rating,
-      reviewsCount: reviewsCount,
       ownerId: ownerId,
       ownerName: ownerName,
-      ownerContact: ownerContact,
       builderName: builderName,
       images: images,
       coverImage: coverImage,
       virtualTourUrl: virtualTourUrl,
-      has360View: has360View,
       features: features,
       amenities: amenities,
       tags: tags,

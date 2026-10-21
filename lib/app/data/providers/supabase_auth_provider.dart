@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:url_launcher/url_launcher.dart' show LaunchMode;
 
@@ -9,14 +8,27 @@ import '../services/apple_sign_in_service.dart';
 import 'auth/i_auth_provider.dart';
 import '../../utils/logger/app_logger.dart';
 
-class SupabaseAuthProvider extends GetxService implements IAuthProvider {
-  final supabase.SupabaseClient _supabase = supabase.Supabase.instance.client;
-  final StorageService _storage = Get.find<StorageService>();
+class SupabaseAuthProvider implements IAuthProvider {
+  /// All dependencies are constructor-injected from Riverpod
+  /// `data_providers` (lib/core/providers/data_providers.dart); no fallbacks,
+  /// misconfiguration fails at provider construction.
+  SupabaseAuthProvider({
+    required supabase.SupabaseClient client,
+    required StorageService storage,
+    required GoogleSignInService google,
+    required AppleSignInService apple,
+  }) : _supabase = client,
+       _storage = storage,
+       _google = google,
+       _apple = apple;
 
-  // Registered once in InitialBinding (R7 DI consolidation); no local
-  // fallbacks — construction must fail loudly if DI is misconfigured.
-  final GoogleSignInService _google = Get.find<GoogleSignInService>();
-  final AppleSignInService _apple = Get.find<AppleSignInService>();
+  final supabase.SupabaseClient _supabase;
+  final StorageService _storage;
+
+  // Provided by Riverpod data_providers; no local
+  // fallbacks — construction fails loudly if misconfigured.
+  final GoogleSignInService _google;
+  final AppleSignInService _apple;
 
   @override
   Future<ProviderAuthResult> loginWithEmail({
@@ -297,6 +309,6 @@ class SupabaseAuthProvider extends GetxService implements IAuthProvider {
   String _ensureE164(String phone) {
     final trimmed = phone.replaceAll(RegExp(r'\s+'), '');
     if (trimmed.startsWith('+')) return trimmed;
-    return '${AppConfig.I.defaultCountryDialCode}$trimmed';
+    return '${AppConfig.I.locale.defaultCountryDialCode}$trimmed';
   }
 }

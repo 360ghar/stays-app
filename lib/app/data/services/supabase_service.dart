@@ -22,9 +22,8 @@ class SupabaseService {
   /// Whether Supabase has been initialized successfully.
   bool get isReady => _initialized;
 
-  /// Optional shared init future. When the entry point sets this, the
-  /// `InitialBinding` registration awaits the same promise instead of
-  /// re-running `initialize()` (which would be a no-op but skip awaiting).
+  /// Optional shared init future. Set by the entry point; awaited before
+  /// `runApp` so `initialize()` is never run twice.
   static Future<void>? supabaseServiceReady;
 
   Future<void> initialize() async {
@@ -38,9 +37,7 @@ class SupabaseService {
       return;
     }
     try {
-      // ponytail: pin is supabase_flutter ^2.6.0; `publishableKey` is added in
-      // the v3.x major. Switch to `publishableKey:` on the next bump.
-      await Supabase.initialize(url: url, anonKey: publishableKey);
+      await Supabase.initialize(url: url, publishableKey: publishableKey);
       _initialized = true;
     } catch (e, st) {
       _initialized = false;

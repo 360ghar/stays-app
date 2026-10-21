@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 
 import '../../../config/app_config.dart';
 import '../../utils/logger/app_logger.dart';
@@ -11,11 +11,19 @@ import '../../utils/logger/app_logger.dart';
 ///
 /// This service automatically captures Flutter errors and can be used to
 /// record custom errors, set user context, and log breadcrumbs.
-class CrashReportingService extends GetxService {
-  static CrashReportingService get I => Get.find<CrashReportingService>();
+///
+/// Shared singleton: every caller reports into the one Crashlytics hook.
+class CrashReportingService {
+  factory CrashReportingService() => _shared;
+  CrashReportingService._internal();
+
+  static final CrashReportingService _shared =
+      CrashReportingService._internal();
+
+  static CrashReportingService get I => _shared;
 
   bool _isInitialized = false;
-  final RxBool isEnabled = false.obs;
+  final ValueNotifier<bool> isEnabled = ValueNotifier<bool>(false);
 
   FirebaseCrashlytics? _crashlytics;
 
@@ -24,8 +32,8 @@ class CrashReportingService extends GetxService {
     if (_isInitialized) return this;
 
     try {
-      // Enable in production and staging, disable in development
-      isEnabled.value = !AppConfig.isDev;
+      // Crashlytics needs a Firebase app; only the prod entry point makes one.
+      isEnabled.value = !AppConfig.isDev && Firebase.apps.isNotEmpty;
 
       if (isEnabled.value) {
         _crashlytics = FirebaseCrashlytics.instance;
@@ -64,7 +72,10 @@ class CrashReportingService extends GetxService {
 
     // Set custom keys for debugging
     await _crashlytics!.setCustomKey('environment', AppConfig.I.environment);
-    await _crashlytics!.setCustomKey('api_base_url', AppConfig.I.apiBaseUrl);
+    await _crashlytics!.setCustomKey(
+      'api_base_url',
+      AppConfig.I.api.apiBaseUrl,
+    );
   }
 
   /// Set up Flutter error handling
@@ -168,15 +179,14 @@ extension CrashReportingExtension on Object {
     String? reason,
     bool fatal = false,
   }) {
-    if (Get.isRegistered<CrashReportingService>()) {
-      unawaited(
-        Get.find<CrashReportingService>().recordError(
-          this,
-          stackTrace: stackTrace,
-          reason: reason,
-          fatal: fatal,
-        ),
-      );
-    }
+    // Degrades to a log when crash reporting is disabled/uninitialized.
+    unawaited(
+      CrashReportingService().recordError(
+        this,
+        stackTrace: stackTrace,
+        reason: reason,
+        fatal: fatal,
+      ),
+    );
   }
 }

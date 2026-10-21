@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:stays_app/app/ui/theme/app_animations.dart';
 
@@ -64,21 +65,21 @@ class _PremiumButtonState extends State<PremiumButton>
   void _handleTapDown(TapDownDetails details) {
     if (!_isPressed && !widget.isLoading && !widget.isDisabled) {
       setState(() => _isPressed = true);
-      _controller.forward();
+      unawaited(_controller.forward());
     }
   }
 
   void _handleTapUp(TapUpDetails details) {
     if (_isPressed) {
       setState(() => _isPressed = false);
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 
   void _handleTapCancel() {
     if (_isPressed) {
       setState(() => _isPressed = false);
-      _controller.reverse();
+      unawaited(_controller.reverse());
     }
   }
 

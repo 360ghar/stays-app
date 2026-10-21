@@ -1,0 +1,256 @@
+{
+  "created": {
+    "actual_check_in": null,
+    "actual_check_out": null,
+    "base_amount": 10500.0,
+    "booking_reference": "BK-2026-00014",
+    "booking_status": "pending",
+    "cancellation_date": null,
+    "cancellation_reason": null,
+    "check_in_date": "2026-11-10T00:00:00Z",
+    "check_out_date": "2026-11-13T00:00:00Z",
+    "created_at": "2026-09-30T10:15:02Z",
+    "discount_amount": 0.0,
+    "early_check_in": false,
+    "guest": {
+      "avatar_url": null,
+      "display_name": "Asha Verma",
+      "id": 50
+    },
+    "guest_details": {
+      "adults": 2
+    },
+    "guest_rating": null,
+    "guest_review": null,
+    "guests": 2,
+    "id": 14,
+    "late_check_out": false,
+    "nights": 3,
+    "payment_date": null,
+    "payment_method": null,
+    "payment_status": "pending",
+    "primary_guest_email": "asha@example.com",
+    "primary_guest_name": "Asha Verma",
+    "primary_guest_phone": "+919800000000",
+    "property": {
+      "city": "Goa",
+      "country": "India",
+      "cover_image_url": "https://cdn.example.com/p1/main.jpg",
+      "id": 1,
+      "title": "Sea View Villa 1"
+    },
+    "property_id": 1,
+    "refund_amount": null,
+    "service_charges": 525.0,
+    "special_requests": "Late check-in",
+    "taxes_amount": 1260.5,
+    "total_amount": 12285.5,
+    "transaction_id": null,
+    "updated_at": "2026-09-30T10:15:02Z",
+    "user_id": 50
+  },
+  "last_page": {
+    "has_more": false,
+    "items": [
+      {
+        "actual_check_in": null,
+        "actual_check_out": null,
+        "base_amount": 10500.0,
+        "booking_reference": "BK-2026-00013",
+        "booking_status": "cancelled",
+        "cancellation_date": null,
+        "cancellation_reason": null,
+        "check_in_date": "2026-11-10T00:00:00Z",
+        "check_out_date": "2026-11-13T00:00:00Z",
+        "created_at": "2026-09-30T10:15:02Z",
+        "discount_amount": 0.0,
+        "early_check_in": false,
+        "guest": {
+          "avatar_url": null,
+          "display_name": "Asha Verma",
+          "id": 50
+        },
+        "guest_details": {
+          "adults": 2
+        },
+        "guest_rating": null,
+        "guest_review": null,
+        "guests": 2,
+        "id": 13,
+        "late_check_out": false,
+        "nights": 3,
+        "payment_date": null,
+        "payment_method": null,
+        "payment_status": "pending",
+        "primary_guest_email": "asha@example.com",
+        "primary_guest_name": "Asha Verma",
+        "primary_guest_phone": "+919800000000",
+        "property": {
+          "city": "Goa",
+          "country": "India",
+          "cover_image_url": "https://cdn.example.com/p1/main.jpg",
+          "id": 1,
+          "title": "Sea View Villa 1"
+        },
+        "property_id": 1,
+        "refund_amount": null,
+        "service_charges": 525.0,
+        "special_requests": "Late check-in",
+        "taxes_amount": 1260.5,
+        "total_amount": 12285.5,
+        "transaction_id": null,
+        "updated_at": "2026-09-30T10:15:02Z",
+        "user_id": 50
+      }
+    ],
+    "limit": 20,
+    "next_cursor": null,
+    "total": null
+  },
+  "list_page": {
+    "has_more": true,
+    "items": [
+      {
+        "actual_check_in": null,
+        "actual_check_out": null,
+        "base_amount": 10500.0,
+        "booking_reference": "BK-2026-00011",
+        "booking_status": "pending",
+        "cancellation_date": null,
+        "cancellation_reason": null,
+        "check_in_date": "2026-11-10T00:00:00Z",
+        "check_out_date": "2026-11-13T00:00:00Z",
+        "created_at": "2026-09-30T10:15:02Z",
+        "discount_amount": 0.0,
+        "early_check_in": false,
+        "guest": {
+          "avatar_url": null,
+          "display_name": "Asha Verma",
+          "id": 50
+        },
+        "guest_details": {
+          "adults": 2
+        },
+        "guest_rating": null,
+        "guest_review": null,
+        "guests": 2,
+        "id": 11,
+        "late_check_out": false,
+        "nights": 3,
+        "payment_date": null,
+        "payment_method": null,
+        "payment_status": "pending",
+        "primary_guest_email": "asha@example.com",
+        "primary_guest_name": "Asha Verma",
+        "primary_guest_phone": "+919800000000",
+        "property": {
+          "city": "Goa",
+          "country": "India",
+          "cover_image_url": "https://cdn.example.com/p1/main.jpg",
+          "id": 1,
+          "title": "Sea View Villa 1"
+        },
+        "property_id": 1,
+        "refund_amount": null,
+        "service_charges": 525.0,
+        "special_requests": "Late check-in",
+        "taxes_amount": 1260.5,
+        "total_amount": 12285.5,
+        "transaction_id": null,
+        "updated_at": "2026-09-30T10:15:02Z",
+        "user_id": 50
+      },
+      {
+        "actual_check_in": null,
+        "actual_check_out": null,
+        "base_amount": 10500.0,
+        "booking_reference": "BK-2026-00012",
+        "booking_status": "confirmed",
+        "cancellation_date": null,
+        "cancellation_reason": null,
+        "check_in_date": "2026-11-10T00:00:00Z",
+        "check_out_date": "2026-11-13T00:00:00Z",
+        "created_at": "2026-09-30T10:15:02Z",
+        "discount_amount": 0.0,
+        "early_check_in": false,
+        "guest": null,
+        "guest_details": {
+          "adults": 2
+        },
+        "guest_rating": null,
+        "guest_review": null,
+        "guests": 2,
+        "id": 12,
+        "late_check_out": false,
+        "nights": 3,
+        "payment_date": null,
+        "payment_method": null,
+        "payment_status": "paid",
+        "primary_guest_email": "asha@example.com",
+        "primary_guest_name": "Asha Verma",
+        "primary_guest_phone": "+919800000000",
+        "property": null,
+        "property_id": 1,
+        "refund_amount": null,
+        "service_charges": 525.0,
+        "special_requests": "Late check-in",
+        "taxes_amount": 1260.5,
+        "total_amount": 12285.5,
+        "transaction_id": null,
+        "updated_at": "2026-09-30T10:15:02Z",
+        "user_id": 50
+      }
+    ],
+    "limit": 20,
+    "next_cursor": "eyJrIjpbIjIwMjYtMDktMzAiLDJdLCJmIjoiYWJjIn0",
+    "total": null
+  },
+  "message_created": {
+    "body": "Thanks!",
+    "created_at": "2026-09-30T10:15:02Z",
+    "id": 503,
+    "sender_id": 50
+  },
+  "messages_page": {
+    "has_more": true,
+    "items": [
+      {
+        "body": "See you on the 10th.",
+        "created_at": "2026-09-30T10:15:02Z",
+        "id": 502,
+        "sender_id": 7
+      },
+      {
+        "body": "Is early check-in possible?",
+        "created_at": "2026-09-30T09:00:00Z",
+        "id": 501,
+        "sender_id": 50
+      }
+    ],
+    "limit": 30,
+    "next_cursor": "eyJrIjpbIjIwMjYtMDktMzAiLDJdLCJmIjoiYWJjIn0",
+    "total": null
+  },
+  "occupancy_full": {
+    "max_occupancy": 4,
+    "occupancy_ok": false,
+    "reason": "Maximum 4 guests"
+  },
+  "occupancy_ok": {
+    "max_occupancy": 4,
+    "occupancy_ok": true,
+    "reason": null
+  },
+  "pricing": {
+    "base_amount": 10500.0,
+    "check_in_date": "2026-11-10T00:00:00Z",
+    "check_out_date": "2026-11-13T00:00:00Z",
+    "discount_amount": 0.0,
+    "guests": 2,
+    "nights": 3,
+    "property_id": 1,
+    "service_charges": 525.0,
+    "taxes_amount": 1260.5,
+    "total_amount": 12285.5
+  }
+}
